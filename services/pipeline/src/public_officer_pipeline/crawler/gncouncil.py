@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import date, datetime, timezone
 from urllib.parse import urljoin
 
@@ -15,12 +16,16 @@ DEFAULT_LIST_URL = "https://www.gncouncil.go.kr/kr/noticeBBS.do"
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 SUPPORTED_FILE_KINDS = {"pdf", "xlsx"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비")
+DOWNLOAD_HREF_PARTS = ("/bbs/download.do", "/bbsAttachDownload.do")
+DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
 
 class CouncilAttachmentCrawler:
     def __init__(self, agency: Agency | None = None, client: httpx.AsyncClient | None = None) -> None:
         self.agency = agency or next(item for item in SEOUL_AGENCIES if item.short_name == "강남구의회")
-        self.list_url = str(self.agency.source_pattern.get("listUrl") or DEFAULT_LIST_URL)
+        pattern = self.agency.source_pattern
+        self.list_url = str(pattern.get("listUrl") or DEFAULT_LIST_URL)
+        self.follow_detail = bool(pattern.get("followDetail"))
         self._client = client or httpx.AsyncClient(
             timeout=DEFAULT_TIMEOUT,
             headers={
@@ -46,6 +51,14 @@ class CouncilAttachmentCrawler:
                 if ref.published_at and ref.published_at < since:
                     continue
                 refs[ref.url] = ref
+            if self.follow_detail:
+                for detail in self._parse_detail_links(response.text):
+                    if detail.published_at and detail.published_at < since:
+                        continue
+                    detail_response = await self._client.get(detail.url)
+                    detail_response.raise_for_status()
+                    for ref in self._parse_detail_downloads(detail_response.text, detail):
+                        refs[ref.url] = ref
         return list(refs.values())
 
     async def fetch_post(self, ref: PostRef) -> PostDetail:
@@ -71,12 +84,13 @@ class CouncilAttachmentCrawler:
             if not _looks_like_expense(title):
                 continue
             published_at = _find_date(cells)
-            for download in cells[5].css('a[href*="/bbs/download.do"]'):
+            for download in cells[5].css("a[href]"):
                 filename = _filename_from_download_link(download)
                 href = download.attributes.get("href", "")
                 file_kind = _file_kind(filename)
                 if (
                     not href
+                    or not _is_download_href(href)
                     or file_kind not in SUPPORTED_FILE_KINDS
                     or not _download_looks_like_expense(title=title, filename=filename)
                 ):
@@ -91,6 +105,61 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
+        return refs
+
+    def _parse_detail_links(self, html: str) -> list[PostRef]:
+        tree = HTMLParser(html)
+        refs: list[PostRef] = []
+        for row in tree.css("tbody tr"):
+            cells = row.css("td")
+            if len(cells) < 4:
+                continue
+            title_cell = cells[1]
+            title = _normalize_spaces(title_cell.text(separator=" ", strip=True))
+            if not _looks_like_expense(title):
+                continue
+            anchor = title_cell.css_first("a[href]")
+            if not anchor:
+                continue
+            href = anchor.attributes.get("href", "")
+            if not href:
+                continue
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=urljoin(self.list_url, href),
+                    title=title,
+                    published_at=_find_date(cells),
+                    department_name=_department_from_filename(title, self.agency.short_name),
+                    file_kind="html",
+                )
+            )
+        return refs
+
+    def _parse_detail_downloads(self, html: str, detail: PostRef) -> list[PostRef]:
+        tree = HTMLParser(html)
+        refs: list[PostRef] = []
+        for download in tree.css("a[href]"):
+            href = download.attributes.get("href", "")
+            if not href or not _is_download_href(href):
+                continue
+            filename = _filename_from_download_link(download)
+            file_kind = _file_kind(filename)
+            if (
+                file_kind not in SUPPORTED_FILE_KINDS
+                or not _download_looks_like_expense(title=detail.title, filename=filename)
+            ):
+                continue
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=urljoin(detail.url, href),
+                    title=f"{detail.title} - {filename}",
+                    published_at=detail.published_at,
+                    department_name=_department_from_filename(filename or detail.title, self.agency.short_name),
+                    file_kind=file_kind,
+                )
+            )
         return refs
 
 
@@ -133,6 +202,10 @@ def _department_from_filename(filename: str, agency_short_name: str = "강남구
 
 
 def _parse_date(value: str) -> date | None:
+    match = DATE_RE.search(value.strip())
+    if match:
+        year, month, day = (int(part) for part in match.groups())
+        return date(year, month, day)
     try:
         return date.fromisoformat(value.strip())
     except ValueError:
@@ -163,6 +236,10 @@ def _download_looks_like_expense(*, title: str, filename: str) -> bool:
     if filename:
         return _looks_like_expense(filename)
     return _looks_like_expense(title)
+
+
+def _is_download_href(href: str) -> bool:
+    return any(part in href for part in DOWNLOAD_HREF_PARTS)
 
 
 def _normalize_spaces(value: str) -> str:

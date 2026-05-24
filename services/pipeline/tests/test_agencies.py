@@ -47,6 +47,10 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
         "구로구의회",
         "동대문구의회",
         "동작구의회",
+        "송파구의회",
         "은평구의회",
         "중랑구의회",
     }
+
+    songpa = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "송파구의회")
+    assert songpa.source_pattern["followDetail"] is True

@@ -103,9 +103,12 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "구로구": "https://www.guroc.go.kr/kr/costBBS.do",
     "동대문구": "https://council.ddm.go.kr/kr/busiexpensesBBS.do",
     "동작구": "https://assembly.dongjak.go.kr/kr/costBBS.do",
+    "송파구": "https://council.songpa.go.kr/kr/news/bbsCost.do",
     "은평구": "https://council.ep.go.kr/kr/costBBS.do",
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
 }
+
+SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {"송파구"}
 
 
 def agency_uuid(key: str) -> UUID:
@@ -169,6 +172,7 @@ def seoul_agencies() -> list[Agency]:
                         "adapter": "council_attachment_board",
                         "listUrl": SEOUL_COUNCIL_ATTACHMENT_BOARDS[gu],
                         "fileKinds": ["pdf", "xlsx"],
+                        "followDetail": gu in SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS,
                     }
                     if gu in SEOUL_COUNCIL_ATTACHMENT_BOARDS
                     else {

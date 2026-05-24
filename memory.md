@@ -347,3 +347,28 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`2131`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`12/52`).
+
+## 2026-05-24 송파구의회 상세 첨부 follow 적재 체크포인트
+
+- 발견:
+  - 송파구의회 업무추진비 게시판은 `https://council.songpa.go.kr/kr/news/bbsCost.do`.
+  - 목록에는 첨부 아이콘만 있고, 실제 `/bbsAttachDownload.do?...` 링크는 상세 페이지에 있음.
+- 구현:
+  - `CouncilAttachmentCrawler`에 `followDetail` 모드 추가.
+  - 목록 row에서 상세 URL·제목·작성일을 추출하고, 상세 페이지에서 첨부 다운로드 링크를 다시 추출.
+  - `bbsAttachDownload.do` 링크와 `YYYY.MM.DD` 날짜 포맷 지원.
+  - 송파구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - Neon `seed-agencies` 재실행 완료.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 25 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 첫 PDF dry-run: `parsed_rows=23`, Kakao match rate `90.48%`.
+  - 두 번째 PDF dry-run: `parsed_rows=23`, Kakao match rate `85.00%`.
+- 실제 적재:
+  - 첫 PDF 실제 적재: `loaded_visits=23`.
+  - 두 번째 PDF 실제 적재: `loaded_visits=23`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `13/52`, `agency_stats_visit_sum=2177`, `places_public=1289`, 좌표 있는 `places_public=1246`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`2177`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`13/52`).
