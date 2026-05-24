@@ -76,3 +76,20 @@
   - `npm run build` → passed
   - API TypeScript compile → passed
   - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 7 passed
+
+## 2026-05-24 Phase 2 셀프 체크 결과
+
+- 통과:
+  - Production 지도 + 마커 + 상세 패널 렌더링 정상.
+  - 검색 필터 동작 확인 (`삼우정` 검색 시 1건으로 축소).
+  - 등급 필터와 목록 전환 UI 동작 확인.
+  - 모바일 375x812 뷰포트에서 주요 UI 겹침 없음.
+  - `/llms.txt` HEAD → 200.
+- 실패:
+  - `place_visits` row: `175` (`> 10,000` 기준 미달).
+  - 적재 기관: `1/52` (`>=45/52` 기준 미달).
+  - sitemap URL: `155` 추정 (`7` static + `148` places, `1,000+` 기준 미달).
+  - 51개 기관 백필은 아직 실제 어댑터/수집 성공 증거 없음.
+- Runbook 결정:
+  - Phase 2 체크 실패이므로 Phase 3 진입 금지.
+  - 사용자 확인 필요: 서울시청 단일 소스 MVP로 배포 완료 처리할지, 51개 기관 어댑터/백필을 계속 구현할지 결정해야 함.
