@@ -99,3 +99,24 @@ def test_seoul_office_html_estimate_board_registered_for_gwanak() -> None:
 
     assert gwanak.source_pattern["adapter"] == "estimate_list_html"
     assert gwanak.source_pattern["listUrl"] == "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do"
+
+
+def test_seoul_office_attachment_board_registered_for_gangdong() -> None:
+    gangdong = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "강동구청")
+
+    assert gangdong.source_pattern["adapter"] == "attachment_board"
+    assert gangdong.source_pattern["listUrl"] == "https://www.gangdong.go.kr/web/newportal/bbs/b_054"
+    assert gangdong.source_pattern["followDetail"] is True
+
+
+def test_seoul_office_attachment_boards_registered_for_egov_boards() -> None:
+    supported = {
+        agency.short_name: agency.source_pattern["listUrl"]
+        for agency in SEOUL_AGENCIES
+        if agency.kind == AgencyKind.GU_OFFICE and agency.source_pattern.get("adapter") == "attachment_board"
+    }
+
+    assert supported["구로구청"] == "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732"
+    assert supported["금천구청"] == "https://www.geumcheon.go.kr/portal/selectBbsNttList.do?bbsNo=86&key=269"
+    assert supported["동대문구청"] == "https://www.ddm.go.kr/www/selectBbsNttList.do?bbsNo=160&key=565"
+    assert supported["서초구청"] == "https://www.seocho.go.kr/site/seocho/ex/bbs/List.do?cbIdx=33"

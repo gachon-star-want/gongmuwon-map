@@ -248,3 +248,76 @@ def test_rows_from_pdf_text_parses_user_amount_place_address_purpose_pdf_table_r
     assert rows[0].amount == 334000
     assert rows[0].user_text == "의장 12명"
     assert rows[1].place_text == "파리바게뜨유스호스텔(영등포동7가 57)"
+
+
+def test_rows_from_pdf_text_parses_segmented_office_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+연번
+
+사용자
+
+사용일자
+
+시간
+
+장소
+
+집 행 목 적
+
+인원 집 행 액
+
+1
+
+고덕1동장 20260330 12:13
+
+너드빈
+
+동 현안업무 추진 관련 직원 격려를
+위한 간담회 경비 지급
+
+6
+
+11,700
+
+신용카드 기관
+
+3
+
+고덕1동장 20260402 15:01
+
+카페불라(CAFE
+
+동 현안업무 추진 관련 관계자 간담회 14
+경비 지급
+
+56,500
+
+신용카드 기관
+
+8
+
+업무담당자 20260415 16:24 오토김밥 고덕점
+
+2026년 주민참여예산 동 지역회의
+개최 관련 다과구매 비용 지급
+
+15
+
+165,000
+
+신용카드 시책
+        """,
+        fallback_department="강동구청 고덕1동",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].used_at.isoformat() == "2026-03-30T12:13:00"
+    assert rows[0].place_text == "너드빈"
+    assert rows[0].amount == 11700
+    assert rows[0].user_text == "고덕1동장 6명"
+    assert rows[1].place_text == "카페불라(CAFE"
+    assert rows[1].purpose == "동 현안업무 추진 관련 관계자 간담회 경비 지급"
+    assert rows[1].user_text == "고덕1동장 14명"
+    assert rows[2].place_text == "오토김밥 고덕점"
+    assert rows[2].expense_category == "시책"

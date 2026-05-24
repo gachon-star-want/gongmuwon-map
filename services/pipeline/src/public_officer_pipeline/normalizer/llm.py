@@ -150,6 +150,7 @@ class Normalizer:
                 "source_published_at", source_published_at.isoformat() if source_published_at else None
             )
             visit.setdefault("source_hash_sha256", source_hash_sha256)
+            visit["raw_excerpt"] = ""
             visits.append(NormalizedVisit.model_validate(visit))
         return visits
 

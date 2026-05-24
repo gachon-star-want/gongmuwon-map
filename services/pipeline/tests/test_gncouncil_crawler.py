@@ -451,3 +451,82 @@ def test_council_attachment_crawler_extracts_yeongdeungpo_downloads() -> None:
     assert len(refs) == 1
     assert refs[0].url == "https://www.ydpc.go.kr/gtb_download.php?gtid=work&fid=182739"
     assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_gangdong_office_file_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="강동구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gangdong.go.kr/web/newportal/bbs/b_054",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>156336</td>
+            <td><a href="/web/newportal/bbs/b_054/156336?cp=1">2026년 4월 고덕1동 업무추진비 집행내역 공개</a></td>
+            <td>강동구청</td><td>2026-05-24</td><td>19</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/web/newportal/file/download/uu/5390aaa366da4ba6b3e53339f927bfdb" title="다운로드" class="dl_file">
+          2026.4월+업무추진비(고덕1동).pdf (45.1KB)
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.gangdong.go.kr/web/newportal/file/download/uu/5390aaa366da4ba6b3e53339f927bfdb"
+    assert refs[0].department_name == "강동구청 고덕1동"
+    assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_egov_direct_downloads_from_list() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="구로구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>10628</td>
+            <td><a href="./selectBbsNttView.do?bbsNo=655&amp;nttNo=234115&amp;key=1732">2026년 4월 주차관리과 시책추진업무추진비 집행내역 공개</a></td>
+            <td>주차기획팀</td>
+            <td>2026.05.13</td>
+            <td>15</td>
+            <td>
+              <a title="첨부파일 다운로드 새창" target="_blank"
+                 href="downloadBbsFile.do?atchmnflNo=351295&amp;bbsNo=655&amp;nttNo=234115&amp;key=1732">
+                <span class="p-icon p-icon__pdf">pdf파일첨부</span>
+              </a>
+            </td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.guro.go.kr/www/downloadBbsFile.do"
+        "?atchmnflNo=351295&bbsNo=655&nttNo=234115&key=1732"
+    )
+    assert refs[0].file_kind == "pdf"

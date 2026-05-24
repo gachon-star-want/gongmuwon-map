@@ -24,6 +24,10 @@ DOWNLOAD_HREF_PARTS = (
     "/Mboard/download.html",
     "/FileDown.do",
     "/gtb_download.php",
+    "/file/download/",
+    "downloadBbsFile.do",
+    "downloadBbsFileStr.do",
+    "/common/board/Download.do",
 )
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
@@ -109,7 +113,11 @@ class CouncilAttachmentCrawler:
                         url=urljoin(self.list_url, href),
                         title=f"{title} - {filename}",
                         published_at=published_at,
-                        department_name=_department_from_filename(filename, self.agency.short_name),
+                        department_name=_best_department(
+                            _department_from_filename(filename, self.agency.short_name),
+                            _department_from_filename(title, self.agency.short_name),
+                            self.agency.short_name,
+                        ),
                         file_kind=file_kind,
                     )
                 )
@@ -188,7 +196,11 @@ class CouncilAttachmentCrawler:
                     url=urljoin(detail.url, href),
                     title=f"{detail.title} - {filename}",
                     published_at=detail.published_at,
-                    department_name=_department_from_filename(filename or detail.title, self.agency.short_name),
+                    department_name=_best_department(
+                        _department_from_filename(filename or detail.title, self.agency.short_name),
+                        detail.department_name,
+                        self.agency.short_name,
+                    ),
                     file_kind=file_kind,
                 )
             )
@@ -230,7 +242,36 @@ def _department_from_filename(filename: str, agency_short_name: str = "강남구
         return f"{agency_short_name} 위원장"
     if "교섭단체" in filename:
         return f"{agency_short_name} 교섭단체"
+    parenthetical = re.search(r"업무추진비\((?P<department>[^)]+)\)", filename)
+    if parenthetical:
+        department = parenthetical.group("department").strip()
+        if _looks_like_department_fragment(department):
+            return f"{agency_short_name} {department}"
+    parenthetical = re.search(r"\((?P<department>[^)]+)\)", filename)
+    if parenthetical:
+        department = parenthetical.group("department").strip()
+        if _looks_like_department_fragment(department):
+            return f"{agency_short_name} {department}"
+    department_match = re.search(
+        r"\d{1,2}월\s+(?P<department>[가-힣0-9]+(?:담당관|구청장|부구청장|국장|과|팀|국|동|소|센터|실))",
+        filename,
+    )
+    if department_match:
+        return f"{agency_short_name} {department_match.group('department')}"
     return agency_short_name
+
+
+def _best_department(primary: str, fallback: str | None, agency_short_name: str) -> str:
+    if primary and primary != agency_short_name:
+        return primary
+    return fallback or primary or agency_short_name
+
+
+def _looks_like_department_fragment(value: str) -> bool:
+    compact = value.strip()
+    if not compact or re.fullmatch(r"(?:20)?\d{2}[.\s년_-]*\d{0,2}\.?", compact):
+        return False
+    return bool(re.search(r"(담당관|구청장|부구청장|국장|과|팀|국|동|소|센터|실)$", compact))
 
 
 def _parse_date(value: str) -> date | None:
@@ -255,7 +296,7 @@ def _find_date(cells) -> date | None:
 def _file_kind(filename: str) -> str:
     lowered = filename.lower()
     for file_kind in SUPPORTED_FILE_KINDS:
-        if re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered):
+        if re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered) or f"{file_kind}파일" in lowered:
             return file_kind
     return ""
 
@@ -265,13 +306,20 @@ def _looks_like_expense(value: str) -> bool:
 
 
 def _download_looks_like_expense(*, title: str, filename: str) -> bool:
-    if filename:
-        return _looks_like_expense(filename)
+    if filename and _looks_like_expense(filename):
+        return True
+    if filename and not _looks_like_generic_file_label(filename):
+        return False
     return _looks_like_expense(title)
 
 
 def _is_download_href(href: str) -> bool:
     return any(part in href for part in DOWNLOAD_HREF_PARTS)
+
+
+def _looks_like_generic_file_label(filename: str) -> bool:
+    normalized = _normalize_spaces(filename).lower()
+    return bool(re.fullmatch(r"(?:pdf|xls|xlsx)\s*파일\s*첨부", normalized))
 
 
 def _url_with_page(url: str, page: int) -> str:

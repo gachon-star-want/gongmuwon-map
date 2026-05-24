@@ -706,3 +706,30 @@
   - `place_visits > 10,000` 기준은 아직 미달 (`7825`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`28/52`).
   - 다음 관악 배치는 `--skip-posts 17` 이후 5~10페이지 단위로 진행 필요.
+
+## 2026-05-25 구청 첨부 게시판 확장 체크포인트
+
+- 구현:
+  - 구청용 `attachment_board` adapter alias 등록.
+  - 강동구청 `b_054`, 금천구청 `bbsNo=86`, 동대문구청 `bbsNo=160`, 서초구청 `cbIdx=33`, 구로구청 `bbsNo=655` 소스 패턴 등록.
+  - `downloadBbsFile.do`, `downloadBbsFileStr.do`, `/file/download/`, `/common/board/Download.do` 첨부 링크 지원.
+  - 강동구청식 텍스트 PDF 파서 추가: `YYYYMMDD` 날짜, 빈 줄로 쪼개진 행, 인원/금액/결제방식 세그먼트 처리.
+  - 텍스트 PDF는 `pdftotext -layout` 실패 시 plain `pdftotext`로 재시도.
+  - DB 실명 잔존 방지를 위해 normalized visit의 `raw_excerpt`를 빈 문자열로 강제하고, 기존 DB `raw_excerpt`도 전부 빈 문자열로 정리.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` -> 57 passed.
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` -> passed.
+  - 강동구청 dry-run 1건: `parsed_rows=13`, Kakao match rate `91.67%`.
+  - 금천구청 dry-run 1건: `parsed_rows=8`, Kakao match rate `100%`.
+  - 서초구청 dry-run 1건(skip 8): `parsed_rows=1`, Kakao match rate `100%`.
+  - 동대문구청 dry-run 1건: `parsed_rows=6`, Kakao match rate `0%`라 품질 개선 필요.
+- 실제 적재:
+  - 강동구청은 장시간 배치를 중단했지만 post 단위 적재로 6개 source, 39 visits 적재됨.
+  - 금천구청 1개 source, 8 visits 적재.
+  - 동대문구청 1개 source, 6 visits 적재.
+  - 서초구청 1개 source, 1 visit 적재.
+  - refresh 후 집계: `52 agencies`, 방문 데이터 기관 `32/52`, 총 visits `7,879`.
+  - `raw_excerpt <> ''` 잔여 row: `0`.
+- 주의:
+  - 구로구청은 직접 PDF 첨부 추출은 되지만 최신 PDF가 현행 텍스트 파서에서 느린 vision 경로로 빠져 실제 적재 보류.
+  - Phase 2 기준은 아직 실패: `place_visits > 10,000` 미달, `>=45/52` 미달.

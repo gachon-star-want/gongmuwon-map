@@ -183,7 +183,7 @@ async def _run_supported_agency(args: argparse.Namespace, agency: Agency) -> int
         return await _run_crawler(args, agency, GangnamExpenseCrawler(agency=agency), _extract_detail_rows)
     if adapter == "estimate_list_html":
         return await _run_crawler(args, agency, EstimateListCrawler(agency=agency), _extract_detail_rows)
-    if adapter in {"gncouncil_pdf_board", "council_attachment_board"}:
+    if adapter in {"gncouncil_pdf_board", "council_attachment_board", "attachment_board"}:
         return await _run_crawler(args, agency, CouncilAttachmentCrawler(agency=agency), _extract_detail_rows)
     print(
         json.dumps(

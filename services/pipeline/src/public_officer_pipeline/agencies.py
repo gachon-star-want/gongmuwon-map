@@ -138,6 +138,21 @@ SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {
     "중구",
 }
 
+SEOUL_OFFICE_ATTACHMENT_BOARDS = {
+    "강동구": "https://www.gangdong.go.kr/web/newportal/bbs/b_054",
+    "구로구": "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732",
+    "금천구": "https://www.geumcheon.go.kr/portal/selectBbsNttList.do?bbsNo=86&key=269",
+    "동대문구": "https://www.ddm.go.kr/www/selectBbsNttList.do?bbsNo=160&key=565",
+    "서초구": "https://www.seocho.go.kr/site/seocho/ex/bbs/List.do?cbIdx=33",
+}
+
+SEOUL_OFFICE_DETAIL_ATTACHMENT_BOARDS = {
+    "강동구",
+    "금천구",
+    "동대문구",
+    "서초구",
+}
+
 
 def agency_uuid(key: str) -> UUID:
     return uuid5(AGENCY_NAMESPACE, key)
@@ -179,6 +194,13 @@ def seoul_agencies() -> list[Agency]:
                 "adapter": "estimate_list_html",
                 "listUrl": "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do",
                 "rowsPerPage": 10,
+            }
+        elif gu in SEOUL_OFFICE_ATTACHMENT_BOARDS:
+            office_source_pattern = {
+                "adapter": "attachment_board",
+                "listUrl": SEOUL_OFFICE_ATTACHMENT_BOARDS[gu],
+                "fileKinds": ["pdf", "xls", "xlsx"],
+                "followDetail": gu in SEOUL_OFFICE_DETAIL_ATTACHMENT_BOARDS,
             }
         agencies.append(
             Agency(

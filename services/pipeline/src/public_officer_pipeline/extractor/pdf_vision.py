@@ -155,6 +155,16 @@ PDF_TEXT_USER_AMOUNT_PLACE_ADDRESS_PURPOSE_ROW_RE = re.compile(
     r"(?P<party_size>\d+\s*명|-)\s+"
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
 )
+PDF_TEXT_SEGMENTED_OFFICE_USER_DATE_RE = re.compile(
+    r"^(?P<user>.+?)\s+"
+    r"(?P<date>20\d{6}|20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)"
+    r"(?:\s+(?P<tail>.+))?$"
+)
+PDF_TEXT_SEGMENTED_OFFICE_PAYMENT_RE = re.compile(
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)"
+    r"(?:\s+(?P<expense_category>\S+))?"
+)
 PDF_TEXT_PURPOSE_STARTERS = (
     "의정활동",
     "직무수행",
@@ -215,15 +225,20 @@ def extract_pdf_rows_with_vision(
     api_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
     gemini_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
     provider = os.getenv("PDF_VISION_PROVIDER", "gemini" if gemini_key else "anthropic")
-    if provider == "anthropic" and not api_key:
-        raise PipelineConfigError("ANTHROPIC_API_KEY is required for scanned PDF vision extraction")
-    if provider == "gemini" and not gemini_key:
-        raise PipelineConfigError("GEMINI_API_KEY is required for scanned PDF vision extraction")
     text = _pdf_to_text(content)
     if text:
         text_rows = rows_from_pdf_text(text, fallback_department=fallback_department)
         if text_rows or "총 0건" in text:
             return text_rows
+    plain_text = _pdf_to_text(content, layout=False)
+    if plain_text and plain_text != text:
+        plain_text_rows = rows_from_pdf_text(plain_text, fallback_department=fallback_department)
+        if plain_text_rows or "총 0건" in plain_text:
+            return plain_text_rows
+    if provider == "anthropic" and not api_key:
+        raise PipelineConfigError("ANTHROPIC_API_KEY is required for scanned PDF vision extraction")
+    if provider == "gemini" and not gemini_key:
+        raise PipelineConfigError("GEMINI_API_KEY is required for scanned PDF vision extraction")
     images = _pdf_to_png_images(content, max_pages=max_pages)
     rows: list[ParsedExpenseRow] = []
     for index, image in enumerate(images, start=1):
@@ -277,11 +292,11 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
         return [path.read_bytes() for path in sorted(Path(directory).glob("page-*.png"))]
 
 
-def _pdf_to_text(content: bytes) -> str:
+def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
     with tempfile.TemporaryDirectory() as directory:
         pdf_path = Path(directory) / "source.pdf"
         pdf_path.write_bytes(content)
-        command = ["pdftotext", "-layout", str(pdf_path), "-"]
+        command = ["pdftotext", *(["-layout"] if layout else []), str(pdf_path), "-"]
         try:
             completed = subprocess.run(command, check=True, capture_output=True)
         except (FileNotFoundError, subprocess.CalledProcessError):
@@ -424,6 +439,8 @@ def rows_from_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExp
         parsed = _parse_pdf_text_line(line, fallback_department=fallback_department)
         if parsed:
             rows.append(parsed)
+    if not rows:
+        rows = _parse_segmented_office_pdf_text(text, fallback_department=fallback_department)
     return rows
 
 
@@ -1037,6 +1054,156 @@ def _parse_pdf_text_purpose_first_line(line: str, *, fallback_department: str) -
         payment_method=row_match.group("payment_method"),
         raw_excerpt=raw_excerpt,
     )
+
+
+def _parse_segmented_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    rows: list[ParsedExpenseRow] = []
+    segments = _split_pdf_blank_line_segments(text.splitlines())
+    index = 0
+    while index < len(segments) - 1:
+        if not _looks_like_segmented_row_number(segments[index]) or not PDF_TEXT_SEGMENTED_OFFICE_USER_DATE_RE.match(
+            segments[index + 1]
+        ):
+            index += 1
+            continue
+        start = index + 1
+        end = len(segments)
+        for candidate in range(start + 1, len(segments) - 1):
+            if _looks_like_segmented_row_number(segments[candidate]) and PDF_TEXT_SEGMENTED_OFFICE_USER_DATE_RE.match(
+                segments[candidate + 1]
+            ):
+                end = candidate
+                break
+        parsed = _parse_segmented_office_segments(segments[start:end], fallback_department=fallback_department)
+        if parsed:
+            rows.append(parsed)
+        index = end
+    return rows
+
+
+def _parse_segmented_office_segments(segments: list[str], *, fallback_department: str) -> ParsedExpenseRow | None:
+    if len(segments) < 4:
+        return None
+    user_match_index = None
+    user_match: re.Match[str] | None = None
+    for index, segment in enumerate(segments):
+        user_match = PDF_TEXT_SEGMENTED_OFFICE_USER_DATE_RE.match(segment)
+        if user_match:
+            user_match_index = index
+            break
+    if user_match_index is None or user_match is None:
+        return None
+
+    payment_index = None
+    payment_match: re.Match[str] | None = None
+    for index in range(len(segments) - 1, user_match_index, -1):
+        payment_match = PDF_TEXT_SEGMENTED_OFFICE_PAYMENT_RE.search(segments[index])
+        if payment_match:
+            payment_index = index
+            break
+    if payment_index is None or payment_match is None:
+        return None
+
+    amount_index = None
+    amount = None
+    for index in range(payment_index - 1, user_match_index, -1):
+        normalized = segments[index].replace(",", "").strip()
+        if re.fullmatch(r"\d+", normalized):
+            amount_index = index
+            amount = int(normalized)
+            break
+    if amount_index is None or amount is None:
+        return None
+
+    party_size = ""
+    content_end = amount_index
+    if amount_index - 1 > user_match_index and re.fullmatch(r"\d+\s*명?|-", segments[amount_index - 1].strip()):
+        party_size = re.sub(r"\D", "", segments[amount_index - 1])
+        content_end = amount_index - 1
+
+    place_tail = (user_match.group("tail") or "").strip()
+    content_segments = segments[user_match_index + 1 : content_end]
+    if place_tail:
+        place_text = place_tail
+        purpose_segments = content_segments
+    elif content_segments:
+        place_text = content_segments[0]
+        purpose_segments = content_segments[1:]
+    else:
+        return None
+    purpose = _normalize_pdf_text_fragment(" ".join(purpose_segments))
+    if not party_size:
+        purpose, party_size = _extract_embedded_party_size(purpose)
+    place_text = _normalize_pdf_text_fragment(place_text)
+    if not place_text or not purpose:
+        return None
+    try:
+        used_at = _parse_pdf_date_time(user_match.group("date"), user_match.group("time"))
+    except ValueError:
+        return None
+    user_text = user_match.group("user").strip()
+    if party_size:
+        user_text = f"{user_text} {party_size}명"
+    raw_excerpt = " | ".join(
+        part
+        for part in (
+            user_match.group("user"),
+            user_match.group("date"),
+            user_match.group("time"),
+            place_text,
+            purpose,
+            party_size,
+            str(amount),
+            payment_match.group("payment_method"),
+            payment_match.group("expense_category"),
+        )
+        if part
+    )
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=place_text,
+        purpose=purpose,
+        amount=amount,
+        user_text=user_text,
+        payment_method=payment_match.group("payment_method"),
+        expense_category=payment_match.group("expense_category"),
+        raw_excerpt=raw_excerpt,
+    )
+
+
+def _split_pdf_blank_line_segments(lines: list[str]) -> list[str]:
+    segments: list[str] = []
+    current: list[str] = []
+    for line in lines:
+        stripped = line.strip().strip("\f")
+        if not stripped:
+            if current:
+                segments.append(_normalize_pdf_text_fragment(" ".join(current)))
+                current = []
+            continue
+        current.append(stripped)
+    if current:
+        segments.append(_normalize_pdf_text_fragment(" ".join(current)))
+    return segments
+
+
+def _looks_like_segmented_row_number(segment: str) -> bool:
+    return bool(re.fullmatch(r"\d{1,3}", segment.strip()))
+
+
+def _extract_embedded_party_size(purpose: str) -> tuple[str, str]:
+    match = re.search(r"\s(?P<party>\d{1,3})\s+(?=경비|비용|간담회|지급|운영|개최)", purpose)
+    if not match:
+        return purpose, ""
+    cleaned = f"{purpose[: match.start()]} {purpose[match.end() :]}".strip()
+    return _normalize_pdf_text_fragment(cleaned), match.group("party")
+
+
+def _parse_pdf_date_time(date_value: str, time_value: str):
+    if re.fullmatch(r"20\d{6}", date_value):
+        date_value = f"{date_value[:4]}-{date_value[4:6]}-{date_value[6:8]}"
+    return date_parser.parse(f"{date_value} {time_value}", fuzzy=True)
 
 
 def _parse_vision_row(item: dict[str, Any], *, fallback_department: str) -> ParsedExpenseRow | None:

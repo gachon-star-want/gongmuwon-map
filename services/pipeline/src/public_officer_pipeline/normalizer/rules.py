@@ -42,7 +42,7 @@ def deterministic_normalize_rows(
                 payment_method=row.payment_method,
                 expense_category=row.expense_category,
                 place_raw=place_raw,
-                raw_excerpt=row.raw_excerpt,
+                raw_excerpt="",
                 confidence=0.82,
             )
         )
