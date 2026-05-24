@@ -219,3 +219,26 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`870`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`5/52`).
+
+## 2026-05-24 관악구의회 2단 XLSX 헤더 적재 체크포인트
+
+- 구현:
+  - XLSX extractor에 2단 헤더 overlay 처리 추가.
+  - `집행일시` 하위 `일자/시간`, `집행장소` 하위 `상호명/주소` 구조를 표준 필드로 매핑.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 23 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 관악구의회 1개 첨부 dry-run:
+    - `parsed_rows=106`
+    - `normalized_visits=106`
+    - `places_seen=79`
+    - Kakao match rate `94.94%`
+- 실제 적재:
+  - 관악구의회 `2026-01-01` 이후 1페이지 11개 첨부 실행.
+  - `posts_seen=11`, `posts_fetched=11`, `parsed_rows=743`, `loaded_visits=743`.
+  - Kakao match rate `92.90%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `6/52`, `agency_stats_visit_sum=1613`, `places_public=863`, 좌표 있는 `places_public=845`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`1613`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`6/52`).

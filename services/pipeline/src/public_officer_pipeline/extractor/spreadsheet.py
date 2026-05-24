@@ -86,6 +86,16 @@ def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
         mapped = [_map_header(cell) for cell in row]
         if "used_date" in mapped and "place_text" in mapped and "amount" in mapped:
             return index, mapped
+        if index + 1 < len(rows):
+            width = max(len(row), len(rows[index + 1]))
+            overlaid = [
+                (rows[index + 1][column] if column < len(rows[index + 1]) else "")
+                or (row[column] if column < len(row) else "")
+                for column in range(width)
+            ]
+            mapped = [_map_header(cell) for cell in overlaid]
+            if "used_date" in mapped and "place_text" in mapped and "amount" in mapped:
+                return index + 1, mapped
     return None, []
 
 
