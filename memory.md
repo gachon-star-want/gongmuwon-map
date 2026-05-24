@@ -419,3 +419,28 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`2823`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`15/52`).
+
+## 2026-05-24 도봉구의회 followDetail XLSX 적재 체크포인트
+
+- 발견:
+  - 도봉구의회 업무추진비 게시판은 `https://www.council-dobong.seoul.kr/kr/activity/bbsCost.do`.
+  - 목록은 상세 링크만 제공하고, 상세 페이지에서 `/bbsAttachDownload.do?...` XLSX/PDF 첨부를 내려받아야 함.
+  - 최신 분기 XLSX는 다중 시트 구조이며 헤더가 `상호`, `인원수`, `구분`처럼 짧은 명칭을 사용.
+- 구현:
+  - 도봉구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - spreadsheet extractor 헤더 alias에 `상호`, `인원수`, `구분` 추가.
+  - 도봉식 XLSX 헤더 테스트 추가.
+- 검증:
+  - 도봉구의회 최신 XLSX dry-run: `parsed_rows=474`, Kakao match rate `60.45%`.
+  - 타깃 테스트: `10 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 도봉구의회 최신 페이지 7개 첨부 실행.
+  - 최신 분기 XLSX 1개에서 `loaded_visits=474`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `16/52`, `agency_stats_visit_sum=3297`, `places_public=1610`, 좌표 있는 `places_public=1443`.
+- 운영 메모:
+  - 같은 페이지의 월별 의회사무국 XLSX는 현재 parser 기준 0건으로 처리됨. 별도 구조 확인 후 추가 보강 가능.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`3297`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`16/52`).

@@ -152,3 +152,33 @@ def test_extracts_council_cost_xlsx_approval_amount_header() -> None:
     assert rows[0].amount == 78000
     assert rows[0].place_text == "보승회관 구로구청점 (서울특별시 구로구 구로중앙로 68)"
     assert rows[0].user_text == "정대근 6명"
+
+
+def test_extracts_council_cost_xlsx_short_merchant_and_party_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의장"
+    worksheet.append(["의회명", "구분", "사용일", "사용일시", "상호", "주소", "집행목적", "사용금액(원)", "인원수", "결제방법"])
+    worksheet.append(
+        [
+            "도봉구의회",
+            "의장",
+            "2026-01-05",
+            "12:22:35",
+            "은행골",
+            "서울 도봉구 도봉동 635번지",
+            "지방의회 운영 방향 등 정책논의 간담회",
+            180000,
+            9,
+            "카드",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="도봉구의회")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "은행골 (서울 도봉구 도봉동 635번지)"
+    assert rows[0].amount == 180000
+    assert rows[0].user_text == "의장 9명"
