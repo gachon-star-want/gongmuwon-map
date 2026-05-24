@@ -97,6 +97,7 @@ SEOUL_COUNCIL_HOMEPAGES = {
 
 SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "강남구": "https://www.gncouncil.go.kr/kr/noticeBBS.do",
+    "강동구": "https://council.gangdong.go.kr/kr/news/bbsBusiness.do",
     "강북구": "https://council.gangbuk.go.kr/kr/costBBS.do",
     "강서구": "https://gsc.gangseo.seoul.kr/kr/costBBS.do",
     "관악구": "https://www.ga21c.seoul.kr/kr/costBBS.do",
@@ -113,7 +114,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
 }
 
-SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {"도봉구", "마포구", "서초구", "송파구"}
+SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {"강동구", "도봉구", "마포구", "서초구", "송파구"}
 
 
 def agency_uuid(key: str) -> UUID:

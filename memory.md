@@ -490,3 +490,24 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`4031`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`18/52`).
+
+## 2026-05-24 강동구의회 followDetail PDF 적재 체크포인트
+
+- 발견:
+  - 강동구의회 업무추진비 게시판은 `https://council.gangdong.go.kr/kr/news/bbsBusiness.do`.
+  - 목록은 상세 링크만 제공하고, 상세 페이지에서 `/bbsAttachDownload.do?...` 단일 PDF 첨부를 내려받는 구조.
+- 구현:
+  - 강동구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - 기관 스냅샷 테스트 갱신.
+- 검증:
+  - 강동구의회 최신 PDF dry-run: `parsed_rows=117`, Kakao match rate `90.22%`.
+  - 타깃 테스트: `15 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 강동구의회 최신 페이지 5개 PDF 실제 적재.
+  - `posts_seen=5`, `posts_fetched=5`, `parsed_rows=322`, `loaded_visits=322`, Kakao match rate `89.91%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `19/52`, `agency_stats_visit_sum=4348`, `places_public=2179`, 좌표 있는 `places_public=1946`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`4348`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`19/52`).
