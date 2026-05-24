@@ -190,10 +190,10 @@ def _department_from_filename(filename: str, agency_short_name: str = "강남구
         return f"{agency_short_name} 사무국"
     if "의장단" in filename:
         return f"{agency_short_name} 의장단"
-    if "의장" in filename:
-        return f"{agency_short_name} 의장"
     if "부의장" in filename:
         return f"{agency_short_name} 부의장"
+    if "의장" in filename:
+        return f"{agency_short_name} 의장"
     if "위원장" in filename:
         return f"{agency_short_name} 위원장"
     if "교섭단체" in filename:

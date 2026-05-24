@@ -69,6 +69,42 @@ def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute
     assert refs[0].file_kind == "xlsx"
 
 
+def test_council_attachment_crawler_detects_vice_chair_before_chair() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="서초구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
+            },
+        )
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <ul class="attach">
+          <li class="file">
+            <a href="/bbsAttachDownload.do?key=file1">
+              <span class="name">2026년 4월 부의장 업무추진비.pdf</span>
+            </a>
+          </li>
+        </ul>
+        """,
+        crawler._parse_detail_links(
+            """
+            <table><tbody><tr>
+              <td>67</td>
+              <td><a href="?reform=view&key=post">2026년 4월 의장, 부의장 및 상임위원장 업무추진비 공개</a></td>
+              <td>서초구의회</td><td>2026.05.15</td><td>11</td><td></td>
+            </tr></tbody></table>
+            """
+        )[0],
+    )
+
+    assert refs[0].department_name == "서초구의회 부의장"
+
+
 def test_council_attachment_crawler_supports_four_column_cost_tables() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

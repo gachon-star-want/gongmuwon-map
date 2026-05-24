@@ -45,6 +45,16 @@ PDF_TEXT_AMOUNT_RE = re.compile(
     r"(?P<party_size>\d+)?\s*"
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)?\s*$"
 )
+PDF_TEXT_PURPOSE_FIRST_ROW_RE = re.compile(
+    r"^\s*\d+\s+"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}\.?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<party_size>\d+|-)\s*$"
+)
 
 
 def extract_pdf_rows_with_vision(
@@ -273,6 +283,9 @@ def rows_from_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExp
 
 
 def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
+    purpose_first = _parse_pdf_text_purpose_first_line(line, fallback_department=fallback_department)
+    if purpose_first:
+        return purpose_first
     row_match = PDF_TEXT_ROW_RE.match(line)
     if not row_match:
         return None
@@ -315,6 +328,44 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
         amount=amount,
         user_text=" ".join(user_text_parts) if user_text_parts else None,
         payment_method=amount_match.group("payment_method"),
+        raw_excerpt=raw_excerpt,
+    )
+
+
+def _parse_pdf_text_purpose_first_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_PURPOSE_FIRST_ROW_RE.match(line)
+    if not row_match:
+        return None
+    try:
+        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
+        amount = int(str(row_match.group("amount")).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    party_size = row_match.group("party_size")
+    user_text_parts = [fallback_department]
+    if party_size and party_size != "-":
+        user_text_parts.append(f"{party_size}명")
+    raw_excerpt = " | ".join(
+        part
+        for part in (
+            row_match.group("date"),
+            row_match.group("time"),
+            row_match.group("place_text"),
+            row_match.group("purpose"),
+            row_match.group("amount"),
+            None if party_size == "-" else party_size,
+            row_match.group("payment_method"),
+        )
+        if part
+    )
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=row_match.group("place_text").strip(),
+        purpose=row_match.group("purpose").strip(),
+        amount=amount,
+        user_text=" ".join(user_text_parts),
+        payment_method=row_match.group("payment_method"),
         raw_excerpt=raw_excerpt,
     )
 

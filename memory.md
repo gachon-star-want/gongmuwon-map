@@ -444,3 +444,27 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`3297`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`16/52`).
+
+## 2026-05-24 서초구의회 purpose-first PDF 적재 체크포인트
+
+- 발견:
+  - 서초구의회 업무추진비 게시판은 `https://www.sdc.seoul.kr/kr/news/bbsBusiness.do`.
+  - 상세 페이지의 `/bbsAttachDownload.do?...` PDF 첨부를 따라가야 함.
+  - PDF 텍스트 표는 컬럼 순서가 `목적 → 지출금액 → 결제방법 → 장소 → 대상인원수`라 금천식 텍스트 parser가 목적을 장소로 오인해 Kakao match rate `0%` 발생.
+- 구현:
+  - 서초구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - `rows_from_pdf_text`에 purpose-first PDF row parser 추가.
+  - `부의장` 파일명이 `의장`보다 먼저 분류되도록 department 추론 순서 수정.
+  - purpose-first parser 및 부의장 분류 테스트 추가.
+- 검증:
+  - 보강 후 서초구의회 최신 PDF dry-run: `parsed_rows=30`, Kakao match rate `83.33%`.
+  - 타깃 테스트: `15 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 서초구의회 최신 페이지 20개 PDF 실제 적재.
+  - `posts_seen=20`, `posts_fetched=20`, `parsed_rows=350`, `loaded_visits=350`, Kakao match rate `92.19%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `17/52`, `agency_stats_visit_sum=3647`, `places_public=1780`, 좌표 있는 `places_public=1600`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`3647`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`17/52`).

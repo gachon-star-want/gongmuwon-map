@@ -62,3 +62,20 @@ def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:
     assert rows[0].amount == 22000
     assert rows[1].used_at.isoformat() == "2026-04-06T20:17:13"
     assert rows[1].user_text == "의정팀장 6명"
+
+
+def test_rows_from_pdf_text_parses_purpose_first_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    2026-04-01 09:03 의정활동 의견 수렴을 위한 관계자 간담회 비용 지출      195,000   카드     ㈜토다코리아        15
+13   2026-04-10 12:51 의정활동 의견 수렴을 위한 관계자 간담회 비용 지출       48,200   계좌이체   파리크라상 서래점     6
+        """,
+        fallback_department="서초구의회 의장",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "㈜토다코리아"
+    assert rows[0].purpose == "의정활동 의견 수렴을 위한 관계자 간담회 비용 지출"
+    assert rows[0].amount == 195000
+    assert rows[0].user_text == "서초구의회 의장 15명"
+    assert rows[1].payment_method == "계좌이체"
