@@ -108,6 +108,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "마포구": "https://council.mapo.seoul.kr/kr/news/bbsCost.do",
     "서초구": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
     "송파구": "https://council.songpa.go.kr/kr/news/bbsCost.do",
+    "용산구": "https://www.yscl.go.kr/kr/councilcostBBS.do",
     "은평구": "https://council.ep.go.kr/kr/costBBS.do",
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
 }

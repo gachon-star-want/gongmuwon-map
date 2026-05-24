@@ -468,3 +468,25 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`3647`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`17/52`).
+
+## 2026-05-24 용산구의회 direct attachment PDF 적재 체크포인트
+
+- 발견:
+  - 용산구의회 업무추진비 게시판은 `https://www.yscl.go.kr/kr/councilcostBBS.do`.
+  - 목록 페이지 마지막 첨부 셀에 `/kr/bbs/download.do?bbs_id=councilcost...` PDF 링크가 직접 노출됨.
+  - 기존 `CouncilAttachmentCrawler`의 직접 첨부 목록 파서로 처리 가능.
+- 구현:
+  - 용산구의회 `source_pattern.adapter=council_attachment_board` 등록.
+  - 기관 스냅샷 테스트 갱신.
+- 검증:
+  - 용산구의회 최신 PDF dry-run: `parsed_rows=13`, Kakao match rate `81.82%`.
+  - 타깃 테스트: `15 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 용산구의회 최신 페이지 29개 PDF 실제 적재.
+  - `posts_seen=29`, `posts_fetched=29`, `parsed_rows=385`, `loaded_visits=385`, Kakao match rate `84.93%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `18/52`, `agency_stats_visit_sum=4031`, `places_public=1973`, 좌표 있는 `places_public=1762`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`4031`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`18/52`).

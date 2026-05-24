@@ -52,6 +52,7 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
         "마포구의회",
         "서초구의회",
         "송파구의회",
+        "용산구의회",
         "은평구의회",
         "중랑구의회",
     }
