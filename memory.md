@@ -372,3 +372,26 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`2177`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`13/52`).
+
+## 2026-05-24 마포구의회 followDetail + PDF JSON repair 체크포인트
+
+- 발견:
+  - 마포구의회 업무추진비 게시판은 `https://council.mapo.seoul.kr/kr/news/bbsCost.do`.
+  - 목록에는 상세 링크만 있고, 상세 페이지의 `/bbsAttachDownload.do?...` 아래 PDF 첨부를 내려받아야 함.
+- 구현:
+  - 마포구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - Gemini vision PDF 추출 호출에 `responseMimeType=application/json` 적용.
+  - LLM JSON 응답의 흔한 쉼표 누락(`}{`, 줄바꿈 뒤 다음 key)을 실패 후 보정하도록 `_loads_json_response` 보강.
+  - 관련 테스트 추가 및 기관 스냅샷 테스트 갱신.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 26 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 마포구의회 첫 PDF dry-run: `parsed_rows=9`, Kakao match rate `87.50%`.
+- 실제 적재:
+  - 마포구의회 최신 월 5개 PDF 실제 적재 완료.
+  - 중간 Gemini JSON 오류 후 repair/retry 보강으로 실패 PDF 재처리 성공.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `14/52`, `agency_stats_visit_sum=2322`, `places_public=1386`, 좌표 있는 `places_public=1323`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`2322`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`14/52`).

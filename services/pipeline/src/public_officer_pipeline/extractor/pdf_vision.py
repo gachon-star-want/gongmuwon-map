@@ -177,36 +177,51 @@ def _extract_page_with_gemini(
         "page_number": page_number,
         "fallback_department": fallback_department,
     }
-    response = httpx.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-        params={"key": api_key},
-        json={
-            "contents": [
-                {
-                    "parts": [
-                        {"text": f"{SYSTEM_PROMPT}\n\nContext:\n{json.dumps(payload, ensure_ascii=False)}"},
-                        {
-                            "inline_data": {
-                                "mime_type": "image/png",
-                                "data": base64.b64encode(image).decode("ascii"),
-                            }
-                        },
-                    ]
-                }
-            ],
-            "generationConfig": {"temperature": 0, "maxOutputTokens": 16384},
-        },
-        timeout=90.0,
-    )
-    response.raise_for_status()
-    body = response.json()
-    parts = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-    text = "".join(part.get("text", "") for part in parts)
-    try:
-        parsed = _loads_json_response(text)
-    except JSONDecodeError as exc:
-        raise PipelineConfigError(f"Vision extraction returned invalid JSON: {exc}") from exc
-    return rows_from_vision_payload(parsed, fallback_department=fallback_department)
+    last_json_error: JSONDecodeError | None = None
+    for attempt in range(2):
+        extra_instruction = ""
+        if attempt:
+            extra_instruction = "\nReturn one complete JSON object. Do not omit commas between rows or fields."
+        response = httpx.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            params={"key": api_key},
+            json={
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": (
+                                    f"{SYSTEM_PROMPT}{extra_instruction}\n\n"
+                                    f"Context:\n{json.dumps(payload, ensure_ascii=False)}"
+                                )
+                            },
+                            {
+                                "inline_data": {
+                                    "mime_type": "image/png",
+                                    "data": base64.b64encode(image).decode("ascii"),
+                                }
+                            },
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0,
+                    "maxOutputTokens": 16384,
+                    "responseMimeType": "application/json",
+                },
+            },
+            timeout=90.0,
+        )
+        response.raise_for_status()
+        body = response.json()
+        parts = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        text = "".join(part.get("text", "") for part in parts)
+        try:
+            parsed = _loads_json_response(text)
+            return rows_from_vision_payload(parsed, fallback_department=fallback_department)
+        except JSONDecodeError as exc:
+            last_json_error = exc
+    raise PipelineConfigError(f"Vision extraction returned invalid JSON: {last_json_error}") from last_json_error
 
 
 def rows_from_vision_payload(payload: dict[str, Any], *, fallback_department: str) -> list[ParsedExpenseRow]:

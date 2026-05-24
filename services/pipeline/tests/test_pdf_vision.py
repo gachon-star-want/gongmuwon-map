@@ -35,3 +35,14 @@ def test_loads_fenced_json_with_nested_rows() -> None:
     )
 
     assert parsed["rows"][0]["place_text"] == "반가안동국시"
+
+
+def test_loads_json_repairs_missing_commas_between_rows() -> None:
+    parsed = _loads_json_response(
+        """{"rows":[
+{"place_text":"반가안동국시","amount":336000}
+{"place_text":"삼우정","amount":120000}
+]}"""
+    )
+
+    assert [row["place_text"] for row in parsed["rows"]] == ["반가안동국시", "삼우정"]

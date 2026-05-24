@@ -168,4 +168,18 @@ def _loads_json_response(text: str) -> dict:
         if start >= 0 and end > start:
             stripped = stripped[start : end + 1]
 
-    return json.loads(stripped)
+    try:
+        return json.loads(stripped)
+    except JSONDecodeError:
+        repaired = _repair_common_json_response(stripped)
+        if repaired != stripped:
+            return json.loads(repaired)
+        raise
+
+
+def _repair_common_json_response(value: str) -> str:
+    repaired = value
+    repaired = re.sub(r"}\s*{", "},{", repaired)
+    repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+    repaired = re.sub(r'(?<=[\]"0-9}])\s*\n\s*"', ',\n"', repaired)
+    return repaired
