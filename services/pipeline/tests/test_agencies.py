@@ -30,3 +30,22 @@ def test_seoul_council_homepages_use_verified_domains() -> None:
 
     assert gangnam_council.homepage == "https://www.gncouncil.go.kr"
     assert gangseo_council.homepage == "https://gsc.gangseo.seoul.kr"
+
+
+def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() -> None:
+    supported = {
+        agency.short_name
+        for agency in SEOUL_AGENCIES
+        if agency.kind == AgencyKind.GU_COUNCIL and agency.source_pattern.get("adapter") == "council_attachment_board"
+    }
+
+    assert supported == {
+        "강남구의회",
+        "강북구의회",
+        "강서구의회",
+        "관악구의회",
+        "구로구의회",
+        "동작구의회",
+        "은평구의회",
+        "중랑구의회",
+    }

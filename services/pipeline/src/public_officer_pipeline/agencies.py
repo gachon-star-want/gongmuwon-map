@@ -95,6 +95,17 @@ SEOUL_COUNCIL_HOMEPAGES = {
     "중랑구": "https://council.jungnang.go.kr",
 }
 
+SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
+    "강남구": "https://www.gncouncil.go.kr/kr/noticeBBS.do",
+    "강북구": "https://council.gangbuk.go.kr/kr/costBBS.do",
+    "강서구": "https://gsc.gangseo.seoul.kr/kr/costBBS.do",
+    "관악구": "https://www.ga21c.seoul.kr/kr/costBBS.do",
+    "구로구": "https://www.guroc.go.kr/kr/costBBS.do",
+    "동작구": "https://assembly.dongjak.go.kr/kr/costBBS.do",
+    "은평구": "https://council.ep.go.kr/kr/costBBS.do",
+    "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
+}
+
 
 def agency_uuid(key: str) -> UUID:
     return uuid5(AGENCY_NAMESPACE, key)
@@ -154,11 +165,11 @@ def seoul_agencies() -> list[Agency]:
                 homepage=SEOUL_COUNCIL_HOMEPAGES[gu],
                 source_pattern=(
                     {
-                        "adapter": "gncouncil_pdf_board",
-                        "listUrl": "https://www.gncouncil.go.kr/kr/noticeBBS.do",
-                        "fileKinds": ["pdf"],
+                        "adapter": "council_attachment_board",
+                        "listUrl": SEOUL_COUNCIL_ATTACHMENT_BOARDS[gu],
+                        "fileKinds": ["pdf", "xlsx"],
                     }
-                    if gu == "강남구"
+                    if gu in SEOUL_COUNCIL_ATTACHMENT_BOARDS
                     else {
                         "adapter": "district_council_board_required",
                         "searchKeyword": f"{gu}의회 업무추진비",

@@ -191,3 +191,31 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`257`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`4/52`).
+
+## 2026-05-24 구의회 첨부 게시판 일반화 + 강서구의회 적재 체크포인트
+
+- 구현:
+  - `GangnamCouncilCrawler`를 `CouncilAttachmentCrawler`로 일반화.
+  - `listUrl`을 agency `source_pattern`에서 읽도록 변경해 `noticeBBS.do`, `costBBS.do` 계열을 같은 parser로 처리.
+  - 첨부 파일명/제목에서 `업무추진비` 또는 `업추비`가 확인되는 `pdf`, `xlsx`만 수집하도록 필터링.
+  - 다운로드 링크의 `title`, 이미지 `alt`, 링크 텍스트에서 파일명을 추출하도록 보강.
+  - 강북·강서·관악·구로·동작·은평·중랑구의회 `costBBS.do` source_pattern 등록.
+  - XLSX extractor 헤더 alias 보강: `가맹점명`, `집행처 명`, `사용금액(원)`, `대상인원(명)`, `사용목적(내역)`, `사용방법` 등.
+  - XLSX 주소 컬럼은 `상호명 (주소)` 형태로 deterministic normalizer에 전달해 카카오 매칭 품질을 높임.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 22 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 강서구의회 1개 첨부 dry-run:
+    - `parsed_rows=96`
+    - `normalized_visits=96`
+    - `places_seen=83`
+    - Kakao match rate `90.36%`
+- 실제 적재:
+  - 강서구의회 `2026-01-01` 이후 1페이지 9개 첨부 실행.
+  - `posts_seen=9`, `posts_fetched=9`, `parsed_rows=614`, `loaded_visits=614`.
+  - Kakao match rate `93.35%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `5/52`, `agency_stats_visit_sum=870`, `places_public=545`, 좌표 있는 `places_public=527`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`870`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`5/52`).
