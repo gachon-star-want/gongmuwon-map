@@ -288,6 +288,49 @@ def test_council_attachment_crawler_extracts_extensionless_bbs_downloads() -> No
     assert refs[0].file_kind == "pdf"
 
 
+def test_council_attachment_crawler_extracts_egov_list_links_and_filedown() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="종로구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://council.jongno.go.kr/council/bbs/BBSMSTR_000000000061/list.do?menuNo=401070",
+                "followDetail": True,
+            },
+        )
+    )
+    details = crawler._parse_detail_links(
+        """
+        <div>
+          <a href="/council/bbs/BBSMSTR_000000000061/view.do?nttId=35&amp;menuNo=401070">
+            의회운영업무추진비 공개
+          </a>
+        </div>
+        """
+    )
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/portal/cmm/fms/FileDown.do?atchFileId=FILE_1&amp;fileSn=1&amp;bbsId=">
+          종로구의회 의회운영업무추진비 사용내역(202604).pdf [89.3K]
+        </a>
+        """,
+        details[0],
+    )
+
+    assert len(details) == 1
+    assert details[0].url == (
+        "https://council.jongno.go.kr/council/bbs/BBSMSTR_000000000061/view.do"
+        "?nttId=35&menuNo=401070"
+    )
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://council.jongno.go.kr/portal/cmm/fms/FileDown.do"
+        "?atchFileId=FILE_1&fileSn=1&bbsId="
+    )
+    assert refs[0].file_kind == "pdf"
+
+
 def test_council_attachment_crawler_extracts_mboard_xls_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

@@ -22,6 +22,7 @@ DOWNLOAD_HREF_PARTS = (
     "/bbsAttachDownload.do",
     "bbs_process?reform=download",
     "/Mboard/download.html",
+    "/FileDown.do",
 )
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
@@ -140,6 +141,30 @@ class CouncilAttachmentCrawler:
                     file_kind="html",
                 )
             )
+        if refs:
+            return refs
+        seen: set[str] = set()
+        for anchor in tree.css("a[href]"):
+            title = _normalize_spaces(anchor.text(separator=" ", strip=True))
+            if not _looks_like_expense(title):
+                continue
+            href = anchor.attributes.get("href", "")
+            if not href or "view.do" not in href:
+                continue
+            url = urljoin(self.list_url, href)
+            if url in seen:
+                continue
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=url,
+                    title=title,
+                    published_at=_parse_date(anchor.parent.text(separator=" ", strip=True)) if anchor.parent else None,
+                    department_name=_department_from_filename(title, self.agency.short_name),
+                    file_kind="html",
+                )
+            )
+            seen.add(url)
         return refs
 
     def _parse_detail_downloads(self, html: str, detail: PostRef) -> list[PostRef]:
@@ -229,7 +254,7 @@ def _find_date(cells) -> date | None:
 def _file_kind(filename: str) -> str:
     lowered = filename.lower()
     for file_kind in SUPPORTED_FILE_KINDS:
-        if lowered.endswith(f".{file_kind}"):
+        if re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered):
             return file_kind
     return ""
 

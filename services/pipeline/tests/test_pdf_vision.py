@@ -157,3 +157,22 @@ def test_rows_from_pdf_text_parses_date_user_amount_place_pdf_table_rows() -> No
     assert rows[0].amount == 218000
     assert rows[0].user_text == "의장 17명"
     assert rows[1].place_text == "소주물 신당．중앙시"
+
+
+def test_rows_from_pdf_text_parses_user_place_purpose_amount_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+의장    2026-04-01   08:42:47 파리바게뜨       종로구청   의회 현한업무 관련 간담회            100,000        6    카드
+의장    2026-04-10   15:37:30 스타벅스    코리아        생일 직원 격려                  210,000        7    카드
+운영위원장    2026-04-01   13:15:09 마로니에카페            의정활동 행사 지원 직원 격려         18,500        4    카드
+        """,
+        fallback_department="종로구의회",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].place_text == "파리바게뜨 종로구청"
+    assert rows[0].purpose == "의회 현한업무 관련 간담회"
+    assert rows[0].amount == 100000
+    assert rows[0].user_text == "의장 6명"
+    assert rows[1].place_text == "스타벅스 코리아"
+    assert rows[2].place_text == "마로니에카페"

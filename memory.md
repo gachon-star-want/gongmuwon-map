@@ -621,3 +621,30 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`6387`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`24/52`).
+
+## 2026-05-25 종로구의회 eGov FileDown PDF 적재 체크포인트
+
+- 발견:
+  - 종로구의회 업무추진비 게시판은 `https://council.jongno.go.kr/council/bbs/BBSMSTR_000000000061/list.do?menuNo=401070`.
+  - 목록은 table row가 아니라 `view.do?nttId=...` 링크 목록으로 렌더링되어 기존 `tbody tr` parser로는 0건.
+  - 첨부는 상세 페이지의 `/portal/cmm/fms/FileDown.do?...` PDF 다운로드 구조.
+  - PDF 텍스트 표는 `사용자 → 사용일시 → 거래처명 → 집행목적 → 사용금액 → 대상인원수 → 사용방법` 순서이며, 거래처명 중간에 지점명이 공백으로 포함됨.
+- 구현:
+  - `CouncilAttachmentCrawler._parse_detail_links`에 table 없는 eGov `view.do` 링크 fallback 추가.
+  - `/FileDown.do` 다운로드 링크 및 `pdf [size]` 파일명 확장자 감지 지원 추가.
+  - 종로구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - 종로식 `user/place/purpose/amount` PDF row parser 추가.
+- 검증:
+  - 종로구의회 실제 목록 probe: `posts=20`.
+  - 최신 PDF 단위 추출: `rows=92`.
+  - dry-run: `parsed_rows=92`, Kakao match rate `91.80%`.
+  - 타깃 테스트: `25 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 종로구의회 2026년 최신 4개 PDF 실제 적재.
+  - `posts_seen=20`, `posts_fetched=4`, `parsed_rows=362`, `loaded_visits=362`, Kakao match rate `88.56%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `25/52`, `agency_stats_visit_sum=6748`, `places_public=3430`, 좌표 있는 `places_public=2943`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`6748`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`25/52`).

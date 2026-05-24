@@ -105,6 +105,15 @@ PDF_TEXT_DATE_USER_AMOUNT_PLACE_ROW_RE = re.compile(
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s+"
     r"(?P<expense_category>\S+)\s*$"
 )
+PDF_TEXT_USER_PLACE_PURPOSE_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_PURPOSE_STARTERS = (
     "의정활동",
     "직무수행",
@@ -114,7 +123,17 @@ PDF_TEXT_PURPOSE_STARTERS = (
     "기획행정위원장",
     "복지건설위원장",
     "의회사무국",
+    "의회 현안",
+    "의회 현한",
     "의정현안",
+    "지역 현안",
+    "지역현안",
+    "의장 수행",
+    "의장실",
+    "의정활동",
+    "생일",
+    "주말",
+    "노동절",
     "기획행정위원회",
     "복지건설위원회",
     "입법지원",
@@ -357,6 +376,12 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     )
     if date_user_amount_place:
         return date_user_amount_place
+    user_place_purpose_amount = _parse_pdf_text_user_place_purpose_amount_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if user_place_purpose_amount:
+        return user_place_purpose_amount
     user_amount_purpose = _parse_pdf_text_user_amount_purpose_line(line, fallback_department=fallback_department)
     if user_amount_purpose:
         return user_amount_purpose
@@ -504,6 +529,52 @@ def _parse_pdf_text_date_user_amount_place_line(line: str, *, fallback_departmen
     )
 
 
+def _parse_pdf_text_user_place_purpose_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_USER_PLACE_PURPOSE_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place, purpose = _split_place_and_purpose_by_marker(row_match.group("body").strip())
+    if not place or not purpose:
+        return None
+    try:
+        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
+        amount = int(str(row_match.group("amount")).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    party_size = row_match.group("party_size")
+    user_text = row_match.group("user").strip()
+    if party_size and party_size != "-":
+        user_text = f"{user_text} {party_size}명"
+    raw_excerpt = " | ".join(
+        part
+        for part in (
+            row_match.group("user"),
+            row_match.group("date"),
+            row_match.group("time"),
+            place,
+            purpose,
+            row_match.group("amount"),
+            None if party_size == "-" else party_size,
+            row_match.group("payment_method"),
+        )
+        if part
+    )
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=place,
+        purpose=purpose,
+        amount=amount,
+        user_text=user_text,
+        payment_method=row_match.group("payment_method"),
+        raw_excerpt=raw_excerpt,
+    )
+
+
 def _parse_pdf_text_user_amount_purpose_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
     row_match = PDF_TEXT_USER_AMOUNT_PURPOSE_ROW_RE.match(line)
     if not row_match:
@@ -601,6 +672,18 @@ def _split_place_and_purpose(body: str, user: str) -> tuple[str, str]:
         if index > 0:
             return body[:index].strip(), body[index:].strip()
     return "", ""
+
+
+def _split_place_and_purpose_by_marker(body: str) -> tuple[str, str]:
+    for marker in PDF_TEXT_PURPOSE_STARTERS:
+        index = body.find(marker)
+        if index > 0:
+            return _normalize_pdf_text_fragment(body[:index]), _normalize_pdf_text_fragment(body[index:])
+    return "", ""
+
+
+def _normalize_pdf_text_fragment(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def _parse_pdf_text_purpose_first_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
