@@ -308,3 +308,22 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`1939`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`9/52`).
+
+## 2026-05-24 은평·중랑구의회 PDF 1개씩 적재 체크포인트
+
+- 은평구의회:
+  - 첫 PDF dry-run: `parsed_rows=77`, Kakao match rate `80.95%`.
+  - 실제 적재: `loaded_sources=1`, `loaded_places=57`, `loaded_visits=77`, Kakao match rate `81.25%`.
+- 중랑구의회:
+  - 첫 PDF dry-run: `parsed_rows=77`, Kakao match rate `88.52%`.
+  - 실제 적재: `loaded_sources=1`, `loaded_places=60`, `loaded_visits=77`, Kakao match rate `88.52%`.
+- materialized views refresh 완료.
+- 직접 DB 확인:
+  - `agencies=52`
+  - 방문 데이터가 있는 기관 `11/52`
+  - `agency_stats_visit_sum=2093`
+  - `places_public=1221`
+  - 좌표 있는 `places_public=1188`
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`2093`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`11/52`).
