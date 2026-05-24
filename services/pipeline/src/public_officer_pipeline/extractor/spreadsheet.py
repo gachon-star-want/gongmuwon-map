@@ -44,6 +44,7 @@ HEADER_ALIASES = {
     "금액": "amount",
     "집행금액": "amount",
     "사용금액": "amount",
+    "승인금액": "amount",
     "결제방법": "payment_method",
     "결재방법": "payment_method",
     "집행방법": "payment_method",

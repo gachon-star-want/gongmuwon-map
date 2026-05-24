@@ -120,3 +120,35 @@ def test_extracts_council_cost_xlsx_two_row_headers() -> None:
     assert rows[0].amount == 19000
     assert rows[0].purpose == "의정활동 및 의회운영 관련 업무유대 경비"
     assert rows[0].user_text == "의장 2명"
+
+
+def test_extracts_council_cost_xlsx_approval_amount_header() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "지출내역"
+    worksheet.append(["2026년 3월 의장단 업무추진비 집행내역"])
+    worksheet.append([])
+    worksheet.append(["연번", "일자", "시간", "승인금액", "장소", "주소", "내역", "대상인원", "결제방법", "사용자"])
+    worksheet.append(
+        [
+            1,
+            "2026-03-04",
+            "12:27:40",
+            78000,
+            "보승회관 구로구청점",
+            "서울특별시 구로구 구로중앙로 68",
+            "지역 현안 의견청취를 위한 간담회",
+            6,
+            "카드",
+            "정대근",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="구로구의회")
+
+    assert len(rows) == 1
+    assert rows[0].amount == 78000
+    assert rows[0].place_text == "보승회관 구로구청점 (서울특별시 구로구 구로중앙로 68)"
+    assert rows[0].user_text == "정대근 6명"

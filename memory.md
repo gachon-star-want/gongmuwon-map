@@ -267,3 +267,25 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`1756`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`7/52`).
+
+## 2026-05-24 구로구의회 XLSX 적재 체크포인트
+
+- 구현:
+  - XLSX extractor에 `승인금액` 금액 alias 추가.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 24 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 구로구의회 2026년 3월 XLSX dry-run:
+    - `parsed_rows=98`
+    - `normalized_visits=98`
+    - `places_seen=70`
+    - Kakao match rate `95.71%`
+- 실제 적재:
+  - 구로구의회 2026년 3월 XLSX 1개 실제 적재.
+  - `loaded_sources=1`, `loaded_places=70`, `loaded_visits=98`.
+  - 2026년 4월 PDF는 Gemini JSON 오류로 보류.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `8/52`, `agency_stats_visit_sum=1854`, `places_public=1043`, 좌표 있는 `places_public=1025`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`1854`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`8/52`).
