@@ -11,6 +11,7 @@ export function sendJson(res: VercelResponse, status: number, body: unknown, cac
 }
 
 export function methodGuard(req: VercelRequest, res: VercelResponse, methods: string[]) {
+  const requestMethod = req.method === 'HEAD' && methods.includes('GET') ? 'GET' : req.method;
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', methods.join(', '));
@@ -18,7 +19,7 @@ export function methodGuard(req: VercelRequest, res: VercelResponse, methods: st
     res.status(204).end();
     return false;
   }
-  if (!req.method || !methods.includes(req.method)) {
+  if (!requestMethod || !methods.includes(requestMethod)) {
     res.setHeader('Allow', methods.join(', '));
     sendJson(res, 405, { error: 'method_not_allowed' });
     return false;

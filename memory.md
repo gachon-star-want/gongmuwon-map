@@ -41,3 +41,23 @@
   - Vercel env에 Neon/R2/Kakao/cron 값 주입
   - production deploy 후 API/프론트 렌더링 QA
   - 52기관 백필은 현재 서울 정보소통광장 단일 크롤러만 있어, 기관 마스터 생성 + 백필 구조 또는 제한적 대체 검증 필요
+
+## 2026-05-24 배포 환경 체크포인트
+
+- Vercel Production env 주입 완료:
+  - `DATABASE_URL`, `DATABASE_URL_READONLY`, `VITE_KAKAO_JS_KEY`, `KAKAO_REST_KEY`, `CRON_SECRET`
+- Vercel Development env 주입 완료.
+- Vercel Preview env:
+  - 전체 preview는 CLI가 `git_branch_required`를 반환.
+  - `main`은 production branch라 preview env 대상으로 지정 불가.
+  - production 배포에는 영향 없음.
+- GitHub Actions secrets 주입 완료:
+  - `DATABASE_URL`, `DATABASE_URL_READONLY`, `KAKAO_REST_KEY`, `KAKAO_JS_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`
+- Production deploy:
+  - deployment id: `dpl_HENmaZfkVaD1ndVurni8obEvfm26`
+  - canonical alias: `https://xn--ob0bo0wl1ax52a.com`
+- Production API smoke:
+  - `/api/v1/stats/summary` → `place_count=148`, `visit_count=175`, `agency_count=1`
+  - `/api/v1/places?...limit=3` → data returned
+- 발견/수정:
+  - `/sitemap.xml` HEAD가 405였음. `methodGuard`에서 `HEAD`를 GET 허용 핸들러로 통과시키도록 수정.
