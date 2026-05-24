@@ -1,0 +1,15 @@
+# 공무원맵 (Public Officer Map)
+
+> 전국 지자체 업무추진비 공개 데이터에서 추출한 식당 방문 빈도 지도 서비스입니다.
+
+## 데이터
+
+- OpenAPI: /openapi.json
+- 요약 통계: /api/v1/stats/summary
+- 식당 목록: /api/v1/places
+
+## 출처와 주의
+
+- 데이터 원천: 서울특별시 정보소통광장 외, 공공누리 제1유형.
+- 운영: 이원영/WonYoungLee, wylee0806@naver.com.
+- 등급은 방문 빈도와 부서 다양성 기반 통계 신호이며 맛·품질·비위 여부를 단정하지 않습니다.

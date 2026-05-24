@@ -1,0 +1,13 @@
+# 공무원맵 풀텍스트 인덱스
+
+공무원맵은 법령에 의해 의무 공개되는 업무추진비 집행내역을 수집해 식당 단위로 정규화합니다.
+
+주요 엔드포인트:
+
+- `/api/v1/places?bbox=minLat,minLng,maxLat,maxLng`
+- `/api/v1/places/{id}`
+- `/api/v1/places/{id}/visits`
+- `/api/v1/agencies`
+- `/api/v1/stats/summary`
+
+데이터 출처는 공공누리 제1유형 공공저작물입니다. 인용 시 “공무원맵, 출처: 서울특별시 정보소통광장 외”를 표시하세요.

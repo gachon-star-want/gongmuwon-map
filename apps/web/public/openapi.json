@@ -1,0 +1,85 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "공무원맵 API",
+    "version": "1.0.0",
+    "description": "전국 지자체 업무추진비 공개 데이터 기반 식당 정보 API. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외.",
+    "contact": {
+      "email": "wylee0806@naver.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://xn--ob0bo0wl1ax52a.com"
+    }
+  ],
+  "paths": {
+    "/api/v1/places": {
+      "get": {
+        "summary": "식당 목록",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}": {
+      "get": {
+        "summary": "식당 상세",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}/visits": {
+      "get": {
+        "summary": "방문 기록",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/stats/summary": {
+      "get": {
+        "summary": "요약 통계",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}
