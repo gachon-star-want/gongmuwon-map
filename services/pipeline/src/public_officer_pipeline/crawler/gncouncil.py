@@ -15,7 +15,7 @@ from public_officer_pipeline.models import Agency, PostDetail, PostRef
 DEFAULT_LIST_URL = "https://www.gncouncil.go.kr/kr/noticeBBS.do"
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 SUPPORTED_FILE_KINDS = {"pdf", "xls", "xlsx"}
-EXPENSE_KEYWORDS = ("업무추진비", "업추비")
+EXPENSE_KEYWORDS = ("업무추진비", "업추비", "시책추진비")
 DOWNLOAD_HREF_PARTS = (
     "/bbs/download.do",
     "/bbs/download?",
@@ -23,6 +23,7 @@ DOWNLOAD_HREF_PARTS = (
     "bbs_process?reform=download",
     "/Mboard/download.html",
     "/FileDown.do",
+    "/gtb_download.php",
 )
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 

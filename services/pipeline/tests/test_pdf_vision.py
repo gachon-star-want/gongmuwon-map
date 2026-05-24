@@ -176,3 +176,75 @@ def test_rows_from_pdf_text_parses_user_place_purpose_amount_pdf_table_rows() ->
     assert rows[0].user_text == "의장 6명"
     assert rows[1].place_text == "스타벅스 코리아"
     assert rows[2].place_text == "마로니에카페"
+
+
+def test_rows_from_pdf_text_parses_purpose_place_amount_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    2026-01-02 11:39   의정활동 홍보를 위한 언론 관계자 간담회   단정                     3         42,000    카드
+2    2026-01-02 11:40    의안자료 수집 관련 관계자 간담회      하이존에프앤씨                3         52,500    카드
+        """,
+        fallback_department="성동구의회 사무국",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "단정"
+    assert rows[0].purpose == "의정활동 홍보를 위한 언론 관계자 간담회"
+    assert rows[0].amount == 42000
+    assert rows[0].user_text == "성동구의회 사무국 3명"
+    assert rows[1].place_text == "하이존에프앤씨"
+
+
+def test_rows_from_pdf_text_parses_region_amount_place_purpose_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+서울시 성동구    2026-01-02   12:19:13   220,000              부성식당              의정활동 및 업무추진을 위한 각종 회의·간담회·행사   10    카드       의장
+서울시 성동구    2026-01-06   12:46:50    31,000         메밀촌 봉평막국수                 소속 의원·상근직원에 대한 격려 및 지원       2    카드    복지건설위원장
+        """,
+        fallback_department="성동구의회 의장단",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "부성식당"
+    assert rows[0].purpose == "의정활동 및 업무추진을 위한 각종 회의·간담회·행사"
+    assert rows[0].amount == 220000
+    assert rows[0].user_text == "의장 10명"
+    assert rows[1].place_text == "메밀촌 봉평막국수"
+    assert rows[1].user_text == "복지건설위원장 2명"
+
+
+def test_rows_from_pdf_text_parses_optional_user_place_purpose_amount_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1            2026.04.01    12:09:03    원양참치        2026년 상반기 청소년 의회교실 개최 관련 간담회        7     203,000   신용카드   시책
+4    의정팀장    2026.04.02    20:01:41   우뚝１９８４       2026 영등포 여의도 봄꽃축제 상황실 격려방문 관련 간담회   7     243,000   신용카드   시책
+7            2026.04.06    11:44:01   황금순    추어탕   소관 위원회 현안사항 관련 간담회                  4      74,000   신용카드   시책
+        """,
+        fallback_department="영등포구의회 사무국",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].place_text == "원양참치"
+    assert rows[0].purpose == "2026년 상반기 청소년 의회교실 개최 관련 간담회"
+    assert rows[0].amount == 203000
+    assert rows[0].user_text == "영등포구의회 사무국 7명"
+    assert rows[1].place_text == "우뚝１９８４"
+    assert rows[1].purpose == "2026 영등포 여의도 봄꽃축제 상황실 격려방문 관련 간담회"
+    assert rows[2].place_text == "황금순 추어탕"
+
+
+def test_rows_from_pdf_text_parses_user_amount_place_address_purpose_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1     의장     2026.01.05   13:00:30     334,000       화사랑화로구이          선유로9가길 16          지역 현안사항 논의를 위한 간담회 개최         의원 등   12명   카드
+6     의장     2026.01.09   14:58:53      34,700     파리바게뜨유스호스텔         영등포동7가 57          의회 현안사항 논의를 위한 간담회 개최         의원 등   6명    카드
+        """,
+        fallback_department="영등포구의회 의장단",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "화사랑화로구이(선유로9가길 16)"
+    assert rows[0].purpose == "지역 현안사항 논의를 위한 간담회 개최"
+    assert rows[0].amount == 334000
+    assert rows[0].user_text == "의장 12명"
+    assert rows[1].place_text == "파리바게뜨유스호스텔(영등포동7가 57)"

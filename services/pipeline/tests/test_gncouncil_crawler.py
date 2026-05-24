@@ -370,3 +370,84 @@ def test_council_attachment_crawler_extracts_mboard_xls_downloads() -> None:
         "?table=council_business&column=userfile&uid=171"
     )
     assert refs[0].file_kind == "xls"
+
+
+def test_council_attachment_crawler_extracts_seongdong_policy_expense_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="성동구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://sdcouncil.sd.go.kr/kr/data/bbs?bbs_id=expenses",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>90</td>
+            <td><a href="?bbs_id=expenses&amp;reform=view&amp;uid=post">의회사무국 시책추진비 집행내역(2026. 1분기)</a></td>
+            <td>성동구의회</td><td>2026-04-30</td><td>142</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/kr/data/bbs_process?reform=download&amp;bbs_id=expenses&amp;uid=21901"
+           title="업무추진비(2026_1_~3_).pdf 파일 내려받기">
+          업무추진비(2026_1_~3_).pdf
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://sdcouncil.sd.go.kr/kr/data/bbs_process"
+        "?reform=download&bbs_id=expenses&uid=21901"
+    )
+    assert refs[0].file_kind == "pdf"
+
+
+def test_council_attachment_crawler_extracts_yeongdeungpo_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="영등포구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://www.ydpc.go.kr/content/news/bbsCost.html",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>106</td>
+            <td><a href="?fidx=eeeeeBcagc&amp;pg=vv&amp;sid=1000&amp;page=1">2026년 4월 업무추진비 사용내역 공개</a></td>
+            <td>영등포구의회</td><td>2026-05-06</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/gtb_download.php?gtid=work&amp;fid=182739"
+           title="Array 첨부파일을 다운받습니다.">
+          2026년 4월 업무추진비 사용내역.pdf
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.ydpc.go.kr/gtb_download.php?gtid=work&fid=182739"
+    assert refs[0].file_kind == "pdf"

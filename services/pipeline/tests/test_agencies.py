@@ -54,9 +54,11 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
         "마포구의회",
         "서대문구의회",
         "서초구의회",
+        "성동구의회",
         "성북구의회",
         "송파구의회",
         "양천구의회",
+        "영등포구의회",
         "용산구의회",
         "은평구의회",
         "종로구의회",
@@ -70,9 +72,11 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
     mapo = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "마포구의회")
     seodaemun = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "서대문구의회")
     seocho = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "서초구의회")
+    seongdong = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "성동구의회")
     seongbuk = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "성북구의회")
     songpa = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "송파구의회")
     yangcheon = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "양천구의회")
+    yeongdeungpo = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "영등포구의회")
     jongno = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "종로구의회")
     junggu = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "중구의회")
     assert gangdong.source_pattern["followDetail"] is True
@@ -81,8 +85,10 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
     assert mapo.source_pattern["followDetail"] is True
     assert seodaemun.source_pattern["followDetail"] is True
     assert seocho.source_pattern["followDetail"] is True
+    assert seongdong.source_pattern["followDetail"] is True
     assert seongbuk.source_pattern["followDetail"] is True
     assert songpa.source_pattern["followDetail"] is True
     assert yangcheon.source_pattern["followDetail"] is True
+    assert yeongdeungpo.source_pattern["followDetail"] is True
     assert jongno.source_pattern["followDetail"] is True
     assert junggu.source_pattern["followDetail"] is True

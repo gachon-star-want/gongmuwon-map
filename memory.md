@@ -648,3 +648,36 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`6748`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`25/52`).
+
+## 2026-05-25 성동구의회·영등포구의회 PDF 적재 체크포인트
+
+- 발견:
+  - 성동구의회 업무추진비 게시판은 `https://sdcouncil.sd.go.kr/kr/data/bbs?bbs_id=expenses`.
+  - 성동 상세 페이지는 `/kr/data/bbs_process?reform=download...` PDF 첨부 구조이며, 제목에 `시책추진비`만 있는 의회사무국 파일도 실제 업무추진비 PDF를 제공.
+  - 영등포구의회 업무추진비 게시판은 `https://www.ydpc.go.kr/content/news/bbsCost.html`.
+  - 영등포 상세 페이지는 `/gtb_download.php?gtid=work&fid=...` PDF 첨부 구조.
+  - 두 기관 모두 text-based PDF지만 표 순서가 달라 기존 parser가 집행목적을 장소로 오인하거나 0행 처리.
+- 구현:
+  - 성동구의회·영등포구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - `CouncilAttachmentCrawler`에 `/gtb_download.php` 다운로드 링크 지원 추가.
+  - 제목 키워드에 `시책추진비` 추가.
+  - 성동식 `purpose/place/amount`, `region/amount/place/purpose` PDF row parser 추가.
+  - 영등포식 `optional user/place/purpose/amount`, `user/amount/place/address/purpose` PDF row parser 추가.
+- 검증:
+  - 성동구의회 실제 목록 probe: `posts=4`.
+  - 성동 dry-run: `parsed_rows=563`, Kakao match rate `93.38%`.
+  - 영등포구의회 실제 목록 probe: `posts=7`.
+  - 영등포 dry-run: `parsed_rows=306`, Kakao match rate `88.65%`.
+  - 타깃 테스트: `31 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 성동구의회 2026년 1분기 PDF 2개 실제 적재.
+  - `posts_seen=4`, `posts_fetched=2`, `parsed_rows=563`, `loaded_visits=563`, Kakao match rate `93.38%`.
+  - 영등포구의회 2026년 최신 PDF 5개 실제 적재.
+  - `posts_seen=7`, `posts_fetched=5`, `parsed_rows=345`, `loaded_visits=345`, Kakao match rate `75.75%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `27/52`, `agency_stats_visit_sum=7656`, `places_public=3937`, 좌표 있는 `places_public=3367`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`7656`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`27/52`).
+  - 의회 중 노원구의회는 확인한 최신 XLS에 장소/가맹점 컬럼이 없어 식당 지도 데이터로는 보류.
