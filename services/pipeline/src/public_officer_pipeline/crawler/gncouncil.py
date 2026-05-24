@@ -137,7 +137,17 @@ class CouncilAttachmentCrawler:
             anchor = title_cell.css_first("a[href]")
             if not anchor:
                 continue
+            script_title = re.search(r"wdigm_title\('(?P<title>[^']+)'\)", title)
+            if script_title:
+                title = script_title.group("title")
             href = anchor.attributes.get("href", "")
+            onclick = anchor.attributes.get("onclick", "")
+            bbs_view = re.search(r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'", onclick)
+            if bbs_view:
+                href = (
+                    "/site/yangcheon/ex/bbs/View.do"
+                    f"?cbIdx={bbs_view.group('cb_idx')}&bcIdx={bbs_view.group('bc_idx')}"
+                )
             if not href:
                 continue
             refs.append(

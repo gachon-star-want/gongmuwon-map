@@ -530,3 +530,39 @@ def test_attachment_crawler_extracts_egov_direct_downloads_from_list() -> None:
         "?atchmnflNo=351295&bbsNo=655&nttNo=234115&key=1732"
     )
     assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="양천구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397",
+                "followDetail": True,
+            },
+        )
+    )
+
+    details = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>7248</td>
+            <td>
+              <a href="#view" onclick="doBbsFView('397','310210','16010100','310210');return false;">
+                <script>document.write(wdigm_title('2026년 4월 업무추진비 집행내역 공개'));</script>
+              </a>
+            </td>
+            <td>기획예산과</td>
+            <td>2026.05.13</td>
+            <td></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(details) == 1
+    assert details[0].url == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
+    assert details[0].title == "2026년 4월 업무추진비 집행내역 공개"

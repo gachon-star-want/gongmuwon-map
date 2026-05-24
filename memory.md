@@ -733,3 +733,24 @@
 - 주의:
   - 구로구청은 직접 PDF 첨부 추출은 되지만 최신 PDF가 현행 텍스트 파서에서 느린 vision 경로로 빠져 실제 적재 보류.
   - Phase 2 기준은 아직 실패: `place_visits > 10,000` 미달, `>=45/52` 미달.
+
+## 2026-05-25 마포·송파·양천 구청 소스 확장 체크포인트
+
+- 구현:
+  - 마포구청 `https://www.mapo.go.kr/site/main/board/expense/list` 소스 등록.
+  - 송파구청 `https://www.songpa.go.kr/www/selectBbsNttList.do?bbsNo=327&key=2323` 소스 등록.
+  - 양천구청 `https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397` 소스 등록.
+  - 양천구청 `doBbsFView(...)` JavaScript 상세 링크와 `wdigm_title(...)` 제목 파싱 지원 추가.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` -> 58 passed.
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` -> passed.
+  - Neon materialized views refresh 완료.
+  - 직접 DB 확인: `52 agencies`, 방문 데이터가 있는 기관 `34/52`, 총 visits `7,910`.
+  - `raw_excerpt` 잔여 row: `0`.
+- 실제 적재:
+  - 송파구청 1개 source, 21 visits, 18 places 적재.
+  - 마포구청 1개 source, 10 visits, 10 places 적재.
+  - 양천구청은 최신 XLSX dry-run에서 `parsed_rows=0`이라 소스 등록과 상세 링크 파싱만 반영, 실제 적재 보류.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준 미달 (`7,910`).
+  - `>=45/52` 기관 적재 기준 미달 (`34/52`).

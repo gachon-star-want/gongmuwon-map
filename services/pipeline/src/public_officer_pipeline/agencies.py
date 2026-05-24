@@ -143,14 +143,19 @@ SEOUL_OFFICE_ATTACHMENT_BOARDS = {
     "구로구": "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732",
     "금천구": "https://www.geumcheon.go.kr/portal/selectBbsNttList.do?bbsNo=86&key=269",
     "동대문구": "https://www.ddm.go.kr/www/selectBbsNttList.do?bbsNo=160&key=565",
+    "마포구": "https://www.mapo.go.kr/site/main/board/expense/list",
     "서초구": "https://www.seocho.go.kr/site/seocho/ex/bbs/List.do?cbIdx=33",
+    "송파구": "https://www.songpa.go.kr/www/selectBbsNttList.do?bbsNo=327&key=2323",
+    "양천구": "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397",
 }
 
 SEOUL_OFFICE_DETAIL_ATTACHMENT_BOARDS = {
     "강동구",
     "금천구",
     "동대문구",
+    "마포구",
     "서초구",
+    "양천구",
 }
 
 
