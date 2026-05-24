@@ -289,3 +289,22 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`1854`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`8/52`).
+
+## 2026-05-24 동작구의회 PDF 1개 적재 체크포인트
+
+- 검증:
+  - 동작구의회 첫 PDF dry-run:
+    - `parsed_rows=85`
+    - `normalized_visits=85`
+    - `places_seen=66`
+    - Kakao match rate `83.33%`
+- 실제 적재:
+  - 동작구의회 첫 PDF 실제 적재.
+  - `loaded_sources=1`, `loaded_places=66`, `loaded_visits=85`.
+  - 실제 적재 시 Kakao match rate `84.85%`.
+  - 두 번째 PDF는 Gemini JSON 오류로 보류.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `9/52`, `agency_stats_visit_sum=1939`, `places_public=1108`, 좌표 있는 `places_public=1082`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`1939`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`9/52`).
