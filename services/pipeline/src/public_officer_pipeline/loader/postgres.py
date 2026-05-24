@@ -131,6 +131,42 @@ class PostgresLoader:
         return UUID(str(row["id"]))
 
     async def _upsert_place(self, conn: psycopg.AsyncConnection[Any], place: ResolvedPlace) -> UUID:
+        if place.kakao_place_id:
+            row = await self._fetch_one(
+                conn,
+                """
+                INSERT INTO public.places (
+                  kakao_place_id, natural_key, name, road_address, jibun_address,
+                  road_address_part, latitude, longitude, category, phone
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (kakao_place_id) DO UPDATE SET
+                  name = EXCLUDED.name,
+                  road_address = EXCLUDED.road_address,
+                  jibun_address = EXCLUDED.jibun_address,
+                  road_address_part = EXCLUDED.road_address_part,
+                  latitude = EXCLUDED.latitude,
+                  longitude = EXCLUDED.longitude,
+                  category = EXCLUDED.category,
+                  phone = EXCLUDED.phone,
+                  updated_at = now()
+                RETURNING id
+                """,
+                (
+                    place.kakao_place_id,
+                    place.natural_key,
+                    place.name,
+                    place.road_address,
+                    place.jibun_address,
+                    place.road_address_part,
+                    place.latitude,
+                    place.longitude,
+                    place.category,
+                    place.phone,
+                ),
+            )
+            return UUID(str(row["id"]))
+
         row = await self._fetch_one(
             conn,
             """
