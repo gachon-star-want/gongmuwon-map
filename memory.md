@@ -395,3 +395,27 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`2322`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`14/52`).
+
+## 2026-05-24 금천구의회 4열 첨부 테이블 + 텍스트 PDF 적재 체크포인트
+
+- 발견:
+  - 금천구의회 업무추진비 게시판은 `https://council.geumcheon.go.kr/council/kr/costBBS.do`.
+  - 목록 페이지가 4열 구조라 기존 `CouncilAttachmentCrawler`의 6열 테이블 가정으로는 0건 반환.
+  - 금천 PDF는 `Microsoft Print To PDF` 텍스트 기반이라 vision보다 `pdftotext -layout` 파싱이 안정적.
+- 구현:
+  - 금천구의회 `source_pattern.adapter=council_attachment_board` 등록.
+  - `CouncilAttachmentCrawler._parse_list`를 4열 이상 + 마지막 셀 첨부 기준으로 완화.
+  - PDF 처리 앞단에 `pdftotext -layout` 기반 `rows_from_pdf_text`를 추가하고, 텍스트 row가 잡히면 vision 호출 없이 반환.
+  - 금천 4열 테이블/텍스트 PDF parser 테스트 추가.
+- 검증:
+  - 금천구의회 두 번째 PDF dry-run: `parsed_rows=13`, Kakao match rate `92.31%`.
+  - 타깃 테스트: `13 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 금천구의회 최신 페이지 12개 첨부 실제 적재.
+  - `posts_seen=12`, `posts_fetched=12`, `parsed_rows=505`, `loaded_visits=505`, Kakao match rate `69.70%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `15/52`, `agency_stats_visit_sum=2823`, `places_public=1447`, 좌표 있는 `places_public=1363`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`2823`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`15/52`).

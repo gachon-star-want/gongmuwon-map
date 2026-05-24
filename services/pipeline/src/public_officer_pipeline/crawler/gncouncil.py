@@ -78,13 +78,13 @@ class CouncilAttachmentCrawler:
         refs: list[PostRef] = []
         for row in tree.css("tbody tr"):
             cells = row.css("td")
-            if len(cells) < 6:
+            if len(cells) < 4:
                 continue
             title = _normalize_spaces(cells[1].text(separator=" ", strip=True))
             if not _looks_like_expense(title):
                 continue
             published_at = _find_date(cells)
-            for download in cells[5].css("a[href]"):
+            for download in cells[-1].css("a[href]"):
                 filename = _filename_from_download_link(download)
                 href = download.attributes.get("href", "")
                 file_kind = _file_kind(filename)

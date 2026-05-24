@@ -69,6 +69,44 @@ def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute
     assert refs[0].file_kind == "xlsx"
 
 
+def test_council_attachment_crawler_supports_four_column_cost_tables() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="금천구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://council.geumcheon.go.kr/council/kr/costBBS.do",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>74</td>
+            <td><a href="/council/kr/costBBSview.do?uid=post">2026년 4월 의회사무국 업무추진비 사용내역</a></td>
+            <td>2026-05-11</td>
+            <td>
+              <a href="/council/kr/bbs/download.do?bbs_id=cost&amp;uid=file1" title="[붙임1] 4월 업무추진비 사용내역 공개(의회사무국장).pdf">
+                <span class="name">[붙임1] 4월 업무추진비 사용내역 공개(의회사무국장).pdf</span>
+              </a>
+              <a href="/council/kr/bbs/download.do?bbs_id=cost&amp;uid=file2" title="[붙임2] 4월 업무추진비 사용내역 공개(의회사무국).pdf">
+                <span class="name">[붙임2] 4월 업무추진비 사용내역 공개(의회사무국).pdf</span>
+              </a>
+            </td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 2
+    assert refs[0].url == "https://council.geumcheon.go.kr/council/kr/bbs/download.do?bbs_id=cost&uid=file1"
+    assert refs[0].published_at.isoformat() == "2026-05-11"
+    assert refs[0].file_kind == "pdf"
+
+
 def test_council_attachment_crawler_extracts_songpa_detail_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

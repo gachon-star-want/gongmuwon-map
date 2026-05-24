@@ -45,6 +45,7 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
         "강서구의회",
         "관악구의회",
         "구로구의회",
+        "금천구의회",
         "동대문구의회",
         "동작구의회",
         "마포구의회",

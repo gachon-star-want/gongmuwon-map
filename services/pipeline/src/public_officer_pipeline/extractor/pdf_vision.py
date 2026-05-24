@@ -33,6 +33,19 @@ Rules:
 - Do not include raw_excerpt unless explicitly necessary.
 """
 
+PDF_TEXT_ROW_RE = re.compile(
+    r"^\s*\d+\s+"
+    r"(?:(?P<user>[^0-9\n]{1,30}?)\s+)?"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}\.?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<body>.+?)\s*$"
+)
+PDF_TEXT_AMOUNT_RE = re.compile(
+    r"\s(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s*"
+    r"(?P<party_size>\d+)?\s*"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)?\s*$"
+)
+
 
 def extract_pdf_rows_with_vision(
     content: bytes,
@@ -51,6 +64,11 @@ def extract_pdf_rows_with_vision(
         raise PipelineConfigError("ANTHROPIC_API_KEY is required for scanned PDF vision extraction")
     if provider == "gemini" and not gemini_key:
         raise PipelineConfigError("GEMINI_API_KEY is required for scanned PDF vision extraction")
+    text = _pdf_to_text(content)
+    if text:
+        text_rows = rows_from_pdf_text(text, fallback_department=fallback_department)
+        if text_rows or "총 0건" in text:
+            return text_rows
     images = _pdf_to_png_images(content, max_pages=max_pages)
     rows: list[ParsedExpenseRow] = []
     for index, image in enumerate(images, start=1):
@@ -102,6 +120,18 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:
             raise PipelineConfigError("pdftoppm is required for scanned PDF vision extraction") from exc
         return [path.read_bytes() for path in sorted(Path(directory).glob("page-*.png"))]
+
+
+def _pdf_to_text(content: bytes) -> str:
+    with tempfile.TemporaryDirectory() as directory:
+        pdf_path = Path(directory) / "source.pdf"
+        pdf_path.write_bytes(content)
+        command = ["pdftotext", "-layout", str(pdf_path), "-"]
+        try:
+            completed = subprocess.run(command, check=True, capture_output=True)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            return ""
+        return completed.stdout.decode("utf-8", errors="ignore")
 
 
 def _extract_page_with_anthropic(
@@ -231,6 +261,62 @@ def rows_from_vision_payload(payload: dict[str, Any], *, fallback_department: st
         if parsed:
             rows.append(parsed)
     return rows
+
+
+def rows_from_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    rows: list[ParsedExpenseRow] = []
+    for line in text.splitlines():
+        parsed = _parse_pdf_text_line(line, fallback_department=fallback_department)
+        if parsed:
+            rows.append(parsed)
+    return rows
+
+
+def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    body = row_match.group("body")
+    amount_match = PDF_TEXT_AMOUNT_RE.search(body)
+    if not amount_match:
+        return None
+    place_and_purpose = body[: amount_match.start()].rstrip()
+    parts = re.split(r"\s{2,}", place_and_purpose, maxsplit=1)
+    if len(parts) != 2:
+        return None
+    place_text, purpose = (part.strip() for part in parts)
+    if not place_text or not purpose:
+        return None
+    try:
+        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
+        amount = int(str(amount_match.group("amount")).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    party_size = amount_match.group("party_size")
+    user_text_parts = [part for part in (row_match.group("user"), f"{party_size}명" if party_size else None) if part]
+    raw_excerpt = " | ".join(
+        part
+        for part in (
+            row_match.group("date"),
+            row_match.group("time"),
+            place_text,
+            purpose,
+            amount_match.group("amount"),
+            party_size,
+            amount_match.group("payment_method"),
+        )
+        if part
+    )
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=place_text,
+        purpose=purpose,
+        amount=amount,
+        user_text=" ".join(user_text_parts) if user_text_parts else None,
+        payment_method=amount_match.group("payment_method"),
+        raw_excerpt=raw_excerpt,
+    )
 
 
 def _parse_vision_row(item: dict[str, Any], *, fallback_department: str) -> ParsedExpenseRow | None:

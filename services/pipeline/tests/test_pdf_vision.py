@@ -1,4 +1,4 @@
-from public_officer_pipeline.extractor.pdf_vision import rows_from_vision_payload
+from public_officer_pipeline.extractor.pdf_vision import rows_from_pdf_text, rows_from_vision_payload
 from public_officer_pipeline.normalizer.llm import _loads_json_response
 
 
@@ -46,3 +46,19 @@ def test_loads_json_repairs_missing_commas_between_rows() -> None:
     )
 
     assert [row["place_text"] for row in parsed["rows"]] == ["반가안동국시", "삼우정"]
+
+
+def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+ 1              2026.04.01.     12:40        네이버                      의원실 내방객 접대용 간식 구매          22,000         신용카드
+ 2      의정팀장    2026.04.06     20:17:13     김상현참치                 원활한 의회운영을 위하여 관계자 간담회 실시       202,000   6    신용카드
+        """,
+        fallback_department="금천구의회 사무국",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "네이버"
+    assert rows[0].amount == 22000
+    assert rows[1].used_at.isoformat() == "2026-04-06T20:17:13"
+    assert rows[1].user_text == "의정팀장 6명"
