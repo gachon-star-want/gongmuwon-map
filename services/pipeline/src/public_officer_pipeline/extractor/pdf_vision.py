@@ -1,0 +1,247 @@
+from __future__ import annotations
+
+import base64
+import json
+import os
+import re
+import subprocess
+import tempfile
+from json import JSONDecodeError
+from pathlib import Path
+from typing import Any
+
+import httpx
+from dateutil import parser as date_parser
+
+from public_officer_pipeline.models import ParsedExpenseRow, PipelineConfigError
+from public_officer_pipeline.normalizer.llm import _loads_json_response
+
+
+SYSTEM_PROMPT = """Extract Korean public expense table rows from scanned PDF page images.
+
+Return valid JSON only:
+{"rows":[{"department_name":"...","used_at":"YYYY-MM-DDTHH:MM:SS","place_text":"상호명(주소)","purpose":"...","amount":12345,"user_text":"구의원 N명","payment_method":"카드"}]}
+
+Rules:
+- Extract every visible expense row.
+- Use ISO dates. If a date has a 2-digit year like 26.1.5, convert it to 2026-01-05.
+- If a row omits the date, inherit the most recent date above it.
+- Put merchant and address together as "상호명(주소)" when an address is visible.
+- For council chair, vice-chair, committee chair, or negotiation group representative roles, set user_text to "구의원 N명" using target headcount.
+- Do not output personal names.
+- Omit total/subtotal/header/footer rows.
+- Do not include raw_excerpt unless explicitly necessary.
+"""
+
+
+def extract_pdf_rows_with_vision(
+    content: bytes,
+    *,
+    fallback_department: str,
+    source_title: str,
+    max_pages: int = 2,
+    anthropic_api_key: str | None = None,
+    gemini_api_key: str | None = None,
+    model: str | None = None,
+) -> list[ParsedExpenseRow]:
+    api_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
+    gemini_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
+    provider = os.getenv("PDF_VISION_PROVIDER", "gemini" if gemini_key else "anthropic")
+    if provider == "anthropic" and not api_key:
+        raise PipelineConfigError("ANTHROPIC_API_KEY is required for scanned PDF vision extraction")
+    if provider == "gemini" and not gemini_key:
+        raise PipelineConfigError("GEMINI_API_KEY is required for scanned PDF vision extraction")
+    images = _pdf_to_png_images(content, max_pages=max_pages)
+    rows: list[ParsedExpenseRow] = []
+    for index, image in enumerate(images, start=1):
+        if provider == "gemini":
+            rows.extend(
+                _extract_page_with_gemini(
+                    image,
+                    page_number=index,
+                    fallback_department=fallback_department,
+                    source_title=source_title,
+                    api_key=gemini_key or "",
+                    model=model or os.getenv("GEMINI_VISION_MODEL", "gemini-2.5-flash"),
+                )
+            )
+        else:
+            rows.extend(
+                _extract_page_with_anthropic(
+                    image,
+                    page_number=index,
+                    fallback_department=fallback_department,
+                    source_title=source_title,
+                    api_key=api_key or "",
+                    model=model
+                    or os.getenv("ANTHROPIC_VISION_MODEL", os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")),
+                )
+            )
+    return rows
+
+
+def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
+    with tempfile.TemporaryDirectory() as directory:
+        pdf_path = Path(directory) / "source.pdf"
+        output_prefix = Path(directory) / "page"
+        pdf_path.write_bytes(content)
+        command = [
+            "pdftoppm",
+            "-png",
+            "-r",
+            "180",
+            "-f",
+            "1",
+            "-l",
+            str(max_pages),
+            str(pdf_path),
+            str(output_prefix),
+        ]
+        try:
+            subprocess.run(command, check=True, capture_output=True)
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            raise PipelineConfigError("pdftoppm is required for scanned PDF vision extraction") from exc
+        return [path.read_bytes() for path in sorted(Path(directory).glob("page-*.png"))]
+
+
+def _extract_page_with_anthropic(
+    image: bytes,
+    *,
+    page_number: int,
+    fallback_department: str,
+    source_title: str,
+    api_key: str,
+    model: str,
+) -> list[ParsedExpenseRow]:
+    payload = {
+        "source_title": source_title,
+        "page_number": page_number,
+        "fallback_department": fallback_department,
+    }
+    response = httpx.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        json={
+            "model": model,
+            "max_tokens": 8192,
+            "temperature": 0,
+            "system": SYSTEM_PROMPT,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": base64.b64encode(image).decode("ascii"),
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": "Extract this scanned public expense table. Context:\n"
+                            + json.dumps(payload, ensure_ascii=False),
+                        },
+                    ],
+                }
+            ],
+        },
+        timeout=90.0,
+    )
+    response.raise_for_status()
+    body = response.json()
+    text = "".join(block.get("text", "") for block in body.get("content", []) if block.get("type") == "text")
+    try:
+        parsed = _loads_json_response(text)
+    except JSONDecodeError as exc:
+        raise PipelineConfigError(f"Vision extraction returned invalid JSON: {exc}") from exc
+    return rows_from_vision_payload(parsed, fallback_department=fallback_department)
+
+
+def _extract_page_with_gemini(
+    image: bytes,
+    *,
+    page_number: int,
+    fallback_department: str,
+    source_title: str,
+    api_key: str,
+    model: str,
+) -> list[ParsedExpenseRow]:
+    payload = {
+        "source_title": source_title,
+        "page_number": page_number,
+        "fallback_department": fallback_department,
+    }
+    response = httpx.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        params={"key": api_key},
+        json={
+            "contents": [
+                {
+                    "parts": [
+                        {"text": f"{SYSTEM_PROMPT}\n\nContext:\n{json.dumps(payload, ensure_ascii=False)}"},
+                        {
+                            "inline_data": {
+                                "mime_type": "image/png",
+                                "data": base64.b64encode(image).decode("ascii"),
+                            }
+                        },
+                    ]
+                }
+            ],
+            "generationConfig": {"temperature": 0, "maxOutputTokens": 16384},
+        },
+        timeout=90.0,
+    )
+    response.raise_for_status()
+    body = response.json()
+    parts = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+    text = "".join(part.get("text", "") for part in parts)
+    try:
+        parsed = _loads_json_response(text)
+    except JSONDecodeError as exc:
+        raise PipelineConfigError(f"Vision extraction returned invalid JSON: {exc}") from exc
+    return rows_from_vision_payload(parsed, fallback_department=fallback_department)
+
+
+def rows_from_vision_payload(payload: dict[str, Any], *, fallback_department: str) -> list[ParsedExpenseRow]:
+    rows: list[ParsedExpenseRow] = []
+    for item in payload.get("rows", []):
+        parsed = _parse_vision_row(item, fallback_department=fallback_department)
+        if parsed:
+            rows.append(parsed)
+    return rows
+
+
+def _parse_vision_row(item: dict[str, Any], *, fallback_department: str) -> ParsedExpenseRow | None:
+    if not item.get("used_at") or not item.get("place_text") or not item.get("amount"):
+        return None
+    try:
+        used_at = date_parser.parse(str(item["used_at"]), fuzzy=True)
+        amount = int(re.sub(r"[^\d]", "", str(item["amount"])))
+    except (TypeError, ValueError):
+        return None
+    if amount <= 0:
+        return None
+
+    raw_excerpt = item.get("raw_excerpt") or " | ".join(
+        str(item.get(key) or "")
+        for key in ("used_at", "place_text", "purpose", "amount", "payment_method")
+        if item.get(key)
+    )
+    return ParsedExpenseRow(
+        department_name=str(item.get("department_name") or fallback_department).strip(),
+        used_at=used_at.replace(tzinfo=None),
+        place_text=str(item["place_text"]).strip(),
+        purpose=str(item["purpose"]).strip() if item.get("purpose") else None,
+        amount=amount,
+        user_text=str(item["user_text"]).strip() if item.get("user_text") else None,
+        payment_method=str(item["payment_method"]).strip() if item.get("payment_method") else None,
+        expense_category=str(item["expense_category"]).strip() if item.get("expense_category") else None,
+        raw_excerpt=raw_excerpt,
+    )

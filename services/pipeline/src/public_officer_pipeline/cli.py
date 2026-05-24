@@ -10,9 +10,9 @@ from collections.abc import Callable
 from typing import Protocol
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
-from public_officer_pipeline.crawler import GangnamExpenseCrawler, SeoulOpenGovCrawler
+from public_officer_pipeline.crawler import GangnamCouncilCrawler, GangnamExpenseCrawler, SeoulOpenGovCrawler
 from public_officer_pipeline.entity import KakaoResolver
-from public_officer_pipeline.extractor import extract_expense_rows, extract_spreadsheet_rows
+from public_officer_pipeline.extractor import extract_expense_rows, extract_pdf_rows_with_vision, extract_spreadsheet_rows
 from public_officer_pipeline.loader import PostgresLoader
 from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
 from public_officer_pipeline.models import (
@@ -173,6 +173,8 @@ async def _run_supported_agency(args: argparse.Namespace, agency: Agency) -> int
         return await _run_opengov_agency(args, agency)
     if adapter == "gangnam_xlsx_board":
         return await _run_crawler(args, agency, GangnamExpenseCrawler(agency=agency), _extract_detail_rows)
+    if adapter == "gncouncil_pdf_board":
+        return await _run_crawler(args, agency, GangnamCouncilCrawler(agency=agency), _extract_detail_rows)
     print(
         json.dumps(
             {
@@ -267,6 +269,12 @@ def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
         return extract_spreadsheet_rows(
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
+        )
+    if detail.file_kind == "pdf" and detail.content_bytes:
+        return extract_pdf_rows_with_vision(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+            source_title=detail.title,
         )
     return []
 

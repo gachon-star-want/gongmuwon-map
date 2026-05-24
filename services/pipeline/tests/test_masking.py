@@ -23,3 +23,11 @@ def test_staff_group_is_department_only() -> None:
     assert result["representative"] is None
     assert result["rank_label"] == "5급 이하"
     assert result["department_name"] == "총무과 외"
+
+
+def test_elected_rank_without_name_keeps_rank_only() -> None:
+    result = mask_user_text("구의원 12명", fallback_department="구의회사무국")
+
+    assert result["representative"] is None
+    assert result["rank_label"] == "구의원"
+    assert result["party_size"] == 12

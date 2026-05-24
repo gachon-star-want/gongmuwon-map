@@ -13,6 +13,7 @@ from public_officer_pipeline.models import PipelineConfigError, PlaceRaw, Resolv
 
 
 KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
+KAKAO_ADDRESS_URL = "https://dapi.kakao.com/v2/local/search/address.json"
 SEOUL_REGION_RE = re.compile(r"(서울(?:특별시)?|서울)\s+([가-힣]+구)")
 
 
@@ -45,10 +46,13 @@ class KakaoResolver:
 
         async with httpx.AsyncClient(timeout=20.0) as client:
             documents = await self._search_kakao(client, place)
-        if not documents:
-            resolved = self._fallback(place)
-        else:
+            address_documents = [] if documents else await self._search_address(client, place)
+        if documents:
             resolved = self._from_kakao(place, self._best_document(documents))
+        elif address_documents:
+            resolved = self._from_kakao_address(place, address_documents[0])
+        else:
+            resolved = self._fallback(place)
         self._cache_set(cache_key, resolved.model_dump_json())
         return resolved
 
@@ -64,6 +68,17 @@ class KakaoResolver:
             if documents:
                 return documents
         return []
+
+    async def _search_address(self, client: httpx.AsyncClient, place: PlaceRaw) -> list[dict[str, Any]]:
+        if not place.address_hint:
+            return []
+        response = await client.get(
+            KAKAO_ADDRESS_URL,
+            params={"query": place.address_hint, "size": 1},
+            headers={"Authorization": f"KakaoAK {self.kakao_rest_key}"},
+        )
+        response.raise_for_status()
+        return response.json().get("documents", [])
 
     def _best_document(self, documents: list[dict[str, Any]]) -> dict[str, Any]:
         food = [doc for doc in documents if doc.get("category_group_code") == "FD6"]
@@ -85,6 +100,29 @@ class KakaoResolver:
             category=document.get("category_name") or None,
             phone=document.get("phone") or None,
             matched=True,
+            raw=document,
+        )
+
+    def _from_kakao_address(self, place: PlaceRaw, document: dict[str, Any]) -> ResolvedPlace:
+        road_address_doc = document.get("road_address") or {}
+        address_doc = document.get("address") or {}
+        road_address = document.get("road_address_name") or road_address_doc.get("address_name") or None
+        jibun_address = document.get("address_name") or address_doc.get("address_name") or None
+        address = road_address or jibun_address or place.address_hint
+        latitude = document.get("y") or road_address_doc.get("y") or address_doc.get("y")
+        longitude = document.get("x") or road_address_doc.get("x") or address_doc.get("x")
+        return ResolvedPlace(
+            kakao_place_id=None,
+            natural_key=natural_key(place.name, address),
+            name=place.name,
+            road_address=road_address,
+            jibun_address=jibun_address,
+            road_address_part=road_address_part(address),
+            latitude=float(latitude) if latitude else None,
+            longitude=float(longitude) if longitude else None,
+            category=None,
+            phone=None,
+            matched=False,
             raw=document,
         )
 

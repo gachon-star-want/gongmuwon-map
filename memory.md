@@ -159,3 +159,35 @@
 - 검증:
   - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 14 passed
   - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+
+## 2026-05-24 강남구의회 PDF vision 어댑터 체크포인트
+
+- 구현:
+  - `GangnamCouncilCrawler` 추가: `https://www.gncouncil.go.kr/kr/noticeBBS.do` 공지 목록에서 업무추진비 PDF 첨부 추출.
+  - `extract_pdf_rows_with_vision` 추가: `pdftoppm`으로 PDF를 PNG로 변환 후 Gemini vision 우선, Anthropic fallback.
+  - Gemini 응답 JSON fence 파싱을 위해 `_loads_json_response`의 중첩 JSON 처리 수정.
+  - council role 텍스트(`구의원 N명`)가 representative 없이 rank만 남도록 마스킹 룰 보강.
+  - Kakao keyword match 실패 시 address search로 좌표를 보강하도록 resolver 확장.
+  - 강남구의회 `source_pattern.adapter=gncouncil_pdf_board` 반영 후 Neon `seed-agencies` 재실행.
+- 품질 확인:
+  - Anthropic/Haiku 및 Sonnet의 한 페이지 전체 OCR은 상호명 오인식이 많아 실제 적재에 부적합.
+  - Gemini 2.5 Flash compact schema로 전환 후 dry-run 성공:
+    - `posts_seen=16`
+    - `posts_fetched=1`
+    - `parsed_rows=62`
+    - `normalized_visits=62`
+    - `places_seen=45`
+    - `kakao_matched_places=32`
+    - Kakao match rate `71.11%`
+- 실제 적재:
+  - 강남구의회 최신 업무추진비 PDF 1개 실제 적재.
+  - `posts_seen=16`, `posts_fetched=1`, `parsed_rows=62`, `loaded_sources=1`, `loaded_places=42`, `loaded_visits=62`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `place_visits=257`, `places_public=203`, 좌표 있는 `places_public=186`, 방문 데이터가 있는 기관 `4/52`.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 19 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - `npm run build` → passed
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`257`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`4/52`).

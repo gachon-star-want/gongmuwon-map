@@ -67,7 +67,13 @@ def mask_user_text(user_text: str, fallback_department: str) -> dict[str, str | 
         representative = elected.group(1)
         rank_label = elected.group(2)
     else:
+        for rank in ELECTED_RANKS:
+            if rank in value:
+                rank_label = rank
+                break
         for rank in APPOINTED_RANKS:
+            if rank_label:
+                break
             if rank in value:
                 rank_label = rank
                 break

@@ -159,7 +159,7 @@ def _loads_json_response(text: str) -> dict:
     if not stripped:
         raise JSONDecodeError("empty response", text, 0)
 
-    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, flags=re.DOTALL)
+    fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", stripped, flags=re.DOTALL)
     if fenced:
         stripped = fenced.group(1)
     else:

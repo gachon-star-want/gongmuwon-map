@@ -152,11 +152,19 @@ def seoul_agencies() -> list[Agency]:
                 parent_region="서울특별시",
                 sub_region=gu,
                 homepage=SEOUL_COUNCIL_HOMEPAGES[gu],
-                source_pattern={
-                    "adapter": "district_council_board_required",
-                    "searchKeyword": f"{gu}의회 업무추진비",
-                    "status": "adapter_required",
-                },
+                source_pattern=(
+                    {
+                        "adapter": "gncouncil_pdf_board",
+                        "listUrl": "https://www.gncouncil.go.kr/kr/noticeBBS.do",
+                        "fileKinds": ["pdf"],
+                    }
+                    if gu == "강남구"
+                    else {
+                        "adapter": "district_council_board_required",
+                        "searchKeyword": f"{gu}의회 업무추진비",
+                        "status": "adapter_required",
+                    }
+                ),
             )
         )
 
