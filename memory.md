@@ -14,7 +14,7 @@
   - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 7 passed
   - `npm run build` → passed
   - API TypeScript compile → passed
-  - MD `<<TBD` grep → 0건
+  - MD 운영자 미확정 토큰 grep → 0건
 - GitHub 백업:
   - `4ef4fc2` — Neon/Vercel API Routes 전환
   - `a08a97f` — Kakao placeId 중복 upsert 수정
@@ -61,3 +61,18 @@
   - `/api/v1/places?...limit=3` → data returned
 - 발견/수정:
   - `/sitemap.xml` HEAD가 405였음. `methodGuard`에서 `HEAD`를 GET 허용 핸들러로 통과시키도록 수정.
+
+## 2026-05-24 Phase 2 렌더링 QA 체크포인트
+
+- Production 렌더링 QA:
+  - `https://xn--ob0bo0wl1ax52a.com` 데이터 fetch 정상.
+  - `/api/v1/places?bbox=...&limit=500` → 200.
+  - `/api/v1/places/{id}/visits?limit=50` → 200.
+  - 콘솔 에러 없음.
+- 발견/수정:
+  - Kakao JS SDK 요청이 headless QA에서 pending 상태로 남으면 중앙 지도 영역이 빈 화면으로 보였음.
+  - SDK 준비 전 또는 실패/타임아웃 시 좌표 기반 fallback map을 렌더하도록 `MapCanvas`와 `loadKakao`를 수정.
+- 재검증:
+  - `npm run build` → passed
+  - API TypeScript compile → passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 7 passed

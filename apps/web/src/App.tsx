@@ -421,9 +421,13 @@ function MapCanvas({
   useEffect(() => {
     if (!KAKAO_JS_KEY) return;
     let cancelled = false;
-    loadKakao(KAKAO_JS_KEY).then(() => {
-      if (!cancelled) setKakaoReady(true);
-    });
+    loadKakao(KAKAO_JS_KEY)
+      .then(() => {
+        if (!cancelled) setKakaoReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setKakaoReady(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -463,7 +467,7 @@ function MapCanvas({
     return () => mapRef.current?.removeEventListener('click', listener);
   }, [kakaoReady, onSelect, places, selectedPlace]);
 
-  if (KAKAO_JS_KEY) {
+  if (KAKAO_JS_KEY && kakaoReady) {
     return <div className="kakao-map" ref={mapRef} />;
   }
 
@@ -530,17 +534,45 @@ function loadKakao(appKey: string) {
     return Promise.resolve();
   }
   return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('kakao map timeout'));
+    }, 2500);
+    const done = () => {
+      if (settled) return;
+      try {
+        window.kakao.maps.load(() => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          resolve();
+        });
+      } catch {
+        settled = true;
+        window.clearTimeout(timeout);
+        reject(new Error('kakao map failed'));
+      }
+    };
+    const failed = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      reject(new Error('kakao map failed'));
+    };
     const existing = document.querySelector<HTMLScriptElement>('script[data-kakao-map]');
     if (existing) {
-      existing.addEventListener('load', () => window.kakao.maps.load(resolve));
+      existing.addEventListener('load', done);
+      existing.addEventListener('error', failed);
       return;
     }
     const script = document.createElement('script');
     script.dataset.kakaoMap = 'true';
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=clusterer&autoload=false`;
     script.async = true;
-    script.onload = () => window.kakao.maps.load(resolve);
-    script.onerror = () => reject(new Error('kakao map failed'));
+    script.onload = done;
+    script.onerror = failed;
     document.head.appendChild(script);
   });
 }
