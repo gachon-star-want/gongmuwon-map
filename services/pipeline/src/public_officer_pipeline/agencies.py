@@ -115,6 +115,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "양천구": "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business",
     "용산구": "https://www.yscl.go.kr/kr/councilcostBBS.do",
     "은평구": "https://council.ep.go.kr/kr/costBBS.do",
+    "중구": "https://council.junggu.seoul.kr/kr/bbs?bbs_id=cost",
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
 }
 
@@ -128,6 +129,7 @@ SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {
     "성북구",
     "송파구",
     "양천구",
+    "중구",
 }
 
 

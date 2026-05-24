@@ -249,6 +249,45 @@ def test_council_attachment_crawler_extracts_bbs_process_detail_downloads() -> N
     assert refs[0].file_kind == "pdf"
 
 
+def test_council_attachment_crawler_extracts_extensionless_bbs_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="중구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://council.junggu.seoul.kr/kr/bbs?bbs_id=cost",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>40</td>
+            <td><a href="/kr/bbs?reform=view&amp;uid=post&amp;bbs_id=cost">2026년 4월 의회운영업무추진비 사용내역</a></td>
+            <td>서울중구의회</td><td>2026-05-08</td><td>10</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/kr/bbs/download?bbs_id=cost&amp;uid=file"
+           title="2026년_4월_의장단_업무추진비_사용내역.pdf 파일 내려받기">
+           2026년_4월_의장단_업무추진비_사용내역.pdf
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://council.junggu.seoul.kr/kr/bbs/download?bbs_id=cost&uid=file"
+    assert refs[0].file_kind == "pdf"
+
+
 def test_council_attachment_crawler_extracts_mboard_xls_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

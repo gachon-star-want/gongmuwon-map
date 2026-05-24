@@ -18,6 +18,7 @@ SUPPORTED_FILE_KINDS = {"pdf", "xls", "xlsx"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비")
 DOWNLOAD_HREF_PARTS = (
     "/bbs/download.do",
+    "/bbs/download?",
     "/bbsAttachDownload.do",
     "bbs_process?reform=download",
     "/Mboard/download.html",

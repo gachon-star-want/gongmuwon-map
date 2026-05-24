@@ -596,3 +596,28 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`5981`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`23/52`).
+
+## 2026-05-24 중구의회 extensionless download PDF 적재 체크포인트
+
+- 발견:
+  - 중구의회 업무추진비 게시판은 `https://council.junggu.seoul.kr/kr/bbs?bbs_id=cost`.
+  - 목록 → 상세 → `/kr/bbs/download?...` PDF 다운로드 구조이며, 확장자 없는 download path라 기존 `/bbs/download.do` 패턴으로는 미감지.
+  - PDF 텍스트 표는 `승인일 → 승인시각 → 사용자 → 금액 → 장소 → 집행목적 → 대상인원수 → 결제방법 → 비목` 순서라 양천식 parser가 장소를 사용자로 오인.
+- 구현:
+  - `CouncilAttachmentCrawler`에 `/bbs/download?` 다운로드 링크 지원 추가.
+  - 중구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - 중구식 `date/user/amount/place` PDF row parser 추가.
+- 검증:
+  - 중구의회 실제 목록 probe: `posts=5`.
+  - 최신 PDF 단위 추출: `rows=91`.
+  - dry-run: `parsed_rows=91`, Kakao match rate `90.48%`.
+  - 타깃 테스트: `23 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 중구의회 최신 페이지 5개 PDF 실제 적재.
+  - `posts_seen=5`, `posts_fetched=5`, `parsed_rows=406`, `loaded_visits=406`, Kakao match rate `90.74%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `24/52`, `agency_stats_visit_sum=6387`, `places_public=3255`, 좌표 있는 `places_public=2791`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`6387`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`24/52`).

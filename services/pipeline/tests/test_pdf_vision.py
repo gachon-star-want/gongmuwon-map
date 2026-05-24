@@ -140,3 +140,20 @@ def test_rows_from_pdf_text_parses_user_amount_purpose_pdf_table_rows() -> None:
     assert rows[1].place_text == "가까운온누리약국"
     assert rows[1].user_text == "의정팀"
     assert rows[1].expense_category == "부서운영"
+
+
+def test_rows_from_pdf_text_parses_date_user_amount_place_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    2026.04.01   11:57:10   의장    218,000       김삼보        의정활동 및 직무활동을 위한 경비     17      카드     의회운영업무추진비
+10   2026.04.10   19:35:52   의장    148,800   소주물 신당．중앙시     의정활동 및 직무활동을 위한 경비     5       카드     의회운영업무추진비
+        """,
+        fallback_department="중구의회 의장단",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "김삼보"
+    assert rows[0].purpose == "의정활동 및 직무활동을 위한 경비"
+    assert rows[0].amount == 218000
+    assert rows[0].user_text == "의장 17명"
+    assert rows[1].place_text == "소주물 신당．중앙시"
