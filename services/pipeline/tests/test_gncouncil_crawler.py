@@ -247,3 +247,44 @@ def test_council_attachment_crawler_extracts_bbs_process_detail_downloads() -> N
     assert refs[0].url == "https://www.ycc.go.kr/kr/news/bbs_process?reform=download&bbs_id=business&uid=2"
     assert refs[0].department_name == "양천구의회 사무국"
     assert refs[0].file_kind == "pdf"
+
+
+def test_council_attachment_crawler_extracts_mboard_xls_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="서대문구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://www.sdmcouncil.go.kr/source/korean/partake/business.html",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>168</td>
+            <td><a href="?mode=view&amp;page=1&amp;number=171">2026년 3월 의장단 업무추진비 집행내역</a></td>
+            <td>서대문구의회</td><td>2026.04.10.</td><td>57</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/Mboard/download.html?table=council_business&amp;column=userfile&amp;uid=171">
+          의장단업무추진비집행내역(202603).xls
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.sdmcouncil.go.kr/Mboard/download.html"
+        "?table=council_business&column=userfile&uid=171"
+    )
+    assert refs[0].file_kind == "xls"

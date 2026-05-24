@@ -108,6 +108,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "동작구": "https://assembly.dongjak.go.kr/kr/costBBS.do",
     "도봉구": "https://www.council-dobong.seoul.kr/kr/activity/bbsCost.do",
     "마포구": "https://council.mapo.seoul.kr/kr/news/bbsCost.do",
+    "서대문구": "https://www.sdmcouncil.go.kr/source/korean/partake/business.html",
     "서초구": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
     "성북구": "https://www.sbc.go.kr/kr/news/bbsCost.do",
     "송파구": "https://council.songpa.go.kr/kr/news/bbsCost.do",
@@ -122,6 +123,7 @@ SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {
     "광진구",
     "도봉구",
     "마포구",
+    "서대문구",
     "서초구",
     "성북구",
     "송파구",
@@ -189,7 +191,7 @@ def seoul_agencies() -> list[Agency]:
                     {
                         "adapter": "council_attachment_board",
                         "listUrl": SEOUL_COUNCIL_ATTACHMENT_BOARDS[gu],
-                        "fileKinds": ["pdf", "xlsx"],
+                        "fileKinds": ["pdf", "xls", "xlsx"],
                         "followDetail": gu in SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS,
                     }
                     if gu in SEOUL_COUNCIL_ATTACHMENT_BOARDS

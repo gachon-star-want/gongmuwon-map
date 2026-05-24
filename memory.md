@@ -567,3 +567,32 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`5746`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`22/52`).
+
+## 2026-05-24 서대문구의회 CP949 XLS 적재 체크포인트
+
+- 발견:
+  - 서대문구의회 업무추진비 게시판은 `https://www.sdmcouncil.go.kr/source/korean/partake/business.html`.
+  - HTML 응답은 CP949/EUC-KR 계열이라 기본 decode 시 한글이 깨져 목록 title keyword matching이 실패.
+  - 상세 페이지에서 `/Mboard/download.html?...` `.xls` 파일을 제공하며, 기존 `openpyxl`은 OLE XLS를 읽지 못함.
+  - DB `sources.file_kind` check constraint가 `xls`를 허용하지 않아 첫 실제 적재가 실패.
+- 구현:
+  - `CouncilAttachmentCrawler`에 CP949 fallback decode 추가.
+  - `/Mboard/download.html` 다운로드 링크 및 `xls` file kind 지원 추가.
+  - `xlrd` 의존성 추가 후 OLE `.xls` reader 구현.
+  - 서대문 XLS 헤더(`집행일`, `집행인원`, `집행액(천원)`)와 중복 `집행유형` 목적/결제방법 disambiguation 보강.
+  - `sources.file_kind`에 `xls`를 허용하는 migration 추가 및 Neon 적용.
+  - 서대문구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+- 검증:
+  - 서대문구의회 실제 목록 probe: `posts=7`.
+  - 최신 XLS 단위 추출: `rows=78`.
+  - dry-run: `parsed_rows=78`, Kakao match rate `95.24%`.
+  - 타깃 테스트: `19 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 서대문구의회 최신 페이지 7개 XLS 실제 적재.
+  - `posts_seen=7`, `posts_fetched=7`, `parsed_rows=235`, `loaded_visits=235`, Kakao match rate `96.43%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `23/52`, `agency_stats_visit_sum=5981`, `places_public=3064`, 좌표 있는 `places_public=2620`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`5981`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`23/52`).

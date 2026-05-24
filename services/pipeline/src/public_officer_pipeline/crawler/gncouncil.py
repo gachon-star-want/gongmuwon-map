@@ -14,9 +14,14 @@ from public_officer_pipeline.models import Agency, PostDetail, PostRef
 
 DEFAULT_LIST_URL = "https://www.gncouncil.go.kr/kr/noticeBBS.do"
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
-SUPPORTED_FILE_KINDS = {"pdf", "xlsx"}
+SUPPORTED_FILE_KINDS = {"pdf", "xls", "xlsx"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비")
-DOWNLOAD_HREF_PARTS = ("/bbs/download.do", "/bbsAttachDownload.do", "bbs_process?reform=download")
+DOWNLOAD_HREF_PARTS = (
+    "/bbs/download.do",
+    "/bbsAttachDownload.do",
+    "bbs_process?reform=download",
+    "/Mboard/download.html",
+)
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
 
@@ -47,17 +52,17 @@ class CouncilAttachmentCrawler:
         for page in range(1, limit_pages + 1):
             response = await self._client.get(_url_with_page(self.list_url, page))
             response.raise_for_status()
-            for ref in self._parse_list(response.text):
+            for ref in self._parse_list(_response_text(response)):
                 if ref.published_at and ref.published_at < since:
                     continue
                 refs[ref.url] = ref
             if self.follow_detail:
-                for detail in self._parse_detail_links(response.text):
+                for detail in self._parse_detail_links(_response_text(response)):
                     if detail.published_at and detail.published_at < since:
                         continue
                     detail_response = await self._client.get(detail.url)
                     detail_response.raise_for_status()
-                    for ref in self._parse_detail_downloads(detail_response.text, detail):
+                    for ref in self._parse_detail_downloads(_response_text(detail_response), detail):
                         refs[ref.url] = ref
         return list(refs.values())
 
@@ -247,6 +252,14 @@ def _url_with_page(url: str, page: int) -> str:
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query["page"] = str(page)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _response_text(response: httpx.Response) -> str:
+    text = response.text
+    if "�" not in text:
+        return text
+    decoded = response.content.decode("cp949", errors="replace")
+    return decoded if decoded.count("�") < text.count("�") else text
 
 
 def _normalize_spaces(value: str) -> str:

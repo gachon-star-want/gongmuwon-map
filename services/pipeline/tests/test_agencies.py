@@ -52,6 +52,7 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
         "동작구의회",
         "도봉구의회",
         "마포구의회",
+        "서대문구의회",
         "서초구의회",
         "성북구의회",
         "송파구의회",
@@ -65,6 +66,7 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
     gwangjin = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "광진구의회")
     dobong = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "도봉구의회")
     mapo = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "마포구의회")
+    seodaemun = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "서대문구의회")
     seocho = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "서초구의회")
     seongbuk = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "성북구의회")
     songpa = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "송파구의회")
@@ -73,6 +75,7 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
     assert gwangjin.source_pattern["followDetail"] is True
     assert dobong.source_pattern["followDetail"] is True
     assert mapo.source_pattern["followDetail"] is True
+    assert seodaemun.source_pattern["followDetail"] is True
     assert seocho.source_pattern["followDetail"] is True
     assert seongbuk.source_pattern["followDetail"] is True
     assert songpa.source_pattern["followDetail"] is True

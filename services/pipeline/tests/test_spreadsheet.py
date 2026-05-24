@@ -182,3 +182,38 @@ def test_extracts_council_cost_xlsx_short_merchant_and_party_headers() -> None:
     assert rows[0].place_text == "은행골 (서울 도봉구 도봉동 635번지)"
     assert rows[0].amount == 180000
     assert rows[0].user_text == "의장 9명"
+
+
+def test_extracts_council_cost_xlsx_duplicate_execution_type_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의장"
+    worksheet.append(["의장 업무추진비 집행내역"])
+    worksheet.append([])
+    worksheet.append(["구분", "사용자", "집행일", "집행유형", "집행구분", "집행대상", "집행인원", "집행액(천원)", "장소", "시간", "집행유형"])
+    worksheet.append(
+        [
+            "의회운영",
+            "의장",
+            "2026-03-03",
+            "업무추진을 위한 각종 회의·간담회·행사·교육",
+            "식사",
+            "의장, 의원",
+            4,
+            54000,
+            "속초명가",
+            "13:28",
+            "카드",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="서대문구의회")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "속초명가"
+    assert rows[0].purpose == "업무추진을 위한 각종 회의·간담회·행사·교육"
+    assert rows[0].amount == 54000
+    assert rows[0].payment_method == "카드"
+    assert rows[0].expense_category == "의회운영"

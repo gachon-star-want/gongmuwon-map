@@ -10,6 +10,7 @@ dependencies = [
   "pydantic>=2.12.4",
   "python-dateutil>=2.9.0.post0",
   "selectolax>=0.4.4",
+  "xlrd>=2.0.1",
 ]
 
 [dependency-groups]

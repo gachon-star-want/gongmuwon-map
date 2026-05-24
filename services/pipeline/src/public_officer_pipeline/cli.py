@@ -268,7 +268,7 @@ async def _run_crawler(
 def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
     if detail.file_kind == "html":
         return extract_expense_rows(detail.html)
-    if detail.file_kind == "xlsx" and detail.content_bytes:
+    if detail.file_kind in {"xls", "xlsx"} and detail.content_bytes:
         return extract_spreadsheet_rows(
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
