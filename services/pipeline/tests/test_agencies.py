@@ -22,3 +22,11 @@ def test_seoul_agency_unique_identity_keys() -> None:
     keys = {(agency.kind, agency.parent_region, agency.sub_region) for agency in SEOUL_AGENCIES}
 
     assert len(keys) == len(SEOUL_AGENCIES)
+
+
+def test_seoul_council_homepages_use_verified_domains() -> None:
+    gangnam_council = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "강남구의회")
+    gangseo_council = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "강서구의회")
+
+    assert gangnam_council.homepage == "https://www.gncouncil.go.kr"
+    assert gangseo_council.homepage == "https://gsc.gangseo.seoul.kr"

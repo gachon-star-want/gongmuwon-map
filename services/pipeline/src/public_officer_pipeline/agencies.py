@@ -67,6 +67,34 @@ SEOUL_GU_DOMAIN_SLUGS = {
     "중랑구": "jn",
 }
 
+SEOUL_COUNCIL_HOMEPAGES = {
+    "강남구": "https://www.gncouncil.go.kr",
+    "강동구": "https://council.gangdong.go.kr",
+    "강북구": "https://council.gangbuk.go.kr",
+    "강서구": "https://gsc.gangseo.seoul.kr",
+    "관악구": "https://www.ga21c.seoul.kr",
+    "광진구": "https://council.gwangjin.go.kr",
+    "구로구": "https://www.guroc.go.kr",
+    "금천구": "https://council.geumcheon.go.kr",
+    "노원구": "https://council.nowon.kr",
+    "도봉구": "https://www.council-dobong.seoul.kr",
+    "동대문구": "https://council.ddm.go.kr",
+    "동작구": "https://assembly.dongjak.go.kr",
+    "마포구": "https://council.mapo.seoul.kr",
+    "서대문구": "https://www.sdmcouncil.go.kr",
+    "서초구": "https://www.sdc.seoul.kr",
+    "성동구": "https://sdcouncil.sd.go.kr",
+    "성북구": "https://www.sbc.go.kr",
+    "송파구": "https://council.songpa.go.kr",
+    "양천구": "https://www.ycc.go.kr",
+    "영등포구": "https://www.ydpc.go.kr",
+    "용산구": "https://www.yscl.go.kr",
+    "은평구": "https://council.ep.go.kr",
+    "종로구": "https://council.jongno.go.kr",
+    "중구": "https://council.junggu.seoul.kr",
+    "중랑구": "https://council.jungnang.go.kr",
+}
+
 
 def agency_uuid(key: str) -> UUID:
     return uuid5(AGENCY_NAMESPACE, key)
@@ -123,7 +151,7 @@ def seoul_agencies() -> list[Agency]:
                 kind=AgencyKind.GU_COUNCIL,
                 parent_region="서울특별시",
                 sub_region=gu,
-                homepage=f"https://council.{domain_slug}.go.kr",
+                homepage=SEOUL_COUNCIL_HOMEPAGES[gu],
                 source_pattern={
                     "adapter": "district_council_board_required",
                     "searchKeyword": f"{gu}의회 업무추진비",

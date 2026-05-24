@@ -147,3 +147,15 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`195`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`3/52`).
+
+## 2026-05-24 구의회 홈페이지 정정 체크포인트
+
+- 발견:
+  - 강남구의회 공식 사이트의 서울 시·구 의회 링크 목록에서 25개 구의회 공식 도메인을 확인.
+  - 기존 `council.{domain_slug}.go.kr` 추정값은 강남구의회, 강서구의회 등에서 틀림.
+- 반영:
+  - `SEOUL_COUNCIL_HOMEPAGES` 공식 도메인 매핑 추가.
+  - Neon `seed-agencies` 재실행으로 기관 마스터 URL 갱신 완료.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 14 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
