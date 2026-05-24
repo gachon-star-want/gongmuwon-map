@@ -10,7 +10,12 @@ from collections.abc import Callable
 from typing import Protocol
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
-from public_officer_pipeline.crawler import CouncilAttachmentCrawler, GangnamExpenseCrawler, SeoulOpenGovCrawler
+from public_officer_pipeline.crawler import (
+    CouncilAttachmentCrawler,
+    EstimateListCrawler,
+    GangnamExpenseCrawler,
+    SeoulOpenGovCrawler,
+)
 from public_officer_pipeline.entity import KakaoResolver
 from public_officer_pipeline.extractor import extract_expense_rows, extract_pdf_rows_with_vision, extract_spreadsheet_rows
 from public_officer_pipeline.loader import PostgresLoader
@@ -176,6 +181,8 @@ async def _run_supported_agency(args: argparse.Namespace, agency: Agency) -> int
         return await _run_opengov_agency(args, agency)
     if adapter == "gangnam_xlsx_board":
         return await _run_crawler(args, agency, GangnamExpenseCrawler(agency=agency), _extract_detail_rows)
+    if adapter == "estimate_list_html":
+        return await _run_crawler(args, agency, EstimateListCrawler(agency=agency), _extract_detail_rows)
     if adapter in {"gncouncil_pdf_board", "council_attachment_board"}:
         return await _run_crawler(args, agency, CouncilAttachmentCrawler(agency=agency), _extract_detail_rows)
     print(

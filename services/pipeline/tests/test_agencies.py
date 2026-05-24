@@ -92,3 +92,10 @@ def test_seoul_council_attachment_boards_registered_for_verified_cost_pages() ->
     assert yeongdeungpo.source_pattern["followDetail"] is True
     assert jongno.source_pattern["followDetail"] is True
     assert junggu.source_pattern["followDetail"] is True
+
+
+def test_seoul_office_html_estimate_board_registered_for_gwanak() -> None:
+    gwanak = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "관악구청")
+
+    assert gwanak.source_pattern["adapter"] == "estimate_list_html"
+    assert gwanak.source_pattern["listUrl"] == "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do"

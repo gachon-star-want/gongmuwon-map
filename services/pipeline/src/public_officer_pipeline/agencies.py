@@ -174,6 +174,12 @@ def seoul_agencies() -> list[Agency]:
                 "listUrl": "https://www.gangnam.go.kr/board/B_000673/list.do?mid=ID05_04200502",
                 "fileKinds": ["xlsx"],
             }
+        elif gu == "관악구":
+            office_source_pattern = {
+                "adapter": "estimate_list_html",
+                "listUrl": "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do",
+                "rowsPerPage": 10,
+            }
         agencies.append(
             Agency(
                 id=agency_uuid(f"{gu}:office"),

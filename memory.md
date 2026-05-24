@@ -681,3 +681,28 @@
   - `place_visits > 10,000` 기준은 아직 미달 (`7656`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`27/52`).
   - 의회 중 노원구의회는 확인한 최신 XLS에 장소/가맹점 컬럼이 없어 식당 지도 데이터로는 보류.
+
+## 2026-05-25 관악구청 HTML estimateList 부분 적재 체크포인트
+
+- 발견:
+  - 관악구청 업무추진비 공개 페이지는 `https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do`.
+  - 첨부파일이 아니라 `table.view` key-value 테이블 10개가 페이지마다 직접 렌더링됨.
+  - 2026-01-01 이후 필터 기준 공개 건수는 `6,145`건이며, pageIndex 기반 페이지네이션.
+- 구현:
+  - `EstimateListCrawler` 추가: `pageIndex`, `searchCondition3`, `searchCondition4` 쿼리로 날짜 필터 페이지를 PostRef로 생성.
+  - `extract_expense_rows`에 key-value `th/td` 업무추진비 테이블 파서 추가.
+  - 관악구청 `source_pattern.adapter=estimate_list_html` 등록.
+  - DB agency master 재시드 완료.
+- 검증:
+  - 관악구청 5페이지 dry-run: `parsed_rows=50`, Kakao match rate `91.67%`.
+  - 타깃 테스트: `11 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 20페이지 배치를 실행했으나 카카오 매칭 지연으로 중단.
+  - 페이지 단위 loader commit 결과 17개 페이지가 적재됨.
+  - 직접 DB 확인: 관악구청 `visit_count=169`, `place_count=134`.
+  - 전체 DB 확인: 방문 데이터가 있는 기관 `28/52`, `agency_stats_visit_sum=7825`, `places_public=4026`, 좌표 있는 `places_public=3456`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`7825`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`28/52`).
+  - 다음 관악 배치는 `--skip-posts 17` 이후 5~10페이지 단위로 진행 필요.
