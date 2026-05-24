@@ -754,3 +754,26 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준 미달 (`7,910`).
   - `>=45/52` 기관 적재 기준 미달 (`34/52`).
+
+## 2026-05-25 성동·강서 구청 적재 및 노원 소스 등록 체크포인트
+
+- 구현:
+  - 성동구청 `https://sd.go.kr/main/selectBbsNttList.do?bbsNo=172&key=1330` 소스 등록.
+  - 강서구청 `https://www.gangseo.seoul.kr/gs030325` 소스 등록 및 상세 페이지 첨부 follow 지원.
+  - 노원구청 `https://www.nowon.kr/www/user/bbs/BD_selectBbsList.do?q_bbsCode=1012` 소스 등록.
+  - `/component/file/ND_fileDownload.do`, `/comm/getFile` 다운로드 링크 지원.
+  - 목록의 공표부서 셀에서 부서명을 추출하도록 `attachment_board` 보강.
+  - 성동구청식 `pdftotext -layout` 컬럼형 PDF 파서 추가.
+  - 주소 없는 구청/구의회 식당명에 `서울 {자치구}` 지역 힌트를 보강하도록 deterministic normalizer 수정.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` -> 62 passed.
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` -> passed.
+  - Neon materialized views refresh 완료.
+  - 직접 DB 확인: `52 agencies`, 방문 데이터가 있는 기관 `36/52`, 총 visits `7,947`.
+- 실제 적재:
+  - 성동구청 1개 source, 26 visits 적재.
+  - 강서구청 2개 source, 11 visits 적재.
+  - 노원구청은 공식 목록과 다운로드 URL 등록은 완료했지만 최신 XLSX/PDF가 현 파서에서 `parsed_rows=0` 또는 vision 경로로 빠져 실제 적재 보류.
+- 주의:
+  - 현재 로컬 셸에는 `KAKAO_REST_KEY`가 없어 신규 적재분은 fallback place로 적재됨. 좌표 재매칭은 키 주입 후 별도 보강 필요.
+  - Phase 2 기준은 아직 실패: `place_visits > 10,000` 미달, `>=45/52` 미달.

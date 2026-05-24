@@ -165,6 +165,11 @@ PDF_TEXT_SEGMENTED_OFFICE_PAYMENT_RE = re.compile(
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)"
     r"(?:\s+(?P<expense_category>\S+))?"
 )
+PDF_TEXT_LAYOUT_DATE_RE = re.compile(r"20\d{2}[.]\s*\d{1,2}[.]\s*\d{1,2}[.]?")
+PDF_TEXT_LAYOUT_TIME_RE = re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b")
+PDF_TEXT_LAYOUT_ROW_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s+")
+PDF_TEXT_LAYOUT_AMOUNT_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
+PDF_TEXT_LAYOUT_PAYMENT_RE = re.compile(r"카드결제|신용카드|카드|현금|제로페이|계좌이체")
 PDF_TEXT_PURPOSE_STARTERS = (
     "의정활동",
     "직무수행",
@@ -439,6 +444,8 @@ def rows_from_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExp
         parsed = _parse_pdf_text_line(line, fallback_department=fallback_department)
         if parsed:
             rows.append(parsed)
+    if not rows:
+        rows = _parse_layout_office_pdf_text(text, fallback_department=fallback_department)
     if not rows:
         rows = _parse_segmented_office_pdf_text(text, fallback_department=fallback_department)
     return rows
@@ -1079,6 +1086,176 @@ def _parse_segmented_office_pdf_text(text: str, *, fallback_department: str) -> 
             rows.append(parsed)
         index = end
     return rows
+
+
+def _parse_layout_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    lines = text.splitlines()
+    header_index = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if "집행일" in line and "집행목적" in line and "집행장소" in line and "집행금액" in line
+        ),
+        None,
+    )
+    if header_index is None:
+        return []
+    positions = _layout_office_header_positions(lines[header_index])
+    if not positions:
+        return []
+    rows: list[ParsedExpenseRow] = []
+    for group in _layout_office_row_groups(lines[header_index + 1 :], positions=positions):
+        parsed = _parse_layout_office_row(group, positions=positions, fallback_department=fallback_department)
+        if parsed:
+            rows.append(parsed)
+    return rows
+
+
+def _layout_office_header_positions(header: str) -> dict[str, int]:
+    positions = {
+        "number": header.find("연번"),
+        "date": header.find("집행일"),
+        "purpose": header.find("집행목적"),
+        "place": header.find("집행장소"),
+        "target": header.find("집행대상"),
+        "amount": header.find("집행금액"),
+        "payment": header.find("집행방법"),
+    }
+    if not all(value >= 0 for value in positions.values()):
+        return {}
+    # pdftotext often places row content several cells left of the visual header
+    # when Korean table cells span multiple lines. Keep the hard boundaries for
+    # place/amount, but widen purpose and target enough to avoid clipping text.
+    positions["purpose"] = max(positions["date"] + len("집행일"), positions["purpose"] - 5)
+    positions["place"] = max(positions["purpose"] + len("집행목적"), positions["place"] - 1)
+    positions["target"] = max(positions["place"] + len("집행장소"), positions["target"] - 1)
+    return positions
+
+
+def _layout_office_row_groups(lines: list[str], *, positions: dict[str, int]) -> list[list[str]]:
+    groups: list[list[str]] = []
+    current: list[str] | None = None
+    pending: list[str] = []
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        stripped = line.strip().strip("\f")
+        if not stripped or stripped.startswith("(단위"):
+            continue
+        clean_line = line.replace("\f", "")
+        row_start = bool(PDF_TEXT_LAYOUT_ROW_NUMBER_RE.match(clean_line))
+        has_date = bool(PDF_TEXT_LAYOUT_DATE_RE.search(clean_line))
+        if row_start:
+            if current:
+                groups.append(current)
+            current = [*pending, clean_line]
+            pending = []
+            continue
+        if has_date and current and _layout_office_group_is_complete(current):
+            groups.append(current)
+            current = None
+            pending = [clean_line]
+            continue
+        if current is None:
+            pending.append(clean_line)
+            continue
+        if _layout_office_group_is_complete(current) and not _layout_office_continues_current_row(
+            raw_line,
+            positions=positions,
+        ):
+            pending.append(clean_line)
+            continue
+        current.append(clean_line)
+    if current:
+        groups.append(current)
+    return groups
+
+
+def _layout_office_group_is_complete(group: list[str]) -> bool:
+    text = " ".join(group)
+    return bool(PDF_TEXT_LAYOUT_AMOUNT_RE.search(text) and PDF_TEXT_LAYOUT_PAYMENT_RE.search(text))
+
+
+def _layout_office_continues_current_row(line: str, *, positions: dict[str, int]) -> bool:
+    if "\f" in line or PDF_TEXT_LAYOUT_TIME_RE.search(line):
+        return True
+    target = _layout_slice(line.replace("\f", ""), positions["target"], positions["amount"])
+    return bool(re.search(r"(명|직원|관계자|대상)", target))
+
+
+def _parse_layout_office_row(
+    group: list[str],
+    *,
+    positions: dict[str, int],
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    group_text = _normalize_pdf_text_fragment(" ".join(line.strip().strip("\f") for line in group))
+    date_match = PDF_TEXT_LAYOUT_DATE_RE.search(group_text)
+    time_match = PDF_TEXT_LAYOUT_TIME_RE.search(group_text)
+    amount_matches = list(PDF_TEXT_LAYOUT_AMOUNT_RE.finditer(group_text))
+    payment_match = PDF_TEXT_LAYOUT_PAYMENT_RE.search(group_text)
+    if not date_match or not time_match or not amount_matches or not payment_match:
+        return None
+    try:
+        used_at = _parse_pdf_date_time(date_match.group(0), time_match.group(0))
+        amount = int(amount_matches[-1].group(0).replace(",", ""))
+    except ValueError:
+        return None
+
+    purpose = _layout_collect_column(group, positions["purpose"], positions["place"])
+    place_text = _layout_collect_column(group, positions["place"], positions["target"])
+    target_text = _layout_collect_column(group, positions["target"], positions["amount"])
+    if not purpose or not place_text:
+        return None
+    party_size_match = re.search(r"(?P<size>\d{1,3})\s*명", target_text)
+    user_text = target_text or fallback_department
+    if party_size_match and "명" not in user_text:
+        user_text = f"{user_text} {party_size_match.group('size')}명"
+    raw_excerpt = " | ".join(
+        part
+        for part in (
+            date_match.group(0),
+            time_match.group(0),
+            place_text,
+            purpose,
+            target_text,
+            amount_matches[-1].group(0),
+            payment_match.group(0),
+        )
+        if part
+    )
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=place_text,
+        purpose=purpose,
+        amount=amount,
+        user_text=user_text,
+        payment_method=payment_match.group(0),
+        raw_excerpt=raw_excerpt,
+    )
+
+
+def _layout_collect_column(group: list[str], start: int, end: int) -> str:
+    parts = []
+    for line in group:
+        value = _layout_slice(line, start, end)
+        if not value:
+            continue
+        value = PDF_TEXT_LAYOUT_ROW_NUMBER_RE.sub("", value).strip()
+        value = PDF_TEXT_LAYOUT_DATE_RE.sub("", value)
+        value = PDF_TEXT_LAYOUT_TIME_RE.sub("", value)
+        value = PDF_TEXT_LAYOUT_AMOUNT_RE.sub("", value)
+        value = PDF_TEXT_LAYOUT_PAYMENT_RE.sub("", value)
+        value = _normalize_pdf_text_fragment(value)
+        if value:
+            parts.append(value)
+    return _normalize_pdf_text_fragment(" ".join(parts))
+
+
+def _layout_slice(line: str, start: int, end: int) -> str:
+    if len(line) <= start:
+        return ""
+    return line[start:end].strip()
 
 
 def _parse_segmented_office_segments(segments: list[str], *, fallback_department: str) -> ParsedExpenseRow | None:

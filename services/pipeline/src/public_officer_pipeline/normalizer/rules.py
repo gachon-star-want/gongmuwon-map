@@ -10,6 +10,7 @@ from public_officer_pipeline.models import NormalizedVisit, ParsedExpenseRow, Pl
 ELECTED_RANKS = ("시장", "구청장", "시의원", "구의원")
 APPOINTED_RANKS = ("부시장", "실장", "국장", "본부장", "과장", "팀장", "담당관", "전문위원")
 PERSON_RE = re.compile(r"([가-힣]{2,4})\s*(시장|구청장|시의원|구의원)")
+SEOUL_DISTRICT_HINT_RE = re.compile(r"(?P<district>[가-힣]+구)(?:청|의회)?")
 
 
 def deterministic_normalize_rows(
@@ -24,6 +25,10 @@ def deterministic_normalize_rows(
     visits: list[NormalizedVisit] = []
     for row in rows:
         place_raw = parse_place_text(row.place_text)
+        if not place_raw.address_hint:
+            region_hint = _region_hint_from_department(row.department_name)
+            if region_hint:
+                place_raw = PlaceRaw(name=place_raw.name, address_hint=region_hint)
         mask = mask_user_text(row.user_text or "", fallback_department=row.department_name)
         visits.append(
             NormalizedVisit(
@@ -55,6 +60,13 @@ def parse_place_text(place_text: str) -> PlaceRaw:
     if match:
         return PlaceRaw(name=_normalize_place_name(match.group("name")), address_hint=match.group("address").strip())
     return PlaceRaw(name=_normalize_place_name(value), address_hint=None)
+
+
+def _region_hint_from_department(department_name: str) -> str | None:
+    match = SEOUL_DISTRICT_HINT_RE.search(department_name)
+    if not match:
+        return None
+    return f"서울 {match.group('district')}"
 
 
 def mask_user_text(user_text: str, fallback_department: str) -> dict[str, str | int | None]:

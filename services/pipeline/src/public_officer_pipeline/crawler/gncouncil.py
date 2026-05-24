@@ -28,6 +28,8 @@ DOWNLOAD_HREF_PARTS = (
     "downloadBbsFile.do",
     "downloadBbsFileStr.do",
     "/common/board/Download.do",
+    "/component/file/ND_fileDownload.do",
+    "/comm/getFile",
 )
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
@@ -116,6 +118,7 @@ class CouncilAttachmentCrawler:
                         department_name=_best_department(
                             _department_from_filename(filename, self.agency.short_name),
                             _department_from_filename(title, self.agency.short_name),
+                            _department_from_cells(cells, self.agency.short_name),
                             self.agency.short_name,
                         ),
                         file_kind=file_kind,
@@ -229,13 +232,19 @@ def _filename_from_download_link(download) -> str:
     image = download.css_first("img")
     if image:
         candidates.append(image.attributes.get("alt", ""))
+    normalized_candidates = []
     for candidate in candidates:
         normalized = _normalize_spaces(candidate)
         if not normalized:
             continue
         if "파일 내려받기" in normalized:
             normalized = normalized.replace("파일 내려받기", "")
-        return normalized.strip(" '\"")
+        normalized_candidates.append(normalized.strip(" '\""))
+    for candidate in normalized_candidates:
+        if _file_kind(candidate) or _looks_like_expense(candidate):
+            return candidate
+    if normalized_candidates:
+        return normalized_candidates[0]
     return ""
 
 
@@ -271,10 +280,22 @@ def _department_from_filename(filename: str, agency_short_name: str = "강남구
     return agency_short_name
 
 
-def _best_department(primary: str, fallback: str | None, agency_short_name: str) -> str:
-    if primary and primary != agency_short_name:
-        return primary
-    return fallback or primary or agency_short_name
+def _department_from_cells(cells, agency_short_name: str) -> str | None:
+    for cell in cells[2:-1]:
+        text = _normalize_spaces(cell.text(separator=" ", strip=True))
+        if not text or DATE_RE.search(text) or re.fullmatch(r"\d+", text):
+            continue
+        if _looks_like_department_fragment(text):
+            return f"{agency_short_name} {text}"
+    return None
+
+
+def _best_department(*candidates: str | None) -> str:
+    fallback = next((candidate for candidate in reversed(candidates) if candidate), "")
+    for candidate in candidates:
+        if candidate and candidate != fallback:
+            return candidate
+    return fallback
 
 
 def _looks_like_department_fragment(value: str) -> bool:

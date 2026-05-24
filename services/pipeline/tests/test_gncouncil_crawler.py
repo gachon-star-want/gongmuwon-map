@@ -1,5 +1,5 @@
 from public_officer_pipeline.crawler.gncouncil import CouncilAttachmentCrawler, GangnamCouncilCrawler, _url_with_page
-from public_officer_pipeline.models import Agency, AgencyKind
+from public_officer_pipeline.models import Agency, AgencyKind, PostRef
 
 
 def test_gncouncil_crawler_extracts_pdf_refs() -> None:
@@ -566,3 +566,78 @@ def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None
     assert len(details) == 1
     assert details[0].url == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
     assert details[0].title == "2026년 4월 업무추진비 집행내역 공개"
+
+
+def test_attachment_crawler_extracts_nowon_direct_downloads_and_department_cell() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="노원구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.nowon.kr/www/user/bbs/BD_selectBbsList.do?q_bbsCode=1012",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td class="cell-no">9880</td>
+            <td class="cell-subject">
+              <a href="/component/file/ND_fileDownload.do?q_fileSn=299137&amp;q_fileId=866"
+                 title="2026년 4월 시책추진 업무추진비 사용내역(건강증진과).pdf Download">
+                2026년 4월 업무추진비 사용내역 공개
+              </a>
+            </td>
+            <td class="cell-part">건강증진과</td>
+            <td class="cell-date">2026-05-11</td>
+            <td class="cell-hit">5</td>
+            <td class="cell-file">
+              <a href="/component/file/ND_fileDownload.do?q_fileSn=299137&amp;q_fileId=866"
+                 title="2026년 4월 시책추진 업무추진비 사용내역(건강증진과).pdf Download">첨부파일</a>
+            </td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.nowon.kr/component/file/ND_fileDownload.do?q_fileSn=299137&q_fileId=866"
+    assert refs[0].file_kind == "pdf"
+    assert refs[0].department_name == "노원구청 건강증진과"
+
+
+def test_attachment_crawler_extracts_gangseo_detail_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="강서구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gangseo.seoul.kr/gs030325",
+                "followDetail": True,
+            },
+        )
+    )
+    refs = crawler._parse_detail_downloads(
+        """
+        <div class="file-element">
+          <a href="/comm/getFile?srvcId=BBSTY1&amp;upperNo=abc&amp;fileTy=ATTACH&amp;fileNo=def" class="btn">
+            <span class="sr-only">공원녹지과 업무추진비 집행내역(2026년 4월).pdf</span>다운로드
+          </a>
+        </div>
+        """,
+        detail=PostRef(
+            agency_id=crawler.agency.id,
+            url="https://www.gangseo.seoul.kr/gs030325/320760",
+            title="2026년 4월 공원녹지과 업무추진비 집행 내역 공개",
+            department_name="강서구청 공원녹지과",
+            file_kind="html",
+        ),
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url.startswith("https://www.gangseo.seoul.kr/comm/getFile?")
+    assert refs[0].file_kind == "pdf"

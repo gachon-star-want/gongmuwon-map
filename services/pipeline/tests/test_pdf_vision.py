@@ -321,3 +321,34 @@ def test_rows_from_pdf_text_parses_segmented_office_pdf_table_rows() -> None:
     assert rows[1].user_text == "고덕1동장 14명"
     assert rows[2].place_text == "오토김밥 고덕점"
     assert rows[2].expense_category == "시책"
+
+
+def test_rows_from_pdf_text_parses_layout_office_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+     2026. 2. 교통지도과 시책추진업무추진비 집행내역
+□ 집행내역
+                                                                          (단위: 원)
+연번    집행일              집행목적           집행장소       집행대상(인원)       집행금액       집행방법
+
+     2026.2.2.                         나눔봉제       교통지도과
+ 1                현안 업무 추진 직원 격려 등                              27,400     카드결제
+      12:29                           협동조합         직원(7명)
+     2026.2.2.    공영주차장 유지관리 관련                 유관기관 관계자 등
+ 2                                    회동영덕막회                    78,000     카드결제
+      12:22           업무회의                           7명
+ 4   2026.2.6.    의견진술심의 관련 업무 회의     일품백송칼국수   업무담당 및 관계자 4명   40,000     카드결제
+      12:15
+        """,
+        fallback_department="성동구청 교통지도과",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].used_at.isoformat() == "2026-02-02T12:29:00"
+    assert rows[0].place_text == "나눔봉제 협동조합"
+    assert rows[0].purpose == "현안 업무 추진 직원 격려 등"
+    assert rows[0].amount == 27400
+    assert rows[0].user_text == "교통지도과 직원(7명)"
+    assert rows[1].place_text == "회동영덕막회"
+    assert rows[1].purpose == "공영주차장 유지관리 관련 업무회의"
+    assert rows[2].place_text == "일품백송칼국수"
