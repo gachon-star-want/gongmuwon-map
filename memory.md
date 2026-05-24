@@ -511,3 +511,27 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`4348`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`19/52`).
+
+## 2026-05-24 성북구의회 followDetail user-address PDF 적재 체크포인트
+
+- 발견:
+  - 성북구의회 업무추진비 게시판은 `https://www.sbc.go.kr/kr/news/bbsCost.do`.
+  - 목록은 상세 링크만 제공하고, 상세 페이지에서 `/bbsAttachDownload.do?...` PDF 첨부를 내려받는 구조.
+  - PDF 텍스트 표는 `사용자 → 사용일 → 사용시간 → 집행장소 → 주소 → 집행목적 → 인원 → 금액 → 결제방법 → 비목` 순서라 기존 금천/서초 PDF parser로는 0건.
+- 구현:
+  - 성북구의회 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - `rows_from_pdf_text`에 user-address PDF row parser 추가.
+  - 기관 스냅샷 및 성북식 PDF 텍스트 parser 테스트 추가.
+- 검증:
+  - 성북구의회 최신 PDF 텍스트 단위 추출: `rows=171`.
+  - 성북구의회 최신 PDF dry-run: `parsed_rows=171`, Kakao match rate `87.69%`.
+  - 타깃 테스트: `11 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 성북구의회 최신 페이지 5개 PDF 실제 적재.
+  - `posts_seen=5`, `posts_fetched=5`, `parsed_rows=631`, `loaded_visits=631`, Kakao match rate `90.43%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `20/52`, `agency_stats_visit_sum=4962`, `places_public=2472`, 좌표 있는 `places_public=2239`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`4962`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`20/52`).

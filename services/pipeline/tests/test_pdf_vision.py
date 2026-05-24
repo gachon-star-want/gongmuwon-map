@@ -79,3 +79,22 @@ def test_rows_from_pdf_text_parses_purpose_first_pdf_table_rows() -> None:
     assert rows[0].amount == 195000
     assert rows[0].user_text == "서초구의회 의장 15명"
     assert rows[1].payment_method == "계좌이체"
+
+
+def test_rows_from_pdf_text_parses_user_address_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    행정기획위원장   2026-04-01   08:10:04   좋은소리카페（길음실   서울 성북구 삼양로2길 55       지역 현안 업무 협의                    5     29,500    카드    의회운영
+3    부의장       2026-04-01   12:25:47   우리풍천장어       서울 성북구 장월로 148-1      지역 현안 논의를 위한 유관기관 관계자 간담회      6     78,000    카드    의회운영
+        """,
+        fallback_department="성북구의회",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "좋은소리카페（길음실(서울 성북구 삼양로2길 55)"
+    assert rows[0].purpose == "지역 현안 업무 협의"
+    assert rows[0].amount == 29500
+    assert rows[0].user_text == "구의원 5명"
+    assert rows[0].expense_category == "의회운영"
+    assert rows[1].place_text == "우리풍천장어(서울 성북구 장월로 148-1)"
+    assert rows[1].payment_method == "카드"
