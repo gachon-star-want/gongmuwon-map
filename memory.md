@@ -535,3 +535,35 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`4962`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`20/52`).
+
+## 2026-05-24 광진구의회·양천구의회 bbs_process PDF 적재 체크포인트
+
+- 발견:
+  - 광진구의회 업무추진비 게시판은 `https://council.gwangjin.go.kr/kr/data/bbs?bbs_id=businesswork`.
+  - 양천구의회 업무추진비 게시판은 `https://www.ycc.go.kr/kr/news/bbs?bbs_id=business`.
+  - 두 사이트 모두 목록 → 상세 → `bbs_process?reform=download` PDF 다운로드 구조.
+  - 기존 crawler가 `listUrl`의 query string을 보존하지 않고 `page` param만 보내 `bbs_id`가 사라지는 문제가 있었음.
+- 구현:
+  - `CouncilAttachmentCrawler`가 기존 query string을 보존하며 `page`만 추가하도록 수정.
+  - `bbs_process?reform=download` 다운로드 링크 지원 추가.
+  - 광진/양천 `source_pattern.adapter=council_attachment_board`, `followDetail=true` 등록.
+  - 광진식 주소 없는 PDF row parser 추가 및 1월/2월 변형(행번호 없음, 목적 시작어 차이) 보강.
+  - 양천식 `장소 → 금액 → 목적 → 인원 → 결제방법` PDF row parser 추가.
+- 검증:
+  - 광진구의회 실제 목록 probe: 2026년 PDF 10개 감지.
+  - 양천구의회 실제 목록 probe: 2026년/2025년 4개 업무추진비 PDF 감지.
+  - 광진 최신 PDF dry-run: `parsed_rows=69`, Kakao match rate `93.22%`.
+  - 양천 최신 PDF dry-run: `parsed_rows=101`, Kakao match rate `94.20%`.
+  - 타깃 테스트: `20 passed`
+  - 타깃 `ruff check` → passed
+- 실제 적재:
+  - 광진구의회 최신 페이지 10개 PDF 실제 적재.
+  - `posts_seen=10`, `posts_fetched=10`, `parsed_rows=436`, `loaded_visits=436`, Kakao match rate `93.82%`.
+  - 양천구의회 최신 페이지 4개 PDF 실제 적재.
+  - `posts_seen=4`, `posts_fetched=4`, `parsed_rows=350`, `loaded_visits=350`, Kakao match rate `25.39%`.
+  - 양천은 PDF에 주소가 없어 분기 전체 실행 기준 상호명만으로 resolve되며 fallback place 비율이 높음.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `22/52`, `agency_stats_visit_sum=5746`, `places_public=2951`, 좌표 있는 `places_public=2511`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`5746`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`22/52`).

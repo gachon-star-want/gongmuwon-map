@@ -101,6 +101,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "강북구": "https://council.gangbuk.go.kr/kr/costBBS.do",
     "강서구": "https://gsc.gangseo.seoul.kr/kr/costBBS.do",
     "관악구": "https://www.ga21c.seoul.kr/kr/costBBS.do",
+    "광진구": "https://council.gwangjin.go.kr/kr/data/bbs?bbs_id=businesswork",
     "구로구": "https://www.guroc.go.kr/kr/costBBS.do",
     "금천구": "https://council.geumcheon.go.kr/council/kr/costBBS.do",
     "동대문구": "https://council.ddm.go.kr/kr/busiexpensesBBS.do",
@@ -110,12 +111,22 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "서초구": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
     "성북구": "https://www.sbc.go.kr/kr/news/bbsCost.do",
     "송파구": "https://council.songpa.go.kr/kr/news/bbsCost.do",
+    "양천구": "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business",
     "용산구": "https://www.yscl.go.kr/kr/councilcostBBS.do",
     "은평구": "https://council.ep.go.kr/kr/costBBS.do",
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
 }
 
-SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {"강동구", "도봉구", "마포구", "서초구", "성북구", "송파구"}
+SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {
+    "강동구",
+    "광진구",
+    "도봉구",
+    "마포구",
+    "서초구",
+    "성북구",
+    "송파구",
+    "양천구",
+}
 
 
 def agency_uuid(key: str) -> UUID:

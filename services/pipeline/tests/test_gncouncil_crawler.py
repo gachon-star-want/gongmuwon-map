@@ -1,4 +1,4 @@
-from public_officer_pipeline.crawler.gncouncil import CouncilAttachmentCrawler, GangnamCouncilCrawler
+from public_officer_pipeline.crawler.gncouncil import CouncilAttachmentCrawler, GangnamCouncilCrawler, _url_with_page
 from public_officer_pipeline.models import Agency, AgencyKind
 
 
@@ -27,6 +27,12 @@ def test_gncouncil_crawler_extracts_pdf_refs() -> None:
     assert refs[0].url == "https://www.gncouncil.go.kr/kr/bbs/download.do?bbs_id=notice&uid=file1"
     assert refs[0].department_name == "강남구의회 의장"
     assert refs[0].file_kind == "pdf"
+
+
+def test_url_with_page_preserves_existing_query_params() -> None:
+    url = _url_with_page("https://www.ycc.go.kr/kr/news/bbs?bbs_id=business", 2)
+
+    assert url == "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business&page=2"
 
 
 def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute() -> None:
@@ -194,4 +200,50 @@ def test_council_attachment_crawler_extracts_songpa_detail_downloads() -> None:
     assert len(refs) == 1
     assert refs[0].url == "https://council.songpa.go.kr/bbsAttachDownload.do?key=file1"
     assert refs[0].department_name == "송파구의회 위원장"
+    assert refs[0].file_kind == "pdf"
+
+
+def test_council_attachment_crawler_extracts_bbs_process_detail_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="양천구의회",
+            kind=AgencyKind.GU_COUNCIL,
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>21</td>
+            <td><a href="?bbs_id=business&amp;reform=view&amp;uid=post">양천구의회 2026년 1분기 업무추진비 공개</a></td>
+            <td>양천구의회</td><td>2026-04-16</td><td>46</td>
+          </tr>
+        </tbody></table>
+        """
+    )[0]
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <div class="files">
+          <a href="/kr/news/bbs_process?reform=download&amp;bbs_id=business&amp;uid=1"
+             title="2026년_1분기_의정운영공통경비_집행내역.pdf 파일 내려받기">
+             2026년_1분기_의정운영공통경비_집행내역.pdf
+          </a>
+          <a href="/kr/news/bbs_process?reform=download&amp;bbs_id=business&amp;uid=2"
+             title="2026년_1분기_의회사무국_업무추진비_집행내역.pdf 파일 내려받기">
+             2026년_1분기_의회사무국_업무추진비_집행내역.pdf
+          </a>
+        </div>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.ycc.go.kr/kr/news/bbs_process?reform=download&bbs_id=business&uid=2"
+    assert refs[0].department_name == "양천구의회 사무국"
     assert refs[0].file_kind == "pdf"

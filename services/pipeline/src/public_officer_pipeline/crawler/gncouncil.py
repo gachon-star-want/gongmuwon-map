@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 from datetime import date, datetime, timezone
-from urllib.parse import urljoin
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 import httpx
 from selectolax.parser import HTMLParser
@@ -16,7 +16,7 @@ DEFAULT_LIST_URL = "https://www.gncouncil.go.kr/kr/noticeBBS.do"
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 SUPPORTED_FILE_KINDS = {"pdf", "xlsx"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비")
-DOWNLOAD_HREF_PARTS = ("/bbs/download.do", "/bbsAttachDownload.do")
+DOWNLOAD_HREF_PARTS = ("/bbs/download.do", "/bbsAttachDownload.do", "bbs_process?reform=download")
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
 
@@ -45,7 +45,7 @@ class CouncilAttachmentCrawler:
     async def list_posts(self, since: date, limit_pages: int = 3) -> list[PostRef]:
         refs: dict[str, PostRef] = {}
         for page in range(1, limit_pages + 1):
-            response = await self._client.get(self.list_url, params={"page": page})
+            response = await self._client.get(_url_with_page(self.list_url, page))
             response.raise_for_status()
             for ref in self._parse_list(response.text):
                 if ref.published_at and ref.published_at < since:
@@ -240,6 +240,13 @@ def _download_looks_like_expense(*, title: str, filename: str) -> bool:
 
 def _is_download_href(href: str) -> bool:
     return any(part in href for part in DOWNLOAD_HREF_PARTS)
+
+
+def _url_with_page(url: str, page: int) -> str:
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["page"] = str(page)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 def _normalize_spaces(value: str) -> str:

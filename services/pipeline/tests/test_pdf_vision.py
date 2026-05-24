@@ -98,3 +98,45 @@ def test_rows_from_pdf_text_parses_user_address_pdf_table_rows() -> None:
     assert rows[0].expense_category == "의회운영"
     assert rows[1].place_text == "우리풍천장어(서울 성북구 장월로 148-1)"
     assert rows[1].payment_method == "카드"
+
+
+def test_rows_from_pdf_text_parses_user_no_address_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+ 1    부의장      2026. 4. 1. 18:26      본가한우생고기           의정활동 및 직무수행과 관련된 소요경비                5명   124,300  카드    의회운영
+ 3   의회운영위원장   2026. 4. 2. 12:30    혜리여수돌산갓김치 의회운영위원장 의정활동 및 직무수행과 관련된 소요 경비                 3명    55,000  카드    의회운영
+ 의정팀장    2026. 1. 1. 09:20     굴다리전주콩나물국밥            의정현안업무 협의 관련 업무추진               12명   177,000    카드    시책
+ 1   의회사무국직원 등    2026. 2. 2. 12:17 가마솥밥상 의회사무국 직원 격려 소요경비     7명    92,000  카드    기관
+        """,
+        fallback_department="광진구의회",
+    )
+
+    assert len(rows) == 4
+    assert rows[0].used_at.isoformat() == "2026-04-01T18:26:00"
+    assert rows[0].place_text == "본가한우생고기"
+    assert rows[0].amount == 124300
+    assert rows[0].user_text == "구의원 5명"
+    assert rows[1].place_text == "혜리여수돌산갓김치"
+    assert rows[1].purpose == "의회운영위원장 의정활동 및 직무수행과 관련된 소요 경비"
+    assert rows[2].place_text == "굴다리전주콩나물국밥"
+    assert rows[3].place_text == "가마솥밥상"
+    assert rows[3].purpose == "의회사무국 직원 격려 소요경비"
+
+
+def test_rows_from_pdf_text_parses_user_amount_purpose_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    의정팀     2026.01.05    12:09:50                        막내네       144,000      의정업무 추진 관련 간담회비 지출          9     신용카드     시책
+14   의정팀     2026.01.13    09:54:36                가까운온누리약국           30,000         부서운영 음료구입비 지출                  신용카드    부서운영
+        """,
+        fallback_department="양천구의회 사무국",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "막내네"
+    assert rows[0].amount == 144000
+    assert rows[0].user_text == "의정팀 9명"
+    assert rows[0].payment_method == "신용카드"
+    assert rows[1].place_text == "가까운온누리약국"
+    assert rows[1].user_text == "의정팀"
+    assert rows[1].expense_category == "부서운영"
