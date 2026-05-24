@@ -51,6 +51,36 @@ def test_extracts_key_value_expense_tables() -> None:
     assert rows[0].user_text == "교통행정과장 6명"
 
 
+def test_extracts_inline_district_expense_table_aliases() -> None:
+    rows = extract_expense_rows(
+        """
+        <table>
+          <thead>
+            <tr>
+              <th>연번</th><th>부서명</th><th>사용자</th><th>대상인원</th>
+              <th>사용일자(일시)</th><th>사용장소(가맹점명)</th><th>사용목적(내역)</th>
+              <th>사용금액(원)</th><th>사용방법</th><th>비목</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>172452</td><td>생활복지과</td><td>주무관</td><td>5</td>
+              <td>2026-05-22 12:00</td><td>울릉도</td><td>간담회</td>
+              <td>75,000</td><td>카드</td><td>시책</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "생활복지과"
+    assert rows[0].place_text == "울릉도"
+    assert rows[0].amount == 75000
+    assert rows[0].user_text == "주무관 5명"
+    assert rows[0].payment_method == "카드"
+
+
 def test_opengov_crawler_uses_agency_title_filter() -> None:
     agency = next(item for item in SEOUL_AGENCIES if item.short_name == "서울시의회")
     crawler = SeoulOpenGovCrawler(agency=agency)

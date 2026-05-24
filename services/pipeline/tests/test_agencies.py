@@ -120,9 +120,24 @@ def test_seoul_office_attachment_boards_registered_for_egov_boards() -> None:
     assert supported["구로구청"] == "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732"
     assert supported["금천구청"] == "https://www.geumcheon.go.kr/portal/selectBbsNttList.do?bbsNo=86&key=269"
     assert supported["동대문구청"] == "https://www.ddm.go.kr/www/selectBbsNttList.do?bbsNo=160&key=565"
+    assert supported["동작구청"] == "https://www.dongjak.go.kr/portal/bbs/B0000591/list.do?menuNo=200209"
     assert supported["마포구청"] == "https://www.mapo.go.kr/site/main/board/expense/list"
     assert supported["노원구청"] == "https://www.nowon.kr/www/user/bbs/BD_selectBbsList.do?q_bbsCode=1012"
     assert supported["서초구청"] == "https://www.seocho.go.kr/site/seocho/ex/bbs/List.do?cbIdx=33"
     assert supported["성동구청"] == "https://sd.go.kr/main/selectBbsNttList.do?bbsNo=172&key=1330"
     assert supported["송파구청"] == "https://www.songpa.go.kr/www/selectBbsNttList.do?bbsNo=327&key=2323"
     assert supported["양천구청"] == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397"
+    assert supported["영등포구청"] == "https://www.ydp.go.kr/www/selectBbsNttList.do?bbsNo=31&key=2814"
+    assert supported["용산구청"] == "https://www.yongsan.go.kr/portal/bbs/B0000030/list.do?menuNo=200140"
+    assert supported["종로구청"] == (
+        "https://www.jongno.go.kr/portal/bbs/selectBoardList.do"
+        "?bbsId=BBSMSTR_000000001167&menuId=110210&menuNo=110210"
+    )
+
+
+def test_seoul_office_inline_table_registered_for_eunpyeong() -> None:
+    eunpyeong = next(agency for agency in SEOUL_AGENCIES if agency.short_name == "은평구청")
+
+    assert eunpyeong.source_pattern["adapter"] == "inline_expense_table"
+    assert eunpyeong.source_pattern["listUrl"] == "https://www.ep.go.kr/www/selectJobPrtnCtWebList.do?key=666"
+    assert eunpyeong.source_pattern["rowsPerPage"] == 100

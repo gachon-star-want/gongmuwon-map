@@ -777,3 +777,31 @@
 - 주의:
   - 현재 로컬 셸에는 `KAKAO_REST_KEY`가 없어 신규 적재분은 fallback place로 적재됨. 좌표 재매칭은 키 주입 후 별도 보강 필요.
   - Phase 2 기준은 아직 실패: `place_visits > 10,000` 미달, `>=45/52` 미달.
+
+## 2026-05-25 영등포·용산·은평 구청 확장 체크포인트
+
+- 구현:
+  - 영등포구청 `https://www.ydp.go.kr/www/selectBbsNttList.do?bbsNo=31&key=2814` 소스 등록.
+  - 용산구청 `https://www.yongsan.go.kr/portal/bbs/B0000030/list.do?menuNo=200140` 소스 등록.
+  - 동작구청 `https://www.dongjak.go.kr/portal/bbs/B0000591/list.do?menuNo=200209` 소스 등록 및 상세 첨부 follow 지원.
+  - 종로구청 `https://www.jongno.go.kr/portal/bbs/selectBoardList.do?bbsId=BBSMSTR_000000001167&menuId=110210&menuNo=110210` 소스 등록.
+  - 은평구청 `https://www.ep.go.kr/www/selectJobPrtnCtWebList.do?key=666` 인라인 지출표 전용 `inline_expense_table` 크롤러 추가.
+  - `/portal/cmmn/file/fileDown.do`, `/cmm/fms/FileDown.do` 다운로드 링크 지원.
+  - 종로구청 `ul.respon-td` 목록 구조에서 부서/월/파일 링크를 추출하도록 보강.
+  - 은평구청 표 헤더(`사용일자(일시)`, `사용장소(가맹점명)`, `사용목적(내역)`, `대상인원`, `사용방법`)를 HTML extractor alias에 추가.
+  - DB `place_visits.party_size > 0` 제약 충돌 방지를 위해 `0명`은 `NULL`로 정규화.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` -> 68 passed.
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` -> passed.
+  - Neon materialized views refresh 완료.
+  - 직접 DB 확인: `52 agencies`, 방문 데이터가 있는 기관 `39/52`, 총 visits `9,026`.
+  - 기관 유형별 적재: `city_hall 1/1`, `city_council 1/1`, `gu_council 24/25`, `gu_office 13/25`.
+- 실제 적재:
+  - 영등포구청 `visit_count=72`, `place_count=72`.
+  - 용산구청 `visit_count=10`, `place_count=9`.
+  - 은평구청 `visit_count=997`, `place_count=547`.
+  - 은평구청 대량 적재는 긴 배치에서 `idle in transaction`이 발생해 9개 source까지만 반영하고 프로세스를 종료함.
+- 보류/주의:
+  - 종로구청·동작구청은 공식 소스와 파서 지원은 추가했지만 최신 PDF가 스캔본이라 현재 `ANTHROPIC_API_KEY` 없는 환경에서는 vision 추출 요구로 실제 적재 보류.
+  - 현재 Phase 2 기준은 아직 실패: `place_visits > 10,000` 미달 (`9,026`), `>=45/52` 기관 적재 미달 (`39/52`).
+  - 남은 0건 기관: 노원구의회, 강북구청, 광진구청, 구로구청, 노원구청, 도봉구청, 동작구청, 서대문구청, 성북구청, 양천구청, 종로구청, 중구청, 중랑구청.

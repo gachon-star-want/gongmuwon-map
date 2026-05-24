@@ -641,3 +641,110 @@ def test_attachment_crawler_extracts_gangseo_detail_downloads() -> None:
     assert len(refs) == 1
     assert refs[0].url.startswith("https://www.gangseo.seoul.kr/comm/getFile?")
     assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_yongsan_downloads_outside_last_cell() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="용산구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.yongsan.go.kr/portal/bbs/B0000030/list.do?menuNo=200140",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>7421</td>
+            <td><a href="/portal/bbs/B0000030/view.do?nttId=746850">2026년 4월 보건위생과 업무추진비 집행내역 공개</a></td>
+            <td>보건위생과</td>
+            <td>
+              <a href="/portal/cmmn/file/fileDown.do?menuNo=200140&amp;atchFileId=abc&amp;fileSn=1"
+                 title="업무추진비 집행내역(2026.4월).pdf" class="file-download"></a>
+            </td>
+            <td>2026-05-22</td>
+            <td>13</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url.startswith("https://www.yongsan.go.kr/portal/cmmn/file/fileDown.do?")
+    assert refs[0].department_name == "용산구청 보건위생과"
+    assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_dongjak_detail_filename_from_parent() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="동작구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.dongjak.go.kr/portal/bbs/B0000591/list.do?menuNo=200209",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url="https://www.dongjak.go.kr/portal/bbs/B0000591/view.do?nttId=10751788",
+        title="2026년 4월 업무추진비 집행내역 공개(복지국장, 복지정책과)",
+        department_name="동작구청 복지정책과",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <dd>
+          <a href="/portal/singl/convert/convertToHtml.do?atchFileId=abc&amp;fileSn=1" class="file">
+            2026년 4월 업무추진비 집행내역 공개(복지정책과).pdf
+          </a>
+          <a href="/portal/cmmn/file/fileDown.do?atchFileId=abc&amp;fileSn=1" class="btn btn-download">다운로드</a>
+        </dd>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_jongno_responsive_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="종로구청",
+            kind=AgencyKind.GU_OFFICE,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": (
+                    "https://www.jongno.go.kr/portal/bbs/selectBoardList.do"
+                    "?bbsId=BBSMSTR_000000001167&menuId=110210&menuNo=110210"
+                ),
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <ul class="respon-td">
+          <li><span>년도</span><em><a href="javascript:viewMove('256840');">2026</a></em></li>
+          <li><span>해당 월</span><em><a href="javascript:viewMove('256840');">04</a></em></li>
+          <li><span>작성부서</span><em><a href="javascript:viewMove('256840');">보건정책과</a></em></li>
+          <li><span>구분</span><em><a href="javascript:viewMove('256840');">시책추진</a></em></li>
+          <li><span>파일</span><em><a href="/cmm/fms/FileDown.do?atchFileId=FILE_1&amp;fileSn=1">파일</a></em></li>
+          <li><span>작성일</span><em>2026년 05월 15일</em></li>
+        </ul>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.jongno.go.kr/cmm/fms/FileDown.do?atchFileId=FILE_1&fileSn=1"
+    assert refs[0].department_name == "종로구청 보건정책과"
+    assert refs[0].published_at and refs[0].published_at.isoformat() == "2026-05-15"
+    assert refs[0].file_kind == "pdf"

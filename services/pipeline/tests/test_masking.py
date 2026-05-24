@@ -29,6 +29,12 @@ def test_staff_group_is_department_only() -> None:
     assert result["department_name"] == "총무과 외"
 
 
+def test_zero_party_size_is_treated_as_unknown() -> None:
+    result = mask_user_text("진관동 0명", fallback_department="진관동")
+
+    assert result["party_size"] is None
+
+
 def test_elected_rank_without_name_keeps_rank_only() -> None:
     result = mask_user_text("구의원 12명", fallback_department="구의회사무국")
 

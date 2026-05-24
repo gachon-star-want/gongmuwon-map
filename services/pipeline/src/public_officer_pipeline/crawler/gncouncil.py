@@ -30,8 +30,11 @@ DOWNLOAD_HREF_PARTS = (
     "/common/board/Download.do",
     "/component/file/ND_fileDownload.do",
     "/comm/getFile",
+    "/portal/cmmn/file/fileDown.do",
+    "/cmm/fms/FileDown.do",
 )
 DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
+KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
 
 
 class CouncilAttachmentCrawler:
@@ -98,7 +101,7 @@ class CouncilAttachmentCrawler:
             if not _looks_like_expense(title):
                 continue
             published_at = _find_date(cells)
-            for download in cells[-1].css("a[href]"):
+            for download in row.css("a[href]"):
                 filename = _filename_from_download_link(download)
                 href = download.attributes.get("href", "")
                 file_kind = _file_kind(filename)
@@ -122,6 +125,43 @@ class CouncilAttachmentCrawler:
                             self.agency.short_name,
                         ),
                         file_kind=file_kind,
+                    )
+                )
+        if not refs:
+            refs.extend(self._parse_responsive_downloads(tree))
+        return refs
+
+    def _parse_responsive_downloads(self, tree: HTMLParser) -> list[PostRef]:
+        refs: list[PostRef] = []
+        for listing in tree.css("ul.respon-td"):
+            fields: dict[str, str] = {}
+            for item in listing.css("li"):
+                label_node = item.css_first("span")
+                value_node = item.css_first("em")
+                label = _normalize_spaces(label_node.text(separator=" ", strip=True)) if label_node else ""
+                value = _normalize_spaces(value_node.text(separator=" ", strip=True)) if value_node else ""
+                if label:
+                    fields[label] = value
+            year = fields.get("년도", "")
+            month = fields.get("해당 월", "").zfill(2)
+            department = fields.get("작성부서", "")
+            category = fields.get("구분", "")
+            if not (year and month and department):
+                continue
+            title = f"{year}년 {month}월 {department} {category} 업무추진비 공개내역".strip()
+            published_at = _parse_date(fields.get("작성일", ""))
+            for download in listing.css("a[href]"):
+                href = download.attributes.get("href", "")
+                if not href or not _is_download_href(href):
+                    continue
+                refs.append(
+                    PostRef(
+                        agency_id=self.agency.id,
+                        url=urljoin(self.list_url, href),
+                        title=f"{title} - {department} 업무추진비.pdf",
+                        published_at=published_at,
+                        department_name=_best_department(f"{self.agency.short_name} {department}", self.agency.short_name),
+                        file_kind="pdf",
                     )
                 )
         return refs
@@ -240,6 +280,9 @@ def _filename_from_download_link(download) -> str:
         if "파일 내려받기" in normalized:
             normalized = normalized.replace("파일 내려받기", "")
         normalized_candidates.append(normalized.strip(" '\""))
+    if normalized_candidates and all(_looks_like_uninformative_file_label(item) for item in normalized_candidates):
+        if download.parent:
+            normalized_candidates.append(_normalize_spaces(download.parent.text(separator=" ", strip=True)).strip(" '\""))
     for candidate in normalized_candidates:
         if _file_kind(candidate) or _looks_like_expense(candidate):
             return candidate
@@ -310,6 +353,10 @@ def _parse_date(value: str) -> date | None:
     if match:
         year, month, day = (int(part) for part in match.groups())
         return date(year, month, day)
+    match = KOREAN_DATE_RE.search(value.strip())
+    if match:
+        year, month, day = (int(part) for part in match.groups())
+        return date(year, month, day)
     try:
         return date.fromisoformat(value.strip())
     except ValueError:
@@ -351,6 +398,13 @@ def _is_download_href(href: str) -> bool:
 def _looks_like_generic_file_label(filename: str) -> bool:
     normalized = _normalize_spaces(filename).lower()
     return bool(re.fullmatch(r"(?:pdf|xls|xlsx)\s*파일\s*첨부", normalized))
+
+
+def _looks_like_uninformative_file_label(filename: str) -> bool:
+    normalized = _normalize_spaces(filename).lower()
+    return normalized in {"다운로드", "첨부파일", "파일", "공개내역 파일", "바로보기"} or _looks_like_generic_file_label(
+        filename
+    )
 
 
 def _url_with_page(url: str, page: int) -> str:

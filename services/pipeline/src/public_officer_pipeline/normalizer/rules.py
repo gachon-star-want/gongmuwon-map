@@ -109,7 +109,8 @@ def _parse_party_size(value: str) -> int | None:
         match = re.search(pattern, value)
         if match:
             count = int(match.group(1))
-            return count + 1 if add_one else count
+            party_size = count + 1 if add_one else count
+            return party_size if party_size > 0 else None
     return None
 
 
