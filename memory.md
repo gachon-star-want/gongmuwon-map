@@ -327,3 +327,23 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`2093`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`11/52`).
+
+## 2026-05-24 동대문구의회 busiexpensesBBS 적재 체크포인트
+
+- 발견:
+  - `costBBS.do` 외 추가 게시판명 스캔에서 동대문구의회 `https://council.ddm.go.kr/kr/busiexpensesBBS.do` 확인.
+  - PDF 첨부형 업무추진비 게시판으로 기존 `CouncilAttachmentCrawler` 재사용 가능.
+- 구현:
+  - 동대문구의회 `source_pattern.adapter=council_attachment_board`, `listUrl=.../busiexpensesBBS.do` 추가.
+  - Neon `seed-agencies` 재실행 완료.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 24 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 첫 PDF dry-run: `parsed_rows=38`, Kakao match rate `84.38%`.
+- 실제 적재:
+  - 첫 PDF 실제 적재: `loaded_sources=1`, `loaded_places=32`, `loaded_visits=38`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `12/52`, `agency_stats_visit_sum=2131`, `places_public=1251`, 좌표 있는 `places_public=1213`.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`2131`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`12/52`).

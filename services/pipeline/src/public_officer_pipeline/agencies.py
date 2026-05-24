@@ -101,6 +101,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "강서구": "https://gsc.gangseo.seoul.kr/kr/costBBS.do",
     "관악구": "https://www.ga21c.seoul.kr/kr/costBBS.do",
     "구로구": "https://www.guroc.go.kr/kr/costBBS.do",
+    "동대문구": "https://council.ddm.go.kr/kr/busiexpensesBBS.do",
     "동작구": "https://assembly.dongjak.go.kr/kr/costBBS.do",
     "은평구": "https://council.ep.go.kr/kr/costBBS.do",
     "중랑구": "https://council.jungnang.go.kr/kr/costBBS.do",
