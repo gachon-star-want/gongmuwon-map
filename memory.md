@@ -242,3 +242,28 @@
 - 남은 Phase 2 실패:
   - `place_visits > 10,000` 기준은 아직 미달 (`1613`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`6/52`).
+
+## 2026-05-24 강북구의회 PDF 소량 배치 적재 체크포인트
+
+- 구현:
+  - `public-officer-pipeline run-*` 명령에 `--skip-posts` 옵션 추가.
+  - PDF vision 추출이 파일별로 흔들릴 때 앞선 성공분을 재처리하지 않고 다음 게시물부터 이어갈 수 있게 함.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 23 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - 강북구의회 1개 PDF dry-run:
+    - `parsed_rows=48`
+    - Kakao match rate `87.80%`
+- 실제 적재:
+  - 강북구의회 2026년 4월·3월 PDF는 일괄 실행 중 성공해 총 `96`건 적재.
+  - 2026년 2월 PDF는 dry-run 성공(`47`건)이지만 실제 실행에서 Gemini JSON 오류가 재발해 보류.
+  - 2026년 1월 PDF는 단독 실제 적재 성공: `loaded_visits=47`, Kakao match rate `79.07%`.
+  - 2025년 12월 PDF는 dry-run `parsed_rows=0`으로 적재하지 않음.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, 방문 데이터가 있는 기관 `7/52`, `agency_stats_visit_sum=1756`, `places_public=973`, 좌표 있는 `places_public=955`.
+- 운영 메모:
+  - PDF 기관은 일괄 처리보다 `--max-posts 1` + `--skip-posts` 소량 배치가 복구성이 좋음.
+  - Gemini vision JSON 오류 파일은 재시도/모델 전환 또는 JSON repair 보강 후 다시 처리.
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`1756`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`7/52`).

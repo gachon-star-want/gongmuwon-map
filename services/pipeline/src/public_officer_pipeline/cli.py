@@ -43,6 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--since", type=date.fromisoformat, default=date.today() - timedelta(days=31))
     run.add_argument("--limit-pages", type=int, default=3)
     run.add_argument("--max-posts", type=int, default=10)
+    run.add_argument("--skip-posts", type=int, default=0)
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--allow-deterministic-normalizer", action="store_true")
     run.add_argument("--allow-unmatched-places", action="store_true")
@@ -55,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     opengov.add_argument("--since", type=date.fromisoformat, default=date.today() - timedelta(days=31))
     opengov.add_argument("--limit-pages", type=int, default=3)
     opengov.add_argument("--max-posts", type=int, default=10)
+    opengov.add_argument("--skip-posts", type=int, default=0)
     opengov.add_argument("--dry-run", action="store_true")
     opengov.add_argument("--allow-deterministic-normalizer", action="store_true")
     opengov.add_argument("--allow-unmatched-places", action="store_true")
@@ -67,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
     agency_run.add_argument("--since", type=date.fromisoformat, default=date.today() - timedelta(days=31))
     agency_run.add_argument("--limit-pages", type=int, default=3)
     agency_run.add_argument("--max-posts", type=int, default=10)
+    agency_run.add_argument("--skip-posts", type=int, default=0)
     agency_run.add_argument("--dry-run", action="store_true")
     agency_run.add_argument("--allow-deterministic-normalizer", action="store_true")
     agency_run.add_argument("--allow-unmatched-places", action="store_true")
@@ -207,7 +210,7 @@ async def _run_crawler(
         loaded_sources = loaded_places = loaded_visits = 0
         loader = None if args.dry_run else PostgresLoader()
 
-        for post in posts[: args.max_posts]:
+        for post in posts[args.skip_posts : args.skip_posts + args.max_posts]:
             detail = await crawler.fetch_post(post)
             stats.posts_fetched += 1
             rows = [row for row in row_extractor(detail) if row.used_at.date() >= args.since]
