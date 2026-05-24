@@ -65,6 +65,16 @@ class PostgresLoader:
 
         return 1, len(place_ids), len(visit_ids)
 
+    async def seed_agencies(self, agencies: list[Agency]) -> int:
+        async with await psycopg.AsyncConnection.connect(
+            self.database_url,
+            row_factory=dict_row,
+        ) as conn:
+            async with conn.transaction():
+                for agency in agencies:
+                    await self._upsert_agency(conn, agency)
+        return len(agencies)
+
     async def _upsert_agency(self, conn: psycopg.AsyncConnection[Any], agency: Agency) -> UUID:
         row = await self._fetch_one(
             conn,
@@ -274,3 +284,12 @@ def apply_schema(*, database_url: str | None = None, migration_path: Path | None
     sql = path.read_text(encoding="utf-8")
     with psycopg.connect(url, autocommit=True) as conn:
         conn.execute(sql)
+
+
+def refresh_materialized_views(*, database_url: str | None = None) -> None:
+    url = database_url or os.getenv("DATABASE_URL")
+    if not url:
+        raise PipelineConfigError("DATABASE_URL is required for refreshing materialized views")
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY public.place_grade_v1")
+        conn.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY public.agency_stats_v1")

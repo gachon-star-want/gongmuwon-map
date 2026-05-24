@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 import httpx
 from selectolax.parser import HTMLParser
 
-from public_officer_pipeline.models import PostDetail, PostRef, SEOUL_CITY_HALL_AGENCY_ID
+from public_officer_pipeline.models import Agency, PostDetail, PostRef, SEOUL_CITY_HALL_AGENCY_ID
 
 
 LIST_URL = "https://opengov.seoul.go.kr/expense/list"
@@ -20,7 +20,12 @@ DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 class SeoulOpenGovCrawler:
     agency_id = SEOUL_CITY_HALL_AGENCY_ID
 
-    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(self, agency: Agency | None = None, client: httpx.AsyncClient | None = None) -> None:
+        self.agency = agency or Agency()
+        pattern = self.agency.source_pattern or {}
+        self.search_keyword = str(pattern.get("searchKeyword") or "서울시본청")
+        title_includes = pattern.get("titleIncludes") or [self.search_keyword]
+        self.title_includes = [str(item) for item in title_includes if str(item).strip()]
         self._client = client or httpx.AsyncClient(
             timeout=DEFAULT_TIMEOUT,
             headers={
@@ -45,7 +50,7 @@ class SeoulOpenGovCrawler:
                 params={
                     "items_per_page": 50,
                     "page": page,
-                    "searchKeyword": "서울시본청",
+                    "searchKeyword": self.search_keyword,
                     "sortField": "reg_date",
                     "sortOrder": "desc",
                     "ym[year]": "all",
@@ -82,12 +87,14 @@ class SeoulOpenGovCrawler:
             if url in seen:
                 continue
             title = " ".join(anchor.text(separator=" ", strip=True).split())
-            if "업무추진비" not in title or "서울시본청" not in title:
+            if "업무추진비" not in title:
+                continue
+            if self.title_includes and not all(token in title for token in self.title_includes):
                 continue
             row_text = " ".join((anchor.parent.text(separator=" ", strip=True) if anchor.parent else title).split())
             refs.append(
                 PostRef(
-                    agency_id=self.agency_id,
+                    agency_id=self.agency.id,
                     url=url,
                     title=title,
                     published_at=_extract_date(row_text),

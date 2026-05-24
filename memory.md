@@ -93,3 +93,33 @@
 - Runbook 결정:
   - Phase 2 체크 실패이므로 Phase 3 진입 금지.
   - 사용자 확인 필요: 서울시청 단일 소스 MVP로 배포 완료 처리할지, 51개 기관 어댑터/백필을 계속 구현할지 결정해야 함.
+
+## 2026-05-24 Phase 2 백필 재개 체크포인트
+
+- 구현:
+  - `public_officer_pipeline.agencies`에 v1 서울 52기관 마스터 추가.
+  - `public-officer-pipeline seed-agencies` CLI 추가.
+  - `run-opengov-agency <agency>` CLI 추가: `source_pattern.adapter == seoul_opengov` 기관을 동일 파이프라인으로 실행.
+  - `refresh-views` CLI 추가: `place_grade_v1`, `agency_stats_v1` 갱신.
+- 실제 적용:
+  - Neon에 기관 52개 seed 완료.
+  - Production stats API에서 `agency_count=52` 확인.
+  - 서울시의회(`의회사무처`) 5개 게시글 실제 적재:
+    - `posts_seen=50`
+    - `posts_fetched=5`
+    - `parsed_rows=14`
+    - `normalized_visits=14`
+    - `loaded_sources=4`
+    - `loaded_places=14`
+    - `loaded_visits=14`
+    - Kakao match rate `85.71%`
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `agencies=52`, `agencies_with_visits=2`, `agency_stats_visit_sum=189`.
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 11 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - `npm run build` → passed
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`189`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`2/52`).
+  - 구청/구의회 50개 기관은 정보소통광장 단일 패턴이 아니라 개별 게시판/PDF/HWP/XLSX 어댑터가 필요.

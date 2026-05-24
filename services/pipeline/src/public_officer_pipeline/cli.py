@@ -7,11 +7,12 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+from public_officer_pipeline.agencies import SEOUL_AGENCIES
 from public_officer_pipeline.crawler import SeoulOpenGovCrawler
 from public_officer_pipeline.entity import KakaoResolver
 from public_officer_pipeline.extractor import extract_expense_rows
 from public_officer_pipeline.loader import PostgresLoader
-from public_officer_pipeline.loader.postgres import apply_schema
+from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
 from public_officer_pipeline.models import Agency, NormalizedVisit, PipelineConfigError, PipelineStats
 from public_officer_pipeline.normalizer import Normalizer
 
@@ -28,6 +29,18 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--allow-deterministic-normalizer", action="store_true")
     run.add_argument("--allow-unmatched-places", action="store_true")
 
+    opengov = subparsers.add_parser(
+        "run-opengov-agency",
+        help="Crawl and load a Seoul OpenGov-backed agency from the agency master",
+    )
+    opengov.add_argument("agency", help="Agency UUID, name, or short_name")
+    opengov.add_argument("--since", type=date.fromisoformat, default=date.today() - timedelta(days=31))
+    opengov.add_argument("--limit-pages", type=int, default=3)
+    opengov.add_argument("--max-posts", type=int, default=10)
+    opengov.add_argument("--dry-run", action="store_true")
+    opengov.add_argument("--allow-deterministic-normalizer", action="store_true")
+    opengov.add_argument("--allow-unmatched-places", action="store_true")
+
     schema = subparsers.add_parser("apply-schema", help="Apply the Postgres schema to DATABASE_URL")
     schema.add_argument(
         "--migration",
@@ -35,11 +48,40 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("supabase/migrations/20260523235106_initial.sql"),
     )
 
+    subparsers.add_parser("seed-agencies", help="Seed the 52 Seoul v1 agencies into DATABASE_URL")
+    subparsers.add_parser("refresh-views", help="Refresh grade and agency stats materialized views")
+
     args = parser.parse_args(argv)
     if args.command == "run-seoul-city":
-        return asyncio.run(_run_seoul_city(args))
+        return asyncio.run(_run_opengov_agency(args, Agency()))
+    if args.command == "run-opengov-agency":
+        agency = _find_agency(args.agency)
+        if agency is None:
+            print(
+                json.dumps({"error": "unknown_agency", "agency": args.agency}, ensure_ascii=False),
+                file=sys.stderr,
+            )
+            return 2
+        if agency.source_pattern.get("adapter") != "seoul_opengov":
+            print(
+                json.dumps(
+                    {
+                        "error": "unsupported_adapter",
+                        "agency": agency.short_name,
+                        "adapter": agency.source_pattern.get("adapter"),
+                    },
+                    ensure_ascii=False,
+                ),
+                file=sys.stderr,
+            )
+            return 2
+        return asyncio.run(_run_opengov_agency(args, agency))
     if args.command == "apply-schema":
         return _apply_schema(args)
+    if args.command == "seed-agencies":
+        return asyncio.run(_seed_agencies())
+    if args.command == "refresh-views":
+        return _refresh_views()
     return 2
 
 
@@ -53,10 +95,37 @@ def _apply_schema(args: argparse.Namespace) -> int:
         return 3
 
 
-async def _run_seoul_city(args: argparse.Namespace) -> int:
+async def _seed_agencies() -> int:
+    try:
+        loader = PostgresLoader()
+        seeded_count = await loader.seed_agencies(SEOUL_AGENCIES)
+        print(json.dumps({"ok": True, "seeded_agencies": seeded_count}, ensure_ascii=False))
+        return 0
+    except PipelineConfigError as exc:
+        print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 3
+
+
+def _refresh_views() -> int:
+    try:
+        refresh_materialized_views()
+        print(json.dumps({"ok": True, "refreshed": ["place_grade_v1", "agency_stats_v1"]}))
+        return 0
+    except PipelineConfigError as exc:
+        print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 3
+
+
+def _find_agency(value: str) -> Agency | None:
+    for agency in SEOUL_AGENCIES:
+        if value in {str(agency.id), agency.name, agency.short_name}:
+            return agency
+    return None
+
+
+async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
     stats = PipelineStats()
-    agency = Agency()
-    crawler = SeoulOpenGovCrawler()
+    crawler = SeoulOpenGovCrawler(agency=agency)
     normalizer = Normalizer(allow_deterministic_fallback=args.allow_deterministic_normalizer)
     resolver = KakaoResolver(allow_unmatched_fallback=args.allow_unmatched_places)
 
