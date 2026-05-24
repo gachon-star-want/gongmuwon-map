@@ -36,10 +36,13 @@ class PostRef(BaseModel):
     url: str
     title: str
     published_at: date | None = None
+    department_name: str | None = None
+    file_kind: str = "html"
 
 
 class PostDetail(PostRef):
     html: str
+    content_bytes: bytes | None = None
     fetched_at: datetime
     hash_sha256: str
 

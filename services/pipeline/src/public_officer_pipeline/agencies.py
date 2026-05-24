@@ -92,6 +92,17 @@ def seoul_agencies() -> list[Agency]:
 
     for gu in SEOUL_GU_NAMES:
         domain_slug = SEOUL_GU_DOMAIN_SLUGS[gu]
+        office_source_pattern = {
+            "adapter": "district_board_required",
+            "searchKeyword": f"{gu}청 업무추진비",
+            "status": "adapter_required",
+        }
+        if gu == "강남구":
+            office_source_pattern = {
+                "adapter": "gangnam_xlsx_board",
+                "listUrl": "https://www.gangnam.go.kr/board/B_000673/list.do?mid=ID05_04200502",
+                "fileKinds": ["xlsx"],
+            }
         agencies.append(
             Agency(
                 id=agency_uuid(f"{gu}:office"),
@@ -101,11 +112,7 @@ def seoul_agencies() -> list[Agency]:
                 parent_region="서울특별시",
                 sub_region=gu,
                 homepage=f"https://www.{domain_slug}.go.kr",
-                source_pattern={
-                    "adapter": "district_board_required",
-                    "searchKeyword": f"{gu}청 업무추진비",
-                    "status": "adapter_required",
-                },
+                source_pattern=office_source_pattern,
             )
         )
         agencies.append(

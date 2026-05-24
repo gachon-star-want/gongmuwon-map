@@ -6,15 +6,33 @@ import json
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from collections.abc import Callable
+from typing import Protocol
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
-from public_officer_pipeline.crawler import SeoulOpenGovCrawler
+from public_officer_pipeline.crawler import GangnamExpenseCrawler, SeoulOpenGovCrawler
 from public_officer_pipeline.entity import KakaoResolver
-from public_officer_pipeline.extractor import extract_expense_rows
+from public_officer_pipeline.extractor import extract_expense_rows, extract_spreadsheet_rows
 from public_officer_pipeline.loader import PostgresLoader
 from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
-from public_officer_pipeline.models import Agency, NormalizedVisit, PipelineConfigError, PipelineStats
+from public_officer_pipeline.models import (
+    Agency,
+    NormalizedVisit,
+    ParsedExpenseRow,
+    PipelineConfigError,
+    PipelineStats,
+    PostDetail,
+    PostRef,
+)
 from public_officer_pipeline.normalizer import Normalizer
+
+
+class ExpenseCrawler(Protocol):
+    async def list_posts(self, since: date, limit_pages: int = 3) -> list[PostRef]: ...
+
+    async def fetch_post(self, ref: PostRef) -> PostDetail: ...
+
+    async def aclose(self) -> None: ...
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -40,6 +58,18 @@ def main(argv: list[str] | None = None) -> int:
     opengov.add_argument("--dry-run", action="store_true")
     opengov.add_argument("--allow-deterministic-normalizer", action="store_true")
     opengov.add_argument("--allow-unmatched-places", action="store_true")
+
+    agency_run = subparsers.add_parser(
+        "run-agency",
+        help="Crawl and load a supported agency from the agency master",
+    )
+    agency_run.add_argument("agency", help="Agency UUID, name, or short_name")
+    agency_run.add_argument("--since", type=date.fromisoformat, default=date.today() - timedelta(days=31))
+    agency_run.add_argument("--limit-pages", type=int, default=3)
+    agency_run.add_argument("--max-posts", type=int, default=10)
+    agency_run.add_argument("--dry-run", action="store_true")
+    agency_run.add_argument("--allow-deterministic-normalizer", action="store_true")
+    agency_run.add_argument("--allow-unmatched-places", action="store_true")
 
     schema = subparsers.add_parser("apply-schema", help="Apply the Postgres schema to DATABASE_URL")
     schema.add_argument(
@@ -76,6 +106,15 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
         return asyncio.run(_run_opengov_agency(args, agency))
+    if args.command == "run-agency":
+        agency = _find_agency(args.agency)
+        if agency is None:
+            print(
+                json.dumps({"error": "unknown_agency", "agency": args.agency}, ensure_ascii=False),
+                file=sys.stderr,
+            )
+            return 2
+        return asyncio.run(_run_supported_agency(args, agency))
     if args.command == "apply-schema":
         return _apply_schema(args)
     if args.command == "seed-agencies":
@@ -124,8 +163,37 @@ def _find_agency(value: str) -> Agency | None:
 
 
 async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
-    stats = PipelineStats()
     crawler = SeoulOpenGovCrawler(agency=agency)
+    return await _run_crawler(args, agency, crawler, _extract_detail_rows)
+
+
+async def _run_supported_agency(args: argparse.Namespace, agency: Agency) -> int:
+    adapter = agency.source_pattern.get("adapter")
+    if adapter == "seoul_opengov":
+        return await _run_opengov_agency(args, agency)
+    if adapter == "gangnam_xlsx_board":
+        return await _run_crawler(args, agency, GangnamExpenseCrawler(agency=agency), _extract_detail_rows)
+    print(
+        json.dumps(
+            {
+                "error": "unsupported_adapter",
+                "agency": agency.short_name,
+                "adapter": adapter,
+            },
+            ensure_ascii=False,
+        ),
+        file=sys.stderr,
+    )
+    return 2
+
+
+async def _run_crawler(
+    args: argparse.Namespace,
+    agency: Agency,
+    crawler: ExpenseCrawler,
+    row_extractor: Callable[[PostDetail], list[ParsedExpenseRow]],
+) -> int:
+    stats = PipelineStats()
     normalizer = Normalizer(allow_deterministic_fallback=args.allow_deterministic_normalizer)
     resolver = KakaoResolver(allow_unmatched_fallback=args.allow_unmatched_places)
 
@@ -140,7 +208,7 @@ async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
         for post in posts[: args.max_posts]:
             detail = await crawler.fetch_post(post)
             stats.posts_fetched += 1
-            rows = [row for row in extract_expense_rows(detail.html) if row.used_at.date() >= args.since]
+            rows = [row for row in row_extractor(detail) if row.used_at.date() >= args.since]
             stats.parsed_rows += len(rows)
             visits = await normalizer.normalize_rows(
                 agency_id=agency.id,
@@ -170,6 +238,7 @@ async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
                     source_title=detail.title,
                     source_published_at=detail.published_at,
                     source_hash_sha256=detail.hash_sha256,
+                    source_file_kind=detail.file_kind,
                     resolved_places=post_places,
                     visits=visits,
                 )
@@ -189,6 +258,17 @@ async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
         return 3
     finally:
         await crawler.aclose()
+
+
+def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
+    if detail.file_kind == "html":
+        return extract_expense_rows(detail.html)
+    if detail.file_kind == "xlsx" and detail.content_bytes:
+        return extract_spreadsheet_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+        )
+    return []
 
 
 if __name__ == "__main__":

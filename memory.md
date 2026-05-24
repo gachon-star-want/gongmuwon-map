@@ -123,3 +123,27 @@
   - `place_visits > 10,000` 기준은 아직 미달 (`189`).
   - `>=45/52` 기관 적재 기준은 아직 미달 (`2/52`).
   - 구청/구의회 50개 기관은 정보소통광장 단일 패턴이 아니라 개별 게시판/PDF/HWP/XLSX 어댑터가 필요.
+
+## 2026-05-24 강남구청 XLSX 어댑터 체크포인트
+
+- 구현:
+  - `openpyxl` 의존성 추가.
+  - `extract_spreadsheet_rows` XLSX 추출기 추가.
+  - `GangnamExpenseCrawler` 추가: `B_000673` 업무추진비 공개 목록에서 XLSX 첨부 다운로드.
+  - `run-agency <agency>` CLI 추가: `seoul_opengov`, `gangnam_xlsx_board` adapter dispatch.
+  - `PostRef`/`PostDetail`에 `department_name`, `file_kind`, `content_bytes` 추가.
+  - `sources.file_kind`에 실제 `xlsx` 저장되도록 loader 확장.
+- Dry-run:
+  - 강남구청 1페이지 3개 첨부: `parsed_rows=6`, `kakao_match_rate=100%`.
+- 실제 적재:
+  - 강남구청 1페이지 10개 첨부 실행.
+  - `posts_seen=10`, `posts_fetched=10`, `parsed_rows=6`, `loaded_sources=1`, `loaded_places=5`, `loaded_visits=6`, Kakao match rate `100%`.
+  - materialized views refresh 완료.
+  - 직접 DB 확인: `place_visits=195`, `places_public=161`, 방문 데이터가 있는 기관 `3/52` (`서울시청=175`, `서울시의회=14`, `강남구청=6`).
+- 검증:
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline pytest` → 13 passed
+  - `uv --cache-dir /private/tmp/uv-cache run --project services/pipeline ruff check` → passed
+  - `npm run build` → passed
+- 남은 Phase 2 실패:
+  - `place_visits > 10,000` 기준은 아직 미달 (`195`).
+  - `>=45/52` 기관 적재 기준은 아직 미달 (`3/52`).

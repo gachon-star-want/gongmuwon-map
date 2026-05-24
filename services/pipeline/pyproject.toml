@@ -5,10 +5,11 @@ description = "Public Officer Map crawler, extractor, normalizer, entity resolve
 requires-python = ">=3.12"
 dependencies = [
   "httpx>=0.28.1",
+  "openpyxl>=3.1.5",
   "psycopg[binary]>=3.2.13",
   "pydantic>=2.12.4",
   "python-dateutil>=2.9.0.post0",
-  "selectolax>=0.4.4"
+  "selectolax>=0.4.4",
 ]
 
 [dependency-groups]

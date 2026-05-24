@@ -27,6 +27,7 @@ class PostgresLoader:
         source_title: str,
         source_published_at: date | None,
         source_hash_sha256: str,
+        source_file_kind: str = "html",
         resolved_places: dict[str, ResolvedPlace],
         visits: list[NormalizedVisit],
         storage_path: str | None = None,
@@ -44,6 +45,7 @@ class PostgresLoader:
                     source_title=source_title,
                     source_published_at=source_published_at,
                     source_hash_sha256=source_hash_sha256,
+                    source_file_kind=source_file_kind,
                     storage_path=storage_path,
                 )
 
@@ -112,6 +114,7 @@ class PostgresLoader:
         source_title: str,
         source_published_at: date | None,
         source_hash_sha256: str,
+        source_file_kind: str,
         storage_path: str | None,
     ) -> UUID:
         row = await self._fetch_one(
@@ -120,7 +123,7 @@ class PostgresLoader:
             INSERT INTO public.sources (
               agency_id, url, title, published_at, file_kind, storage_path, hash_sha256
             )
-            VALUES (%s, %s, %s, %s, 'html', %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (agency_id, hash_sha256) DO UPDATE SET
               url = EXCLUDED.url,
               title = EXCLUDED.title,
@@ -134,6 +137,7 @@ class PostgresLoader:
                 source_url,
                 source_title,
                 source_published_at,
+                source_file_kind,
                 storage_path,
                 source_hash_sha256,
             ),
