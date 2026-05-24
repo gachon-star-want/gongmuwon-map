@@ -11,12 +11,12 @@
                                                                 ▼
                   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
                   │   Loader     │ ← │   Geocoder   │ ← │   Resolver   │
-                  │  (Supabase   │   │ (카카오 좌표) │   │ (카카오 place│
-                  │   upsert)    │   │              │   │   match)     │
+                  │ (Neon upsert │   │ (카카오 좌표) │   │ (카카오 place│
+                  │ via psycopg) │   │              │   │   match)     │
                   └──────────────┘   └──────────────┘   └──────────────┘
 ```
 
-각 단계는 멱등성을 가지며, 중간 산출물은 Supabase Storage(`raw-sources/`)와 로컬 SQLite(`pipeline_state.db`)에 캐시.
+각 단계는 멱등성을 가지며, 중간 산출물은 Cloudflare R2(`r2://officer-map-raw/`)와 로컬 SQLite(`pipeline_state.db`)에 캐시.
 
 ## 모듈별 책임
 
@@ -53,8 +53,8 @@ class CrawlerAdapter(Protocol):
 
 - HTTP GET + Range 헤더 + 30초 타임아웃
 - SHA-256 해시 계산, 같은 해시 캐시되어 있으면 skip
-- Supabase Storage `raw-sources/{agency_short}/{yyyy-mm}/{hash}.{ext}` 업로드
-- `sources` 테이블에 row insert
+- Cloudflare R2 버킷 `officer-map-raw` 에 `{agency_short}/{yyyy-mm}/{hash}.{ext}` 키로 업로드 (S3 호환 SDK 사용, `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` 환경변수)
+- `sources` 테이블에 row insert (`storage_path = r2://officer-map-raw/{agency_short}/{yyyy-mm}/{hash}.{ext}`)
 
 ### 3. `extractor/` — 파일 → 텍스트
 
@@ -105,18 +105,20 @@ class CrawlerAdapter(Protocol):
 
 3개 프로바이더(Anthropic·OpenAI·Gemini)를 통일 인터페이스 `LLMClient`로 호출. 작업 유형에 따라 라우팅:
 
-| 작업 유형 | 1차 | 2차 | 3차 |
+| 작업 유형 | 1차 (모델 · thinking/reasoning) | 2차 | 3차 |
 |---|---|---|---|
-| 대량 표 정규화 | Gemini 2.5 Flash | Claude Haiku 4.5 | GPT-4o-mini |
-| PDF 표 추출 | Claude Haiku 4.5 | Gemini 2.5 Flash | Claude Sonnet 4.6 |
-| PDF 비전(스캔) | Claude Sonnet 4.6 vision | Gemini 2.5 Pro vision | GPT-4o vision |
-| 식당명 정규화 | Claude Sonnet 4.6 | GPT-4o | Gemini 2.5 Pro |
-| 사이트 어댑터 추론 | Claude Sonnet 4.6 | GPT-4o | — |
-| 마스킹 검증 | Claude Sonnet 4.6 | (재시도) | 사람 큐 |
+| 대량 표 정규화 | Gemini 3.5 Flash · `thinking_level=minimal` | Claude Haiku 4.5 · ET off | GPT-5.5 · `reasoning.effort=low` |
+| PDF 표 추출 (텍스트) | Claude Haiku 4.5 · ET off | Gemini 3.5 Flash · `thinking_level=low` | Claude Sonnet 4.6 · ET 4K |
+| PDF 비전(스캔) | **Claude Opus 4.7 vision · ET 8K** | Gemini 3.5 Flash vision · `thinking_level=medium` | GPT-5.5 · `reasoning.effort=medium` |
+| 식당명 정규화 | Claude Sonnet 4.6 · ET 4K | GPT-5.5 · `reasoning.effort=medium` | Claude Opus 4.7 · ET 4K |
+| 사이트 어댑터 추론 (일회성) | Claude Opus 4.7 · ET 32K | GPT-5.5 · `reasoning.effort=high` | — |
+| 마스킹 검증 (보안 critical) | Claude Sonnet 4.6 · ET 16K | Claude Sonnet 4.6 재시도 · ET 16K | 사람 큐 |
+
+> `ET = extended_thinking.budget_tokens`. 프로바이더별 thinking 파라미터 매핑은 [ADR-009](adr/ADR-009-multi-llm-provider-routing.md#thinking--reasoning-파라미터-매핑) 참조.
 
 폴백 트리거: 5xx/429 / 30초 타임아웃 / schema validation 실패 / confidence < 0.8 평균.
 
-호출 단위 토큰 사용량은 `llm_usage` 테이블에 적재. 일일 예산(`LLM_BUDGET_DAILY_USD`) 초과 시 자동 강등.
+호출 단위 토큰 사용량(thinking 토큰 포함)은 `llm_usage` 테이블에 적재. 일일 예산(`LLM_BUDGET_DAILY_USD`) 초과 시 자동 강등.
 
 #### 마스킹 룰 (LLM 시스템 프롬프트에 박힘)
 
@@ -151,10 +153,10 @@ class CrawlerAdapter(Protocol):
 - Entity resolver가 placeId 매칭 성공하면 좌표 자동 획득 (별도 호출 불필요).
 - 폴백(자체 자연키)인 경우 카카오 주소 → 좌표 변환 API 호출.
 
-### 7. `loader/` — Supabase Upsert
+### 7. `loader/` — Neon Postgres Upsert
 
 ```python
-# 의사 코드
+# 의사 코드 (psycopg/asyncpg, DATABASE_URL 사용)
 for visit in normalized_batch:
     place = upsert_place(visit.place_raw, resolved)
     upsert_source(visit.source)
@@ -169,8 +171,8 @@ for visit in normalized_batch:
     )
 ```
 
-- Service role 키로 PostgREST 호출.
-- 한 번에 500 row씩 배치.
+- `DATABASE_URL` (service role, RLS bypass) 로 Neon에 직접 SQL 실행. PostgREST 미사용.
+- 한 번에 500 row씩 배치 (Neon connection pooler 사용 권장).
 - 실패 시 트랜잭션 롤백 + GitHub Issue.
 
 ## 실행 스케줄
@@ -178,8 +180,8 @@ for visit in normalized_batch:
 | 작업 | 빈도 | 트리거 |
 |---|---|---|
 | `daily-crawl.yml` | 매일 03:00 KST | GitHub Actions cron |
-| `recompute-grades` | 매일 03:30 KST | Supabase pg_cron |
-| `sitemap-generate` | 매일 04:00 KST | Supabase pg_cron |
+| `GET /api/cron/recompute-grades` | 매일 03:30 KST | Vercel Cron (`vercel.json` crons) |
+| `GET /api/sitemap` 워밍 | 매일 04:00 KST | Vercel Cron |
 | `data-health-check` | 매일 04:30 KST | GitHub Actions, row count 알림 |
 
 ## 에러 처리 정책

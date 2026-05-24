@@ -1,5 +1,4 @@
-Supabase CLI deploys Edge Functions from `supabase/functions/`.
+This directory is retained only as migration history.
 
-The production function sources live there so `supabase functions serve` and
-`supabase functions deploy` work without extra path configuration. This folder
-is kept as the architecture-level boundary referenced by `docs/RUNBOOK.md`.
+Runtime server logic now lives in root `api/` Vercel API Routes. See
+`docs/adr/ADR-010-database-stack-migration.md`.

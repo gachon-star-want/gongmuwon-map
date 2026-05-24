@@ -96,7 +96,7 @@ ORDER BY score
 
 - 매일 03:30 KST: `REFRESH MATERIALIZED VIEW CONCURRENTLY place_grade_v1`
 - 새 방문 1건 적재 시 즉시 재계산 안 함 (비용 큼). 다음 daily refresh까지 기다림.
-- 운영자가 강제 재계산 필요 시 `recompute-grades` Edge Function에 인증 키로 호출.
+- 운영자가 강제 재계산 필요 시 Vercel Cron/API Route `/api/cron/recompute-grades`를 인증 키로 호출.
 
 ## 미래 확장 (v1.1+)
 

@@ -1,7 +1,9 @@
 # ADR-006 — 풀스택 조합: Vite + React + Mantine + Supabase + Vercel
 
-- **Status**: Accepted
+- **Status**: Accepted (Supabase portion superseded by [ADR-010](ADR-010-database-stack-migration.md))
 - **Date**: 2026-05-23
+
+> **Note (2026-05-24)**: 이 ADR의 Supabase(DB/Storage/Edge Functions/Auth) 부분은 [ADR-010](ADR-010-database-stack-migration.md)에 의해 Neon + Cloudflare R2 + Vercel API Routes로 대체되었습니다. 그 외(Frontend Build/Framework/UI/State/Map/Hosting/Crawler/LLM) 결정은 그대로 유효합니다. 아래의 본 결정 내용은 박제 목적으로 원형을 유지합니다.
 
 ## Context
 

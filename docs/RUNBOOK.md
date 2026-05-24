@@ -5,12 +5,15 @@
 ## 전제 조건
 
 ### 이미 완료된 것 (사용자가 사전 준비)
-- ✅ **Supabase CLI 로그인** (`supabase login`) 완료
-- ✅ **Vercel CLI 로그인** (`vercel login`) 완료
-- ✅ **GitHub CLI 로그인** (`gh auth status` 확인 완료)
+- ✅ **Neon CLI 로그인** (`neonctl auth`) 완료 — DB 스택 ([ADR-010](adr/ADR-010-database-stack-migration.md))
+- ✅ **Cloudflare 계정 + R2 활성화** — Object Storage
+- ✅ **Vercel CLI 로그인** (`vercel login`) 완료, 프로젝트 이미 연결됨
+- ✅ **GitHub CLI 로그인** (`gh auth status` 확인 완료), 저장소 + 도메인 이미 설정됨
 - ✅ **외부 API 키** — 사용자가 직접 마련, 배포 직전 환경변수로 주입
+  - **DB**: `DATABASE_URL` (Neon, service 쓰기용), `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted)
+  - **R2**: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=officer-map-raw`
   - **LLM 3종**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` (멀티 프로바이더 라우팅 — [ADR-009](adr/ADR-009-multi-llm-provider-routing.md))
-  - **카카오**: `KAKAO_JS_KEY` (도메인 제한), `KAKAO_REST_KEY` (Edge Function 전용)
+  - **카카오**: `KAKAO_JS_KEY` (도메인 제한), `KAKAO_REST_KEY` (Vercel API Route 서버 측 전용)
   - **메일**: `RESEND_API_KEY`
   - **라우팅 설정**: `LLM_PRIMARY=anthropic`, `LLM_FALLBACK_ORDER=openai,gemini,anthropic-sonnet`, `LLM_BUDGET_DAILY_USD=10`
 
@@ -25,17 +28,19 @@
 
 | 작업 | 명령 |
 |---|---|
-| Supabase 프로젝트 생성·링크 | `supabase init && supabase link --project-ref <ref>` |
-| Vercel 프로젝트 생성·링크 | `vercel link` (인터랙티브 회피 → `--yes`로 자동) |
-| GitHub 저장소 생성·push | `gh repo create gongmuwon-map --public --source . --push` |
-| GitHub Secret 주입 | `gh secret set ANTHROPIC_API_KEY` 등 — 사용자가 키 값 제공 시점만 결정 |
-| Vercel 환경변수 주입 | `vercel env add VITE_KAKAO_JS_KEY production` 등 |
+| Neon 프로젝트 생성 | `neonctl projects create gongmuwon-map --org-id <org>` → `DATABASE_URL` 획득 |
+| Neon 역할 생성 (1회) | `public-officer-pipeline apply-schema`가 `anon`, `authenticated`, `service_role` NOLOGIN 역할을 idempotent하게 생성 |
+| Cloudflare R2 버킷 생성 | 대시보드에서 `officer-map-raw` 버킷 + API 토큰 발급 (R2 SDK 사용) |
+| Vercel 프로젝트 연결 확인 | (이미 연결됨) `vercel link` — 재실행 불필요 |
+| GitHub 저장소 push | (이미 생성됨) `git push origin main` |
+| GitHub Secret 주입 | `gh secret set DATABASE_URL`, `gh secret set R2_ACCESS_KEY_ID` 등 |
+| Vercel 환경변수 주입 | `vercel env add DATABASE_URL production`, `vercel env add R2_ACCOUNT_ID production` 등 |
 
-`<<TBD: ...>>` 플레이스홀더가 모든 MD에 남아 있는지 시작 시 grep으로 확인: `grep -rn '<<TBD' --include='*.md'`. 0건이어야 자율 모드 Phase 1 진입 가능.
+미확정 운영자 토큰이 모든 MD에 남아 있는지 시작 시 grep으로 확인: `grep -rn '<<''TBD' --include='*.md'`. 0건이어야 자율 모드 Phase 1 진입 가능.
 
 ## Phase 0: 운영자 정보 채우기 (자율 모드 시작 직후, 약 5분)
 
-자율 에이전트는 Phase 1 시작 전에 사용자에게 다음 6개 값을 묻고, 모든 MD의 `<<TBD>>`를 자동 치환한다.
+자율 에이전트는 Phase 1 시작 전에 사용자에게 다음 6개 값을 묻고, 모든 MD의 운영자 미확정 토큰을 자동 치환한다.
 
 | 필드 | 예시 |
 |---|---|
@@ -50,18 +55,18 @@
 치환 명령 (자율 에이전트 실행):
 ```bash
 # 예시 (실제 값은 사용자 응답으로 받아 치환)
-sed -i '' 's|<<TBD: 운영자 정보>>|이원영 · admin@... · ...|g' AGENTS.md
-sed -i '' 's|<<TBD: 실명/단체명>>|이원영|g' docs/LEGAL_PRIVACY.md
-sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_PRIVACY.md docs/UI_UX.md
+sed -i '' 's|운영자정보_미확정|이원영 · admin@... · ...|g' AGENTS.md
+sed -i '' 's|운영자명_미확정|이원영|g' docs/LEGAL_PRIVACY.md
+sed -i '' 's|운영자이메일_미확정|admin@gongmuwon-map.com|g' docs/LEGAL_PRIVACY.md docs/UI_UX.md
 # 등 ... 자율 에이전트가 grep 결과를 보고 일괄 처리
 ```
 
-치환 후 검증: `grep -rn '<<TBD' --include='*.md'` 결과 0건.
+치환 후 검증: `grep -rn '<<''TBD' --include='*.md'` 결과 0건.
 
 **자기 참조 4곳 예외**(검증 시그널이라 변경 금지):
 - `RUNBOOK.md` L18 (자기 참조)
-- `RUNBOOK.md` Phase 3 체크리스트 (`<<TBD>>` grep 결과 0건)
-- `TEST_PLAN.md` 수동 QA 항목 (`<<TBD>>` grep 결과 0건)
+- `RUNBOOK.md` Phase 3 체크리스트 (운영자 미확정 토큰 grep 결과 0건)
+- `TEST_PLAN.md` 수동 QA 항목 (운영자 미확정 토큰 grep 결과 0건)
 
 이 4곳은 코드 블록 안 또는 백틱 문구로 표시되어 있어 자동 치환 대상에서 제외 가능.
 
@@ -71,13 +76,14 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 
 ### 1.1 저장소 구조 부트스트랩
 - `apps/web/` Vite + React + TypeScript + Mantine 스캐폴드
+- `api/` Vercel API Routes (Node.js/TypeScript) — 프론트와 동일 Vercel 프로젝트 ([ADR-010](adr/ADR-010-database-stack-migration.md))
 - `services/pipeline/` Python 3.12 + uv 또는 poetry 환경
-- `services/edge-functions/` Supabase Edge Functions (Deno)
-- `supabase/migrations/0001_initial.sql` — `DATA_MODEL.md` SQL 그대로
+- `supabase/migrations/20260523235106_initial.sql` — `DATA_MODEL.md` SQL 그대로 (파일 경로는 commit 히스토리 보존을 위해 유지, Neon에 적용)
 
-### 1.2 Supabase 스키마 적용
-- `supabase db push`
-- RLS·뷰·RPC 생성 확인
+### 1.2 Neon 스키마 적용
+- Neon 역할 생성은 마이그레이션 상단의 role bootstrap 블록이 idempotent하게 처리한다.
+- 마이그레이션 적용: `uv run --project services/pipeline public-officer-pipeline apply-schema` (내부에서 `DATABASE_URL`로 SQL 실행)
+- RLS·뷰·SQL 함수 생성 확인
 - `place_grade_v1` 머티리얼라이즈드 뷰 빈 상태로 생성
 
 ### 1.3 Crawler 어댑터 1개 (서울시청)
@@ -86,26 +92,27 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 
 ### 1.4 Extractor·Normalizer
 - HTML 표 → 자유 텍스트 변환
-- Anthropic Haiku 호출, 정규화 JSON 받기
-- 마스킹 검증
+- `LLMClient.extract(task=TABLE_NORMALIZE, ...)` 호출 (1차 Gemini 3.5 Flash, [ADR-009](adr/ADR-009-multi-llm-provider-routing.md) 라우팅), 정규화 JSON 받기
+- 마스킹 검증 (`LLMClient.extract(task=MASKING_VERIFY, ...)` — Claude Sonnet 4.6 + ET 16K)
 
 ### 1.5 Entity Resolver·Geocoder
 - 카카오 로컬 검색 API 호출, placeId·좌표 획득
 - 폴백 자연키 생성 로직 검증
 
 ### 1.6 Loader
-- Supabase REST upsert
+- Neon Postgres에 직접 SQL upsert (psycopg/asyncpg, `DATABASE_URL` service role)
+- 원본 파일은 Cloudflare R2(`officer-map-raw` 버킷)에 업로드 → `sources.storage_path = r2://...`
 - 멱등성 테스트(같은 sample 두 번 실행해도 row 수 동일)
 
 ### 1.7 등급 계산
-- `recompute-grades` Edge Function 호출
+- Vercel API Route `/api/cron/recompute-grades` 호출 (수동: `curl https://<vercel-url>/api/cron/recompute-grades`)
 - `places_public` 뷰에서 grade 컬럼 채워지는지 확인
 
 ### Phase 1 셀프 체크리스트
 - [ ] `place_visits`에 100+ rows
 - [ ] `places`에 30+ rows (식당 수)
 - [ ] 모든 row의 `representative` 컬럼이 NULL이거나 시장 직급
-- [ ] `places_public` 뷰가 anon 키로 SELECT 가능
+- [ ] `places_public` 뷰가 `DATABASE_URL_READONLY` (Neon anon role) 로 SELECT 가능
 - [ ] `place_grade_v1`에 grade가 채워진 row 다수
 - [ ] 카카오 로컬 매칭율 ≥ 70%
 
@@ -122,13 +129,13 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 - 헤더·필터 바·디테일 패널·바텀시트 (모바일)
 - 다크모드·다국어 베이스
 
-### 2.3 Supabase 클라이언트
-- `@supabase/supabase-js` 익명 키
+### 2.3 API 클라이언트
+- 자체 Vercel API Routes (`/api/v1/places`, `/api/v1/places/[id]`, `/api/v1/agencies` 등) 호출 — 클라이언트는 DB 자격 증명 없이 fetch만
 - TanStack Query 훅: `usePlaces(bbox, filters)`, `usePlace(id)`, `usePlaceVisits(id)`
 
 ### 2.4 SEO 베이스
 - path별 메타태그 JS 동적 주입
-- Edge Function `sitemap-generate` 정적 sitemap.xml + llms.txt 생성
+- Vercel API Route `/api/sitemap` (Vercel Cron이 매일 워밍) — sitemap.xml + llms.txt 동적 응답
 - JSON-LD Restaurant 스키마
 
 ### 2.5 나머지 51개 기관 백필
@@ -136,9 +143,10 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 - 실패율 > 30% 기관은 GitHub Issue 생성 → v1.1로 미룸
 - 24개월 백필 실행 (등급 계산은 12개월만 사용)
 
-### 2.6 노티스앤테이크다운 + 폐업 신고 Edge Functions
-- `notice-takedown` Edge Function: 폼 접수 → 즉시 hide → 운영자 이메일
-- `closure-report` Edge Function: 누적 3건 시 자동 폐업
+### 2.6 노티스앤테이크다운 + 폐업 신고 Vercel API Routes
+- `POST /api/takedown-request` (구 `notice-takedown`): 폼 접수 → 즉시 hide → 운영자 이메일 (Resend SDK)
+- `POST /api/closure-report` (구 `closure-report`): 누적 3건 시 자동 폐업 (SQL 함수 `report_closure` 호출)
+- `vercel deploy` 한 번으로 프론트와 동시 배포
 
 ### Phase 2 셀프 체크리스트
 - [ ] localhost:5173에서 지도 + 마커 + 디테일 패널 동작
@@ -156,7 +164,7 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 
 ### 3.1 법무 페이지
 - `/about`, `/privacy`, `/terms`, `/disclaimer`, `/legal` 페이지
-- 운영자 신원 실제 값으로 채우기 (`<<TBD>>` 다 제거)
+- 운영자 신원 실제 값으로 채우기 (운영자 미확정 토큰 다 제거)
 - 푸터 최종
 
 ### 3.2 API 문서 페이지
@@ -172,7 +180,7 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 - Slack/이메일 알림 채널 설정
 
 ### 3.5 외부 모니터링
-- Sentry 프론트·Edge Function 양쪽 연결
+- Sentry 프론트·Vercel API Routes 양쪽 연결
 - Plausible 또는 GA4 설치
 - Google Search Console 등록 + sitemap.xml 제출
 
@@ -190,7 +198,7 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 - 부정 트래픽 (DDoS·스크래핑 폭주)
 
 ### Phase 3 셀프 체크리스트
-- [ ] `<<TBD>>` grep 결과 0건 (모든 플레이스홀더 채워짐)
+- [ ] 운영자 미확정 토큰 grep 결과 0건 (모든 플레이스홀더 채워짐)
 - [ ] 프로덕션 URL 정상 접속
 - [ ] HTTPS, HSTS 적용
 - [ ] sitemap.xml, robots.txt, llms.txt 접근 가능
@@ -211,11 +219,14 @@ sed -i '' 's|<<TBD: 운영자 이메일>>|admin@gongmuwon-map.com|g' docs/LEGAL_
 
 | 에러 | 행동 |
 |---|---|
-| Supabase 연결 실패 | 환경변수·키 재확인, 30초 대기 후 재시도, 3회 실패 시 중단 보고 |
+| Neon 연결 실패 | `DATABASE_URL` / `DATABASE_URL_READONLY` 재확인, Neon scale-to-zero 콜드 스타트 대기(최대 5초), 3회 실패 시 중단 보고 |
+| R2 업로드 실패 | `R2_*` 키 + 버킷명 재확인, 일시적 5xx면 지수 백오프 3회, 최종 실패 시 R2 캐시 skip하고 in-memory만 사용 |
 | 카카오 API 401/403 | 키·도메인 제한 확인, 사용자 보고 후 중단 |
 | 카카오 일 한도 초과 | 다음 사이클로 미루기, GitHub Issue 생성 |
-| Anthropic 429 | 지수 백오프, 5회 실패 시 Sonnet→Haiku 강등 후 재시도 |
-| 추출 confidence 평균 < 0.8 | 모델 자동 Sonnet으로 escalate (PIPELINE.md의 임계값과 동일). confidence 평균 < 0.5는 즉시 `extraction_failures` 큐 |
+| Anthropic 429 | 지수 백오프, 즉시 다음 프로바이더(OpenAI → Gemini)로 폴백 ([ADR-009](adr/ADR-009-multi-llm-provider-routing.md) 매트릭스). 모든 프로바이더 429면 5분 대기 후 재시도 |
+| OpenAI 429 / Gemini 429 | 동일 — 다음 프로바이더로 즉시 폴백 |
+| 추출 confidence 평균 < 0.8 | 매트릭스의 다음 행으로 escalate (예: Haiku → Sonnet, Flash → Opus). confidence 평균 < 0.5는 즉시 `extraction_failures` 큐 |
+| 일일 예산(`LLM_BUDGET_DAILY_USD`) 초과 | 자동 강등 — 모든 작업을 가장 싼 1차 모델로 1주 운영, 알림 |
 | Vercel 배포 실패 | 빌드 로그 분석, 환경변수 재확인. 변경 commit 안 한 채 4번 실패 시 중단 |
 | Materialized view refresh 실패 | 다음 사이클로 미루기 + 알림 |
 

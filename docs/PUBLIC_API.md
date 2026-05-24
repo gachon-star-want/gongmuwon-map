@@ -26,24 +26,50 @@
 
 ## 구현 방식
 
-**핵심: Supabase PostgREST 자동 노출 + Vercel Edge Routing 리버스 프록시.**
+**핵심: Vercel API Routes에 v1 엔드포인트를 손으로 작성. 핸들러가 Neon에 SQL 실행 후 `*_public` 뷰 결과를 JSON으로 반환.** ([ADR-010](adr/ADR-010-database-stack-migration.md))
 
-- Supabase는 모든 view·function을 `/rest/v1/...`로 자동 노출.
-- 우리는 Vercel rewrite로 `/api/v1/places` → `/rest/v1/places_public`처럼 매핑.
-- 추가 코드 거의 0.
+- v1엔 PostgREST 자동 노출이 없으므로 엔드포인트별 짧은 핸들러를 직접 둔다(5개).
+- 핸들러는 `DATABASE_URL_READONLY` (anon RLS-restricted Neon 역할)로 연결 → `*_public` 뷰만 SELECT 가능.
+- 쓰기 경로(`/api/closure-report`, `/api/takedown-request`)만 `DATABASE_URL` (service role)로 전환 후 SQL 함수 호출.
+- **v1.1 옵션**: Render에 PostgREST 컨테이너 셀프호스트 → 다시 자동 노출로 회귀 검토.
 
-### Vercel `vercel.json` rewrites 예시
+### Vercel API Route 예시 (`api/v1/places.ts`)
+
+```ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY });
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const { bbox, grade, limit = '100' } = req.query;
+  // bbox = "min_lat,min_lng,max_lat,max_lng"
+  const [minLat, minLng, maxLat, maxLng] = String(bbox).split(',').map(Number);
+  const grades = grade ? String(grade).split(',') : [];
+  const values = [minLat, minLng, maxLat, maxLng, Number(limit)];
+  const sql = grades.length
+    ? `SELECT * FROM places_public
+       WHERE latitude BETWEEN $1 AND $3
+         AND longitude BETWEEN $2 AND $4
+         AND grade = ANY($6)
+       LIMIT $5`
+    : `SELECT * FROM places_public
+       WHERE latitude BETWEEN $1 AND $3
+         AND longitude BETWEEN $2 AND $4
+       LIMIT $5`;
+
+  const { rows } = await pool.query(sql, grades.length ? [...values, grades] : values);
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  res.json(rows);
+}
+```
+
+### `vercel.json` (캐시 헤더만 — rewrites 미사용)
 
 ```json
 {
-  "rewrites": [
-    { "source": "/api/v1/places", "destination": "https://<project>.supabase.co/rest/v1/places_public" },
-    { "source": "/api/v1/places/:id", "destination": "https://<project>.supabase.co/rest/v1/places_public?id=eq.:id" },
-    { "source": "/api/v1/places/:id/visits", "destination": "https://<project>.supabase.co/rest/v1/place_visits_public?place_id=eq.:id" },
-    { "source": "/api/v1/agencies", "destination": "https://<project>.supabase.co/rest/v1/agencies_public" },
-    { "source": "/api/v1/agencies/:id", "destination": "https://<project>.supabase.co/rest/v1/agencies_public?id=eq.:id" },
-    { "source": "/api/v1/stats/summary", "destination": "https://<project>.supabase.co/rest/v1/rpc/get_summary_stats" }
-  ],
   "headers": [
     {
       "source": "/api/v1/(.*)",
@@ -52,11 +78,15 @@
         { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=600" }
       ]
     }
+  ],
+  "crons": [
+    { "path": "/api/cron/recompute-grades", "schedule": "30 18 * * *" },
+    { "path": "/api/sitemap", "schedule": "0 19 * * *" }
   ]
 }
 ```
 
-Supabase anon 키는 클라이언트 헤더로 자동 주입(미들웨어).
+> 표 상단의 `/api/v1/*` 경로는 v1 정식 경로이며, 실제 라우트 파일은 Vercel 기본 규칙에 맞춰 repo root `api/v1/...`에 둔다.
 
 ## 응답 스키마 예시
 
@@ -109,7 +139,7 @@ Supabase anon 키는 클라이언트 헤더로 자동 주입(미들웨어).
 | **익명 (도메인 정상 Referer)** | 600 req/min |
 | **인증 키 (v1.1)** | 무제한 (FUP 적용) |
 
-구현: Vercel Edge Middleware + KV(Upstash 무료 한도) 토큰 버킷.
+구현: Vercel Edge Middleware + Upstash Redis(무료 한도) 토큰 버킷.
 
 ## CORS
 
@@ -118,7 +148,7 @@ Supabase anon 키는 클라이언트 헤더로 자동 주입(미들웨어).
 
 ## OpenAPI 3.1 스펙
 
-`/openapi.json` — Edge Function이 Supabase 스키마에서 자동 생성. 정적 캐시 1시간.
+`/openapi.json` — 빌드 시 정적 파일로 생성(`apps/web/public/openapi.json`) 또는 `/api/openapi` Vercel API Route가 동적 응답. 1시간 캐시.
 
 ```yaml
 openapi: 3.1.0
@@ -215,9 +245,10 @@ Claude Desktop, Cursor, Cline 등에서 직접 호출 가능.
 
 ## 보안
 
-- Supabase anon 키 노출되지만 RLS로 view·rpc 외 접근 차단.
-- PostgREST의 `?select=` 컬럼 노출 제한 (RLS USING 절에서 컬럼 마스킹).
-- Sensitive 데이터(추출 원본 PDF 경로 등)는 anon에 노출 안 됨.
+- DB 자격 증명은 클라이언트에 노출되지 않음 (모든 SQL은 Vercel API Route 서버 측에서 실행).
+- 읽기 핸들러는 `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted) 사용 → 원본 테이블 SELECT 차단, `*_public` 뷰만 허용.
+- 쓰기 핸들러는 `DATABASE_URL` (service role)로 전환 후 SQL 함수만 호출.
+- Sensitive 데이터(추출 원본 R2 경로 등)는 anon 응답 스키마에서 제외.
 
 ## 분석
 

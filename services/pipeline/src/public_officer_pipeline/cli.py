@@ -5,11 +5,13 @@ import asyncio
 import json
 import sys
 from datetime import date, timedelta
+from pathlib import Path
 
 from public_officer_pipeline.crawler import SeoulOpenGovCrawler
 from public_officer_pipeline.entity import KakaoResolver
 from public_officer_pipeline.extractor import extract_expense_rows
-from public_officer_pipeline.loader import SupabaseRestLoader
+from public_officer_pipeline.loader import PostgresLoader
+from public_officer_pipeline.loader.postgres import apply_schema
 from public_officer_pipeline.models import Agency, NormalizedVisit, PipelineConfigError, PipelineStats
 from public_officer_pipeline.normalizer import Normalizer
 
@@ -26,10 +28,29 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--allow-deterministic-normalizer", action="store_true")
     run.add_argument("--allow-unmatched-places", action="store_true")
 
+    schema = subparsers.add_parser("apply-schema", help="Apply the Postgres schema to DATABASE_URL")
+    schema.add_argument(
+        "--migration",
+        type=Path,
+        default=Path("supabase/migrations/20260523235106_initial.sql"),
+    )
+
     args = parser.parse_args(argv)
     if args.command == "run-seoul-city":
         return asyncio.run(_run_seoul_city(args))
+    if args.command == "apply-schema":
+        return _apply_schema(args)
     return 2
+
+
+def _apply_schema(args: argparse.Namespace) -> int:
+    try:
+        apply_schema(migration_path=args.migration)
+        print(json.dumps({"ok": True, "migration": str(args.migration)}, ensure_ascii=False))
+        return 0
+    except PipelineConfigError as exc:
+        print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 3
 
 
 async def _run_seoul_city(args: argparse.Namespace) -> int:
@@ -45,7 +66,7 @@ async def _run_seoul_city(args: argparse.Namespace) -> int:
         all_visits: list[NormalizedVisit] = []
         resolved_by_place_json = {}
         loaded_sources = loaded_places = loaded_visits = 0
-        loader = None if args.dry_run else SupabaseRestLoader()
+        loader = None if args.dry_run else PostgresLoader()
 
         for post in posts[: args.max_posts]:
             detail = await crawler.fetch_post(post)

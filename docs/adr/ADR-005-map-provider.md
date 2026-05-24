@@ -24,7 +24,7 @@
 
 ## Consequences
 
-- JS 키는 도메인 제한, REST 키는 Edge Function 안에서만 사용.
+- JS 키는 도메인 제한, REST 키는 Vercel API Route와 pipeline 서버 측에서만 사용.
 - 한도 초과 시 비즈 플랜 또는 네이버 폴백 검토.
 - 지도 UI 일관성: 거지맵·cham-monimap·kofficer-guide 모두 카카오맵 사용 → 사용자 학습 비용↓.
 

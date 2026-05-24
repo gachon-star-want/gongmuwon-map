@@ -126,7 +126,7 @@
 - 사용 목적: 중복 신고 차단, 운영자 응답.
 - 보관 기간: fingerprint 90일, 이메일은 응답 완료 후 30일.
 - 제3자 제공: 없음.
-- 처리 위탁: Supabase(미국), Vercel(미국), Resend(미국).
+- 처리 위탁: Neon(미국), Vercel(미국), Cloudflare R2(미국), Resend(미국).
 - 사용자 권리: 열람·삭제 요청 가능.
 - 책임자: 이원영/WonYoungLee
 
@@ -149,7 +149,8 @@
 | 카카오맵 JS | 카카오 약관 | 비상업 무료 한도 내, 상업 시 별도 계약 (한도 초과 시 검토) |
 | 카카오 로컬 API | 카카오 약관 | 동일 |
 | Mantine | MIT | 라이선스 파일 포함 |
-| Supabase | Apache 2.0 | — |
+| Neon | Apache 2.0 | — |
+| Cloudflare R2 SDK | Apache 2.0/MIT 계열 | 사용 SDK 라이선스 포함 |
 | 기타 npm/pypi | MIT/Apache 등 | LICENSE 파일 자동 수집 |
 
 ## 위반 시 머지 금지 정책

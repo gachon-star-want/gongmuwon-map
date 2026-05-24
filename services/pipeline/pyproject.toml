@@ -1,10 +1,11 @@
 [project]
 name = "public-officer-pipeline"
 version = "0.1.0"
-description = "Public Officer Map crawler, extractor, normalizer, entity resolver, and Supabase loader"
+description = "Public Officer Map crawler, extractor, normalizer, entity resolver, and Neon loader"
 requires-python = ">=3.12"
 dependencies = [
   "httpx>=0.28.1",
+  "psycopg[binary]>=3.2.13",
   "pydantic>=2.12.4",
   "python-dateutil>=2.9.0.post0",
   "selectolax>=0.4.4"

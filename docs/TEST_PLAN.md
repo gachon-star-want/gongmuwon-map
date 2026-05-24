@@ -34,12 +34,12 @@
 
 ### `pipeline/test_end_to_end.py`
 1. 테스트용 작은 HTML(서울시청 1주일치) → Crawler → Extractor → Normalizer → Loader
-2. Supabase 테스트 프로젝트에 적재
+2. Neon 테스트 브랜치 또는 로컬 Postgres에 적재
 3. `place_grade_v1` REFRESH
 4. `places_public` 조회 → 등급 정상 부여
 
-### `services/edge-functions/test_takedown.ts`
-- POST `/notice-takedown` → `places.hidden_at` 설정 확인
+### `api/test_takedown.ts`
+- POST `/api/takedown-request` → `places.hidden_at` 설정 확인
 - 같은 fingerprint 중복 신고 차단 확인
 - 운영자 이메일 mock 호출 확인
 
@@ -139,7 +139,7 @@ ORDER BY visit_date DESC;
 
 ### 법무 페이지 검수
 - `/about`, `/privacy`, `/terms`, `/disclaimer`, `/legal` 모두 접속
-- `<<TBD>>` grep 결과 0건
+- 운영자 미확정 토큰 grep 결과 0건
 - 운영자 신원·이메일·연락처·주소 정확
 - 공공누리 출처표시 포함
 
@@ -148,8 +148,8 @@ ORDER BY visit_date DESC;
 - 이메일에 신청 내용·식당 ID·복원 링크 포함
 
 ### 보안
-- Supabase service key가 클라이언트 번들에 노출되지 않음
-- 카카오 REST key가 클라이언트에 노출되지 않음 (Edge Function 내부만)
+- Neon `DATABASE_URL`이 클라이언트 번들에 노출되지 않음
+- 카카오 REST key가 클라이언트에 노출되지 않음 (Vercel API Route / pipeline 서버 측만)
 - CSP 헤더 검사
 
 ## 성능

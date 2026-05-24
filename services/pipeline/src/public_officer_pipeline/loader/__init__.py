@@ -1,3 +1,3 @@
-from .supabase_rest import SupabaseRestLoader
+from .postgres import PostgresLoader
 
-__all__ = ["SupabaseRestLoader"]
+__all__ = ["PostgresLoader"]

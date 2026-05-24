@@ -14,8 +14,8 @@ LLM 에이전트(Claude·ChatGPT·Perplexity·Gemini)가 웹을 직접 크롤링
 
 다음을 모두 노출:
 
-1. **REST API** (`/api/v1/*`) — Supabase PostgREST 자동 노출 + Vercel rewrite로 깔끔한 경로.
-2. **OpenAPI 3.1** (`/openapi.json`) — Edge Function이 스키마에서 자동 생성, 1시간 캐시.
+1. **REST API** (`/api/v1/*`) — Vercel API Routes가 Neon의 `*_public` 뷰를 조회해 JSON 반환.
+2. **OpenAPI 3.1** (`/openapi.json`) — 정적 파일 또는 Vercel API Route로 제공, 1시간 캐시.
 3. **llms.txt 표준** (`/llms.txt`, `/llms-full.txt`) — Anthropic·OpenAI가 미는 LLM 친화 사이트맵.
 4. **API 문서 페이지** (`/api`) — Swagger UI 임베드.
 5. **MCP Server** — v1.1 옵션.

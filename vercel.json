@@ -3,6 +3,27 @@
   "installCommand": "npm install",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
+  "headers": [
+    {
+      "source": "/api/v1/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/recompute-grades",
+      "schedule": "30 18 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

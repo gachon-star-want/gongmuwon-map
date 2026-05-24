@@ -1,3 +1,18 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOLOGIN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated NOLOGIN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    CREATE ROLE service_role NOLOGIN;
+  END IF;
+END;
+$$;
+
+CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA extensions;
@@ -5,7 +20,7 @@ CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA extensions;
 CREATE SCHEMA IF NOT EXISTS app_private;
 
 CREATE TABLE public.agencies (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   name text NOT NULL,
   short_name text NOT NULL,
   kind text NOT NULL CHECK (kind IN ('city_hall', 'city_council', 'gu_office', 'gu_council')),
@@ -20,7 +35,7 @@ CREATE TABLE public.agencies (
 CREATE INDEX agencies_kind_region ON public.agencies (kind, parent_region, sub_region);
 
 CREATE TABLE public.sources (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   agency_id uuid NOT NULL REFERENCES public.agencies(id) ON DELETE RESTRICT,
   url text NOT NULL,
   title text,
@@ -35,7 +50,7 @@ CREATE TABLE public.sources (
 CREATE INDEX sources_agency_published ON public.sources (agency_id, published_at DESC);
 
 CREATE TABLE public.places (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   kakao_place_id text UNIQUE,
   natural_key text UNIQUE NOT NULL,
   name text NOT NULL,
@@ -63,7 +78,7 @@ CREATE INDEX places_geo ON public.places USING gist (extensions.ll_to_earth(lati
 CREATE INDEX places_active ON public.places (id) WHERE hidden_at IS NULL AND deleted_at IS NULL;
 
 CREATE TABLE public.place_visits (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   place_id uuid NOT NULL REFERENCES public.places(id) ON DELETE RESTRICT,
   agency_id uuid NOT NULL REFERENCES public.agencies(id) ON DELETE RESTRICT,
   source_id uuid NOT NULL REFERENCES public.sources(id) ON DELETE RESTRICT,
@@ -88,7 +103,7 @@ CREATE INDEX visits_agency_date ON public.place_visits (agency_id, visit_date DE
 CREATE INDEX visits_date ON public.place_visits (visit_date DESC);
 
 CREATE TABLE public.place_closure_reports (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   place_id uuid NOT NULL REFERENCES public.places(id) ON DELETE CASCADE,
   reporter_fp text NOT NULL,
   note text,
@@ -99,7 +114,7 @@ CREATE TABLE public.place_closure_reports (
 );
 
 CREATE TABLE public.place_takedown_requests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   place_id uuid NOT NULL REFERENCES public.places(id) ON DELETE CASCADE,
   reporter_email text,
   reason text NOT NULL,
@@ -111,7 +126,7 @@ CREATE TABLE public.place_takedown_requests (
 );
 
 CREATE TABLE public.llm_usage (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   task_type text NOT NULL,
   provider text NOT NULL,
   model text NOT NULL,
@@ -122,7 +137,7 @@ CREATE TABLE public.llm_usage (
 );
 
 CREATE TABLE public.extraction_failures (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   agency_id uuid REFERENCES public.agencies(id) ON DELETE SET NULL,
   source_url text,
   source_title text,
@@ -359,10 +374,22 @@ REVOKE ALL ON TABLE public.agencies, public.sources, public.places, public.place
 GRANT SELECT ON public.places_public TO anon, authenticated;
 GRANT SELECT ON public.place_visits_public TO anon, authenticated;
 GRANT SELECT ON public.agencies_public TO anon, authenticated;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA app_private TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.report_closure(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.request_takedown(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.recompute_grades() TO service_role;
-GRANT USAGE ON SCHEMA app_private TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION app_private.report_closure_impl(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION app_private.request_takedown_impl(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION app_private.recompute_grades_impl() TO service_role;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
+    GRANT USAGE ON SCHEMA public TO app_readonly;
+    GRANT SELECT ON public.places_public TO app_readonly;
+    GRANT SELECT ON public.place_visits_public TO app_readonly;
+    GRANT SELECT ON public.agencies_public TO app_readonly;
+  END IF;
+END;
+$$;

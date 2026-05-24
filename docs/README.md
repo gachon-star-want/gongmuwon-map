@@ -11,7 +11,7 @@
 ### 어떻게 (Engineering)
 - [ARCHITECTURE.md](ARCHITECTURE.md) — 컴포넌트 다이어그램·데이터 흐름.
 - [TECH_STACK.md](TECH_STACK.md) — 사용 도구 + 선정 근거.
-- [DATA_MODEL.md](DATA_MODEL.md) — Supabase 테이블·뷰·RLS·entity resolution.
+- [DATA_MODEL.md](DATA_MODEL.md) — Neon Postgres 테이블·뷰·RLS·entity resolution.
 - [PIPELINE.md](PIPELINE.md) — 크롤 → 파싱(LLM) → 정규화 → 지오코딩 → 적재.
 - [ALGORITHM.md](ALGORITHM.md) — 등급 공식·백분위·시간 윈도우·폐업 처리.
 - [UI_UX.md](UI_UX.md) — 지도·마커·필터·디테일 패널 사양.
@@ -35,6 +35,7 @@
 - [adr/ADR-007-deployment-strategy.md](adr/ADR-007-deployment-strategy.md)
 - [adr/ADR-008-public-api-and-ai-agents.md](adr/ADR-008-public-api-and-ai-agents.md)
 - [adr/ADR-009-multi-llm-provider-routing.md](adr/ADR-009-multi-llm-provider-routing.md)
+- [adr/ADR-010-database-stack-migration.md](adr/ADR-010-database-stack-migration.md) — Supabase → Neon + R2 + Vercel API Routes 마이그레이션
 
 ## 작업 흐름
 

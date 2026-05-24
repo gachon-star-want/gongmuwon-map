@@ -128,8 +128,8 @@ v1엔 자동 룰 + 수동 처리. v1.1에 운영자 대시보드:
 
 ## 데이터 백업 정책
 
-- Supabase 자동 백업 (Pro plan, 매일 7일 보관).
-- 별도: 주 1회 `pg_dump` → 개인 GitHub repo 또는 Google Drive (암호화).
+- Neon Point-in-Time Restore (Free 24시간, Launch 7일+)를 기본 복구 수단으로 사용.
+- 별도: 주 1회 `pg_dump $DATABASE_URL` → 개인 GitHub repo 또는 Google Drive (암호화).
 - 가처분 영구삭제 후 백업까지 폐기되는지 신청인이 확인하는 경우는 드물지만, 정책상 명시.
 
 ## 사용자 신뢰 신호

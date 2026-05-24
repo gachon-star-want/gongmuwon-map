@@ -33,7 +33,9 @@ class KakaoResolver:
         cache_key = f"{place.name}|{place.address_hint or ''}"
         cached = self._cache_get(cache_key)
         if cached:
-            return ResolvedPlace.model_validate_json(cached)
+            resolved = ResolvedPlace.model_validate_json(cached)
+            if resolved.matched or not self.kakao_rest_key:
+                return resolved
         if not self.kakao_rest_key:
             if not self.allow_unmatched_fallback:
                 raise PipelineConfigError("KAKAO_REST_KEY is required for place resolution")
@@ -41,21 +43,31 @@ class KakaoResolver:
             self._cache_set(cache_key, resolved.model_dump_json())
             return resolved
 
-        query = f"{place.name} {place.address_hint or ''}".strip()
         async with httpx.AsyncClient(timeout=20.0) as client:
+            documents = await self._search_kakao(client, place)
+        if not documents:
+            resolved = self._fallback(place)
+        else:
+            resolved = self._from_kakao(place, self._best_document(documents))
+        self._cache_set(cache_key, resolved.model_dump_json())
+        return resolved
+
+    async def _search_kakao(self, client: httpx.AsyncClient, place: PlaceRaw) -> list[dict[str, Any]]:
+        for query in kakao_queries(place):
             response = await client.get(
                 KAKAO_KEYWORD_URL,
                 params={"query": query, "size": 5},
                 headers={"Authorization": f"KakaoAK {self.kakao_rest_key}"},
             )
             response.raise_for_status()
-        documents = response.json().get("documents", [])
-        if not documents:
-            resolved = self._fallback(place)
-        else:
-            resolved = self._from_kakao(place, documents[0])
-        self._cache_set(cache_key, resolved.model_dump_json())
-        return resolved
+            documents = response.json().get("documents", [])
+            if documents:
+                return documents
+        return []
+
+    def _best_document(self, documents: list[dict[str, Any]]) -> dict[str, Any]:
+        food = [doc for doc in documents if doc.get("category_group_code") == "FD6"]
+        return (food or documents)[0]
 
     def _from_kakao(self, place: PlaceRaw, document: dict[str, Any]) -> ResolvedPlace:
         road_address = document.get("road_address_name") or None
@@ -109,6 +121,29 @@ class KakaoResolver:
 
 def normalize_name(value: str) -> str:
     return re.sub(r"[\s㈜주식회사()（）·.,-]+", "", value).lower()
+
+
+def kakao_queries(place: PlaceRaw) -> list[str]:
+    names = _candidate_query_names(place.name)
+    queries: list[str] = []
+    for name in names:
+        if place.address_hint:
+            queries.append(f"{name} {place.address_hint}".strip())
+        queries.append(name)
+    return list(dict.fromkeys(query for query in queries if query))
+
+
+def _candidate_query_names(name: str) -> list[str]:
+    cleaned = re.sub(r"[()（）㈜]", " ", name)
+    cleaned = re.sub(r"\b주식회사\b|\b유한회사\b|\b합자회사\b|\b합명회사\b", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    tokens = cleaned.split()
+    candidates = [cleaned]
+    if len(tokens) >= 2:
+        candidates.append(" ".join(tokens[-2:]))
+    if len(tokens) >= 3:
+        candidates.append(" ".join(tokens[-3:]))
+    return list(dict.fromkeys(candidates))
 
 
 def natural_key(name: str, address: str | None) -> str:

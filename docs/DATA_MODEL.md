@@ -1,9 +1,11 @@
-# DATA_MODEL — Supabase 스키마
+# DATA_MODEL — Neon Postgres 스키마
+
+> Stack 컨텍스트: DB는 **Neon Postgres**(serverless, scale-to-zero, branching), 원본 파일은 **Cloudflare R2**(S3 호환)에 저장. 자세한 배경은 [ADR-010](adr/ADR-010-database-stack-migration.md) 참조. RLS는 Postgres 표준 기능이며 Neon에서 동일 SQL이 동작한다(Supabase 의존 X).
 
 ## 설계 원칙
 
 1. **모든 anon 읽기는 `*_public` 뷰로만**. 원본 테이블은 service role 전용.
-2. **모든 anon 쓰기는 RPC 함수로만**. 직접 INSERT/UPDATE/DELETE 금지.
+2. **모든 anon 쓰기는 SQL 함수(`request_takedown`, `report_closure`, `mark_reopen`)를 거쳐서만**. v1엔 Vercel API Route 핸들러가 service role로 연결한 뒤 해당 함수를 호출한다(직접 INSERT/UPDATE/DELETE 금지).
 3. **소프트 삭제** (`hidden_at`, `deleted_at`) — 노티스앤테이크다운 복원 가능.
 4. **자연키로 멱등성 보장** — 같은 데이터 여러 번 적재해도 중복 없음.
 5. **개인 실명은 적재 단계에서 마스킹** — DB에 절대 평문 저장 금지.
@@ -15,8 +17,8 @@
 | `agencies` | 기관(시청·구청·의회 등) 마스터 | service-only |
 | `places` | 식당 마스터 | service-only |
 | `place_visits` | 방문 트랜잭션 (1 row = 1 회식·간담회) | service-only |
-| `place_closure_reports` | 폐업 신고 | service-only insert, anon insert via RPC |
-| `place_takedown_requests` | 정보 삭제 요청 | service-only insert, anon insert via RPC |
+| `place_closure_reports` | 폐업 신고 | service-only insert, Vercel API Route가 SQL 함수 호출 |
+| `place_takedown_requests` | 정보 삭제 요청 | service-only insert, Vercel API Route가 SQL 함수 호출 |
 | `place_grade_v1` (MAT VIEW) | 등급 계산 결과 | service-only |
 | `places_public` (VIEW) | anon 노출 | anon read |
 | `place_visits_public` (VIEW) | anon 노출 (마스킹된 부서·직급만) | anon read |
@@ -133,7 +135,7 @@ CREATE TABLE sources (
   title           text,
   published_at    date,
   file_kind       text,                       -- 'html' | 'pdf' | 'hwp' | 'xlsx'
-  storage_path    text,                       -- raw-sources/{agency}/{yyyy-mm}/{hash}.pdf
+  storage_path    text,                       -- r2://officer-map-raw/{agency}/{yyyy-mm}/{hash}.{ext}
   fetched_at      timestamptz NOT NULL DEFAULT now(),
   hash_sha256     text NOT NULL,
   UNIQUE (agency_id, hash_sha256)
@@ -248,7 +250,7 @@ FROM ranked;
 CREATE UNIQUE INDEX place_grade_v1_pk ON place_grade_v1 (place_id);
 ```
 
-`recompute-grades` Edge Function이 매일 03:30 KST에 `REFRESH MATERIALIZED VIEW CONCURRENTLY` 실행.
+Vercel Cron이 매일 03:30 KST에 `/api/cron/recompute-grades`를 호출하여 `REFRESH MATERIALIZED VIEW CONCURRENTLY place_grade_v1`을 실행.
 
 ### `place_visits_public` — anon 노출 (마스킹 검증 후)
 
@@ -273,7 +275,9 @@ JOIN places p ON p.id = v.place_id
 WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
 ```
 
-## RPC 함수 (anon 쓰기 진입점)
+## SQL 함수 (Vercel API Route 핸들러가 호출하는 쓰기 진입점)
+
+> 사용자(anon)는 Vercel API Route(`/api/closure-report`, `/api/takedown-request`)에 POST. 핸들러는 service role 자격으로 Neon에 연결한 뒤 아래 함수를 호출한다. 사용자가 직접 DB에 접근하지 않음.
 
 ### `report_closure(place_id uuid, fp text, note text)`
 - 같은 `(place_id, fp)` 중복 차단.
@@ -281,13 +285,30 @@ WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
 
 ### `request_takedown(place_id uuid, reason text, email text)`
 - 즉시 `places.hidden_at = now()` 설정 (v1은 식당 단위 hide만 지원).
-- 운영자에게 이메일 알림 (Edge Function이 Resend 호출).
+- 운영자에게 이메일 알림은 API Route 핸들러가 Resend SDK로 발송 (SQL 함수 안에서 외부 호출 안 함).
 - **v1.1**: visit 단위 hide를 위한 `place_visits.hidden_at` 컬럼 추가 + `visit_id` 인자 지원 예정.
 
 ### `mark_reopen(place_id uuid, fp text)`
 - "다시 영업해요" 정정 신고. 임계값 별도(예: 누적 2건).
 
-## RLS 정책 핵심
+## Neon 초기 셋업 (마이그레이션 SQL 적용 전 1회)
+
+Supabase는 `anon` / `authenticated` / `service_role` 역할을 기본 제공했지만 Neon에는 없다. 마이그레이션 SQL 파일(`supabase/migrations/20260523235106_initial.sql` — 파일 경로는 [ADR-010](adr/ADR-010-database-stack-migration.md) 결정대로 유지) 상단의 bootstrap 블록이 아래 역할을 idempotent하게 만든다.
+
+```sql
+-- Neon 프로젝트에 새로 만들어 줘야 하는 NOLOGIN 역할들 (Supabase가 자동 제공하던 것)
+CREATE ROLE anon NOLOGIN;
+CREATE ROLE authenticated NOLOGIN;
+CREATE ROLE service_role NOLOGIN;
+
+-- 실제 접속은 Neon이 발급한 로그인 역할을 사용한다.
+-- API Route / pipeline 쓰기: DATABASE_URL = 프로젝트 owner 연결 문자열
+-- API Route 읽기: DATABASE_URL_READONLY = app_readonly 로그인 역할 연결 문자열
+```
+
+이후 마이그레이션 SQL의 `GRANT SELECT ON ... TO anon` / `GRANT EXECUTE ON FUNCTION ... TO anon` 구문이 정상 동작한다. `app_readonly` 로그인 역할은 별도로 만들고 `places_public`, `place_visits_public`, `agencies_public` 뷰에만 `SELECT` 권한을 준다.
+
+## RLS 정책 핵심 (Neon Postgres = Postgres 표준 RLS)
 
 ```sql
 ALTER TABLE places ENABLE ROW LEVEL SECURITY;
@@ -302,10 +323,12 @@ GRANT SELECT ON places_public TO anon, authenticated;
 GRANT SELECT ON place_visits_public TO anon, authenticated;
 GRANT SELECT ON agencies_public TO anon, authenticated;
 
--- 쓰기는 RPC만
+-- 쓰기는 SQL 함수만 (Vercel API Route가 service role로 호출)
 GRANT EXECUTE ON FUNCTION report_closure TO anon;
 GRANT EXECUTE ON FUNCTION request_takedown TO anon;
 ```
+
+> Neon 운영 모델: API Route는 평소엔 `DATABASE_URL_READONLY` (anon RLS-restricted)로 SELECT, 쓰기 함수 호출 시에만 `DATABASE_URL` (service)로 전환. 자세한 환경변수는 [ADR-010](adr/ADR-010-database-stack-migration.md).
 
 ## Entity Resolution 알고리즘
 
@@ -329,5 +352,6 @@ GRANT EXECUTE ON FUNCTION request_takedown TO anon;
 
 ## 백업·복원
 
-- Supabase 자동 백업(Pro plan): 매일.
-- 별도: GitHub Actions가 주 1회 `pg_dump` 후 별도 저장소에 commit (작은 스키마라 가능).
+- Neon **Point-in-Time Restore** (Free 플랜 24시간 history, Launch 플랜 7일+) — 브랜치 단위 복원.
+- 별도: GitHub Actions가 주 1회 `pg_dump $DATABASE_URL` 후 별도 저장소에 commit (작은 스키마라 가능).
+- 원본 파일(Cloudflare R2)은 버전 관리 옵션 활성화 시 30일간 이전 객체 보관.

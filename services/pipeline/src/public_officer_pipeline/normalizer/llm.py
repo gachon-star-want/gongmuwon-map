@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import date
+from json import JSONDecodeError
 from uuid import UUID
 
 import httpx
@@ -57,14 +59,26 @@ class Normalizer:
                     rows=rows,
                 )
             raise PipelineConfigError("ANTHROPIC_API_KEY is required for LLM normalization")
-        return await self._normalize_with_anthropic(
-            agency_id=agency_id,
-            source_url=source_url,
-            source_title=source_title,
-            source_published_at=source_published_at,
-            source_hash_sha256=source_hash_sha256,
-            rows=rows,
-        )
+        try:
+            return await self._normalize_with_anthropic(
+                agency_id=agency_id,
+                source_url=source_url,
+                source_title=source_title,
+                source_published_at=source_published_at,
+                source_hash_sha256=source_hash_sha256,
+                rows=rows,
+            )
+        except (JSONDecodeError, KeyError, ValueError) as exc:
+            if self.allow_deterministic_fallback:
+                return deterministic_normalize_rows(
+                    agency_id=agency_id,
+                    source_url=source_url,
+                    source_title=source_title,
+                    source_published_at=source_published_at,
+                    source_hash_sha256=source_hash_sha256,
+                    rows=rows,
+                )
+            raise PipelineConfigError(f"LLM normalization returned invalid JSON: {exc}") from exc
 
     async def _normalize_with_anthropic(
         self,
@@ -126,7 +140,7 @@ class Normalizer:
             response.raise_for_status()
         body = response.json()
         text = "".join(block.get("text", "") for block in body.get("content", []) if block.get("type") == "text")
-        parsed = json.loads(text)
+        parsed = _loads_json_response(text)
         visits = []
         for visit in parsed.get("visits", []):
             visit.setdefault("agency_id", str(agency_id))
@@ -138,3 +152,20 @@ class Normalizer:
             visit.setdefault("source_hash_sha256", source_hash_sha256)
             visits.append(NormalizedVisit.model_validate(visit))
         return visits
+
+
+def _loads_json_response(text: str) -> dict:
+    stripped = text.strip()
+    if not stripped:
+        raise JSONDecodeError("empty response", text, 0)
+
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, flags=re.DOTALL)
+    if fenced:
+        stripped = fenced.group(1)
+    else:
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start >= 0 and end > start:
+            stripped = stripped[start : end + 1]
+
+    return json.loads(stripped)

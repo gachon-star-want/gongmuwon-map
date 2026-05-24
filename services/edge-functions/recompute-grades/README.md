@@ -1,1 +1,1 @@
-Implementation: `../../../supabase/functions/recompute-grades/index.ts`
+Implementation moved to `../../../api/cron/recompute-grades.ts`.

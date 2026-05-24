@@ -12,7 +12,6 @@
   "dependencies": {
     "@mantine/core": "^8.3.8",
     "@mantine/hooks": "^8.3.8",
-    "@supabase/supabase-js": "^2.87.0",
     "@tanstack/react-query": "^5.91.5",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",

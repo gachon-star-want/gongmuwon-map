@@ -32,9 +32,9 @@
 | **식당 정체성** | 카카오 로컬 placeId + (정규화 이름 + 좌표 격자) 폴백 | [ADR-003](docs/adr/ADR-003-entity-resolution.md) |
 | **등급 공식** | `score = visit_count × log10(unique_departments + 1)` + 자치구별 백분위 컷오프 | [ADR-004](docs/adr/ADR-004-ranking-formula.md) |
 | **지도** | 카카오맵 JS API (placeId 정합성) | [ADR-005](docs/adr/ADR-005-map-provider.md) |
-| **스택** | Vite + React + TypeScript + Mantine + Supabase + Vercel | [ADR-006](docs/adr/ADR-006-stack.md) |
-| **배포** | Vercel(프론트) + Supabase(DB·Auth·Functions·Storage) + GitHub Actions(매일 크롤) | [ADR-007](docs/adr/ADR-007-deployment-strategy.md) |
-| **공개 API** | REST(PostgREST 자동) + OpenAPI 3.1 + `/llms.txt` + (옵션) MCP server | [ADR-008](docs/adr/ADR-008-public-api-and-ai-agents.md) |
+| **스택** | Vite + React + TypeScript + Mantine + Neon(Postgres) + Cloudflare R2 + Vercel(API Routes & Hosting) | [ADR-006](docs/adr/ADR-006-stack.md) · [ADR-010](docs/adr/ADR-010-database-stack-migration.md) |
+| **배포** | Vercel(프론트 + API Routes) + Neon(DB) + Cloudflare R2(Storage) + GitHub Actions(매일 크롤) | [ADR-007](docs/adr/ADR-007-deployment-strategy.md) · [ADR-010](docs/adr/ADR-010-database-stack-migration.md) |
+| **공개 API** | REST(Vercel API Routes 수기 작성) + OpenAPI 3.1 + `/llms.txt` + (옵션) MCP server | [ADR-008](docs/adr/ADR-008-public-api-and-ai-agents.md) |
 | **LLM 라우팅** | **Anthropic + OpenAI + Gemini 멀티 프로바이더** (작업 유형별 1·2·3차 폴백, 일일 예산 가드레일) | [ADR-009](docs/adr/ADR-009-multi-llm-provider-routing.md) |
 
 ---
@@ -84,19 +84,19 @@ ADR(돌이킬 수 없는 결정 박제)은 `docs/adr/` 폴더 참조.
 2. **데이터 노출 정책은 LEGAL_PRIVACY.md가 최종 권위** — 이걸 어기는 코드는 머지 금지.
 3. **사용자 댓글·평점·후기 기능 v1엔 절대 금지** — 명예훼손 리스크. v2 결정 전까지 추가하지 말 것.
 4. **개인 실명은 데이터 적재 단계에서 마스킹** — 절대 DB에 저장 후 표시 단계 마스킹하지 말 것. 유출 리스크.
-5. **운영자 신원** (`이원영/WonYoungLee · wylee0806@naver.com · 010-7133-0806 · 경기도 성남시 분당구 수내로 39 · xn--ob0bo0wl1ax52a.com`) 플레이스홀더는 배포 직전 사용자가 채움. 자율 에이전트가 임의로 채우지 말 것.
+5. **운영자 신원**은 아래 확정값을 사용한다. 자율 에이전트가 임의로 변경하지 말 것.
 6. **공공누리 출처 표시** — 푸터·OpenAPI 스펙·llms.txt에 누락 없이.
 
 ---
 
-## 운영자 정보 (배포 직전 사용자가 채울 것)
+## 운영자 정보
 
 ```
-이원영/WonYoungLee · wylee0806@naver.com · 010-7133-0806 · 경기도 성남시 분당구 수내로 39 · xn--ob0bo0wl1ax52a.com
-- 실명/단체명:
-- 대표 이메일:
-- 연락처(가처분 송달용):
+실명/단체명: 이원영/WonYoungLee
+대표 이메일: wylee0806@naver.com
+연락처(가처분 송달용): 010-7133-0806
+주소: 경기도 성남시 분당구 수내로 39
 - 사업자등록번호: (해당 없음 — 개인 운영. 사업자 등록 시 LEGAL_PRIVACY.md 업데이트 필요)
-- 도메인 (primary, 영문):
-- 도메인 (alias, 한국어 punycode, 선택):
+- 도메인 (primary): xn--ob0bo0wl1ax52a.com
+- 도메인 (alias): (없음)
 ```
