@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../../_lib/db';
 import { publicReadRoute } from '../../_lib/route';
 import { numberParam, stringParam } from '../../_lib/http';
@@ -32,7 +31,7 @@ function orderBy(sort: string) {
   return 'name_prefix_match DESC, p.score DESC NULLS LAST, p.last_visit_at DESC NULLS LAST';
 }
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
   const q = stringParam(req.query.q)?.trim() || null;
   const regions = splitList(stringParam(req.query.region));
   const grades = parseGrades(stringParam(req.query.grade));

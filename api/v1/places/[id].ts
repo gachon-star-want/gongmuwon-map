@@ -1,9 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../../_lib/db';
 import { publicReadRoute } from '../../_lib/route';
 import { stringParam } from '../../_lib/http';
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
   const id = stringParam(req.query.id);
   if (!id) {
     return { status: 400, body: { error: 'missing_place_id' } };
