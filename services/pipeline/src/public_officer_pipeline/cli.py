@@ -6,10 +6,9 @@ import json
 import sys
 from datetime import date, timedelta
 from pathlib import Path
-from collections.abc import Callable
-from typing import Protocol
+from collections.abc import Awaitable, Callable
 
-from public_officer_pipeline.agencies import SEOUL_AGENCIES
+from public_officer_pipeline.agencies import CAPITAL_AREA_AGENCIES, SEOUL_AGENCIES
 from public_officer_pipeline.crawler import (
     CouncilAttachmentCrawler,
     EstimateListCrawler,
@@ -17,28 +16,28 @@ from public_officer_pipeline.crawler import (
     InlineExpenseTableCrawler,
     SeoulOpenGovCrawler,
 )
+from public_officer_pipeline.source_pattern import (
+    AdapterRequiredPattern,
+    AttachmentBoardPattern,
+    EstimateListPattern,
+    InlineExpenseTablePattern,
+    SeoulOpenGovPattern,
+    SourcePatternError,
+    parse_source_pattern,
+)
 from public_officer_pipeline.entity import KakaoResolver
 from public_officer_pipeline.extractor import extract_expense_rows, extract_pdf_rows_with_vision, extract_spreadsheet_rows
 from public_officer_pipeline.loader import PostgresLoader
 from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
+from public_officer_pipeline.pipeline.run import ExpenseCrawler, PipelineRunConfig, PipelineRunner
 from public_officer_pipeline.models import (
     Agency,
-    NormalizedVisit,
     ParsedExpenseRow,
     PipelineConfigError,
-    PipelineStats,
     PostDetail,
-    PostRef,
 )
 from public_officer_pipeline.normalizer import Normalizer
-
-
-class ExpenseCrawler(Protocol):
-    async def list_posts(self, since: date, limit_pages: int = 3) -> list[PostRef]: ...
-
-    async def fetch_post(self, ref: PostRef) -> PostDetail: ...
-
-    async def aclose(self) -> None: ...
+from public_officer_pipeline.storage import SourceStorage, SourceStorageError, R2SourceStorage, NullSourceStorage
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -53,6 +52,13 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--allow-deterministic-normalizer", action="store_true")
     run.add_argument("--allow-unmatched-places", action="store_true")
+    run.add_argument("--allow-missing-r2", action="store_true")
+    run.add_argument(
+        "--quality-mode",
+        choices=["warn", "quarantine", "fail"],
+        default="warn",
+        help="Quality gate action: warn, quarantine, fail",
+    )
 
     opengov = subparsers.add_parser(
         "run-opengov-agency",
@@ -66,6 +72,13 @@ def main(argv: list[str] | None = None) -> int:
     opengov.add_argument("--dry-run", action="store_true")
     opengov.add_argument("--allow-deterministic-normalizer", action="store_true")
     opengov.add_argument("--allow-unmatched-places", action="store_true")
+    opengov.add_argument("--allow-missing-r2", action="store_true")
+    opengov.add_argument(
+        "--quality-mode",
+        choices=["warn", "quarantine", "fail"],
+        default="warn",
+        help="Quality gate action: warn, quarantine, fail",
+    )
 
     agency_run = subparsers.add_parser(
         "run-agency",
@@ -79,6 +92,13 @@ def main(argv: list[str] | None = None) -> int:
     agency_run.add_argument("--dry-run", action="store_true")
     agency_run.add_argument("--allow-deterministic-normalizer", action="store_true")
     agency_run.add_argument("--allow-unmatched-places", action="store_true")
+    agency_run.add_argument("--allow-missing-r2", action="store_true")
+    agency_run.add_argument(
+        "--quality-mode",
+        choices=["warn", "quarantine", "fail"],
+        default="warn",
+        help="Quality gate action: warn, quarantine, fail",
+    )
 
     schema = subparsers.add_parser("apply-schema", help="Apply the Postgres schema to DATABASE_URL")
     schema.add_argument(
@@ -101,7 +121,23 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        if agency.source_pattern.get("adapter") != "seoul_opengov":
+        try:
+            pattern = parse_source_pattern(agency)
+        except SourcePatternError as exc:
+            print(
+                json.dumps(
+                    {
+                        "error": "unsupported_adapter",
+                        "agency": agency.short_name,
+                        "adapter": agency.source_pattern.get("adapter"),
+                        "reason": str(exc),
+                    },
+                    ensure_ascii=False,
+                ),
+                file=sys.stderr,
+            )
+            return 2
+        if not isinstance(pattern, SeoulOpenGovPattern):
             print(
                 json.dumps(
                     {
@@ -138,6 +174,12 @@ def _apply_schema(args: argparse.Namespace) -> int:
         apply_schema(migration_path=args.migration)
         print(json.dumps({"ok": True, "migration": str(args.migration)}, ensure_ascii=False))
         return 0
+    except SourceStorageError as exc:
+        print(
+            json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False),
+            file=sys.stderr,
+        )
+        return 3
     except PipelineConfigError as exc:
         print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 3
@@ -165,35 +207,84 @@ def _refresh_views() -> int:
 
 
 def _find_agency(value: str) -> Agency | None:
-    for agency in SEOUL_AGENCIES:
+    for agency in CAPITAL_AREA_AGENCIES:
         if value in {str(agency.id), agency.name, agency.short_name}:
             return agency
     return None
 
 
 async def _run_opengov_agency(args: argparse.Namespace, agency: Agency) -> int:
-    crawler = SeoulOpenGovCrawler(agency=agency)
+    pattern = parse_source_pattern(agency)
+    if not isinstance(pattern, SeoulOpenGovPattern):
+        raise PipelineConfigError("run-opengov-agency requires seoul_opengov pattern")
+    crawler = SeoulOpenGovCrawler(agency=agency, source_pattern=pattern)
     return await _run_crawler(args, agency, crawler, _extract_detail_rows)
 
 
 async def _run_supported_agency(args: argparse.Namespace, agency: Agency) -> int:
-    adapter = agency.source_pattern.get("adapter")
-    if adapter == "seoul_opengov":
+    try:
+        pattern = parse_source_pattern(agency)
+    except SourcePatternError as exc:
+        print(
+            json.dumps(
+                {
+                    "error": "unsupported_adapter",
+                    "agency": agency.short_name,
+                    "adapter": agency.source_pattern.get("adapter"),
+                    "reason": str(exc),
+                },
+                ensure_ascii=False,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
+    if isinstance(pattern, AdapterRequiredPattern):
+        print(
+            json.dumps(
+                {"error": "adapter_required", "agency": agency.short_name, "adapter": pattern.adapter},
+                ensure_ascii=False,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
+    if isinstance(pattern, SeoulOpenGovPattern):
         return await _run_opengov_agency(args, agency)
-    if adapter == "gangnam_xlsx_board":
-        return await _run_crawler(args, agency, GangnamExpenseCrawler(agency=agency), _extract_detail_rows)
-    if adapter == "estimate_list_html":
-        return await _run_crawler(args, agency, EstimateListCrawler(agency=agency), _extract_detail_rows)
-    if adapter == "inline_expense_table":
-        return await _run_crawler(args, agency, InlineExpenseTableCrawler(agency=agency), _extract_detail_rows)
-    if adapter in {"gncouncil_pdf_board", "council_attachment_board", "attachment_board"}:
-        return await _run_crawler(args, agency, CouncilAttachmentCrawler(agency=agency), _extract_detail_rows)
+    if isinstance(pattern, AttachmentBoardPattern) and pattern.adapter == "gangnam_xlsx_board":
+        return await _run_crawler(
+            args,
+            agency,
+            GangnamExpenseCrawler(agency=agency),
+            _extract_detail_rows,
+        )
+    if isinstance(pattern, AttachmentBoardPattern):
+        return await _run_crawler(
+            args,
+            agency,
+            CouncilAttachmentCrawler(agency=agency, source_pattern=pattern),
+            _extract_detail_rows,
+        )
+    if isinstance(pattern, EstimateListPattern):
+        return await _run_crawler(
+            args,
+            agency,
+            EstimateListCrawler(agency=agency, source_pattern=pattern),
+            _extract_detail_rows,
+        )
+    if isinstance(pattern, InlineExpenseTablePattern):
+        return await _run_crawler(
+            args,
+            agency,
+            InlineExpenseTableCrawler(agency=agency, source_pattern=pattern),
+            _extract_detail_rows,
+        )
     print(
         json.dumps(
             {
                 "error": "unsupported_adapter",
                 "agency": agency.short_name,
-                "adapter": adapter,
+                "adapter": pattern.adapter,
             },
             ensure_ascii=False,
         ),
@@ -206,76 +297,56 @@ async def _run_crawler(
     args: argparse.Namespace,
     agency: Agency,
     crawler: ExpenseCrawler,
-    row_extractor: Callable[[PostDetail], list[ParsedExpenseRow]],
+    row_extractor: Callable[[PostDetail], list[ParsedExpenseRow] | Awaitable[list[ParsedExpenseRow]]],
 ) -> int:
-    stats = PipelineStats()
-    normalizer = Normalizer(allow_deterministic_fallback=args.allow_deterministic_normalizer)
-    resolver = KakaoResolver(allow_unmatched_fallback=args.allow_unmatched_places)
-
     try:
-        posts = await crawler.list_posts(since=args.since, limit_pages=args.limit_pages)
-        stats.posts_seen = len(posts)
-        all_visits: list[NormalizedVisit] = []
-        resolved_by_place_json = {}
-        loaded_sources = loaded_places = loaded_visits = 0
+        normalizer = Normalizer(allow_deterministic_fallback=args.allow_deterministic_normalizer)
+        resolver = KakaoResolver(allow_unmatched_fallback=args.allow_unmatched_places)
+        if args.dry_run:
+            storage: SourceStorage = NullSourceStorage()
+        elif args.allow_missing_r2:
+            storage = NullSourceStorage()
+        else:
+            storage = R2SourceStorage.from_env()
+
         loader = None if args.dry_run else PostgresLoader()
+        config = PipelineRunConfig(
+            since=args.since,
+            limit_pages=args.limit_pages,
+            max_posts=args.max_posts,
+            skip_posts=args.skip_posts,
+            dry_run=args.dry_run,
+            quality_mode=args.quality_mode,
+        )
+        runner = PipelineRunner(
+            config=config,
+            normalizer=normalizer,
+            resolver=resolver,
+            storage=storage,
+            row_extractor=row_extractor,
+            loader=loader,
+            require_storage_path=not args.allow_missing_r2,
+            extractor_model="llm",
+        )
+        stats = await runner.run_agency(agency, crawler)
 
-        for post in posts[args.skip_posts : args.skip_posts + args.max_posts]:
-            detail = await crawler.fetch_post(post)
-            stats.posts_fetched += 1
-            rows = [row for row in row_extractor(detail) if row.used_at.date() >= args.since]
-            stats.parsed_rows += len(rows)
-            visits = await normalizer.normalize_rows(
-                agency_id=agency.id,
-                source_url=detail.url,
-                source_title=detail.title,
-                source_published_at=detail.published_at,
-                source_hash_sha256=detail.hash_sha256,
-                rows=rows,
+        print(
+            json.dumps(
+                stats.model_dump() | {"kakao_match_rate": stats.kakao_match_rate},
+                ensure_ascii=False,
+                indent=2,
             )
-            stats.normalized_visits += len(visits)
-            all_visits.extend(visits)
-
-            post_places = {}
-            for visit in visits:
-                key = visit.place_raw.model_dump_json()
-                if key in resolved_by_place_json:
-                    post_places[key] = resolved_by_place_json[key]
-                    continue
-                resolved = await resolver.resolve(visit.place_raw)
-                resolved_by_place_json[key] = resolved
-                post_places[key] = resolved
-
-            if loader and visits:
-                source_count, place_count, visit_count = await loader.load(
-                    agency=agency,
-                    source_url=detail.url,
-                    source_title=detail.title,
-                    source_published_at=detail.published_at,
-                    source_hash_sha256=detail.hash_sha256,
-                    source_file_kind=detail.file_kind,
-                    resolved_places=post_places,
-                    visits=visits,
-                )
-                loaded_sources += source_count
-                loaded_places += place_count
-                loaded_visits += visit_count
-
-        stats.places_seen = len(resolved_by_place_json)
-        stats.kakao_matched_places = sum(1 for place in resolved_by_place_json.values() if place.matched)
-        stats.loaded_sources = loaded_sources
-        stats.loaded_places = loaded_places
-        stats.loaded_visits = loaded_visits
-        print(json.dumps(stats.model_dump() | {"kakao_match_rate": stats.kakao_match_rate}, ensure_ascii=False, indent=2))
+        )
         return 0
     except PipelineConfigError as exc:
         print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 3
-    finally:
-        await crawler.aclose()
+    except SourceStorageError as exc:
+        print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 3
 
 
-def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
+async def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
     if detail.file_kind == "html":
         return extract_expense_rows(detail.html)
     if detail.file_kind in {"xls", "xlsx"} and detail.content_bytes:

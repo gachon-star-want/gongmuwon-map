@@ -1,16 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../../../_lib/db';
-import { methodGuard, numberParam, sendJson, stringParam } from '../../../_lib/http';
+import { readQuery } from '../../../_lib/db';
+import { publicReadRoute } from '../../../_lib/route';
+import { numberParam, stringParam } from '../../../_lib/http';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!methodGuard(req, res, ['GET'])) return;
+export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
   const id = stringParam(req.query.id);
   if (!id) {
-    sendJson(res, 400, { error: 'missing_place_id' });
-    return;
+    return { status: 400, body: { error: 'missing_place_id' } };
   }
   const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);
-  const { rows } = await query(
+  const { rows } = await readQuery(
     `
     SELECT id, place_id, agency_id, visit_date, amount, party_size, department_name,
       rank_label, representative, purpose, source_url, source_title
@@ -21,5 +20,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `,
     [id, limit],
   );
-  sendJson(res, 200, rows, true);
-}
+  return rows;
+}, { cache: true });

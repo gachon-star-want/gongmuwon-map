@@ -1,11 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../../_lib/db';
-import { methodGuard, sendJson } from '../../_lib/http';
+import { readQuery } from '../../_lib/db';
+import { publicReadRoute } from '../../_lib/route';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!methodGuard(req, res, ['GET'])) return;
+export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
 
-  const { rows } = await query<{
+  const { rows } = await readQuery<{
     place_count: string;
     visit_count: string;
     agency_count: string;
@@ -21,16 +20,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   );
 
   const row = rows[0];
-  sendJson(
-    res,
-    200,
-    {
-      place_count: Number(row.place_count),
-      visit_count: Number(row.visit_count),
-      agency_count: Number(row.agency_count),
-      last_visit_at: row.last_visit_at,
-      source_notice: '공공누리 제1유형, 출처: 서울특별시 정보소통광장 외',
-    },
-    true,
-  );
-}
+  return {
+    place_count: Number(row.place_count),
+    visit_count: Number(row.visit_count),
+    agency_count: Number(row.agency_count),
+    last_visit_at: row.last_visit_at,
+    source_notice: '공공누리 제1유형, 출처: 서울특별시 정보소통광장 외',
+  };
+}, { cache: true });

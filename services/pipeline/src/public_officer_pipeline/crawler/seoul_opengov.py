@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-import hashlib
 import re
-from datetime import date, datetime, timezone
+from typing import Any
+from datetime import date
 from urllib.parse import urljoin
 
 import httpx
 from selectolax.parser import HTMLParser
 
 from public_officer_pipeline.models import Agency, PostDetail, PostRef, SEOUL_CITY_HALL_AGENCY_ID
+from public_officer_pipeline.http_client import create_http_client
+from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
+from public_officer_pipeline.source_pattern import (
+    SeoulOpenGovPattern,
+    parse_source_pattern,
+)
 
 
 LIST_URL = "https://opengov.seoul.go.kr/expense/list"
@@ -20,13 +26,20 @@ DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 class SeoulOpenGovCrawler:
     agency_id = SEOUL_CITY_HALL_AGENCY_ID
 
-    def __init__(self, agency: Agency | None = None, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(
+        self,
+        agency: Agency | None = None,
+        client: Any | None = None,
+        source_pattern: SeoulOpenGovPattern | None = None,
+    ) -> None:
         self.agency = agency or Agency()
-        pattern = self.agency.source_pattern or {}
-        self.search_keyword = str(pattern.get("searchKeyword") or "서울시본청")
-        title_includes = pattern.get("titleIncludes") or [self.search_keyword]
+        pattern = source_pattern or parse_source_pattern(self.agency)
+        if not isinstance(pattern, SeoulOpenGovPattern):
+            raise ValueError("SeoulOpenGovCrawler requires a seoul_opengov source pattern")
+        self.search_keyword = pattern.searchKeyword
+        title_includes = pattern.titleIncludes or [self.search_keyword]
         self.title_includes = [str(item) for item in title_includes if str(item).strip()]
-        self._client = client or httpx.AsyncClient(
+        self._client = client or create_http_client(
             timeout=DEFAULT_TIMEOUT,
             headers={
                 "User-Agent": (
@@ -67,13 +80,7 @@ class SeoulOpenGovCrawler:
     async def fetch_post(self, ref: PostRef) -> PostDetail:
         response = await self._client.get(ref.url)
         response.raise_for_status()
-        content = response.text
-        return PostDetail(
-            **ref.model_dump(),
-            html=content,
-            fetched_at=datetime.now(timezone.utc),
-            hash_sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
-        )
+        return post_detail_from_artifact(artifact_from_response(ref, response))
 
     def _parse_list(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)

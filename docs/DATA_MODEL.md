@@ -19,6 +19,7 @@
 | `place_visits` | 방문 트랜잭션 (1 row = 1 회식·간담회) | service-only |
 | `place_closure_reports` | 폐업 신고 | service-only insert, Vercel API Route가 SQL 함수 호출 |
 | `place_takedown_requests` | 정보 삭제 요청 | service-only insert, Vercel API Route가 SQL 함수 호출 |
+| `llm_usage` | LLM 호출별 사용량/시도 이력 | service-only |
 | `place_grade_v1` (MAT VIEW) | 등급 계산 결과 | service-only |
 | `places_public` (VIEW) | anon 노출 | anon read |
 | `place_visits_public` (VIEW) | anon 노출 (마스킹된 부서·직급만) | anon read |
@@ -35,16 +36,20 @@ CREATE TABLE agencies (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name            text NOT NULL,              -- "서울특별시청", "강남구의회"
   short_name      text NOT NULL,              -- "서울시청", "강남구의회"
-  kind            text NOT NULL,              -- 'city_hall' | 'city_council' | 'gu_office' | 'gu_council'
+  gov_tier        text NOT NULL,              -- 'regional' | 'basic'
+  branch          text NOT NULL,              -- 'admin' | 'council'
+  jurisdiction_type text NOT NULL,            -- 'special_city' | 'metro_city' | 'province' | 'autonomous_gu' | 'si' | 'gun'
   parent_region   text NOT NULL,              -- '서울특별시'
   sub_region      text,                       -- '강남구' (시청·시의회는 NULL)
   homepage        text,
   source_pattern  jsonb,                      -- 크롤러 어댑터 힌트
   created_at      timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (kind, parent_region, sub_region)
+  UNIQUE (gov_tier, branch, parent_region, sub_region)
 );
 
-CREATE INDEX agencies_kind_region ON agencies (kind, parent_region, sub_region);
+CREATE INDEX agencies_tier_region ON agencies (gov_tier, branch, parent_region, sub_region);
+
+`agencies_public` 뷰는 `kind` 대신 `gov_tier`, `branch`, `jurisdiction_type`을 노출한다.
 ```
 
 ### `places` — 식당 마스터
@@ -135,7 +140,8 @@ CREATE TABLE sources (
   title           text,
   published_at    date,
   file_kind       text,                       -- 'html' | 'pdf' | 'hwp' | 'xlsx'
-  storage_path    text,                       -- r2://officer-map-raw/{agency}/{yyyy-mm}/{hash}.{ext}
+  storage_path    text,                       -- r2://officer-map-raw/{agency_id}/{yyyy-mm}/{hash}.{ext}
+                                                 -- production(비 dry-run, allow-missing-r2 미사용)에서는 실사용 run에서 null 허용 안 함
   fetched_at      timestamptz NOT NULL DEFAULT now(),
   hash_sha256     text NOT NULL,
   UNIQUE (agency_id, hash_sha256)
@@ -170,6 +176,37 @@ CREATE TABLE place_takedown_requests (
 -- v1.1: visit_id 컬럼 추가 예정 (visit 단위 takedown)
 ```
 
+### `llm_usage` — LLM 호출 시도 이력
+
+```sql
+CREATE TABLE llm_usage (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_type         text NOT NULL,                   -- normalizer/extractor task name
+  provider          text NOT NULL,                   -- anthropic | gemini | openai
+  model             text NOT NULL,
+  input_tokens      integer,
+  output_tokens     integer,
+  thinking_tokens   integer,
+  estimated_cost_usd numeric(12,4),
+  task_id           text,                            -- correlation id for extract() call
+  status            text NOT NULL,                   -- success | fallback | error | skipped_budget
+  error_code        text,                            -- exception type, validation reason, etc.
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+```
+
+`status`는 다음 값 중 하나다.
+
+- `success` — 최종 성공한 시도
+- `fallback` — 오류/재시도 조건 후 다음 프로바이더로 넘어가기 전 기록된 시도
+- `error` — 그 시도에서 최종 실패로 종료된 시도
+- `skipped_budget` — `LLM_BUDGET_DAILY_USD` 초과로 건너뛴 시도
+
+`status` 제약은 마이그레이션에서
+`CHECK (status IN ('success', 'fallback', 'error', 'skipped_budget') OR status IS NULL)`로 적용한다.
+
+동일 작업 내 다중 시도는 같은 `task_id`로 묶어서 추적한다.
+
 ## 뷰 / 머티리얼라이즈드 뷰
 
 ### `places_public` — anon 노출
@@ -201,9 +238,12 @@ WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
 ```sql
 CREATE MATERIALIZED VIEW place_grade_v1 AS
 WITH window_visits AS (
-  SELECT *
-  FROM place_visits
-  WHERE visit_date >= (current_date - interval '12 months')
+  SELECT v.*
+  FROM place_visits v
+  JOIN places p ON p.id = v.place_id
+  WHERE v.visit_date >= (current_date - interval '12 months')
+    AND p.hidden_at IS NULL
+    AND p.deleted_at IS NULL
 ),
 agg AS (
   SELECT
@@ -251,6 +291,28 @@ CREATE UNIQUE INDEX place_grade_v1_pk ON place_grade_v1 (place_id);
 ```
 
 Vercel Cron이 매일 03:30 KST에 `/api/cron/recompute-grades`를 호출하여 `REFRESH MATERIALIZED VIEW CONCURRENTLY place_grade_v1`을 실행.
+
+### `agency_stats_v1` — 기관별 통계
+
+```sql
+CREATE MATERIALIZED VIEW agency_stats_v1 AS
+SELECT
+  a.id AS agency_id,
+  COUNT(v.id)::integer AS visit_count,
+  COUNT(DISTINCT v.place_id)::integer AS place_count,
+  MAX(v.visit_date) AS last_visit_at
+FROM agencies a
+LEFT JOIN place_visits v ON v.agency_id = a.id
+LEFT JOIN places p
+  ON p.id = v.place_id
+  AND p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+GROUP BY a.id;
+
+CREATE UNIQUE INDEX agency_stats_v1_pk ON agency_stats_v1 (agency_id);
+```
+
+`place_visits`는 비공개/삭제 플래그가 있는 식당을 제외하고 집계됩니다.
 
 ### `place_visits_public` — anon 노출 (마스킹 검증 후)
 
@@ -338,6 +400,7 @@ GRANT EXECUTE ON FUNCTION request_takedown TO anon;
 4. 좌표가 입력 주소의 ±300m 안이면 매칭 성공 → `places.kakao_place_id` 키로 upsert.
 5. 매칭 실패면:
    - `natural_key = normalize(name) + ':' + geohash(lat, lng, 7)` 자체 생성.
+   - 좌표가 없으면 `normalize(name) + ':' + normalize(address)` 사용.
    - normalize: 공백 제거 + 괄호 안 지점명 추출 + 동음이의 분리(`(시청점)` vs `(역삼점)`).
 6. **머지 룰**: 동일 카카오 placeId 발견 시, 기존 natural_key 레코드를 placeId 키로 머지.
 

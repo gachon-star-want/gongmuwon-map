@@ -16,3 +16,5 @@ services/pipeline/pipeline_state.db
 supabase/.branches/
 supabase/.temp/
 .vercel
+.gstack/
+.env*

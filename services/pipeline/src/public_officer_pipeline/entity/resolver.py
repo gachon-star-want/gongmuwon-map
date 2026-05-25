@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-import hashlib
 import os
-import re
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
 import httpx
 
+from public_officer_pipeline.entity.policy import (
+    DefaultPlaceResolutionPolicy,
+    PlaceResolutionPolicy,
+)
 from public_officer_pipeline.models import PipelineConfigError, PlaceRaw, ResolvedPlace
-
 
 KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 KAKAO_ADDRESS_URL = "https://dapi.kakao.com/v2/local/search/address.json"
-SEOUL_REGION_RE = re.compile(r"(서울(?:특별시)?|서울)\s+([가-힣]+구)")
+KAKAO_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7
 
 
 class KakaoResolver:
@@ -24,40 +26,68 @@ class KakaoResolver:
         kakao_rest_key: str | None = None,
         cache_path: Path | None = None,
         allow_unmatched_fallback: bool = False,
+        policy: PlaceResolutionPolicy | None = None,
     ) -> None:
         self.kakao_rest_key = kakao_rest_key or os.getenv("KAKAO_REST_KEY")
         self.allow_unmatched_fallback = allow_unmatched_fallback
         self.cache_path = cache_path or Path("services/pipeline/pipeline_state.db")
+        self.policy = policy or DefaultPlaceResolutionPolicy()
         self._init_cache()
 
     async def resolve(self, place: PlaceRaw) -> ResolvedPlace:
         cache_key = f"{place.name}|{place.address_hint or ''}"
         cached = self._cache_get(cache_key)
         if cached:
-            resolved = ResolvedPlace.model_validate_json(cached)
-            if resolved.matched or not self.kakao_rest_key:
-                return resolved
+            return ResolvedPlace.model_validate_json(cached)
+
         if not self.kakao_rest_key:
             if not self.allow_unmatched_fallback:
                 raise PipelineConfigError("KAKAO_REST_KEY is required for place resolution")
-            resolved = self._fallback(place)
+            resolved = self._fallback(place, None, None)
             self._cache_set(cache_key, resolved.model_dump_json())
             return resolved
 
         async with httpx.AsyncClient(timeout=20.0) as client:
+            address_documents = await self._search_address(client, place)
+            if address_documents:
+                source_coordinates = self._extract_document_coordinates(address_documents[0])
+            else:
+                source_coordinates = (None, None)
+            self.policy.source_coordinates = source_coordinates
             documents = await self._search_kakao(client, place)
-            address_documents = [] if documents else await self._search_address(client, place)
+
         if documents:
-            resolved = self._from_kakao(place, self._best_document(documents))
+            candidates = [
+                document
+                for document in documents
+                if self.policy.validate_candidate(
+                    place,
+                    {
+                        **document,
+                        "_validation_latitude": source_coordinates[0],
+                        "_validation_longitude": source_coordinates[1],
+                    },
+                )
+            ]
+            best = self.policy.choose_best_kakao_document(place, candidates)
+            if best is not None:
+                resolved = self.policy.from_kakao_document(place, best)
+            else:
+                resolved = self.policy.fallback(
+                    place, latitude=source_coordinates[0], longitude=source_coordinates[1]
+                )
         elif address_documents:
-            resolved = self._from_kakao_address(place, address_documents[0])
+            resolved = self.policy.from_kakao_document(place, address_documents[0])
         else:
-            resolved = self._fallback(place)
+            resolved = self.policy.fallback(
+                place, latitude=source_coordinates[0], longitude=source_coordinates[1]
+            )
+
         self._cache_set(cache_key, resolved.model_dump_json())
         return resolved
 
     async def _search_kakao(self, client: httpx.AsyncClient, place: PlaceRaw) -> list[dict[str, Any]]:
-        for query in kakao_queries(place):
+        for query in self.policy.candidate_queries(place):
             response = await client.get(
                 KAKAO_KEYWORD_URL,
                 params={"query": query, "size": 5},
@@ -80,61 +110,34 @@ class KakaoResolver:
         response.raise_for_status()
         return response.json().get("documents", [])
 
-    def _best_document(self, documents: list[dict[str, Any]]) -> dict[str, Any]:
-        food = [doc for doc in documents if doc.get("category_group_code") == "FD6"]
-        return (food or documents)[0]
+    def _fallback(self, place: PlaceRaw, latitude: float | None, longitude: float | None) -> ResolvedPlace:
+        return self.policy.fallback(place, latitude=latitude, longitude=longitude)
 
-    def _from_kakao(self, place: PlaceRaw, document: dict[str, Any]) -> ResolvedPlace:
-        road_address = document.get("road_address_name") or None
-        jibun_address = document.get("address_name") or None
-        address = road_address or jibun_address or place.address_hint
-        return ResolvedPlace(
-            kakao_place_id=document.get("id") or None,
-            natural_key=natural_key(place.name, address),
-            name=document.get("place_name") or place.name,
-            road_address=road_address,
-            jibun_address=jibun_address,
-            road_address_part=road_address_part(address),
-            latitude=float(document["y"]) if document.get("y") else None,
-            longitude=float(document["x"]) if document.get("x") else None,
-            category=document.get("category_name") or None,
-            phone=document.get("phone") or None,
-            matched=True,
-            raw=document,
-        )
-
-    def _from_kakao_address(self, place: PlaceRaw, document: dict[str, Any]) -> ResolvedPlace:
-        road_address_doc = document.get("road_address") or {}
-        address_doc = document.get("address") or {}
-        road_address = document.get("road_address_name") or road_address_doc.get("address_name") or None
-        jibun_address = document.get("address_name") or address_doc.get("address_name") or None
-        address = road_address or jibun_address or place.address_hint
-        latitude = document.get("y") or road_address_doc.get("y") or address_doc.get("y")
-        longitude = document.get("x") or road_address_doc.get("x") or address_doc.get("x")
-        return ResolvedPlace(
-            kakao_place_id=None,
-            natural_key=natural_key(place.name, address),
-            name=place.name,
-            road_address=road_address,
-            jibun_address=jibun_address,
-            road_address_part=road_address_part(address),
-            latitude=float(latitude) if latitude else None,
-            longitude=float(longitude) if longitude else None,
-            category=None,
-            phone=None,
-            matched=False,
-            raw=document,
-        )
-
-    def _fallback(self, place: PlaceRaw) -> ResolvedPlace:
-        return ResolvedPlace(
-            kakao_place_id=None,
-            natural_key=natural_key(place.name, place.address_hint),
-            name=place.name,
-            road_address=place.address_hint,
-            road_address_part=road_address_part(place.address_hint),
-            matched=False,
-        )
+    def _extract_document_coordinates(self, document: dict[str, Any]) -> tuple[float | None, float | None]:
+        latitude = document.get("y")
+        longitude = document.get("x")
+        if latitude is not None and longitude is not None:
+            try:
+                return float(latitude), float(longitude)
+            except (TypeError, ValueError):
+                pass
+        road_address = document.get("road_address")
+        address = document.get("address")
+        if isinstance(road_address, dict):
+            y = road_address.get("y")
+            x = road_address.get("x")
+            try:
+                return (float(y), float(x))
+            except (TypeError, ValueError):
+                pass
+        if isinstance(address, dict):
+            y = address.get("y")
+            x = address.get("x")
+            try:
+                return (float(y), float(x))
+            except (TypeError, ValueError):
+                pass
+        return (None, None)
 
     def _init_cache(self) -> None:
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -142,57 +145,41 @@ class KakaoResolver:
             con.execute(
                 "CREATE TABLE IF NOT EXISTS kakao_cache (cache_key TEXT PRIMARY KEY, payload TEXT NOT NULL)"
             )
+            existing_columns = {
+                row[1]
+                for row in con.execute("PRAGMA table_info(kakao_cache)").fetchall()
+            }
+            if "created_at" not in existing_columns:
+                con.execute("ALTER TABLE kakao_cache ADD COLUMN created_at INTEGER")
 
     def _cache_get(self, cache_key: str) -> str | None:
         with sqlite3.connect(self.cache_path) as con:
-            row = con.execute("SELECT payload FROM kakao_cache WHERE cache_key = ?", (cache_key,)).fetchone()
-            return row[0] if row else None
+            row = con.execute(
+                "SELECT payload, created_at FROM kakao_cache WHERE cache_key = ?", (cache_key,)
+            ).fetchone()
+            if not row:
+                return None
+
+            payload, created_at = row
+            if created_at is None:
+                con.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
+                return None
+
+            if self._cache_expired(int(created_at)):
+                con.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
+                return None
+            return payload
+
+    def _cache_expired(self, created_at: int) -> bool:
+        return (self._now_ts() - created_at) >= KAKAO_CACHE_TTL_SECONDS
 
     def _cache_set(self, cache_key: str, payload: str) -> None:
         with sqlite3.connect(self.cache_path) as con:
             con.execute(
-                "INSERT INTO kakao_cache (cache_key, payload) VALUES (?, ?) "
-                "ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload",
-                (cache_key, payload),
+                "INSERT INTO kakao_cache (cache_key, payload, created_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at",
+                (cache_key, payload, self._now_ts()),
             )
 
-
-def normalize_name(value: str) -> str:
-    return re.sub(r"[\s㈜주식회사()（）·.,-]+", "", value).lower()
-
-
-def kakao_queries(place: PlaceRaw) -> list[str]:
-    names = _candidate_query_names(place.name)
-    queries: list[str] = []
-    for name in names:
-        if place.address_hint:
-            queries.append(f"{name} {place.address_hint}".strip())
-        queries.append(name)
-    return list(dict.fromkeys(query for query in queries if query))
-
-
-def _candidate_query_names(name: str) -> list[str]:
-    cleaned = re.sub(r"[()（）㈜]", " ", name)
-    cleaned = re.sub(r"\b주식회사\b|\b유한회사\b|\b합자회사\b|\b합명회사\b", " ", cleaned)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    tokens = cleaned.split()
-    candidates = [cleaned]
-    if len(tokens) >= 2:
-        candidates.append(" ".join(tokens[-2:]))
-    if len(tokens) >= 3:
-        candidates.append(" ".join(tokens[-3:]))
-    return list(dict.fromkeys(candidates))
-
-
-def natural_key(name: str, address: str | None) -> str:
-    base = f"{normalize_name(name)}|{address or ''}"
-    return hashlib.sha1(base.encode("utf-8")).hexdigest()
-
-
-def road_address_part(address: str | None) -> str | None:
-    if not address:
-        return None
-    match = SEOUL_REGION_RE.search(address)
-    if not match:
-        return None
-    return f"서울 {match.group(2)}"
+    def _now_ts(self) -> int:
+        return int(time.time())

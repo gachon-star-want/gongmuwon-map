@@ -1,20 +1,25 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
-import os
 import re
+import os
 import subprocess
 import tempfile
-from json import JSONDecodeError
+import threading
 from pathlib import Path
 from typing import Any
 
-import httpx
 from dateutil import parser as date_parser
 
+from public_officer_pipeline.extractor.pdf_text import (
+    build_default_grammars,
+    parse_pdf_text_with_diagnostics,
+)
+from public_officer_pipeline.llm import LLMClient, TaskType
 from public_officer_pipeline.models import ParsedExpenseRow, PipelineConfigError
-from public_officer_pipeline.normalizer.llm import _loads_json_response
+from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 
 
 SYSTEM_PROMPT = """Extract Korean public expense table rows from scanned PDF page images.
@@ -166,6 +171,7 @@ PDF_TEXT_SEGMENTED_OFFICE_PAYMENT_RE = re.compile(
     r"(?:\s+(?P<expense_category>\S+))?"
 )
 PDF_TEXT_LAYOUT_DATE_RE = re.compile(r"20\d{2}[.]\s*\d{1,2}[.]\s*\d{1,2}[.]?")
+PDF_TEXT_LAYOUT_DATE_OR_DASH_RE = re.compile(r"20\d{2}[.-]\s*\d{1,2}[.-]\s*\d{1,2}[.]?")
 PDF_TEXT_LAYOUT_TIME_RE = re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b")
 PDF_TEXT_LAYOUT_ROW_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s+")
 PDF_TEXT_LAYOUT_AMOUNT_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
@@ -217,7 +223,7 @@ PDF_TEXT_PURPOSE_STARTER_PATTERNS = (
 )
 
 
-def extract_pdf_rows_with_vision(
+async def _extract_pdf_rows_with_vision(
     content: bytes,
     *,
     fallback_department: str,
@@ -227,9 +233,8 @@ def extract_pdf_rows_with_vision(
     gemini_api_key: str | None = None,
     model: str | None = None,
 ) -> list[ParsedExpenseRow]:
-    api_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
+    anthropic_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
     gemini_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
-    provider = os.getenv("PDF_VISION_PROVIDER", "gemini" if gemini_key else "anthropic")
     text = _pdf_to_text(content)
     if text:
         text_rows = rows_from_pdf_text(text, fallback_department=fallback_department)
@@ -240,37 +245,85 @@ def extract_pdf_rows_with_vision(
         plain_text_rows = rows_from_pdf_text(plain_text, fallback_department=fallback_department)
         if plain_text_rows or "총 0건" in plain_text:
             return plain_text_rows
-    if provider == "anthropic" and not api_key:
-        raise PipelineConfigError("ANTHROPIC_API_KEY is required for scanned PDF vision extraction")
-    if provider == "gemini" and not gemini_key:
-        raise PipelineConfigError("GEMINI_API_KEY is required for scanned PDF vision extraction")
+    if _expense_text_lacks_place_column(text) or _expense_text_lacks_place_column(plain_text):
+        return []
+    if not anthropic_key and not gemini_key and not os.getenv("OPENAI_API_KEY"):
+        raise PipelineConfigError("At least one LLM API key is required for scanned PDF vision extraction")
+
+    client = LLMClient(
+        anthropic_api_key=anthropic_key,
+        gemini_api_key=gemini_key,
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        model_by_provider=(
+            {"anthropic": {TaskType.PDF_VISION_EXTRACT: model}} if model is not None else None
+        ),
+    )
+
     images = _pdf_to_png_images(content, max_pages=max_pages)
     rows: list[ParsedExpenseRow] = []
     for index, image in enumerate(images, start=1):
-        if provider == "gemini":
-            rows.extend(
-                _extract_page_with_gemini(
-                    image,
-                    page_number=index,
-                    fallback_department=fallback_department,
-                    source_title=source_title,
-                    api_key=gemini_key or "",
-                    model=model or os.getenv("GEMINI_VISION_MODEL", "gemini-2.5-flash"),
-                )
+        rows.extend(
+            await _extract_page_with_vision(
+                client,
+                image,
+                page_number=index,
+                fallback_department=fallback_department,
+                source_title=source_title,
             )
-        else:
-            rows.extend(
-                _extract_page_with_anthropic(
-                    image,
-                    page_number=index,
-                    fallback_department=fallback_department,
-                    source_title=source_title,
-                    api_key=api_key or "",
-                    model=model
-                    or os.getenv("ANTHROPIC_VISION_MODEL", os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")),
-                )
-            )
+        )
     return rows
+
+
+def extract_pdf_rows_with_vision(
+    content: bytes,
+    *,
+    fallback_department: str,
+    source_title: str,
+    max_pages: int = 2,
+    anthropic_api_key: str | None = None,
+    gemini_api_key: str | None = None,
+    model: str | None = None,
+) -> list[ParsedExpenseRow]:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(
+            _extract_pdf_rows_with_vision(
+                content,
+                fallback_department=fallback_department,
+                source_title=source_title,
+                max_pages=max_pages,
+                anthropic_api_key=anthropic_api_key,
+                gemini_api_key=gemini_api_key,
+                model=model,
+            )
+        )
+
+    result: dict[str, object] = {}
+    error: dict[str, BaseException] = {}
+
+    def _run() -> None:
+        try:
+            result["rows"] = asyncio.run(
+                _extract_pdf_rows_with_vision(
+                    content,
+                    fallback_department=fallback_department,
+                    source_title=source_title,
+                    max_pages=max_pages,
+                    anthropic_api_key=anthropic_api_key,
+                    gemini_api_key=gemini_api_key,
+                    model=model,
+                )
+            )
+        except BaseException as exc:  # pragma: no cover - defensive
+            error["exception"] = exc
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    thread.join()
+    if "exception" in error:
+        raise error["exception"]
+    return result["rows"]  # type: ignore[return-value]
 
 
 def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
@@ -309,125 +362,45 @@ def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
         return completed.stdout.decode("utf-8", errors="ignore")
 
 
-def _extract_page_with_anthropic(
+def _expense_text_lacks_place_column(text: str) -> bool:
+    if not text:
+        return False
+    compact = re.sub(r"\s+", "", text)
+    has_expense_columns = "집행목적" in compact and ("집행금액" in compact or "사용금액" in compact)
+    has_place_column = any(
+        keyword in compact for keyword in ("집행장소", "사용장소", "가맹점", "상호", "집행처", "장소")
+    )
+    return has_expense_columns and not has_place_column
+
+
+async def _extract_page_with_vision(
+    client: LLMClient,
     image: bytes,
     *,
     page_number: int,
     fallback_department: str,
     source_title: str,
-    api_key: str,
-    model: str,
 ) -> list[ParsedExpenseRow]:
+    del page_number
     payload = {
         "source_title": source_title,
-        "page_number": page_number,
         "fallback_department": fallback_department,
     }
-    response = httpx.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+    prompt = json.dumps(
+        {
+            "system_prompt": SYSTEM_PROMPT,
+            "user_prompt": "Extract this scanned public expense table. Context:\n" + json.dumps(payload, ensure_ascii=False),
+            "image_base64": base64.b64encode(image).decode("ascii"),
         },
-        json={
-            "model": model,
-            "max_tokens": 8192,
-            "temperature": 0,
-            "system": SYSTEM_PROMPT,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "image/png",
-                                "data": base64.b64encode(image).decode("ascii"),
-                            },
-                        },
-                        {
-                            "type": "text",
-                            "text": "Extract this scanned public expense table. Context:\n"
-                            + json.dumps(payload, ensure_ascii=False),
-                        },
-                    ],
-                }
-            ],
-        },
+        ensure_ascii=False,
+    )
+    result = await client.extract(
+        task=TaskType.PDF_VISION_EXTRACT,
+        prompt=prompt,
+        schema={"required": ["rows"]},
         timeout=90.0,
     )
-    response.raise_for_status()
-    body = response.json()
-    text = "".join(block.get("text", "") for block in body.get("content", []) if block.get("type") == "text")
-    try:
-        parsed = _loads_json_response(text)
-    except JSONDecodeError as exc:
-        raise PipelineConfigError(f"Vision extraction returned invalid JSON: {exc}") from exc
-    return rows_from_vision_payload(parsed, fallback_department=fallback_department)
-
-
-def _extract_page_with_gemini(
-    image: bytes,
-    *,
-    page_number: int,
-    fallback_department: str,
-    source_title: str,
-    api_key: str,
-    model: str,
-) -> list[ParsedExpenseRow]:
-    payload = {
-        "source_title": source_title,
-        "page_number": page_number,
-        "fallback_department": fallback_department,
-    }
-    last_json_error: JSONDecodeError | None = None
-    for attempt in range(2):
-        extra_instruction = ""
-        if attempt:
-            extra_instruction = "\nReturn one complete JSON object. Do not omit commas between rows or fields."
-        response = httpx.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-            params={"key": api_key},
-            json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": (
-                                    f"{SYSTEM_PROMPT}{extra_instruction}\n\n"
-                                    f"Context:\n{json.dumps(payload, ensure_ascii=False)}"
-                                )
-                            },
-                            {
-                                "inline_data": {
-                                    "mime_type": "image/png",
-                                    "data": base64.b64encode(image).decode("ascii"),
-                                }
-                            },
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0,
-                    "maxOutputTokens": 16384,
-                    "responseMimeType": "application/json",
-                },
-            },
-            timeout=90.0,
-        )
-        response.raise_for_status()
-        body = response.json()
-        parts = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-        text = "".join(part.get("text", "") for part in parts)
-        try:
-            parsed = _loads_json_response(text)
-            return rows_from_vision_payload(parsed, fallback_department=fallback_department)
-        except JSONDecodeError as exc:
-            last_json_error = exc
-    raise PipelineConfigError(f"Vision extraction returned invalid JSON: {last_json_error}") from last_json_error
-
+    return rows_from_vision_payload(result.payload, fallback_department=fallback_department)
 
 def rows_from_vision_payload(payload: dict[str, Any], *, fallback_department: str) -> list[ParsedExpenseRow]:
     rows: list[ParsedExpenseRow] = []
@@ -438,17 +411,44 @@ def rows_from_vision_payload(payload: dict[str, Any], *, fallback_department: st
     return rows
 
 
+def _build_pdf_row(
+    payload: dict[str, str | int | None],
+    *,
+    fallback_department: str,
+    raw_values: list[str] | None = None,
+) -> ParsedExpenseRow | None:
+    used_at_value = payload.get("used_at")
+    cleaned_raw_values = [str(value) for value in (raw_values or []) if value is not None]
+    return build_expense_row(
+        RawExpenseFields(
+            department_name=str(payload.get("department_name") or fallback_department),
+            used_at=None,
+            date_text=str(used_at_value) if used_at_value is not None else None,
+            place_name=payload.get("place_name"),
+            address=payload.get("address"),
+            address_hint=payload.get("address_hint"),
+            place_text=payload.get("place_text"),
+            purpose=payload.get("purpose"),
+            amount=payload.get("amount"),
+            party_size=payload.get("party_size"),
+            user_text=payload.get("user_text"),
+            payment_method=payload.get("payment_method"),
+            expense_category=payload.get("expense_category"),
+            raw_values=cleaned_raw_values,
+        ),
+        fallback_department=fallback_department,
+    )
+
+
 def rows_from_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
-    rows: list[ParsedExpenseRow] = []
-    for line in text.splitlines():
-        parsed = _parse_pdf_text_line(line, fallback_department=fallback_department)
-        if parsed:
-            rows.append(parsed)
-    if not rows:
-        rows = _parse_layout_office_pdf_text(text, fallback_department=fallback_department)
-    if not rows:
-        rows = _parse_segmented_office_pdf_text(text, fallback_department=fallback_department)
-    return rows
+    line_grammars, whole_text_grammars = build_default_grammars()
+    result = parse_pdf_text_with_diagnostics(
+        text,
+        fallback_department=fallback_department,
+        line_grammars=line_grammars,
+        whole_text_grammars=whole_text_grammars,
+    )
+    return result.rows
 
 
 def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
@@ -500,6 +500,10 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     purpose_first = _parse_pdf_text_purpose_first_line(line, fallback_department=fallback_department)
     if purpose_first:
         return purpose_first
+    return _parse_pdf_text_generic_row(line, fallback_department=fallback_department)
+
+
+def _parse_pdf_text_generic_row(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
     row_match = PDF_TEXT_ROW_RE.match(line)
     if not row_match:
         return None
@@ -514,16 +518,19 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     place_text, purpose = (part.strip() for part in parts)
     if not place_text or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(amount_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = amount_match.group("party_size")
-    user_text_parts = [part for part in (row_match.group("user"), f"{party_size}명" if party_size else None) if part]
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_text": place_text,
+            "purpose": purpose,
+            "amount": amount_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user"),
+            "payment_method": amount_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("date"),
             row_match.group("time"),
             place_text,
@@ -531,18 +538,7 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
             amount_match.group("amount"),
             party_size,
             amount_match.group("payment_method"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place_text,
-        purpose=purpose,
-        amount=amount,
-        user_text=" ".join(user_text_parts) if user_text_parts else None,
-        payment_method=amount_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -553,44 +549,37 @@ def _parse_pdf_text_user_address_line(line: str, *, fallback_department: str) ->
     body_match = PDF_TEXT_PLACE_ADDRESS_PURPOSE_RE.match(row_match.group("body").strip())
     if not body_match:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = "구의원"
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
     place = body_match.group("place").strip()
     address = body_match.group("address").strip()
     purpose = body_match.group("purpose").strip()
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "address": address,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": "구의원",
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
             place,
             address,
             purpose,
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("amount"),
             row_match.group("payment_method"),
             row_match.group("expense_category"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=f"{place}({address})",
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        expense_category=row_match.group("expense_category"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -601,40 +590,32 @@ def _parse_pdf_text_date_user_amount_place_line(line: str, *, fallback_departmen
     place, purpose = _split_place_and_purpose(row_match.group("body").strip(), row_match.group("user").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = row_match.group("user").strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("date"),
             row_match.group("time"),
             row_match.group("user"),
             row_match.group("amount"),
             place,
             purpose,
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("payment_method"),
             row_match.group("expense_category"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        expense_category=row_match.group("expense_category"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -645,37 +626,29 @@ def _parse_pdf_text_purpose_place_amount_line(line: str, *, fallback_department:
     purpose, place = _split_purpose_and_place(row_match.group("body").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = fallback_department
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": fallback_department,
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("date"),
             row_match.group("time"),
             place,
             purpose,
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("amount"),
             row_match.group("payment_method"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -690,39 +663,31 @@ def _parse_pdf_text_region_amount_place_purpose_line(
     place, purpose = _split_place_and_purpose_by_columns(row_match.group("body").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = row_match.group("user").strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("region"),
             row_match.group("date"),
             row_match.group("time"),
             place,
             purpose,
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("amount"),
             row_match.group("payment_method"),
             row_match.group("user"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -737,40 +702,32 @@ def _parse_pdf_text_optional_user_place_purpose_amount_line(
     place, purpose = _split_place_and_purpose_by_marker(row_match.group("body").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = (row_match.group("user") or fallback_department).strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": (row_match.group("user") or fallback_department).strip(),
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
             place,
             purpose,
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("amount"),
             row_match.group("payment_method"),
             row_match.group("expense_category"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        expense_category=row_match.group("expense_category"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -785,18 +742,23 @@ def _parse_pdf_text_user_amount_place_address_purpose_line(
     place, address, purpose = _split_place_address_and_purpose(row_match.group("body").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = row_match.group("user").strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "address": address,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": None,
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
@@ -804,21 +766,10 @@ def _parse_pdf_text_user_amount_place_address_purpose_line(
             address,
             purpose,
             row_match.group("target"),
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("amount"),
             row_match.group("payment_method"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=f"{place}({address})" if address else place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -833,38 +784,30 @@ def _parse_pdf_text_user_place_purpose_amount_line(
     place, purpose = _split_place_and_purpose_by_marker(row_match.group("body").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = row_match.group("user").strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
             place,
             purpose,
             row_match.group("amount"),
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("payment_method"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -872,40 +815,32 @@ def _parse_pdf_text_user_amount_purpose_line(line: str, *, fallback_department: 
     row_match = PDF_TEXT_USER_AMOUNT_PURPOSE_ROW_RE.match(line)
     if not row_match:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text = row_match.group("user").strip()
-    if party_size and party_size != "-":
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": row_match.group("place").strip(),
+            "purpose": row_match.group("purpose").strip(),
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
             row_match.group("place"),
             row_match.group("amount"),
             row_match.group("purpose"),
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("payment_method"),
             row_match.group("expense_category"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=row_match.group("place").strip(),
-        purpose=row_match.group("purpose").strip(),
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        expense_category=row_match.group("expense_category"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -916,18 +851,20 @@ def _parse_pdf_text_user_no_address_line(line: str, *, fallback_department: str)
     place, purpose = _split_place_and_purpose(row_match.group("body").strip(), row_match.group("user").strip())
     if not place or not purpose:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = re.sub(r"\D", "", row_match.group("party_size"))
-    user_text = "구의원"
-    if party_size:
-        user_text = f"{user_text} {party_size}명"
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": "구의원",
+            "payment_method": row_match.group("payment_method"),
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("user"),
             row_match.group("date"),
             row_match.group("time"),
@@ -937,19 +874,7 @@ def _parse_pdf_text_user_no_address_line(line: str, *, fallback_department: str)
             row_match.group("amount"),
             row_match.group("payment_method"),
             row_match.group("expense_category"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=place,
-        purpose=purpose,
-        amount=amount,
-        user_text=user_text,
-        payment_method=row_match.group("payment_method"),
-        expense_category=row_match.group("expense_category"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -1029,37 +954,29 @@ def _parse_pdf_text_purpose_first_line(line: str, *, fallback_department: str) -
     row_match = PDF_TEXT_PURPOSE_FIRST_ROW_RE.match(line)
     if not row_match:
         return None
-    try:
-        used_at = date_parser.parse(f"{row_match.group('date')} {row_match.group('time')}", fuzzy=True)
-        amount = int(str(row_match.group("amount")).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
     party_size = row_match.group("party_size")
-    user_text_parts = [fallback_department]
-    if party_size and party_size != "-":
-        user_text_parts.append(f"{party_size}명")
-    raw_excerpt = " | ".join(
-        part
-        for part in (
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": row_match.group("place_text").strip(),
+            "purpose": row_match.group("purpose").strip(),
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": fallback_department,
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
             row_match.group("date"),
             row_match.group("time"),
             row_match.group("place_text"),
             row_match.group("purpose"),
             row_match.group("amount"),
-            None if party_size == "-" else party_size,
+            party_size,
             row_match.group("payment_method"),
-        )
-        if part
-    )
-    return ParsedExpenseRow(
-        department_name=fallback_department,
-        used_at=used_at.replace(tzinfo=None),
-        place_text=row_match.group("place_text").strip(),
-        purpose=row_match.group("purpose").strip(),
-        amount=amount,
-        user_text=" ".join(user_text_parts),
-        payment_method=row_match.group("payment_method"),
-        raw_excerpt=raw_excerpt,
+        ],
     )
 
 
@@ -1086,6 +1003,145 @@ def _parse_segmented_office_pdf_text(text: str, *, fallback_department: str) -> 
             rows.append(parsed)
         index = end
     return rows
+
+
+def _parse_user_place_purpose_layout_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    if not all(keyword in text for keyword in ("집행장소", "집행목적", "대상인원", "결제방법")):
+        return []
+    rows: list[ParsedExpenseRow] = []
+    for group in _user_place_purpose_layout_groups(text.splitlines()):
+        parsed = _parse_user_place_purpose_layout_group(group, fallback_department=fallback_department)
+        if parsed:
+            rows.append(parsed)
+    return rows
+
+
+def _user_place_purpose_layout_groups(lines: list[str]) -> list[list[str]]:
+    groups: list[list[str]] = []
+    current: list[str] = []
+    for raw_line in lines:
+        line = raw_line.rstrip().replace("\f", "")
+        stripped = line.strip()
+        if not stripped or stripped == "2026" or stripped.startswith(("연번", "(결제시간)")):
+            continue
+        if "합계" in stripped:
+            if current:
+                groups.append(current)
+            break
+        if PDF_TEXT_LAYOUT_DATE_OR_DASH_RE.search(line):
+            if current:
+                groups.append(current)
+            current = [line]
+            continue
+        if current:
+            current.append(line)
+    if current:
+        groups.append(current)
+    return groups
+
+
+def _parse_user_place_purpose_layout_group(
+    group: list[str],
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    group_text = _normalize_pdf_text_fragment(" ".join(line.strip() for line in group))
+    date_match = PDF_TEXT_LAYOUT_DATE_OR_DASH_RE.search(group_text)
+    time_match = PDF_TEXT_LAYOUT_TIME_RE.search(group_text)
+    amount_match = re.search(
+        r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+        r"(?P<party_size>\d+|-)\s+"
+        r"(?P<payment_method>신용카드|법인카드|카드|현금|제로페이|계좌이체)",
+        group_text,
+    )
+    row_match = next(
+        (
+            re.match(r"^\s*(?P<number>\d+)\s+(?P<user>\S+)", line)
+            for line in group
+            if re.match(r"^\s*\d+\s+\S+", line)
+        ),
+        None,
+    )
+    if not date_match or not time_match or not amount_match or not row_match:
+        return None
+    try:
+        used_at = _parse_pdf_date_time(date_match.group(0), time_match.group(0))
+        amount = int(amount_match.group("amount").replace(",", ""))
+    except ValueError:
+        return None
+
+    place_parts: list[str] = []
+    purpose_parts: list[str] = []
+    amount_value = amount_match.group("amount")
+    party_size = amount_match.group("party_size")
+    payment_method = amount_match.group("payment_method")
+    user = row_match.group("user")
+    for line in group:
+        for match in re.finditer(r"\S+", line):
+            token = match.group(0)
+            start = match.start()
+            if _layout_token_is_metadata(
+                token,
+                user=user,
+                amount=amount_value,
+                party_size=party_size,
+                payment_method=payment_method,
+            ):
+                continue
+            if 22 <= start <= 29:
+                place_parts.append(token)
+            elif 30 <= start < 54:
+                purpose_parts.append(token)
+
+    place_text = _normalize_pdf_text_fragment(" ".join(place_parts))
+    purpose = _normalize_pdf_text_fragment(" ".join(purpose_parts))
+    if not place_text or not purpose:
+        return None
+    user_text = user
+    if party_size and party_size != "-":
+        user_text = f"{user_text} {party_size}명"
+    return ParsedExpenseRow(
+        department_name=fallback_department,
+        used_at=used_at.replace(tzinfo=None),
+        place_text=place_text,
+        purpose=purpose,
+        amount=amount,
+        user_text=user_text,
+        payment_method=payment_method,
+        raw_excerpt=" | ".join(
+            part
+            for part in (
+                date_match.group(0),
+                time_match.group(0),
+                place_text,
+                purpose,
+                amount_value,
+                None if party_size == "-" else party_size,
+                payment_method,
+            )
+            if part
+        ),
+    )
+
+
+def _layout_token_is_metadata(
+    token: str,
+    *,
+    user: str,
+    amount: str,
+    party_size: str,
+    payment_method: str,
+) -> bool:
+    return bool(
+        token == user
+        or token == amount
+        or token == party_size
+        or token == payment_method
+        or token == "2026"
+        or PDF_TEXT_LAYOUT_DATE_OR_DASH_RE.fullmatch(token)
+        or PDF_TEXT_LAYOUT_TIME_RE.fullmatch(token)
+        or re.fullmatch(r"\d+", token)
+    )
 
 
 def _parse_layout_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
@@ -1384,29 +1440,18 @@ def _parse_pdf_date_time(date_value: str, time_value: str):
 
 
 def _parse_vision_row(item: dict[str, Any], *, fallback_department: str) -> ParsedExpenseRow | None:
-    if not item.get("used_at") or not item.get("place_text") or not item.get("amount"):
-        return None
-    try:
-        used_at = date_parser.parse(str(item["used_at"]), fuzzy=True)
-        amount = int(re.sub(r"[^\d]", "", str(item["amount"])))
-    except (TypeError, ValueError):
-        return None
-    if amount <= 0:
-        return None
-
-    raw_excerpt = item.get("raw_excerpt") or " | ".join(
-        str(item.get(key) or "")
-        for key in ("used_at", "place_text", "purpose", "amount", "payment_method")
-        if item.get(key)
-    )
-    return ParsedExpenseRow(
-        department_name=str(item.get("department_name") or fallback_department).strip(),
-        used_at=used_at.replace(tzinfo=None),
-        place_text=str(item["place_text"]).strip(),
-        purpose=str(item["purpose"]).strip() if item.get("purpose") else None,
-        amount=amount,
-        user_text=str(item["user_text"]).strip() if item.get("user_text") else None,
-        payment_method=str(item["payment_method"]).strip() if item.get("payment_method") else None,
-        expense_category=str(item["expense_category"]).strip() if item.get("expense_category") else None,
-        raw_excerpt=raw_excerpt,
+    return _build_pdf_row(
+        {
+            "department_name": str(item.get("department_name") or fallback_department).strip(),
+            "used_at": item.get("used_at"),
+            "place_text": str(item["place_text"]).strip() if item.get("place_text") else None,
+            "purpose": str(item["purpose"]).strip() if item.get("purpose") else None,
+            "amount": item.get("amount"),
+            "user_text": str(item["user_text"]).strip() if item.get("user_text") else None,
+            "payment_method": str(item["payment_method"]).strip() if item.get("payment_method") else None,
+            "expense_category": str(item["expense_category"]).strip() if item.get("expense_category") else None,
+            "party_size": None,
+        },
+        fallback_department=fallback_department,
+        raw_values=[str(value) for value in filter(None, [item.get("raw_excerpt")])],
     )

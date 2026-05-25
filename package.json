@@ -16,6 +16,8 @@
     "dev": "npm --workspace apps/web run dev",
     "build": "npm --workspace apps/web run build",
     "test:web": "npm --workspace apps/web run test",
-    "test:pipeline": "uv run --project services/pipeline pytest"
+    "test:pipeline": "uv run --project services/pipeline pytest",
+    "test:api": "node_modules/.bin/vitest run --root . api/_lib/*.test.ts",
+    "check:public-contracts": "node scripts/verify-public-route-contracts.mjs"
   }
 }

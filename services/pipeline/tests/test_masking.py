@@ -1,8 +1,23 @@
 from datetime import datetime
 
-from public_officer_pipeline.models import ParsedExpenseRow
-from public_officer_pipeline.normalizer import deterministic_normalize_rows, mask_user_text
+import pytest
+
 from public_officer_pipeline.agencies import agency_uuid
+from public_officer_pipeline.legal.visibility import (
+    LegalVisibilityError,
+    allowed_elected_ranks_for_agency,
+    sanitize_raw_excerpt,
+    validate_normalized_visit,
+    validate_seoul_normalized_visit,
+)
+from public_officer_pipeline.models import (
+    Agency,
+    JurisdictionType,
+    NormalizedVisit,
+    ParsedExpenseRow,
+    PipelineConfigError,
+)
+from public_officer_pipeline.normalizer import Normalizer, deterministic_normalize_rows, mask_user_text
 
 
 def test_elected_official_can_keep_representative() -> None:
@@ -66,3 +81,109 @@ def test_deterministic_normalizer_adds_seoul_district_hint_for_gu_department() -
 
     assert visits[0].place_raw.name == "나눔봉제 협동조합"
     assert visits[0].place_raw.address_hint == "서울 성동구"
+
+
+def _visit(**overrides: object) -> NormalizedVisit:
+    data = {
+        "agency_id": agency_uuid("성동구:office"),
+        "source_url": "https://example.test/source.pdf",
+        "source_title": "서울시 업무추진비",
+        "source_published_at": None,
+        "source_hash_sha256": "hash",
+        "visit_date": datetime(2026, 4, 1).date(),
+        "amount": 10000,
+        "department_name": "총무국",
+        "rank_label": "시장",
+        "representative": "홍길동",
+        "place_raw": {"name": "샤브하우스", "address_hint": None},
+        "raw_excerpt": "홍길동 국장",
+        "confidence": 0.92,
+    }
+    data.update(overrides)
+    return NormalizedVisit.model_validate(data)
+
+
+def _agency(parent_region: str, jurisdiction_type: JurisdictionType = JurisdictionType.SPECIAL_CITY) -> Agency:
+    return Agency(parent_region=parent_region, jurisdiction_type=jurisdiction_type)
+
+
+def test_legal_visibility_allows_elected_representative_in_seoul() -> None:
+    visit = _visit(rank_label="구의원", representative="박영희", raw_excerpt="의안 검토 간담회")
+
+    validated = validate_seoul_normalized_visit(visit)
+
+    assert validated.representative == "박영희"
+
+
+def test_legal_visibility_masks_elected_rank_out_of_region() -> None:
+    visit = _visit(rank_label="도지사", representative="홍길동", raw_excerpt="의안 검토 간담회")
+
+    validated = validate_normalized_visit(visit, agency=_agency("서울특별시"))
+
+    assert validated.representative is None
+
+
+def test_legal_visibility_allows_gyeonggi_elected_ranks() -> None:
+    agency = _agency("경기도", JurisdictionType.PROVINCE)
+
+    assert allowed_elected_ranks_for_agency(agency) == ("도지사", "시장", "군수", "도의원", "시의원", "군의원")
+
+    for rank in ("도지사", "군수", "도의원"):
+        visit = _visit(rank_label=rank, representative="홍길동", agency_id=agency_uuid("gyeonggi:province:office"))
+        validated = validate_normalized_visit(visit, agency=agency)
+        assert validated.representative == "홍길동"
+
+
+def test_legal_visibility_allows_incheon_elected_ranks() -> None:
+    agency = _agency("인천광역시", JurisdictionType.METRO_CITY)
+
+    for rank in ("시장", "군수", "구의원"):
+        visit = _visit(rank_label=rank, representative="김철수", agency_id=agency_uuid("incheon:metro:office"))
+        validated = validate_normalized_visit(visit, agency=agency)
+        assert validated.representative == "김철수"
+
+
+def test_legal_visibility_masks_general_or_appointed_ranks_outside_elected_allowlist() -> None:
+    visit = _visit(rank_label="국장", representative="박영희", raw_excerpt="점심 식사")
+    validated = validate_normalized_visit(visit, agency=_agency("경기도", JurisdictionType.PROVINCE))
+
+    assert validated.representative is None
+
+    visit = _visit(rank_label="부지사", representative="이길동", raw_excerpt="오후 회의")
+    validated = validate_normalized_visit(visit, agency=_agency("경기도", JurisdictionType.PROVINCE))
+
+    assert validated.representative is None
+
+
+def test_sanitize_raw_excerpt_masks_obvious_name_rank_pairs() -> None:
+    assert sanitize_raw_excerpt("홍길동 국장") == "○○ 국장"
+    assert sanitize_raw_excerpt("김철수 과장") == "○○ 과장"
+    assert sanitize_raw_excerpt("박영희구청장 외 2명") == "○○구청장 외 2명"
+
+
+def test_department_name_with_name_rank_is_rejected() -> None:
+    with pytest.raises(LegalVisibilityError):
+        validate_normalized_visit(_visit(department_name="홍길동 국장"), agency=_agency("서울특별시"))
+
+
+@pytest.mark.asyncio
+async def test_non_seoul_normalization_blocks_missing_agency_context() -> None:
+    normalizer = Normalizer(allow_deterministic_fallback=True)
+    with pytest.raises(PipelineConfigError, match="Non-Seoul agencies require explicit Agency context"):
+        await normalizer.normalize_rows(
+            agency_id=agency_uuid("gyeonggi:province:office"),
+            source_url="https://example.test/source.pdf",
+            source_title="test",
+            source_published_at=None,
+            source_hash_sha256="hash",
+            rows=[
+                ParsedExpenseRow(
+                    department_name="의회",
+                    used_at=datetime(2026, 5, 1, 12),
+                    place_text="테스트 식당",
+                    amount=10000,
+                    user_text="도지사 홍길동",
+                    raw_excerpt="회의 비용",
+                )
+            ],
+        )

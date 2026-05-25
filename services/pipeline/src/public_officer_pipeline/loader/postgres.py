@@ -10,7 +10,13 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
-from public_officer_pipeline.models import Agency, NormalizedVisit, PipelineConfigError, ResolvedPlace
+from public_officer_pipeline.models import (
+    Agency,
+    PipelineConfigError,
+    ResolvedPlace,
+)
+from public_officer_pipeline.pipeline.batch import LoadBatch, place_resolution_key
+from public_officer_pipeline.legal.visibility import validate_normalized_visits
 
 
 class PostgresLoader:
@@ -21,47 +27,40 @@ class PostgresLoader:
 
     async def load(
         self,
-        *,
-        agency: Agency,
-        source_url: str,
-        source_title: str,
-        source_published_at: date | None,
-        source_hash_sha256: str,
-        source_file_kind: str = "html",
-        resolved_places: dict[str, ResolvedPlace],
-        visits: list[NormalizedVisit],
-        storage_path: str | None = None,
+        batch: LoadBatch,
     ) -> tuple[int, int, int]:
+        visits = validate_normalized_visits(batch.visits, agency=batch.agency)
         async with await psycopg.AsyncConnection.connect(
             self.database_url,
             row_factory=dict_row,
         ) as conn:
             async with conn.transaction():
-                await self._upsert_agency(conn, agency)
+                await self._upsert_agency(conn, batch.agency)
                 source_id = await self._upsert_source(
                     conn,
-                    agency=agency,
-                    source_url=source_url,
-                    source_title=source_title,
-                    source_published_at=source_published_at,
-                    source_hash_sha256=source_hash_sha256,
-                    source_file_kind=source_file_kind,
-                    storage_path=storage_path,
+                    agency=batch.agency,
+                    source_url=batch.source_url,
+                    source_title=batch.source_title,
+                    source_published_at=batch.source_published_at,
+                    source_hash_sha256=batch.source_hash_sha256,
+                    source_file_kind=batch.source_file_kind,
+                    storage_path=batch.storage_path,
                 )
 
                 place_ids: dict[str, UUID] = {}
-                for place in resolved_places.values():
+                for place in batch.resolved_places.values():
                     place_ids[place.natural_key] = await self._upsert_place(conn, place)
 
                 visit_ids = []
                 for visit in visits:
-                    resolved = resolved_places[visit.place_raw.model_dump_json()]
+                    resolved = batch.resolved_places[place_resolution_key(visit.place_raw)]
                     visit_ids.append(
                         await self._upsert_visit(
                             conn,
                             visit=visit,
                             place_id=place_ids[resolved.natural_key],
                             source_id=source_id,
+                            extractor_model=batch.extractor_model,
                         )
                     )
 
@@ -82,10 +81,10 @@ class PostgresLoader:
             conn,
             """
             INSERT INTO public.agencies (
-              id, name, short_name, kind, parent_region, sub_region, homepage, source_pattern
+              id, name, short_name, gov_tier, branch, jurisdiction_type, parent_region, sub_region, homepage, source_pattern
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (kind, parent_region, sub_region) DO UPDATE SET
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (gov_tier, branch, parent_region, sub_region) DO UPDATE SET
               name = EXCLUDED.name,
               short_name = EXCLUDED.short_name,
               homepage = EXCLUDED.homepage,
@@ -96,7 +95,9 @@ class PostgresLoader:
                 agency.id,
                 agency.name,
                 agency.short_name,
-                agency.kind.value,
+                agency.gov_tier.value,
+                agency.branch.value,
+                agency.jurisdiction_type.value,
                 agency.parent_region,
                 agency.sub_region,
                 agency.homepage,
@@ -224,6 +225,7 @@ class PostgresLoader:
         visit: NormalizedVisit,
         place_id: UUID,
         source_id: UUID,
+        extractor_model: str,
     ) -> UUID:
         row = await self._fetch_one(
             conn,
@@ -261,7 +263,7 @@ class PostgresLoader:
                 visit.payment_method,
                 visit.expense_category,
                 visit.raw_excerpt,
-                "claude-haiku-4-5",
+                extractor_model,
                 visit.confidence,
             ),
         )

@@ -53,8 +53,9 @@ class CrawlerAdapter(Protocol):
 
 - HTTP GET + Range 헤더 + 30초 타임아웃
 - SHA-256 해시 계산, 같은 해시 캐시되어 있으면 skip
-- Cloudflare R2 버킷 `officer-map-raw` 에 `{agency_short}/{yyyy-mm}/{hash}.{ext}` 키로 업로드 (S3 호환 SDK 사용, `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` 환경변수)
-- `sources` 테이블에 row insert (`storage_path = r2://officer-map-raw/{agency_short}/{yyyy-mm}/{hash}.{ext}`)
+- Cloudflare R2 버킷 `officer-map-raw` 에 `{agency_id}/{yyyy-mm}/{hash}.{ext}` 키로 업로드 (S3 호환 SDK 사용, `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` 환경변수)
+- 비-dry-run 기본 실행은 업로드 후 `storage_path = r2://officer-map-raw/{agency_id}/{yyyy-mm}/{hash}.{ext}`를 `sources`에 저장
+- 운영 중단 모드가 아니라면 `--allow-missing-r2` 없이 R2 업로드가 실패하면 전체 run은 config error로 중단됨
 
 ### 3. `extractor/` — 파일 → 텍스트
 
@@ -118,15 +119,32 @@ class CrawlerAdapter(Protocol):
 
 폴백 트리거: 5xx/429 / 30초 타임아웃 / schema validation 실패 / confidence < 0.8 평균.
 
-호출 단위 토큰 사용량(thinking 토큰 포함)은 `llm_usage` 테이블에 적재. 일일 예산(`LLM_BUDGET_DAILY_USD`) 초과 시 자동 강등.
+호출 단위 토큰 사용량(thinking 토큰 포함)은 `llm_usage`에 시도 단위로 적재한다.
+각 시도는 `task_type/provider/model/input_tokens/output_tokens/thinking_tokens/estimated_cost_usd/status/task_id/error_code`를 기록한다.
+
+일일 예산은 환경변수 `LLM_BUDGET_DAILY_USD`를 사용한다.
+- 시도 시작 전에 일일 누적비용을 확인한다.
+- 상한 초과 시:
+  - 현재 시도는 `status='skipped_budget'`으로 기록하고,
+  - 아직 사용하지 않은 프로바이더 중 비용이 더 싼 쪽이 있으면 즉시 강등해 재시도한다.
+  - 강등 후보가 없으면 `PipelineConfigError("LLM daily budget exceeded")`.
+
+시도 상태값은 다음과 같다.
+- `success`: 최종 성공
+- `fallback`: 실패/재시도 조건이 발생해 다음 프로바이더로 넘어간 시도
+- `error`: 최종 실패한 시도
+- `skipped_budget`: 예산 상한으로 인해 스킵된 시도
 
 #### 마스킹 룰 (LLM 시스템 프롬프트에 박힘)
 
 ```
-1. representative 컬럼은 다음 직급에만 채운다: 시장, 구청장, 시의원, 구의원.
+1. representative 컬럼은 지역별 선출직 목록에 따라 채운다.
+   - 서울: 시장, 구청장, 시의원, 구의원
+   - 경기: 도지사, 시장, 군수, 도의원, 시의원, 군의원
+   - 인천: 시장, 구청장, 군수, 시의원, 구의원, 군의원
    - "○○○ 시장" → representative = "○○○"
    - "○○○ 시장 외 5명" → representative = "○○○", party_size = 6
-2. 임명직 (부시장·국장·과장 등): rank_label만 채우고 representative = null.
+2. 임명직 (부시장·부지사·부군수·부구청장·국장·과장·팀장·담당관·전문위원·주무관·직원): rank_label만 채우고 representative = null.
    - "홍길동 국장(총무국)" → department_name = "총무국", rank_label = "국장", representative = null
 3. 5급 이하: rank_label = "5급 이하", department_name = 부서명만.
 4. 일반 직원 다수 회식: department_name = "○○과 외 N명".

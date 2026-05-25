@@ -2,23 +2,48 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from datetime import date
-from json import JSONDecodeError
 from uuid import UUID
 
-import httpx
+from pydantic import ValidationError
 
+from public_officer_pipeline.agencies import Agency, SEOUL_AGENCIES
+from public_officer_pipeline.legal.visibility import (
+    LegalVisibilityError,
+    allowed_elected_ranks_for_agency,
+    sanitize_raw_excerpt,
+)
+from public_officer_pipeline.llm import LLMClient, TaskType
 from public_officer_pipeline.models import NormalizedVisit, ParsedExpenseRow, PipelineConfigError
 from public_officer_pipeline.normalizer.rules import deterministic_normalize_rows
 
+_SEOUL_AGENCY_IDS = {agency.id for agency in SEOUL_AGENCIES}
 
-SYSTEM_PROMPT = """You normalize Korean public expense execution records into JSON.
+_APPOINTED_RANK_LABELS = (
+    "부시장",
+    "부지사",
+    "부군수",
+    "부구청장",
+    "실장",
+    "국장",
+    "본부장",
+    "과장",
+    "팀장",
+    "담당관",
+    "전문위원",
+    "주무관",
+    "직원",
+)
+
+
+def _system_prompt_for(agency: Agency) -> str:
+    allowed_elected = ", ".join(allowed_elected_ranks_for_agency(agency))
+    return f"""You normalize Korean public expense execution records into JSON.
 
 Masking rules are mandatory:
-1. Fill representative only for elected ranks: 시장, 구청장, 시의원, 구의원.
-2. For appointed ranks such as 부시장, 국장, 과장, 팀장, 담당관, 전문위원, set representative to null.
-3. For 5급 이하 or staff groups, set rank_label to "5급 이하" and keep only department-level labels.
+1. Fill representative only for elected ranks: {allowed_elected}.
+2. For appointed ranks such as {', '.join(_APPOINTED_RANK_LABELS)}, set representative to null.
+3. For 5급 이하 or staff groups, set rank_label to \"5급 이하\" and keep only department-level labels.
 4. Never output a private person's name except elected officials covered by rule 1.
 5. Return valid JSON only, with a top-level visits array.
 """
@@ -32,14 +57,24 @@ class Normalizer:
         model: str | None = None,
         allow_deterministic_fallback: bool = False,
     ) -> None:
-        self.anthropic_api_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
         self.allow_deterministic_fallback = allow_deterministic_fallback
+        model_override = model or os.getenv("ANTHROPIC_MODEL")
+        model_overrides: dict[str, dict[TaskType, str | None]] = {}
+        if model_override is not None:
+            model_overrides["anthropic"] = {TaskType.TABLE_NORMALIZE: model_override}
+
+        self._llm_client = LLMClient(
+            anthropic_api_key=anthropic_api_key,
+            gemini_api_key=os.getenv("GEMINI_API_KEY"),
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+            model_by_provider=model_overrides,
+        )
 
     async def normalize_rows(
         self,
         *,
         agency_id: UUID,
+        agency: Agency | None = None,
         source_url: str,
         source_title: str,
         source_published_at: date | None,
@@ -48,19 +83,22 @@ class Normalizer:
     ) -> list[NormalizedVisit]:
         if not rows:
             return []
-        if not self.anthropic_api_key:
-            if self.allow_deterministic_fallback:
-                return deterministic_normalize_rows(
-                    agency_id=agency_id,
-                    source_url=source_url,
-                    source_title=source_title,
-                    source_published_at=source_published_at,
-                    source_hash_sha256=source_hash_sha256,
-                    rows=rows,
+        if agency is None:
+            if agency_id not in _SEOUL_AGENCY_IDS:
+                raise PipelineConfigError(
+                    "Non-Seoul agencies require explicit Agency context in normalize_rows; "
+                    "pass agency from the caller before loading non-Seoul data."
                 )
-            raise PipelineConfigError("ANTHROPIC_API_KEY is required for LLM normalization")
+            agency = Agency()
+
         try:
-            return await self._normalize_with_anthropic(
+            allowed_elected_ranks_for_agency(agency)
+        except LegalVisibilityError as exc:
+            raise PipelineConfigError(str(exc)) from exc
+
+        try:
+            return await self._normalize_with_llm(
+                agency=agency,
                 agency_id=agency_id,
                 source_url=source_url,
                 source_title=source_title,
@@ -68,9 +106,10 @@ class Normalizer:
                 source_hash_sha256=source_hash_sha256,
                 rows=rows,
             )
-        except (JSONDecodeError, KeyError, ValueError) as exc:
+        except (PipelineConfigError, ValidationError, KeyError, ValueError, TypeError) as exc:
             if self.allow_deterministic_fallback:
                 return deterministic_normalize_rows(
+                    agency=agency,
                     agency_id=agency_id,
                     source_url=source_url,
                     source_title=source_title,
@@ -78,12 +117,13 @@ class Normalizer:
                     source_hash_sha256=source_hash_sha256,
                     rows=rows,
                 )
-            raise PipelineConfigError(f"LLM normalization returned invalid JSON: {exc}") from exc
+            raise PipelineConfigError(f"LLM normalization failed: {exc}") from exc
 
-    async def _normalize_with_anthropic(
+    async def _normalize_with_llm(
         self,
         *,
         agency_id: UUID,
+        agency: Agency,
         source_url: str,
         source_title: str,
         source_published_at: date | None,
@@ -112,37 +152,26 @@ class Normalizer:
                 "confidence",
             ],
         }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={
-                    "x-api-key": self.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "max_tokens": 8192,
-                    "temperature": 0,
-                    "system": SYSTEM_PROMPT,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": (
-                                "Normalize these Seoul public expense rows. "
-                                "Return JSON only.\n\n"
-                                + json.dumps(payload, ensure_ascii=False)
-                            ),
-                        }
-                    ],
-                },
-            )
-            response.raise_for_status()
-        body = response.json()
-        text = "".join(block.get("text", "") for block in body.get("content", []) if block.get("type") == "text")
-        parsed = _loads_json_response(text)
+        prompt = json.dumps(
+            {
+                "system_prompt": _system_prompt_for(agency),
+                "user_prompt": (
+                    f"Normalize these {agency.parent_region} public expense rows. "
+                    "Return JSON only.\n\n"
+                    + json.dumps(payload, ensure_ascii=False)
+                ),
+            },
+            ensure_ascii=False,
+        )
+        result = await self._llm_client.extract(
+            task=TaskType.TABLE_NORMALIZE,
+            prompt=prompt,
+            schema={"required": ["visits"]},
+            timeout=60.0,
+        )
+
         visits = []
-        for visit in parsed.get("visits", []):
+        for visit in result.payload.get("visits", []):
             visit.setdefault("agency_id", str(agency_id))
             visit.setdefault("source_url", source_url)
             visit.setdefault("source_title", source_title)
@@ -150,37 +179,11 @@ class Normalizer:
                 "source_published_at", source_published_at.isoformat() if source_published_at else None
             )
             visit.setdefault("source_hash_sha256", source_hash_sha256)
-            visit["raw_excerpt"] = ""
+            visit["raw_excerpt"] = sanitize_raw_excerpt(visit.get("raw_excerpt"))
             visits.append(NormalizedVisit.model_validate(visit))
         return visits
 
 
-def _loads_json_response(text: str) -> dict:
-    stripped = text.strip()
-    if not stripped:
-        raise JSONDecodeError("empty response", text, 0)
+from public_officer_pipeline.llm.schema import _loads_json_response, _repair_common_json_response
 
-    fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", stripped, flags=re.DOTALL)
-    if fenced:
-        stripped = fenced.group(1)
-    else:
-        start = stripped.find("{")
-        end = stripped.rfind("}")
-        if start >= 0 and end > start:
-            stripped = stripped[start : end + 1]
-
-    try:
-        return json.loads(stripped)
-    except JSONDecodeError:
-        repaired = _repair_common_json_response(stripped)
-        if repaired != stripped:
-            return json.loads(repaired)
-        raise
-
-
-def _repair_common_json_response(value: str) -> str:
-    repaired = value
-    repaired = re.sub(r"}\s*{", "},{", repaired)
-    repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
-    repaired = re.sub(r'(?<=[\]"0-9}])\s*\n\s*"', ',\n"', repaired)
-    return repaired
+__all__ = ["_loads_json_response", "_repair_common_json_response"]

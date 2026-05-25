@@ -18,7 +18,7 @@
 | GET | `/api/v1/places/{id}/visits` | 방문 트랜잭션 |
 | GET | `/api/v1/agencies` | 기관 목록 |
 | GET | `/api/v1/agencies/{id}` | 기관 상세 + 통계 |
-| GET | `/api/v1/agencies/{id}/top-places` | 기관별 자주 가는 식당 |
+| GET | `/api/v1/regions` | 자치구 목록 + 지역 통계 |
 | GET | `/api/v1/stats/summary` | 전체 통계 (총 식당 수·기관 수·방문 수) |
 | GET | `/openapi.json` | OpenAPI 3.1 스펙 |
 | GET | `/llms.txt` | LLM 친화 사이트 가이드 |
@@ -29,7 +29,7 @@
 **핵심: Vercel API Routes에 v1 엔드포인트를 손으로 작성. 핸들러가 Neon에 SQL 실행 후 `*_public` 뷰 결과를 JSON으로 반환.** ([ADR-010](adr/ADR-010-database-stack-migration.md))
 
 - v1엔 PostgREST 자동 노출이 없으므로 엔드포인트별 짧은 핸들러를 직접 둔다(5개).
-- 핸들러는 `DATABASE_URL_READONLY` (anon RLS-restricted Neon 역할)로 연결 → `*_public` 뷰만 SELECT 가능.
+- 핸들러는 `DATABASE_URL_READONLY` (anon RLS-restricted Neon 역할)로 연결 → `*_public` 뷰만 SELECT 가능. 이 변수 미설정은 배포 오류로 간주되어 서비스는 시작되지 않는다.
 - 쓰기 경로(`/api/closure-report`, `/api/takedown-request`)만 `DATABASE_URL` (service role)로 전환 후 SQL 함수 호출.
 - **v1.1 옵션**: Render에 PostgREST 컨테이너 셀프호스트 → 다시 자동 노출로 회귀 검토.
 
@@ -246,7 +246,7 @@ Claude Desktop, Cursor, Cline 등에서 직접 호출 가능.
 ## 보안
 
 - DB 자격 증명은 클라이언트에 노출되지 않음 (모든 SQL은 Vercel API Route 서버 측에서 실행).
-- 읽기 핸들러는 `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted) 사용 → 원본 테이블 SELECT 차단, `*_public` 뷰만 허용.
+- 읽기 핸들러는 `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted) 사용 → 원본 테이블 SELECT 차단, `*_public` 뷰만 허용. `DATABASE_URL_READONLY`가 없으면 시작 시 실패한다.
 - 쓰기 핸들러는 `DATABASE_URL` (service role)로 전환 후 SQL 함수만 호출.
 - Sensitive 데이터(추출 원본 R2 경로 등)는 anon 응답 스키마에서 제외.
 

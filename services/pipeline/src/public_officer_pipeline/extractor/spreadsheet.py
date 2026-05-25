@@ -6,9 +6,9 @@ from io import BytesIO
 from typing import Any
 
 import xlrd
-from dateutil import parser as date_parser
 from openpyxl import load_workbook
 
+from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 from public_officer_pipeline.models import ParsedExpenseRow
 
 
@@ -17,10 +17,14 @@ HEADER_ALIASES = {
     "집행일": "used_date",
     "사용일자": "used_date",
     "사용일": "used_date",
+    "승인일": "used_date",
+    "사용일시": "used_date",
+    "일시": "used_date",
     "일자": "used_date",
     "집행시간": "used_time",
     "사용시간": "used_time",
     "사용시각": "used_time",
+    "승인시각": "used_time",
     "시각": "used_time",
     "시간": "used_time",
     "사용자": "user_text",
@@ -47,6 +51,7 @@ HEADER_ALIASES = {
     "집행인원": "party_size",
     "인원": "party_size",
     "인원수": "party_size",
+    "결제": "payment_method",
     "금액": "amount",
     "집행금액": "amount",
     "집행액": "amount",
@@ -122,7 +127,8 @@ def _extract_department(rows: list[list[str]]) -> str | None:
 def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
     for index, row in enumerate(rows[:20]):
         mapped = _disambiguate_headers(row, [_map_header(cell) for cell in row])
-        if "used_date" in mapped and "place_text" in mapped and "amount" in mapped:
+        has_place_hint = "place_text" in mapped or "purpose" in mapped or "expense_category" in mapped
+        if "used_date" in mapped and has_place_hint and "amount" in mapped:
             return index, mapped
         if index + 1 < len(rows):
             width = max(len(row), len(rows[index + 1]))
@@ -132,7 +138,8 @@ def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
                 for column in range(width)
             ]
             mapped = _disambiguate_headers(overlaid, [_map_header(cell) for cell in overlaid])
-            if "used_date" in mapped and "place_text" in mapped and "amount" in mapped:
+            has_place_hint = "place_text" in mapped or "purpose" in mapped or "expense_category" in mapped
+            if "used_date" in mapped and has_place_hint and "amount" in mapped:
                 return index + 1, mapped
     return None, []
 
@@ -163,43 +170,30 @@ def _parse_row(raw_row: list[str], mapped_headers: list[str | None], department:
         for index, value in enumerate(raw_row[: len(mapped_headers)])
         if mapped_headers[index] and _clean(value)
     }
-    if not item.get("used_date") or not item.get("place_text") or not item.get("amount"):
+    place_text = item.get("place_text") or item.get("purpose") or item.get("expense_category")
+    if not item.get("used_date") or not place_text or not item.get("amount"):
         return None
-    try:
-        used_at = _parse_datetime(item["used_date"], item.get("used_time"))
-        amount = int(re.sub(r"[^\d]", "", item["amount"]))
-    except (ValueError, TypeError):
-        return None
-    if amount <= 0:
-        return None
-
-    place_text = item["place_text"]
-    if item.get("address_hint"):
-        place_text = f"{place_text} ({item['address_hint']})"
 
     user_text = item.get("user_text") or department
-    if item.get("party_size"):
-        user_text = f"{user_text} {item['party_size']}명"
-
-    return ParsedExpenseRow(
-        department_name=department,
-        used_at=used_at,
-        place_text=place_text,
-        purpose=item.get("purpose") or None,
-        amount=amount,
-        user_text=user_text,
-        payment_method=item.get("payment_method") or None,
-        expense_category=item.get("expense_category") or None,
-        raw_excerpt=" | ".join(_clean(value) for value in raw_row if _clean(value)),
+    amount_text = item.get("amount")
+    return build_expense_row(
+        RawExpenseFields(
+            department_name=department,
+            date_text=item["used_date"],
+            time_text=item.get("used_time"),
+            place_name=place_text,
+            address=item.get("address_hint"),
+            purpose=item.get("purpose") or None,
+            amount=amount_text,
+            party_size=item.get("party_size"),
+            user_text=user_text,
+            payment_method=item.get("payment_method") or None,
+            expense_category=item.get("expense_category") or None,
+            raw_values=raw_row,
+        ),
+        fallback_department=department,
+        address_separator=" (",
     )
-
-
-def _parse_datetime(date_value: str, time_value: str | None) -> datetime:
-    parsed_date = date_parser.parse(date_value, fuzzy=True).date()
-    if not time_value:
-        return datetime.combine(parsed_date, time.min)
-    parsed_time = date_parser.parse(time_value, fuzzy=True).time()
-    return datetime.combine(parsed_date, parsed_time).replace(tzinfo=None)
 
 
 def _stringify(value: Any) -> str:

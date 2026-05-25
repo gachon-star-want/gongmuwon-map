@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
 
-from dateutil import parser as date_parser
 from selectolax.parser import HTMLParser, Node
 
+from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 from public_officer_pipeline.models import ParsedExpenseRow
 
 
@@ -14,25 +13,35 @@ HEADER_ALIASES = {
     "집행부서": "department_name",
     "사용일시": "used_at",
     "집행일시": "used_at",
+    "집행일": "used_at",
+    "사용일자": "used_at",
     "사용일자(일시)": "used_at",
+    "장소": "place_text",
     "사용장소": "place_text",
     "집행장소": "place_text",
     "사용장소(가맹점명)": "place_text",
     "사용목적": "purpose",
     "집행목적": "purpose",
+    "집행유형": "purpose",
     "집행내역": "purpose",
     "사용목적(내역)": "purpose",
+    "집행구분": "expense_category",
     "사용금액(원)": "amount",
     "집행금액(원)": "amount",
+    "집행액(천원)": "amount_thousand",
+    "집행액": "amount",
+    "금액": "amount",
     "사용자 및 인원": "user_text",
     "사용자": "user_text",
     "집행대상": "user_text",
+    "집행인원": "party_size",
     "대상인원": "party_size",
     "대상인원수(명)": "party_size",
     "결제방법": "payment_method",
     "결재방법": "payment_method",
     "사용방법": "payment_method",
     "비목": "expense_category",
+    "구분": "expense_category",
 }
 
 
@@ -82,7 +91,7 @@ def _extract_key_value_table(table: Node) -> dict[str, str]:
             value = _clean(values[index].text(separator=" ", strip=True))
             if value:
                 item[mapped] = value
-    if "used_at" in item and "place_text" in item and "amount" in item:
+    if "used_at" in item and "place_text" in item and ("amount" in item or "amount_thousand" in item):
         return item
     return {}
 
@@ -103,36 +112,28 @@ def _map_header(header: str) -> str | None:
 
 
 def _parse_row(item: dict[str, str], raw_row: list[str]) -> ParsedExpenseRow | None:
-    if not item.get("used_at") or not item.get("place_text") or not item.get("amount"):
+    amount_text = item.get("amount") or item.get("amount_thousand")
+    if not item.get("used_at") or not item.get("place_text") or not amount_text:
         return None
-    try:
-        used_at = date_parser.parse(item["used_at"], fuzzy=True)
-        amount = int(re.sub(r"[^\d]", "", item["amount"]))
-    except (ValueError, TypeError):
-        return None
-    if amount <= 0:
-        return None
+
     user_text = item.get("user_text") or None
-    if user_text and item.get("party_size"):
-        user_text = f"{user_text} {item['party_size']}명"
-    elif item.get("party_size"):
-        user_text = f"{item['party_size']}명"
-
-    return ParsedExpenseRow(
-        department_name=item.get("department_name") or "서울시본청",
-        used_at=_strip_tz(used_at),
-        place_text=item["place_text"],
-        purpose=item.get("purpose") or None,
-        amount=amount,
-        user_text=user_text,
-        payment_method=item.get("payment_method") or None,
-        expense_category=item.get("expense_category") or None,
-        raw_excerpt=" | ".join(_clean(value) for value in raw_row if _clean(value)),
+    return build_expense_row(
+        RawExpenseFields(
+            department_name=item.get("department_name"),
+            used_at=None,
+            date_text=item["used_at"],
+            place_text=item["place_text"],
+            purpose=item.get("purpose") or None,
+            amount=amount_text,
+            amount_is_thousands=bool(item.get("amount_thousand")),
+            party_size=item.get("party_size"),
+            user_text=user_text,
+            payment_method=item.get("payment_method") or None,
+            expense_category=item.get("expense_category") or None,
+            raw_values=[value for value in raw_row if _clean(value)],
+        ),
+        fallback_department=item.get("department_name") or "서울시본청",
     )
-
-
-def _strip_tz(value: datetime) -> datetime:
-    return value.replace(tzinfo=None)
 
 
 def _clean(value: str) -> str:

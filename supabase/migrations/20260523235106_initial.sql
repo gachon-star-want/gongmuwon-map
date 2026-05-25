@@ -23,16 +23,18 @@ CREATE TABLE public.agencies (
   id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   name text NOT NULL,
   short_name text NOT NULL,
-  kind text NOT NULL CHECK (kind IN ('city_hall', 'city_council', 'gu_office', 'gu_council')),
+  gov_tier text NOT NULL CHECK (gov_tier IN ('regional', 'basic')),
+  branch text NOT NULL CHECK (branch IN ('admin', 'council')),
+  jurisdiction_type text NOT NULL CHECK (jurisdiction_type IN ('special_city', 'metro_city', 'province', 'autonomous_gu', 'si', 'gun')),
   parent_region text NOT NULL,
   sub_region text,
   homepage text,
   source_pattern jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE NULLS NOT DISTINCT (kind, parent_region, sub_region)
+  UNIQUE NULLS NOT DISTINCT (gov_tier, branch, parent_region, sub_region)
 );
 
-CREATE INDEX agencies_kind_region ON public.agencies (kind, parent_region, sub_region);
+CREATE INDEX agencies_tier_region ON public.agencies (gov_tier, branch, parent_region, sub_region);
 
 CREATE TABLE public.sources (
   id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
@@ -149,9 +151,12 @@ CREATE TABLE public.extraction_failures (
 
 CREATE MATERIALIZED VIEW public.place_grade_v1 AS
 WITH window_visits AS (
-  SELECT *
-  FROM public.place_visits
-  WHERE visit_date >= (current_date - interval '12 months')
+  SELECT v.*
+  FROM public.place_visits v
+  JOIN public.places p ON p.id = v.place_id
+  WHERE v.visit_date >= (current_date - interval '12 months')
+    AND p.hidden_at IS NULL
+    AND p.deleted_at IS NULL
 ),
 agg AS (
   SELECT
@@ -209,6 +214,7 @@ SELECT
   MAX(v.visit_date) AS last_visit_at
 FROM public.agencies a
 LEFT JOIN public.place_visits v ON v.agency_id = a.id
+LEFT JOIN public.places p ON p.id = v.place_id AND p.hidden_at IS NULL AND p.deleted_at IS NULL
 GROUP BY a.id;
 
 CREATE UNIQUE INDEX agency_stats_v1_pk ON public.agency_stats_v1 (agency_id);
@@ -257,7 +263,9 @@ SELECT
   a.id,
   a.name,
   a.short_name,
-  a.kind,
+  a.gov_tier,
+  a.branch,
+  a.jurisdiction_type,
   a.parent_region,
   a.sub_region,
   a.homepage,
@@ -375,13 +383,15 @@ GRANT SELECT ON public.places_public TO anon, authenticated;
 GRANT SELECT ON public.place_visits_public TO anon, authenticated;
 GRANT SELECT ON public.agencies_public TO anon, authenticated;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT USAGE ON SCHEMA app_private TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA app_private TO service_role;
 GRANT EXECUTE ON FUNCTION public.report_closure(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.request_takedown(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.recompute_grades() TO service_role;
-GRANT EXECUTE ON FUNCTION app_private.report_closure_impl(uuid, text, text) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION app_private.request_takedown_impl(uuid, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION app_private.recompute_grades_impl() TO service_role;
+
+REVOKE USAGE ON SCHEMA app_private FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION app_private.report_closure_impl(uuid, text, text) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION app_private.request_takedown_impl(uuid, text, text) FROM anon, authenticated;
 
 DO $$
 BEGIN

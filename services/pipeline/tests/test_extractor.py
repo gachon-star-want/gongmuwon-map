@@ -81,6 +81,42 @@ def test_extracts_inline_district_expense_table_aliases() -> None:
     assert rows[0].payment_method == "카드"
 
 
+def test_extracts_seodaemun_key_value_table_with_thousand_amounts() -> None:
+    rows = extract_expense_rows(
+        """
+        <table>
+          <tbody>
+            <tr>
+              <th scope="row">구분</th><td>시책</td>
+              <th scope="row">집행부서</th><td>행정지원과</td>
+              <th scope="row">집행일</th><td>2026-05-18</td>
+            </tr>
+            <tr>
+              <th scope="row">집행유형</th><td colspan="3">업무추진을 위한 회의</td>
+              <th scope="row">집행구분</th><td>식사</td>
+            </tr>
+            <tr>
+              <th scope="row">집행대상</th><td colspan="3">행정자치국 직원</td>
+              <th scope="row">집행액(천원)</th><td>84</td>
+            </tr>
+            <tr>
+              <th scope="row">집행인원</th><td>4</td>
+              <th scope="row">결제방법</th><td>카드</td>
+              <th scope="row">장소</th><td>연희녹두삼계탕</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "행정지원과"
+    assert rows[0].place_text == "연희녹두삼계탕"
+    assert rows[0].amount == 84000
+    assert rows[0].user_text == "행정자치국 직원 4명"
+    assert rows[0].expense_category == "식사"
+
+
 def test_opengov_crawler_uses_agency_title_filter() -> None:
     agency = next(item for item in SEOUL_AGENCIES if item.short_name == "서울시의회")
     crawler = SeoulOpenGovCrawler(agency=agency)

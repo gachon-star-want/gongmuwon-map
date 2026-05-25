@@ -5,7 +5,9 @@ from uuid import UUID, uuid5
 from public_officer_pipeline.models import (
     SEOUL_CITY_HALL_AGENCY_ID,
     Agency,
-    AgencyKind,
+    GovTier,
+    GovBranch,
+    JurisdictionType,
 )
 
 
@@ -67,6 +69,11 @@ SEOUL_GU_DOMAIN_SLUGS = {
     "중랑구": "jn",
 }
 
+SEOUL_GU_HOMEPAGES = {
+    "중구": "https://www.junggu.seoul.kr",
+    "중랑구": "https://www.jungnang.go.kr",
+}
+
 SEOUL_COUNCIL_HOMEPAGES = {
     "강남구": "https://www.gncouncil.go.kr",
     "강동구": "https://council.gangdong.go.kr",
@@ -107,6 +114,7 @@ SEOUL_COUNCIL_ATTACHMENT_BOARDS = {
     "동대문구": "https://council.ddm.go.kr/kr/busiexpensesBBS.do",
     "동작구": "https://assembly.dongjak.go.kr/kr/costBBS.do",
     "도봉구": "https://www.council-dobong.seoul.kr/kr/activity/bbsCost.do",
+    "노원구": "https://council.nowon.kr/kr/news/bbsData.do",
     "마포구": "https://council.mapo.seoul.kr/kr/news/bbsCost.do",
     "서대문구": "https://www.sdmcouncil.go.kr/source/korean/partake/business.html",
     "서초구": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
@@ -136,40 +144,117 @@ SEOUL_COUNCIL_DETAIL_ATTACHMENT_BOARDS = {
     "영등포구",
     "종로구",
     "중구",
+    "노원구",
 }
 
 SEOUL_OFFICE_ATTACHMENT_BOARDS = {
+    "강북구": "https://child.gangbuk.go.kr/portal/intgty/deptJobPrtnCt/list.do?menuNo=200155",
     "강동구": "https://www.gangdong.go.kr/web/newportal/bbs/b_054",
     "강서구": "https://www.gangseo.seoul.kr/gs030325",
+    "광진구": "https://www.gwangjin.go.kr/portal/bbs/B0000027/list.do?menuNo=201646",
     "구로구": "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732",
     "금천구": "https://www.geumcheon.go.kr/portal/selectBbsNttList.do?bbsNo=86&key=269",
+    "도봉구": "https://www.dobong.go.kr/Contents.asp?code=10008860",
     "동대문구": "https://www.ddm.go.kr/www/selectBbsNttList.do?bbsNo=160&key=565",
     "동작구": "https://www.dongjak.go.kr/portal/bbs/B0000591/list.do?menuNo=200209",
     "마포구": "https://www.mapo.go.kr/site/main/board/expense/list",
     "노원구": "https://www.nowon.kr/www/user/bbs/BD_selectBbsList.do?q_bbsCode=1012",
     "서초구": "https://www.seocho.go.kr/site/seocho/ex/bbs/List.do?cbIdx=33",
     "성동구": "https://sd.go.kr/main/selectBbsNttList.do?bbsNo=172&key=1330",
+    "성북구": "https://www.sb.go.kr/www/selectBbsNttList.do?bbsNo=28&key=5923",
     "송파구": "https://www.songpa.go.kr/www/selectBbsNttList.do?bbsNo=327&key=2323",
     "양천구": "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397",
     "영등포구": "https://www.ydp.go.kr/www/selectBbsNttList.do?bbsNo=31&key=2814",
     "용산구": "https://www.yongsan.go.kr/portal/bbs/B0000030/list.do?menuNo=200140",
     "종로구": "https://www.jongno.go.kr/portal/bbs/selectBoardList.do?bbsId=BBSMSTR_000000001167&menuId=110210&menuNo=110210",
+    "중구": "https://www.junggu.seoul.kr/content.do?cmsid=15383&exclude=Y",
+    "중랑구": "https://www.jungnang.go.kr/portal/bbs/list/B0000143.do?menuNo=200432",
 }
 
 SEOUL_OFFICE_INLINE_TABLES = {
+    "서대문구": "https://www.sdm.go.kr/admininfo/budget/openmoney.do",
     "은평구": "https://www.ep.go.kr/www/selectJobPrtnCtWebList.do?key=666",
 }
 
 SEOUL_OFFICE_DETAIL_ATTACHMENT_BOARDS = {
     "강동구",
     "강서구",
+    "광진구",
     "금천구",
+    "도봉구",
     "동대문구",
     "동작구",
     "마포구",
     "서초구",
+    "성북구",
     "양천구",
+    "중구",
 }
+
+SEOUL_OFFICE_ATTACHMENT_PAGE_PARAMS = {
+    "강북구": "pageIndex",
+    "광진구": "pageIndex",
+    "성북구": "pageIndex",
+    "중구": "page2",
+    "중랑구": "pageIndex",
+}
+
+SEOUL_OFFICE_ATTACHMENT_PAGE_UNIT_PARAMS = {
+    "중랑구": "pageUnit",
+}
+
+GYEONGGI_CITIES = [
+    "수원시",
+    "성남시",
+    "의정부시",
+    "안양시",
+    "부천시",
+    "광명시",
+    "평택시",
+    "동두천시",
+    "안산시",
+    "고양시",
+    "과천시",
+    "구리시",
+    "남양주시",
+    "오산시",
+    "시흥시",
+    "군포시",
+    "의왕시",
+    "하남시",
+    "용인시",
+    "파주시",
+    "이천시",
+    "안성시",
+    "김포시",
+    "화성시",
+    "광주시",
+    "양주시",
+    "포천시",
+    "여주시",
+]
+
+GYEONGGI_COUNTIES = [
+    "연천군",
+    "가평군",
+    "양평군",
+]
+
+INCHEON_GUS = [
+    "중구",
+    "동구",
+    "미추홀구",
+    "연수구",
+    "남동구",
+    "부평구",
+    "계양구",
+    "서구",
+]
+
+INCHEON_COUNTIES = [
+    "강화군",
+    "옹진군",
+]
 
 
 def agency_uuid(key: str) -> UUID:
@@ -183,7 +268,9 @@ def seoul_agencies() -> list[Agency]:
             id=agency_uuid("seoul_city_council"),
             name="서울특별시의회",
             short_name="서울시의회",
-            kind=AgencyKind.CITY_COUNCIL,
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.SPECIAL_CITY,
             parent_region="서울특별시",
             homepage="https://opengov.seoul.go.kr/expense/list",
             source_pattern={
@@ -220,12 +307,18 @@ def seoul_agencies() -> list[Agency]:
                 "fileKinds": ["pdf", "xls", "xlsx"],
                 "followDetail": gu in SEOUL_OFFICE_DETAIL_ATTACHMENT_BOARDS,
             }
+            if gu in SEOUL_OFFICE_ATTACHMENT_PAGE_PARAMS:
+                office_source_pattern["pageParam"] = SEOUL_OFFICE_ATTACHMENT_PAGE_PARAMS[gu]
+            if gu in SEOUL_OFFICE_ATTACHMENT_PAGE_UNIT_PARAMS:
+                office_source_pattern["pageUnitParam"] = SEOUL_OFFICE_ATTACHMENT_PAGE_UNIT_PARAMS[
+                    gu
+                ]
         elif gu in SEOUL_OFFICE_INLINE_TABLES:
             office_source_pattern = {
                 "adapter": "inline_expense_table",
                 "listUrl": SEOUL_OFFICE_INLINE_TABLES[gu],
                 "rowsPerPage": 100,
-                "pageParam": "pageIndex",
+                "pageParam": "cp" if gu == "서대문구" else "pageIndex",
                 "pageUnitParam": "pageUnit",
             }
         agencies.append(
@@ -233,10 +326,12 @@ def seoul_agencies() -> list[Agency]:
                 id=agency_uuid(f"{gu}:office"),
                 name=f"서울특별시 {gu}청",
                 short_name=f"{gu}청",
-                kind=AgencyKind.GU_OFFICE,
+                gov_tier=GovTier.BASIC,
+                branch=GovBranch.ADMIN,
+                jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
                 parent_region="서울특별시",
                 sub_region=gu,
-                homepage=f"https://www.{domain_slug}.go.kr",
+                homepage=SEOUL_GU_HOMEPAGES.get(gu, f"https://www.{domain_slug}.go.kr"),
                 source_pattern=office_source_pattern,
             )
         )
@@ -245,7 +340,9 @@ def seoul_agencies() -> list[Agency]:
                 id=agency_uuid(f"{gu}:council"),
                 name=f"서울특별시 {gu}의회",
                 short_name=f"{gu}의회",
-                kind=AgencyKind.GU_COUNCIL,
+                gov_tier=GovTier.BASIC,
+                branch=GovBranch.COUNCIL,
+                jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
                 parent_region="서울특별시",
                 sub_region=gu,
                 homepage=SEOUL_COUNCIL_HOMEPAGES[gu],
@@ -269,7 +366,243 @@ def seoul_agencies() -> list[Agency]:
     return agencies
 
 
+def gyeonggi_agencies() -> list[Agency]:
+    agencies: list[Agency] = [
+        Agency(
+            id=agency_uuid("gyeonggi:province:office"),
+            name="경기도청",
+            short_name="경기도청",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.PROVINCE,
+            parent_region="경기도",
+            sub_region=None,
+            homepage=None,
+            source_pattern={
+                "adapter": "gyeonggi_admin_required",
+                "searchKeyword": "경기도청 업무추진비",
+                "status": "adapter_required",
+            },
+        ),
+        Agency(
+            id=agency_uuid("gyeonggi:province:council"),
+            name="경기도의회",
+            short_name="경기도의회",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.PROVINCE,
+            parent_region="경기도",
+            sub_region=None,
+            homepage=None,
+            source_pattern={
+                "adapter": "gyeonggi_council_required",
+                "searchKeyword": "경기도의회 업무추진비",
+                "status": "adapter_required",
+            },
+        ),
+    ]
+
+    for city in GYEONGGI_CITIES:
+        agencies.extend(
+            [
+                Agency(
+                    id=agency_uuid(f"gyeonggi:{city}:office"),
+                    name=f"경기도 {city}청",
+                    short_name=f"{city}청",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.ADMIN,
+                    jurisdiction_type=JurisdictionType.SI,
+                    parent_region="경기도",
+                    sub_region=city,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "gg_office_required",
+                        "searchKeyword": f"{city}청 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+                Agency(
+                    id=agency_uuid(f"gyeonggi:{city}:council"),
+                    name=f"경기도 {city}의회",
+                    short_name=f"{city}의회",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.COUNCIL,
+                    jurisdiction_type=JurisdictionType.SI,
+                    parent_region="경기도",
+                    sub_region=city,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "gg_council_required",
+                        "searchKeyword": f"{city}의회 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+            ]
+        )
+
+    for county in GYEONGGI_COUNTIES:
+        agencies.extend(
+            [
+                Agency(
+                    id=agency_uuid(f"gyeonggi:{county}:office"),
+                    name=f"경기도 {county}청",
+                    short_name=f"{county}청",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.ADMIN,
+                    jurisdiction_type=JurisdictionType.GUN,
+                    parent_region="경기도",
+                    sub_region=county,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "gg_office_required",
+                        "searchKeyword": f"{county}청 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+                Agency(
+                    id=agency_uuid(f"gyeonggi:{county}:council"),
+                    name=f"경기도 {county}의회",
+                    short_name=f"{county}의회",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.COUNCIL,
+                    jurisdiction_type=JurisdictionType.GUN,
+                    parent_region="경기도",
+                    sub_region=county,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "gg_council_required",
+                        "searchKeyword": f"{county}의회 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+            ]
+        )
+
+    return agencies
+
+
+def incheon_agencies() -> list[Agency]:
+    agencies: list[Agency] = [
+        Agency(
+            id=agency_uuid("incheon:metro:office"),
+            name="인천광역시청",
+            short_name="인천시청",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.METRO_CITY,
+            parent_region="인천광역시",
+            sub_region=None,
+            homepage=None,
+            source_pattern={
+                "adapter": "incheon_admin_required",
+                "searchKeyword": "인천광역시청 업무추진비",
+                "status": "adapter_required",
+            },
+        ),
+        Agency(
+            id=agency_uuid("incheon:metro:council"),
+            name="인천광역시의회",
+            short_name="인천시의회",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.METRO_CITY,
+            parent_region="인천광역시",
+            sub_region=None,
+            homepage=None,
+            source_pattern={
+                "adapter": "incheon_council_required",
+                "searchKeyword": "인천광역시의회 업무추진비",
+                "status": "adapter_required",
+            },
+        ),
+    ]
+
+    for district in INCHEON_GUS:
+        agencies.extend(
+            [
+                Agency(
+                    id=agency_uuid(f"incheon:{district}:office"),
+                    name=f"인천광역시 {district}청",
+                    short_name=f"{district}청",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.ADMIN,
+                    jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+                    parent_region="인천광역시",
+                    sub_region=district,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "ic_office_required",
+                        "searchKeyword": f"인천 {district}청 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+                Agency(
+                    id=agency_uuid(f"incheon:{district}:council"),
+                    name=f"인천광역시 {district}의회",
+                    short_name=f"{district}의회",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.COUNCIL,
+                    jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+                    parent_region="인천광역시",
+                    sub_region=district,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "ic_council_required",
+                        "searchKeyword": f"인천 {district}의회 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+            ]
+        )
+
+    for county in INCHEON_COUNTIES:
+        agencies.extend(
+            [
+                Agency(
+                    id=agency_uuid(f"incheon:{county}:office"),
+                    name=f"인천광역시 {county}청",
+                    short_name=f"{county}청",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.ADMIN,
+                    jurisdiction_type=JurisdictionType.GUN,
+                    parent_region="인천광역시",
+                    sub_region=county,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "ic_office_required",
+                        "searchKeyword": f"인천 {county}청 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+                Agency(
+                    id=agency_uuid(f"incheon:{county}:council"),
+                    name=f"인천광역시 {county}의회",
+                    short_name=f"{county}의회",
+                    gov_tier=GovTier.BASIC,
+                    branch=GovBranch.COUNCIL,
+                    jurisdiction_type=JurisdictionType.GUN,
+                    parent_region="인천광역시",
+                    sub_region=county,
+                    homepage=None,
+                    source_pattern={
+                        "adapter": "ic_council_required",
+                        "searchKeyword": f"인천 {county}의회 업무추진비",
+                        "status": "adapter_required",
+                    },
+                ),
+            ]
+        )
+
+    return agencies
+
+
 SEOUL_AGENCIES = seoul_agencies()
+GYEONGGI_AGENCIES = gyeonggi_agencies()
+INCHEON_AGENCIES = incheon_agencies()
+CAPITAL_AREA_AGENCIES = SEOUL_AGENCIES + GYEONGGI_AGENCIES + INCHEON_AGENCIES
 
 assert len(SEOUL_AGENCIES) == 52
+assert len(GYEONGGI_AGENCIES) == 64
+assert len(INCHEON_AGENCIES) == 22
 assert SEOUL_AGENCIES[0].id == SEOUL_CITY_HALL_AGENCY_ID
+assert len(CAPITAL_AREA_AGENCIES) == 138

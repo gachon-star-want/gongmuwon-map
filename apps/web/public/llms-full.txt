@@ -5,9 +5,17 @@
 주요 엔드포인트:
 
 - `/api/v1/places?bbox=minLat,minLng,maxLat,maxLng`
+- `/api/v1/places/search?q=스타벅스&limit=20`
+- `/api/v1/places/search?region=서울%20강남구&grade=★★★`
+- `/api/v1/regions`
 - `/api/v1/places/{id}`
 - `/api/v1/places/{id}/visits`
 - `/api/v1/agencies`
+- `/api/v1/agencies/{id}`
 - `/api/v1/stats/summary`
+- `/openapi.json`
+- `/legal`
 
 데이터 출처는 공공누리 제1유형 공공저작물입니다. 인용 시 “공무원맵, 출처: 서울특별시 정보소통광장 외”를 표시하세요.
+등급은 맛 평가가 아니라 방문 빈도와 부서 다양성 기반 통계 신호입니다. 이번 API에는 댓글·평점·후기 데이터가 없습니다.
+2026-05-25 기준 서울 52개 기관 중 51개 기관이 지도 집계에 반영되어 있으며, 중랑구청은 공식 원문에 장소·가맹점 열이 없어 보류 상태입니다.

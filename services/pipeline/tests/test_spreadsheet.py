@@ -217,3 +217,94 @@ def test_extracts_council_cost_xlsx_duplicate_execution_type_headers() -> None:
     assert rows[0].amount == 54000
     assert rows[0].payment_method == "카드"
     assert rows[0].expense_category == "의회운영"
+
+
+def test_extracts_xlsx_with_combined_datetime_and_party_size_aliases() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["연번", "사용자", "일시", "장소", "집행목적", "대상인원수", "금액", "결제", "비목"])
+    worksheet.append(
+        [
+            1,
+            "체육정책팀",
+            "2026-04-01 12:13:00",
+            "추오정남원추어탕",
+            "양천마라톤 대회 관련 관계자 간담회 비용 지급",
+            6,
+            54000,
+            "신용카드",
+            "시책",
+        ]
+    )
+
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="양천구청")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "추오정남원추어탕"
+    assert rows[0].used_at.isoformat() == "2026-04-01T12:13:00"
+    assert rows[0].amount == 54000
+    assert rows[0].user_text == "체육정책팀 6명"
+
+
+def test_extracts_xlsx_short_year_datetime_as_2000s_year() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["연번", "사용일시", "장소", "집행목적", "금액", "결제방법"])
+    worksheet.append([1, "26.04.30, 13:38", "동트팔팔장어", "간담회", 120000, "카드"])
+
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="노원구청")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-04-30T13:38:00"
+    assert rows[0].place_text == "동트팔팔장어"
+
+
+def test_extracts_xlsx_short_year_datetime_first_day_without_dateutil_flip() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["연번", "사용일시", "장소", "집행목적", "금액", "결제방법"])
+    worksheet.append([1, "26.04.01, 17:00", "노원어르신행복 주식", "간담회", 90000, "카드"])
+
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="노원구청")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-04-01T17:00:00"
+    assert rows[0].place_text == "노원어르신행복 주식"
+
+
+def test_extracts_council_cost_xlsx_approval_date_headers_without_place() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의원회의"
+    worksheet.append(["의장단 집행내역"])
+    worksheet.append(["구분", "승인일", "승인시각", "승인금액", "대상인원", "집행내역", "결제방법"])
+    worksheet.append(
+        [
+            "의장",
+            "2026-01-02 00:00:00",
+            "1970-01-01 11:25:19",
+            110000,
+            5,
+            "더불어민주당 의원 간담회",
+            "카드결제",
+        ]
+    )
+
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="노원구의회 의장단")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "더불어민주당 의원 간담회"
+    assert rows[0].user_text == "의장 5명"
+    assert rows[0].amount == 110000

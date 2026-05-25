@@ -2,7 +2,9 @@ INSERT INTO public.agencies (
   id,
   name,
   short_name,
-  kind,
+  gov_tier,
+  branch,
+  jurisdiction_type,
   parent_region,
   sub_region,
   homepage,
@@ -11,13 +13,15 @@ INSERT INTO public.agencies (
   '00000000-0000-0000-0000-000000000001',
   '서울특별시청',
   '서울시청',
-  'city_hall',
+  'regional',
+  'admin',
+  'special_city',
   '서울특별시',
   NULL,
   'https://opengov.seoul.go.kr/expense/list',
   '{"adapter":"seoul_opengov","searchKeyword":"서울시본청"}'::jsonb
 )
-ON CONFLICT (kind, parent_region, sub_region) DO UPDATE
+ON CONFLICT (gov_tier, branch, parent_region, sub_region) DO UPDATE
 SET
   name = EXCLUDED.name,
   short_name = EXCLUDED.short_name,

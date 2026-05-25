@@ -1,5 +1,9 @@
-from public_officer_pipeline.crawler.gncouncil import CouncilAttachmentCrawler, GangnamCouncilCrawler, _url_with_page
-from public_officer_pipeline.models import Agency, AgencyKind, PostRef
+from public_officer_pipeline.crawler.gncouncil import (
+    CouncilAttachmentCrawler,
+    GangnamCouncilCrawler,
+    _url_with_page,
+)
+from public_officer_pipeline.models import Agency, GovTier, GovBranch, JurisdictionType, PostRef
 
 
 def test_gncouncil_crawler_extracts_pdf_refs() -> None:
@@ -35,11 +39,28 @@ def test_url_with_page_preserves_existing_query_params() -> None:
     assert url == "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business&page=2"
 
 
+def test_url_with_page_supports_custom_pagination_params() -> None:
+    url = _url_with_page(
+        "https://www.jungnang.go.kr/portal/bbs/list/B0000143.do?menuNo=200432",
+        2,
+        page_param="pageIndex",
+        page_unit_param="pageUnit",
+        rows_per_page=10,
+    )
+
+    assert url == (
+        "https://www.jungnang.go.kr/portal/bbs/list/B0000143.do"
+        "?menuNo=200432&pageIndex=2&pageUnit=10"
+    )
+
+
 def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="강서구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://gsc.gangseo.seoul.kr/kr/costBBS.do",
@@ -79,7 +100,9 @@ def test_council_attachment_crawler_detects_vice_chair_before_chair() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="서초구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://www.sdc.seoul.kr/kr/news/bbsBusiness.do",
@@ -115,7 +138,9 @@ def test_council_attachment_crawler_supports_four_column_cost_tables() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="금천구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://council.geumcheon.go.kr/council/kr/costBBS.do",
@@ -144,7 +169,10 @@ def test_council_attachment_crawler_supports_four_column_cost_tables() -> None:
     )
 
     assert len(refs) == 2
-    assert refs[0].url == "https://council.geumcheon.go.kr/council/kr/bbs/download.do?bbs_id=cost&uid=file1"
+    assert (
+        refs[0].url
+        == "https://council.geumcheon.go.kr/council/kr/bbs/download.do?bbs_id=cost&uid=file1"
+    )
     assert refs[0].published_at.isoformat() == "2026-05-11"
     assert refs[0].file_kind == "pdf"
 
@@ -153,7 +181,9 @@ def test_council_attachment_crawler_extracts_songpa_detail_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="송파구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://council.songpa.go.kr/kr/news/bbsCost.do",
@@ -180,7 +210,10 @@ def test_council_attachment_crawler_extracts_songpa_detail_downloads() -> None:
     )
 
     assert len(details) == 1
-    assert details[0].url == "https://council.songpa.go.kr/kr/news/bbsCost.do?reform=view&key=abc&pageNum=1&flag=&keyword="
+    assert (
+        details[0].url
+        == "https://council.songpa.go.kr/kr/news/bbsCost.do?reform=view&key=abc&pageNum=1&flag=&keyword="
+    )
     assert details[0].published_at.isoformat() == "2026-04-10"
 
     refs = crawler._parse_detail_downloads(
@@ -207,7 +240,9 @@ def test_council_attachment_crawler_extracts_bbs_process_detail_downloads() -> N
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="양천구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://www.ycc.go.kr/kr/news/bbs?bbs_id=business",
@@ -244,7 +279,10 @@ def test_council_attachment_crawler_extracts_bbs_process_detail_downloads() -> N
     )
 
     assert len(refs) == 1
-    assert refs[0].url == "https://www.ycc.go.kr/kr/news/bbs_process?reform=download&bbs_id=business&uid=2"
+    assert (
+        refs[0].url
+        == "https://www.ycc.go.kr/kr/news/bbs_process?reform=download&bbs_id=business&uid=2"
+    )
     assert refs[0].department_name == "양천구의회 사무국"
     assert refs[0].file_kind == "pdf"
 
@@ -253,7 +291,9 @@ def test_council_attachment_crawler_extracts_extensionless_bbs_downloads() -> No
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="중구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://council.junggu.seoul.kr/kr/bbs?bbs_id=cost",
@@ -292,7 +332,9 @@ def test_council_attachment_crawler_extracts_egov_list_links_and_filedown() -> N
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="종로구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://council.jongno.go.kr/council/bbs/BBSMSTR_000000000061/list.do?menuNo=401070",
@@ -325,8 +367,7 @@ def test_council_attachment_crawler_extracts_egov_list_links_and_filedown() -> N
     )
     assert len(refs) == 1
     assert refs[0].url == (
-        "https://council.jongno.go.kr/portal/cmm/fms/FileDown.do"
-        "?atchFileId=FILE_1&fileSn=1&bbsId="
+        "https://council.jongno.go.kr/portal/cmm/fms/FileDown.do?atchFileId=FILE_1&fileSn=1&bbsId="
     )
     assert refs[0].file_kind == "pdf"
 
@@ -335,7 +376,9 @@ def test_council_attachment_crawler_extracts_mboard_xls_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="서대문구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://www.sdmcouncil.go.kr/source/korean/partake/business.html",
@@ -376,7 +419,9 @@ def test_council_attachment_crawler_extracts_seongdong_policy_expense_downloads(
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="성동구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://sdcouncil.sd.go.kr/kr/data/bbs?bbs_id=expenses",
@@ -408,8 +453,7 @@ def test_council_attachment_crawler_extracts_seongdong_policy_expense_downloads(
 
     assert len(refs) == 1
     assert refs[0].url == (
-        "https://sdcouncil.sd.go.kr/kr/data/bbs_process"
-        "?reform=download&bbs_id=expenses&uid=21901"
+        "https://sdcouncil.sd.go.kr/kr/data/bbs_process?reform=download&bbs_id=expenses&uid=21901"
     )
     assert refs[0].file_kind == "pdf"
 
@@ -418,7 +462,9 @@ def test_council_attachment_crawler_extracts_yeongdeungpo_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="영등포구의회",
-            kind=AgencyKind.GU_COUNCIL,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "council_attachment_board",
                 "listUrl": "https://www.ydpc.go.kr/content/news/bbsCost.html",
@@ -457,7 +503,9 @@ def test_attachment_crawler_extracts_gangdong_office_file_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="강동구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.gangdong.go.kr/web/newportal/bbs/b_054",
@@ -487,7 +535,10 @@ def test_attachment_crawler_extracts_gangdong_office_file_downloads() -> None:
     )
 
     assert len(refs) == 1
-    assert refs[0].url == "https://www.gangdong.go.kr/web/newportal/file/download/uu/5390aaa366da4ba6b3e53339f927bfdb"
+    assert (
+        refs[0].url
+        == "https://www.gangdong.go.kr/web/newportal/file/download/uu/5390aaa366da4ba6b3e53339f927bfdb"
+    )
     assert refs[0].department_name == "강동구청 고덕1동"
     assert refs[0].file_kind == "pdf"
 
@@ -496,7 +547,9 @@ def test_attachment_crawler_extracts_egov_direct_downloads_from_list() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="구로구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.guro.go.kr/www/selectBbsNttList.do?bbsNo=655&key=1732",
@@ -532,11 +585,55 @@ def test_attachment_crawler_extracts_egov_direct_downloads_from_list() -> None:
     assert refs[0].file_kind == "pdf"
 
 
+def test_attachment_crawler_extracts_gangbuk_office_direct_download_table() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="강북구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://child.gangbuk.go.kr/portal/intgty/deptJobPrtnCt/list.do?menuNo=200155",
+                "pageParam": "pageIndex",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table>
+          <thead>
+            <tr><th>번호</th><th>년도</th><th>월</th><th>작성부서</th><th>구분</th><th>파일</th><th>작성일</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>100</td><td>2026</td><td>4</td><td>기획예산과</td><td>시책추진</td>
+              <td><a href="./fileDownLoad.do?streFileNm=20260522054258444.pdf&amp;menuNo=200155">첨부파일</a></td>
+              <td>2026년 05월 22일</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://child.gangbuk.go.kr/portal/intgty/deptJobPrtnCt/fileDownLoad.do"
+        "?streFileNm=20260522054258444.pdf&menuNo=200155"
+    )
+    assert refs[0].department_name == "강북구청 기획예산과"
+    assert refs[0].published_at and refs[0].published_at.isoformat() == "2026-05-22"
+    assert refs[0].file_kind == "pdf"
+
+
 def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="양천구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397",
@@ -564,7 +661,10 @@ def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None
     )
 
     assert len(details) == 1
-    assert details[0].url == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
+    assert (
+        details[0].url
+        == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
+    )
     assert details[0].title == "2026년 4월 업무추진비 집행내역 공개"
 
 
@@ -572,7 +672,9 @@ def test_attachment_crawler_extracts_nowon_direct_downloads_and_department_cell(
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="노원구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.nowon.kr/www/user/bbs/BD_selectBbsList.do?q_bbsCode=1012",
@@ -604,7 +706,10 @@ def test_attachment_crawler_extracts_nowon_direct_downloads_and_department_cell(
     )
 
     assert len(refs) == 1
-    assert refs[0].url == "https://www.nowon.kr/component/file/ND_fileDownload.do?q_fileSn=299137&q_fileId=866"
+    assert (
+        refs[0].url
+        == "https://www.nowon.kr/component/file/ND_fileDownload.do?q_fileSn=299137&q_fileId=866"
+    )
     assert refs[0].file_kind == "pdf"
     assert refs[0].department_name == "노원구청 건강증진과"
 
@@ -613,7 +718,9 @@ def test_attachment_crawler_extracts_gangseo_detail_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="강서구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.gangseo.seoul.kr/gs030325",
@@ -647,7 +754,9 @@ def test_attachment_crawler_extracts_yongsan_downloads_outside_last_cell() -> No
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="용산구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.yongsan.go.kr/portal/bbs/B0000030/list.do?menuNo=200140",
@@ -683,7 +792,9 @@ def test_attachment_crawler_extracts_dongjak_detail_filename_from_parent() -> No
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="동작구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": "https://www.dongjak.go.kr/portal/bbs/B0000591/list.do?menuNo=200209",
@@ -715,11 +826,140 @@ def test_attachment_crawler_extracts_dongjak_detail_filename_from_parent() -> No
     assert refs[0].file_kind == "pdf"
 
 
+def test_attachment_crawler_extracts_dobong_wdb_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="도봉구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.dobong.go.kr/Contents.asp?code=10008860",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url="https://www.dobong.go.kr/bbs.asp?bmode=D&pcode=12743392&code=10008860",
+        title="2026년 4월 창3동주민센터 업무추진비 집행내역 공개",
+        department_name="도봉구청 창3동",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/WDB_common/include/download.asp?fcode=13595472&amp;bcode=387"
+           title="(붙임) 업무추진비 집행내역(창3동)(2026.04).xlsx 다운로드">
+          (붙임) 업무추진비 집행내역(창3동)(2026.04).xlsx
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert (
+        refs[0].url
+        == "https://www.dobong.go.kr/WDB_common/include/download.asp?fcode=13595472&bcode=387"
+    )
+    assert refs[0].file_kind == "xlsx"
+
+
+def test_attachment_crawler_extracts_junggu_cwsboard_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="중구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.junggu.seoul.kr/content.do?cmsid=15383&exclude=Y",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url="https://www.junggu.seoul.kr/content.do?cmsid=15383&exclude=Y&mode=view&cid=144933281",
+        title="2026년 4월 업무추진비 집행내역(소공동)",
+        department_name="중구청 소공동",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/cwsboard/board.do?mode=download&amp;bid=179&amp;cid=144933281&amp;fileIndex=1&amp;filename=144933.xlsx">
+          게시용_업추비_2026. 4월_소공동.xlsx
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.junggu.seoul.kr/cwsboard/board.do"
+        "?mode=download&bid=179&cid=144933281&fileIndex=1&filename=144933.xlsx"
+    )
+    assert refs[0].file_kind == "xlsx"
+
+
+def test_attachment_crawler_extracts_jungnang_rows_with_th_number_cell() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="중랑구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.jungnang.go.kr/portal/bbs/list/B0000143.do?menuNo=200432",
+                "pageParam": "pageIndex",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <th scope="col">8290</th>
+            <td class="tit">
+              <a href="/portal/bbs/view/B0000143/166122.do?menuNo=200432&pageIndex=1">
+                2026년 4월 업무추진비 집행내역(도시기반조성과)
+              </a>
+            </td>
+            <td>도시기반조성과</td>
+            <td class="attach_file">
+              <a href="/portal/cmm/fms/FileDown.do?atchFileId=FILE_1&amp;fileSn=1&amp;bbsId="
+                 title="2026년 4월 업무추진비 집행내역(도시기반조성과).pdf">
+                2026년 4월 업무추진비 집행내역(도시기반조성과).pdf
+              </a>
+            </td>
+            <td>2026-05-22</td>
+            <td>8</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert (
+        refs[0].url
+        == "https://www.jungnang.go.kr/portal/cmm/fms/FileDown.do?atchFileId=FILE_1&fileSn=1&bbsId="
+    )
+    assert refs[0].department_name == "중랑구청 도시기반조성과"
+    assert refs[0].file_kind == "pdf"
+
+
 def test_attachment_crawler_extracts_jongno_responsive_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
             short_name="종로구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "attachment_board",
                 "listUrl": (

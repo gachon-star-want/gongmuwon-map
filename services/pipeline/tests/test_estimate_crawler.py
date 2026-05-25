@@ -1,7 +1,7 @@
 from datetime import date
 
 from public_officer_pipeline.crawler.estimate import EstimateListCrawler, _page_count
-from public_officer_pipeline.models import Agency, AgencyKind
+from public_officer_pipeline.models import Agency, GovTier, GovBranch, JurisdictionType
 
 
 def test_estimate_crawler_counts_pages() -> None:
@@ -12,7 +12,9 @@ def test_estimate_crawler_builds_filtered_page_refs() -> None:
     crawler = EstimateListCrawler(
         Agency(
             short_name="관악구청",
-            kind=AgencyKind.GU_OFFICE,
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
             source_pattern={
                 "adapter": "estimate_list_html",
                 "listUrl": "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do",

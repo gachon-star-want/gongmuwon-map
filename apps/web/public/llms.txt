@@ -7,9 +7,18 @@
 - OpenAPI: /openapi.json
 - 요약 통계: /api/v1/stats/summary
 - 식당 목록: /api/v1/places
+- 검색 목록: /api/v1/places/search?q=창고43&limit=20
+- 자치구 목록: /api/v1/regions
+- 기관 목록: /api/v1/agencies
+- 기관 상세: /api/v1/agencies/{agency_id}
+- 식당 상세: /api/v1/places/{place_id}
+- 방문 기록: /api/v1/places/{place_id}/visits
+- 법무/출처: /legal, /privacy, /terms, /disclaimer
 
 ## 출처와 주의
 
 - 데이터 원천: 서울특별시 정보소통광장 외, 공공누리 제1유형.
 - 운영: 이원영/WonYoungLee, wylee0806@naver.com.
 - 등급은 방문 빈도와 부서 다양성 기반 통계 신호이며 맛·품질·비위 여부를 단정하지 않습니다.
+- 댓글·평점·후기 데이터는 제공하지 않습니다.
+- 2026-05-25 기준 서울 52개 기관 중 51개 기관이 지도 집계에 반영되어 있습니다.
