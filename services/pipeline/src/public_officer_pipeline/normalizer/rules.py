@@ -4,17 +4,20 @@ import re
 from datetime import date
 from uuid import UUID
 
-from public_officer_pipeline.models import NormalizedVisit, ParsedExpenseRow, PlaceRaw
+from public_officer_pipeline.legal.visibility import (
+    APPOINTED_RANKS,
+    ALLOWED_ELECTED_RANKS,
+    allowed_elected_ranks_for_agency,
+)
+from public_officer_pipeline.models import Agency, NormalizedVisit, ParsedExpenseRow, PlaceRaw
+from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 
-
-ELECTED_RANKS = ("시장", "구청장", "시의원", "구의원")
-APPOINTED_RANKS = ("부시장", "실장", "국장", "본부장", "과장", "팀장", "담당관", "전문위원")
-PERSON_RE = re.compile(r"([가-힣]{2,4})\s*(시장|구청장|시의원|구의원)")
 SEOUL_DISTRICT_HINT_RE = re.compile(r"(?P<district>[가-힣]+구)(?:청|의회)?")
 
 
 def deterministic_normalize_rows(
     *,
+    agency: Agency | None = None,
     agency_id: UUID,
     source_url: str,
     source_title: str,
@@ -29,7 +32,11 @@ def deterministic_normalize_rows(
             region_hint = _region_hint_from_department(row.department_name)
             if region_hint:
                 place_raw = PlaceRaw(name=place_raw.name, address_hint=region_hint)
-        mask = mask_user_text(row.user_text or "", fallback_department=row.department_name)
+        mask = mask_user_text(
+            row.user_text or "",
+            fallback_department=row.department_name,
+            agency=agency,
+        )
         visits.append(
             NormalizedVisit(
                 agency_id=agency_id,
@@ -47,7 +54,7 @@ def deterministic_normalize_rows(
                 payment_method=row.payment_method,
                 expense_category=row.expense_category,
                 place_raw=place_raw,
-                raw_excerpt="",
+                raw_excerpt=sanitize_raw_excerpt(row.raw_excerpt),
                 confidence=0.82,
             )
         )
@@ -69,17 +76,23 @@ def _region_hint_from_department(department_name: str) -> str | None:
     return f"서울 {match.group('district')}"
 
 
-def mask_user_text(user_text: str, fallback_department: str) -> dict[str, str | int | None]:
+def mask_user_text(
+    user_text: str,
+    fallback_department: str,
+    agency: Agency | None = None,
+) -> dict[str, str | int | None]:
     value = re.sub(r"\s+", " ", user_text).strip()
     representative: str | None = None
     rank_label: str | None = None
+    elected_ranks = _elected_ranks_for_agency(agency)
+    elected_re = _person_re_for_ranks(elected_ranks)
 
-    elected = PERSON_RE.search(value)
+    elected = elected_re.search(value)
     if elected:
         representative = elected.group(1)
         rank_label = elected.group(2)
     else:
-        for rank in ELECTED_RANKS:
+        for rank in elected_ranks:
             if rank in value:
                 rank_label = rank
                 break
@@ -91,9 +104,11 @@ def mask_user_text(user_text: str, fallback_department: str) -> dict[str, str | 
                 break
     if not rank_label:
         rank_label = "5급 이하"
+    elif rank_label == "직원":
+        rank_label = "5급 이하"
 
     party_size = _parse_party_size(value)
-    department_name = _masked_department(value, fallback_department, rank_label)
+    department_name = _masked_department(value, fallback_department, rank_label, elected_ranks)
     return {
         "party_size": party_size,
         "department_name": department_name,
@@ -114,13 +129,29 @@ def _parse_party_size(value: str) -> int | None:
     return None
 
 
-def _masked_department(user_text: str, fallback_department: str, rank_label: str) -> str:
+def _masked_department(
+    user_text: str,
+    fallback_department: str,
+    rank_label: str,
+    elected_ranks: tuple[str, ...],
+) -> str:
     cleaned_department = fallback_department.strip() or "서울시본청"
-    if rank_label in ELECTED_RANKS:
+    if rank_label in elected_ranks:
         return cleaned_department
     if "직원" in user_text or rank_label == "5급 이하":
         return cleaned_department if "외" in cleaned_department else f"{cleaned_department} 외"
     return cleaned_department
+
+
+def _person_re_for_ranks(ranks: tuple[str, ...]) -> re.Pattern[str]:
+    rank_pattern = "|".join(sorted(ranks, key=len, reverse=True))
+    return re.compile(rf"([가-힣]{{2,4}})\s*({rank_pattern})")
+
+
+def _elected_ranks_for_agency(agency: Agency | None) -> tuple[str, ...]:
+    if agency is None:
+        return ALLOWED_ELECTED_RANKS
+    return allowed_elected_ranks_for_agency(agency)
 
 
 def _normalize_place_name(value: str) -> str:

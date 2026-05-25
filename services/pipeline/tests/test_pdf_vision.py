@@ -1,4 +1,8 @@
-from public_officer_pipeline.extractor.pdf_vision import rows_from_pdf_text, rows_from_vision_payload
+from public_officer_pipeline.extractor.pdf_vision import (
+    _expense_text_lacks_place_column,
+    rows_from_pdf_text,
+    rows_from_vision_payload,
+)
 from public_officer_pipeline.normalizer.llm import _loads_json_response
 
 
@@ -48,6 +52,21 @@ def test_loads_json_repairs_missing_commas_between_rows() -> None:
     assert [row["place_text"] for row in parsed["rows"]] == ["반가안동국시", "삼우정"]
 
 
+def test_expense_text_lacks_place_column_detects_unusable_expense_tables() -> None:
+    assert _expense_text_lacks_place_column(
+        """
+연번 부서명 집행일자 집행목적 집행금액(원) 대상인원(명) 결제방법
+1 기획예산과 2026-04-01 현안업무 협의 간담회 63,000 5 카드
+        """
+    )
+    assert not _expense_text_lacks_place_column(
+        """
+연번 부서명 집행일자 집행목적 집행금액(원) 집행장소 대상인원(명) 결제방법
+1 교육지원과 2026-04-01 현안업무 협의 간담회 63,000 ㈜장수마늘보쌈 5 카드
+        """
+    )
+
+
 def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:
     rows = rows_from_pdf_text(
         """
@@ -62,6 +81,34 @@ def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:
     assert rows[0].amount == 22000
     assert rows[1].used_at.isoformat() == "2026-04-06T20:17:13"
     assert rows[1].user_text == "의정팀장 6명"
+
+
+def test_rows_from_pdf_text_parses_user_place_purpose_layout_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+               집행일시        집행장소        집행목적         집행금액 대상인원
+연번    사용자                                                            결제방법
+              (결제시간)       (가맹점명)       (내역)         (원)       (명)
+
+              2026-04-01 ㈜장수마늘  강북구 스마트팜센터
+1    교육협력팀장                    체험 프로그램 지원 사업          63,000   5     법인카드
+                 12:12     보쌈
+                                운영 관계자 간담회
+
+              2026-04-09        교육경비보조사업 지원
+7    교육지원과장              우리콩순두부                       59,000   4     법인카드
+                 12:07             관련 간담회
+        """,
+        fallback_department="강북구청 교육지원과",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].place_text == "㈜장수마늘 보쌈"
+    assert rows[0].purpose == "강북구 스마트팜센터 체험 프로그램 지원 사업 운영 관계자 간담회"
+    assert rows[0].amount == 63000
+    assert rows[0].user_text == "교육협력팀장 5명"
+    assert rows[1].place_text == "우리콩순두부"
+    assert rows[1].purpose == "교육경비보조사업 지원 관련 간담회"
 
 
 def test_rows_from_pdf_text_parses_purpose_first_pdf_table_rows() -> None:

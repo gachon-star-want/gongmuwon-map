@@ -1,8 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'node:crypto';
 
-export function sendJson(res: VercelResponse, status: number, body: unknown, cache: boolean | string = false) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+export function sendJson(
+  res: VercelResponse,
+  status: number,
+  body: unknown,
+  cache: boolean | string = false,
+  cors = false,
+) {
+  if (cors) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   if (cache) {
     res.setHeader('Cache-Control', cache === true ? 'public, s-maxage=300, stale-while-revalidate=600' : cache);
@@ -13,7 +21,6 @@ export function sendJson(res: VercelResponse, status: number, body: unknown, cac
 export function methodGuard(req: VercelRequest, res: VercelResponse, methods: string[]) {
   const requestMethod = req.method === 'HEAD' && methods.includes('GET') ? 'GET' : req.method;
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', methods.join(', '));
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.status(204).end();

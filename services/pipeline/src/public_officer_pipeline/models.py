@@ -11,21 +11,35 @@ from pydantic import BaseModel, Field
 SEOUL_CITY_HALL_AGENCY_ID = UUID("00000000-0000-0000-0000-000000000001")
 
 
-class AgencyKind(StrEnum):
-    CITY_HALL = "city_hall"
-    CITY_COUNCIL = "city_council"
-    GU_OFFICE = "gu_office"
-    GU_COUNCIL = "gu_council"
+class GovTier(StrEnum):
+    REGIONAL = "regional"
+    BASIC = "basic"
+
+
+class GovBranch(StrEnum):
+    ADMIN = "admin"
+    COUNCIL = "council"
+
+
+class JurisdictionType(StrEnum):
+    SPECIAL_CITY = "special_city"
+    METRO_CITY = "metro_city"
+    PROVINCE = "province"
+    AUTONOMOUS_GU = "autonomous_gu"
+    SI = "si"
+    GUN = "gun"
 
 
 class Agency(BaseModel):
     id: UUID = SEOUL_CITY_HALL_AGENCY_ID
     name: str = "서울특별시청"
     short_name: str = "서울시청"
-    kind: AgencyKind = AgencyKind.CITY_HALL
+    gov_tier: GovTier = GovTier.REGIONAL
+    branch: GovBranch = GovBranch.ADMIN
+    jurisdiction_type: JurisdictionType = JurisdictionType.SPECIAL_CITY
     parent_region: str = "서울특별시"
     sub_region: str | None = None
-    homepage: str = "https://opengov.seoul.go.kr/expense/list"
+    homepage: str | None = "https://opengov.seoul.go.kr/expense/list"
     source_pattern: dict[str, Any] = Field(
         default_factory=lambda: {"adapter": "seoul_opengov", "searchKeyword": "서울시본청"}
     )

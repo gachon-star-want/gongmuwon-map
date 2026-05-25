@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "path": "/",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/r/{slug}-{place_id}",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/about",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/privacy",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/terms",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/disclaimer",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/legal",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/api",
+      "kind": "page",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/sitemap.xml",
+      "kind": "xml",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/api/v1/places",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=300, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/places/search",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=300, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true,
+      "cursor_documented": false
+    },
+    {
+      "path": "/api/v1/places/{id}",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=120, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/places/{id}/visits",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=120, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/agencies",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=120, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/agencies/{id}",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=120, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/agencies/{id}/top-places",
+      "kind": "json",
+      "method": "GET",
+      "status": "planned",
+      "cache": "public, s-maxage=60, stale-while-revalidate=300",
+      "source_notice_required": true,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/api/v1/regions",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=1800, stale-while-revalidate=3600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/stats/summary",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=120, stale-while-revalidate=600",
+      "source_notice_required": true,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/closure-report",
+      "kind": "json",
+      "method": "POST",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": true,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/api/takedown-request",
+      "kind": "json",
+      "method": "POST",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": true,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/openapi.json",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=3600",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/llms.txt",
+      "kind": "txt",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=3600",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/llms-full.txt",
+      "kind": "txt",
+      "method": "GET",
+      "status": "implemented",
+      "cache": "public, s-maxage=3600",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    },
+    {
+      "path": "/agency/{agency_id}",
+      "kind": "page",
+      "method": "GET",
+      "status": "planned",
+      "source_notice_required": false,
+      "documented_in_openapi": false,
+      "documented_in_llms": false
+    }
+  ]
+}

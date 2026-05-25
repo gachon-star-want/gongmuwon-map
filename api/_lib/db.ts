@@ -1,32 +1,61 @@
 import { Pool, type QueryResultRow } from 'pg';
 
-let readPool: Pool | undefined;
-let writePool: Pool | undefined;
+type PoolKind = 'read' | 'write';
+type PoolFactory = (connectionString: string, max: number) => Pool;
 
-function connectionString(kind: 'read' | 'write') {
-  if (kind === 'read') {
-    return process.env.DATABASE_URL_READONLY || process.env.DATABASE_URL;
-  }
+let readPoolInstance: Pool | undefined;
+let writePoolInstance: Pool | undefined;
+let poolFactory: PoolFactory = (connectionString, max) => new Pool({ connectionString, max });
+
+function readConnectionString() {
+  return process.env.DATABASE_URL_READONLY;
+}
+
+function writeConnectionString() {
   return process.env.DATABASE_URL;
 }
 
-export function pool(kind: 'read' | 'write' = 'read') {
-  const url = connectionString(kind);
+function requireUrl(url: string | undefined, name: string) {
   if (!url) {
-    throw new Error(kind === 'read' ? 'DATABASE_URL_READONLY is not configured' : 'DATABASE_URL is not configured');
+    throw new Error(`${name} is not configured`);
   }
-  if (kind === 'read') {
-    readPool ??= new Pool({ connectionString: url, max: 3 });
-    return readPool;
+  return url;
+}
+
+export function readPool() {
+  const url = requireUrl(readConnectionString(), 'DATABASE_URL_READONLY');
+  if (!readPoolInstance) {
+    readPoolInstance = poolFactory(url, 3);
   }
-  writePool ??= new Pool({ connectionString: url, max: 2 });
-  return writePool;
+  return readPoolInstance;
+}
+
+export function writePool() {
+  const url = requireUrl(writeConnectionString(), 'DATABASE_URL');
+  if (!writePoolInstance) {
+    writePoolInstance = poolFactory(url, 2);
+  }
+  return writePoolInstance;
+}
+
+export async function readQuery<T extends QueryResultRow>(text: string, values: unknown[] = []) {
+  return readPool().query<T>(text, values);
+}
+
+export async function writeQuery<T extends QueryResultRow>(text: string, values: unknown[] = []) {
+  return writePool().query<T>(text, values);
 }
 
 export async function query<T extends QueryResultRow>(
   text: string,
   values: unknown[] = [],
-  kind: 'read' | 'write' = 'read',
+  kind: PoolKind = 'read',
 ) {
-  return pool(kind).query<T>(text, values);
+  return (kind === 'write' ? writeQuery<T>(text, values) : readQuery<T>(text, values));
+}
+
+export function _setPoolFactoryForTest(factory: PoolFactory) {
+  poolFactory = factory;
+  readPoolInstance = undefined;
+  writePoolInstance = undefined;
 }

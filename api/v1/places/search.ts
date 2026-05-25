@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../../_lib/db';
-import { methodGuard, numberParam, sendJson, stringParam } from '../../_lib/http';
+import { readQuery } from '../../_lib/db';
+import { publicReadRoute } from '../../_lib/route';
+import { numberParam, stringParam } from '../../_lib/http';
 
 const ALLOWED_GRADES = new Set(['★★★', '★★', '★', '✦']);
 const ALLOWED_SORTS = new Set(['score', 'recent', 'visits']);
@@ -31,9 +32,7 @@ function orderBy(sort: string) {
   return 'name_prefix_match DESC, p.score DESC NULLS LAST, p.last_visit_at DESC NULLS LAST';
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!methodGuard(req, res, ['GET'])) return;
-
+export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
   const q = stringParam(req.query.q)?.trim() || null;
   const regions = splitList(stringParam(req.query.region));
   const grades = parseGrades(stringParam(req.query.grade));
@@ -41,15 +40,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const limit = Math.min(Math.max(numberParam(req.query.limit, 50), 1), 100);
 
   if (!grades || !ALLOWED_SORTS.has(sort)) {
-    sendJson(res, 400, { error: 'invalid_query' });
-    return;
+    return { status: 400, body: { error: 'invalid_query' } };
   }
 
   const qPattern = q ? `%${q}%` : null;
   const qPrefix = q ? `${q}%` : null;
   const values = [limit, grades, regions.length ? regions : null, qPattern, qPrefix];
 
-  const { rows } = await query(
+  const { rows } = await readQuery(
     `
     WITH visit_agg AS (
       SELECT
@@ -113,14 +111,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     values,
   );
 
-  sendJson(
-    res,
-    200,
-    {
-      items: rows,
-      next_cursor: null,
-      source_notice: SOURCE_NOTICE,
-    },
-    true,
-  );
-}
+  return {
+    items: rows,
+    next_cursor: null,
+    source_notice: SOURCE_NOTICE,
+  };
+}, { cache: true });

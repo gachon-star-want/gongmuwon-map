@@ -1,16 +1,22 @@
 from __future__ import annotations
 
-import hashlib
 import math
 import re
-from datetime import date, datetime, timezone
+from datetime import date
 from urllib.parse import urlencode, urlsplit, urlunsplit
+from typing import Any
 
 import httpx
 from selectolax.parser import HTMLParser
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
 from public_officer_pipeline.models import Agency, PostDetail, PostRef
+from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
+from public_officer_pipeline.http_client import create_http_client
+from public_officer_pipeline.source_pattern import (
+    EstimateListPattern,
+    parse_source_pattern,
+)
 
 
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
@@ -18,12 +24,19 @@ COUNT_RE = re.compile(r"건수\s*:\s*([\d,]+)")
 
 
 class EstimateListCrawler:
-    def __init__(self, agency: Agency | None = None, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(
+        self,
+        agency: Agency | None = None,
+        client: Any | None = None,
+        source_pattern: EstimateListPattern | None = None,
+    ) -> None:
         self.agency = agency or next(item for item in SEOUL_AGENCIES if item.short_name == "관악구청")
-        pattern = self.agency.source_pattern
-        self.list_url = str(pattern.get("listUrl") or "https://www.gwanak.go.kr/site/gwanak/estimate/estimateList.do")
-        self.rows_per_page = int(pattern.get("rowsPerPage") or 10)
-        self._client = client or httpx.AsyncClient(
+        pattern = source_pattern or parse_source_pattern(self.agency)
+        if not isinstance(pattern, EstimateListPattern):
+            raise ValueError("EstimateListCrawler requires an estimate_list_html source pattern")
+        self.list_url = pattern.listUrl
+        self.rows_per_page = pattern.rowsPerPage
+        self._client = client or create_http_client(
             timeout=DEFAULT_TIMEOUT,
             headers={
                 "User-Agent": (
@@ -53,13 +66,7 @@ class EstimateListCrawler:
     async def fetch_post(self, ref: PostRef) -> PostDetail:
         response = await self._client.get(ref.url)
         response.raise_for_status()
-        html = response.text
-        return PostDetail(
-            **ref.model_dump(),
-            html=html,
-            fetched_at=datetime.now(timezone.utc),
-            hash_sha256=hashlib.sha256(html.encode("utf-8")).hexdigest(),
-        )
+        return post_detail_from_artifact(artifact_from_response(ref, response))
 
     def _ref_for_page(self, page: int, url: str, since: date) -> PostRef:
         return PostRef(

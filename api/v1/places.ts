@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { query } from '../_lib/db';
-import { methodGuard, numberParam, sendJson, stringParam } from '../_lib/http';
+import { readQuery } from '../_lib/db';
+import { publicReadRoute } from '../_lib/route';
+import { numberParam, stringParam } from '../_lib/http';
 
 const SEOUL_BBOX = [37.413, 126.734, 37.715, 127.269] as const;
 const ALLOWED_GRADES = new Set(['★★★', '★★', '★', '✦']);
@@ -14,9 +15,7 @@ function parseGrades(raw?: string) {
     .filter((item) => ALLOWED_GRADES.has(item));
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!methodGuard(req, res, ['GET'])) return;
-
+export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
   const bbox = stringParam(req.query.bbox)?.split(',').map(Number) ?? [...SEOUL_BBOX];
   const [minLat, minLng, maxLat, maxLng] = bbox.length === 4 && bbox.every(Number.isFinite) ? bbox : SEOUL_BBOX;
   const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);
@@ -26,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const gradeWhere = grades.length ? 'AND grade = ANY($6)' : '';
   if (grades.length) values.push(grades);
 
-  const { rows } = await query(
+  const { rows } = await readQuery(
     `
     SELECT
       id, name, road_address, road_address_part, latitude, longitude, category,
@@ -38,9 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ${gradeWhere}
     ORDER BY score DESC NULLS LAST, last_visit_at DESC NULLS LAST
     LIMIT $5
-    `,
+  `,
     values,
   );
 
-  sendJson(res, 200, rows, true);
-}
+  return rows;
+}, { cache: true });

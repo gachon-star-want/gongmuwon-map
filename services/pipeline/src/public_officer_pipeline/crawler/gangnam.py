@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import hashlib
-from datetime import date, datetime, timezone
+from typing import Any
+from datetime import date
 from email.message import Message
 from urllib.parse import urljoin
 
@@ -9,7 +9,9 @@ import httpx
 from selectolax.parser import HTMLParser
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
+from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
 from public_officer_pipeline.models import Agency, PostDetail, PostRef
+from public_officer_pipeline.http_client import create_http_client
 
 
 LIST_URL = "https://www.gangnam.go.kr/board/B_000673/list.do"
@@ -17,9 +19,9 @@ DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 
 
 class GangnamExpenseCrawler:
-    def __init__(self, agency: Agency | None = None, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(self, agency: Agency | None = None, client: Any | None = None) -> None:
         self.agency = agency or next(item for item in SEOUL_AGENCIES if item.short_name == "강남구청")
-        self._client = client or httpx.AsyncClient(
+        self._client = client or create_http_client(
             timeout=DEFAULT_TIMEOUT,
             headers={
                 "User-Agent": (
@@ -52,15 +54,12 @@ class GangnamExpenseCrawler:
     async def fetch_post(self, ref: PostRef) -> PostDetail:
         response = await self._client.get(ref.url)
         response.raise_for_status()
-        content = response.content
-        data = ref.model_dump()
-        data["file_kind"] = _file_kind(response.headers.get("content-disposition", ""))
-        return PostDetail(
-            **data,
-            html="",
-            content_bytes=content,
-            fetched_at=datetime.now(timezone.utc),
-            hash_sha256=hashlib.sha256(content).hexdigest(),
+        return post_detail_from_artifact(
+            artifact_from_response(
+                ref,
+                response,
+                fallback_file_kind=_file_kind(response.headers.get("content-disposition", "")),
+            )
         )
 
     def _parse_list(self, html: str) -> list[PostRef]:

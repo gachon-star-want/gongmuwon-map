@@ -7,9 +7,12 @@
 - OpenAPI: /openapi.json
 - 요약 통계: /api/v1/stats/summary
 - 식당 목록: /api/v1/places
-- UI 검색: /api/v1/places/search?q=스타벅스&limit=20
+- 검색 목록: /api/v1/places/search?q=창고43&limit=20
 - 자치구 목록: /api/v1/regions
 - 기관 목록: /api/v1/agencies
+- 기관 상세: /api/v1/agencies/{agency_id}
+- 식당 상세: /api/v1/places/{place_id}
+- 방문 기록: /api/v1/places/{place_id}/visits
 - 법무/출처: /legal, /privacy, /terms, /disclaimer
 
 ## 출처와 주의
