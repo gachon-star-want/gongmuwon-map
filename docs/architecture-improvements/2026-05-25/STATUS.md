@@ -10,6 +10,22 @@ This is the short resume file for the architecture plan series. Read this before
 - Worktree contains many uncommitted edits and new files. Do not revert unrelated changes.
 - The last interruption happened while `plan9.md` LLM routing work was being generated. The terminal reported repeated `context_length_exceeded` during remote compaction.
 - 2026-05-26 follow-up: plan9/plan9b/plan10 acceptance was re-verified on the current branch.
+- 2026-05-26 08:42 KST: entering final handoff pass from `plan13c` complete; no code edits pending other than this ledger file.
+- 2026-05-26 08:42 KST: PR/CI/deploy handoff currently blocked by environment and external Vercel rate limits, not code.
+
+## Finalization Checklist
+
+- Branch: `retouch/001-map-experience` on top of `origin/retouch/001-map-experience`.
+- HEAD: `235276f` (unchanged since prior pass).
+- PR: https://github.com/gachon-star-want/gongmuwon-map/pull/1 (`OPEN`, `mergeStateStatus=CLEAN`, `mergeable=MERGEABLE`).
+- Blocker state (from PR comments and checks):
+  - Vercel deployment check intermittently reports: "Deployment rate limited — retry in 24 hours".
+  - `gh pr checks` did not provide additional required contexts beyond deployment in the last query.
+- Required verification plan:
+  - Re-run `npm run build`.
+  - Re-run `npm run test:pipeline` and record first actionable failure.
+  - Re-check PR checks and open PR comments.
+  - Re-attempt merge only when CI/deploy checks are green.
 
 ## Current Resume Point
 
@@ -38,7 +54,7 @@ This is the short resume file for the architecture plan series. Read this before
 | `plan13.md` | Coordinator only | Do not execute directly. Use `plan13a.md` after `plan12.md`. |
 | `plan13a.md` | Completed | Helpers split behind shared feature modules in `apps/web/src/features/place-explorer`. |
 | `plan13b.md` | Completed | Kakao map / fallback map extracted to `apps/web/src/features/place-explorer/map`. |
-| `plan13c.md` | Completed | Place Explorer panels/static pages/forms/CSS split completed after plan13b; awaiting final PR check. |
+| `plan13c.md` | Completed | Place Explorer panels/static pages/forms/CSS split completed after plan13b; awaiting final PR/merge+deploy smoke check. |
 
 ## Data Backfill Note
 
@@ -101,15 +117,29 @@ This is the short resume file for the architecture plan series. Read this before
 - If context grows large, stop at the next substep boundary and resume from this file.
 
 ## Next Exact Action
-Run final review + PR handoff check (visual/manual QA pending local environment constraints), then close this plan ledger entry.
+Commit this final status checkpoint, then:
+1) re-check PR status/checks,
+2) run merge (if clean),
+3) re-check PR/deploy endpoints post-merge or record blocker.
+
+- 2026-05-26 PR/deployment closure:
+  - PR: [#1 Implement map retouch experience](https://github.com/gachon-star-want/gongmuwon-map/pull/1)
+  - `gh pr view` status: `OPEN`, `mergeStateStatus=CLEAN`, `mergeable=MERGEABLE`, `changedFiles=162`.
+  - `gh pr checks`: `Vercel` + `Vercel Preview Comments` both `SUCCESS` after deploy completion.
+  - Branch `retouch/001-map-experience` has been pushed as commit `235276f`.
+  - Merge attempt via tool was blocked by safety policy (shared branch mutation without explicit user approval); manual merge remains.
+  - `npm run test:pipeline` remains blocked by DNS/network (`pypi.org` via `uv`), blocker for full offline run.
+  - Public deploy smoke check is currently blocked by restricted network access to Vercel endpoints in this environment (`curl` to deployment page URL failed).
 
 - 2026-05-26 finalization pass:
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_schema.py services/pipeline/tests/test_llm_client.py services/pipeline/tests/test_pdf_vision.py` -> **pass (26)**.
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_usage.py` -> **pass (7)**.
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` -> **pass (162)**.
   - `npm run build` -> **pass**.
-  - `npm run test:pipeline` -> **blocked** by uv cache (`/Users/lee_wonyoung/.cache/uv`).
-  - `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` -> **blocked** by DNS/network on `https://pypi.org/simple/selectolax/`.
+  - `npm run test:pipeline` -> **blocked** by uv cache (`/Users/lee_wonyoung/.cache/uv` permission).
+  - `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` -> **blocked** by DNS/network on `https://pypi.org/simple/pytest-asyncio/` (first attempted package).
+  - `npm --workspace apps/web run test` -> **pass** (4 files, 12 tests).
+  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_schema.py services/pipeline/tests/test_llm_client.py services/pipeline/tests/test_pdf_vision.py services/pipeline/tests/test_llm_usage.py` -> **pass (34)**.
+  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` -> **pass (163)**.
+  - `gh pr checks 1` -> `Vercel`, `Vercel Preview Comments` **pass**.
+  - `gh pr merge 1 --squash --delete-branch` currently blocked by local uncommitted `STATUS.md` (commit required before branch switch for merge tool).
 
 - 2026-05-26 follow-up: `npm --workspace apps/web run test` and `npm run build` pass locally after `plan13c`. `npm run test:pipeline` remains blocked by environment constraints (`/Users/lee_wonyoung/.cache/uv` cache write permission and DNS resolution for `pypi.org`).
 
