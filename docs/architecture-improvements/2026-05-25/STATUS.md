@@ -15,6 +15,10 @@ This is the short resume file for the architecture plan series. Read this before
 - 2026-05-26 23:55 KST: plan9 미해결/배포 장애 해결 구간 재개. `/api/v1/*` 핸들러 시그니처가 Vercel 타입 가이드와 맞지 않아 컴파일 타임 충돌이 발생한 것으로 확인되어 10개 API/레거시 POST 라우트를 컨텍스트 시그니처(`({ req })`)로 정리함.
 - 2026-05-26 23:56 KST: `npm run build`, `npm run test:api`, `npm run check:public-contracts` 재실행 모두 통과.
 - 2026-05-26 23:57 KST: 배포 전 상태 기록: `git status --short`에서 API 라우트 9개+2개 핸들러 수정 분만 남음. 이 변경은 PR/배포 대상 변경점으로 보류.
+- 2026-05-26 23:59 KST: PR #2 created (`fix-api-handler-signature`) and merged after CI pass.
+- 2026-05-26 23:59 KST: `gh pr checks 2` showed `Vercel` and `Vercel Preview Comments` pass.
+- 2026-05-26 23:59 KST: Production deployment `https://gongmuwon-53w4vtw25-gachon-star-wants-projects.vercel.app` reached `Ready` after merge; alias includes `https://xn--ob0bo0wl1ax52a.com`.
+- 2026-05-26 23:59 KST: API smoke via `curl` still blocked in this environment (`Could not resolve host` for both custom and Vercel domains), so runtime 200/500 verification could not be completed locally. 
 
 Plan 13c 이후 상태(재배포 준비):
 - Local verification of remaining fix is complete. Next action: branch + commit + PR, then merge/deploy and re-run production smoke.
