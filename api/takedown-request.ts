@@ -1,9 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { writeQuery } from './_lib/db';
 import { parseBody } from './_lib/http';
 import { privateWriteRoute } from './_lib/route';
 
-export default privateWriteRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default privateWriteRoute(async function handler({ req }) {
   const body = parseBody(req);
   const placeId = String(body.place_id || '');
   const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 2000) : '';

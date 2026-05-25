@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../_lib/db';
 import { publicReadRoute } from '../_lib/route';
 import { CAPITAL_AREA_REGION_METADATA, fallbackRegionMeta } from '../_lib/region-registry';
@@ -26,7 +25,7 @@ type RegionItem = {
   last_visit_at: string | null;
 };
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
   const includeEmpty = stringParam(req.query.include_empty) === 'true' || stringParam(req.query.include_empty) === '1';
   const { rows } = await readQuery<{
     region: string;

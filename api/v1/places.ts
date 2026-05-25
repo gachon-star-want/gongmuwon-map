@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../_lib/db';
 import { publicReadRoute } from '../_lib/route';
 import { numberParam, stringParam } from '../_lib/http';
@@ -15,7 +14,7 @@ function parseGrades(raw?: string) {
     .filter((item) => ALLOWED_GRADES.has(item));
 }
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
   const bbox = stringParam(req.query.bbox)?.split(',').map(Number) ?? [...SEOUL_BBOX];
   const [minLat, minLng, maxLat, maxLng] = bbox.length === 4 && bbox.every(Number.isFinite) ? bbox : SEOUL_BBOX;
   const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);

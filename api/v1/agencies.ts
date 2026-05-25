@@ -1,8 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../_lib/db';
 import { publicReadRoute } from '../_lib/route';
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
   const { rows } = await readQuery(
     `
     SELECT id, name, short_name, gov_tier, branch, jurisdiction_type, parent_region, sub_region, homepage,

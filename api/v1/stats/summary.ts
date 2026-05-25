@@ -1,8 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../../_lib/db';
 import { publicReadRoute } from '../../_lib/route';
 
-export default publicReadRoute(async function handler(req: VercelRequest, res: VercelResponse) {
+export default publicReadRoute(async function handler({ req }) {
 
   const { rows } = await readQuery<{
     place_count: string;
