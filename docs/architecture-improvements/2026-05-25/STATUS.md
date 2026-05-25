@@ -10,10 +10,12 @@ This is the short resume file for the architecture plan series. Read this before
 - Worktree contains many uncommitted edits and new files. Do not revert unrelated changes.
 - The last interruption happened while `plan9.md` LLM routing work was being generated. The terminal reported repeated `context_length_exceeded` during remote compaction.
 - 2026-05-26 follow-up: plan9/plan9b/plan10 acceptance was re-verified on the current branch.
+- 2026-05-26 08:42 KST: final merge/deploy verification pass begun after code changes.
+- 2026-05-26 23:43 KST: PR #1 is merged on GitHub (`MERGED`) and API smoke checks executed on production domain.
 
 ## Current Resume Point
 
-- Resume point: `plan13c.md` implementation completed; remaining action is PR/CI/deploy handoff verification.
+- Resume point: `plan13c.md` completed; all architecture-improvement plans complete.
 
 ## Plan Ledger
 
@@ -38,7 +40,7 @@ This is the short resume file for the architecture plan series. Read this before
 | `plan13.md` | Coordinator only | Do not execute directly. Use `plan13a.md` after `plan12.md`. |
 | `plan13a.md` | Completed | Helpers split behind shared feature modules in `apps/web/src/features/place-explorer`. |
 | `plan13b.md` | Completed | Kakao map / fallback map extracted to `apps/web/src/features/place-explorer/map`. |
-| `plan13c.md` | Completed | Place Explorer panels/static pages/forms/CSS split completed after plan13b; awaiting final PR check. |
+| `plan13c.md` | Completed | Place Explorer panels/static pages/forms/CSS split completed after plan13b; awaiting final PR/deploy check. |
 
 ## Data Backfill Note
 
@@ -101,17 +103,29 @@ This is the short resume file for the architecture plan series. Read this before
 - If context grows large, stop at the next substep boundary and resume from this file.
 
 ## Next Exact Action
-Run final review + PR handoff check (visual/manual QA pending local environment constraints), then close this plan ledger entry.
+Merge/deploy handoff is now completed (PR merged). Close ledger after confirming smoke checks and recording blockers.
 
 - 2026-05-26 finalization pass:
   - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_schema.py services/pipeline/tests/test_llm_client.py services/pipeline/tests/test_pdf_vision.py` -> **pass (26)**.
   - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_usage.py` -> **pass (7)**.
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` -> **pass (162)**.
+  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` -> **pass (163)**.
   - `npm run build` -> **pass**.
   - `npm run test:pipeline` -> **blocked** by uv cache (`/Users/lee_wonyoung/.cache/uv`).
   - `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` -> **blocked** by DNS/network on `https://pypi.org/simple/selectolax/`.
 
 - 2026-05-26 follow-up: `npm --workspace apps/web run test` and `npm run build` pass locally after `plan13c`. `npm run test:pipeline` remains blocked by environment constraints (`/Users/lee_wonyoung/.cache/uv` cache write permission and DNS resolution for `pypi.org`).
+
+- 2026-05-26 finalization continuation:
+  - `gh pr view 1` -> `state=MERGED`, `mergedAt=2026-05-25T23:42:42Z`, `changedFiles=162`.
+  - `gh pr checks 1` -> `Vercel` and `Vercel Preview Comments` **pass**.
+  - Production smoke (https://xn--ob0bo0wl1ax52a.com) checks:
+    - `/` and `/about` -> `HTTP 200`.
+    - `/api/v1/places/search?q=스타벅스&limit=3` -> **500 internal_error**.
+    - `/api/v1/places`, `/api/v1/places?bbox=...`, `/api/v1/regions` -> **500 internal_error**.
+    - `/api/v1/openapi.json` -> `404`.
+    - `/openapi.json` -> `200`.
+    - `/api` route on this domain does not exist (`404`).
+  - `gh pr merge 1 --squash --delete-branch` no longer available (PR already merged in prior run and branch is now `main`).
 
 ### plan13c execution checkpoint (2026-05-26)
 
