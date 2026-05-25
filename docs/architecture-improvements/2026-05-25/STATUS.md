@@ -20,6 +20,8 @@ This is the short resume file for the architecture plan series. Read this before
 - 2026-05-26 23:59 KST: Production deployment `https://gongmuwon-53w4vtw25-gachon-star-wants-projects.vercel.app` reached `Ready` after merge; alias includes `https://xn--ob0bo0wl1ax52a.com`.
 - 2026-05-26 23:59 KST: API smoke via `curl` still blocked in this environment (`Could not resolve host` for both custom and Vercel domains), so runtime 200/500 verification could not be completed locally. 
 
+- 2026-05-26 23:59 KST: `npm run test:pipeline` 실행 재시도 결과는 동일 블로커(`Failed to initialize cache at /Users/lee_wonyoung/.cache/uv` 권한)로 실패.
+
 Plan 13c 이후 상태(재배포 준비):
 - Local verification of remaining fix is complete. Next action: branch + commit + PR, then merge/deploy and re-run production smoke.
 
