@@ -118,6 +118,8 @@ Merge/deploy handoff is now completed (PR merged). Close ledger after confirming
 - 2026-05-26 finalization continuation:
   - `gh pr view 1` -> `state=MERGED`, `mergedAt=2026-05-25T23:42:42Z`, `changedFiles=162`.
   - `gh pr checks 1` -> `Vercel` and `Vercel Preview Comments` **pass**.
+  - `npm run test:api` -> **pass** (3 files, 24 tests).
+  - `npm run check:public-contracts` -> **pass**.
   - Production smoke (https://xn--ob0bo0wl1ax52a.com) checks:
     - `/` and `/about` -> `HTTP 200`.
     - `/api/v1/places/search?q=스타벅스&limit=3` -> **500 internal_error**.
