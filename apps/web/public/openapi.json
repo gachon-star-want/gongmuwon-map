@@ -3,7 +3,7 @@
   "info": {
     "title": "공무원맵 API",
     "version": "1.0.0",
-    "description": "전국 지자체 업무추진비 공개 데이터 기반 식당 정보 API. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외.",
+    "description": "전국 지자체 업무추진비 공개 데이터 기반 식당 정보 API. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외. 등급은 맛 평가가 아니라 방문 빈도와 부서 다양성 기반 통계 신호입니다. 댓글, 평점, 후기 데이터는 제공하지 않습니다.",
     "contact": {
       "email": "wylee0806@naver.com"
     }
@@ -23,13 +23,113 @@
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "min_lat,min_lng,max_lat,max_lng"
           },
           {
             "name": "grade",
             "in": "query",
             "schema": {
               "type": "string"
+            },
+            "description": "comma-separated grade list"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/places/search": {
+      "get": {
+        "summary": "UI 검색용 식당 목록",
+        "description": "식당명, 주소, 카테고리, 마스킹된 부서명을 검색하고 자치구, 등급, 정렬을 적용합니다. 댓글, 평점, 후기 필드는 포함하지 않습니다.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "예: 서울 강남구 또는 comma-separated list"
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "★★★,★★,✦"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "score",
+                "recent",
+                "visits"
+              ],
+              "default": "score"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid query"
+          }
+        }
+      }
+    },
+    "/api/v1/regions": {
+      "get": {
+        "summary": "자치구 필터 목록",
+        "parameters": [
+          {
+            "name": "include_empty",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -57,6 +157,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
           }
         }
       }
@@ -64,6 +167,57 @@
     "/api/v1/places/{id}/visits": {
       "get": {
         "summary": "방문 기록",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/agencies": {
+      "get": {
+        "summary": "기관 목록",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/agencies/{id}": {
+      "get": {
+        "summary": "기관 상세",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -77,6 +231,26 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/takedown-request": {
+      "post": {
+        "summary": "정보 수정·삭제 요청",
+        "responses": {
+          "200": {
+            "description": "접수 완료"
+          }
+        }
+      }
+    },
+    "/api/closure-report": {
+      "post": {
+        "summary": "폐업 신고",
+        "responses": {
+          "200": {
+            "description": "접수 완료"
           }
         }
       }

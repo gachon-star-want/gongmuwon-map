@@ -1,5 +1,6 @@
 {
   "buildCommand": "npm run build",
+  "devCommand": "npm --workspace apps/web run dev -- --host 0.0.0.0 --port $PORT",
   "installCommand": "npm install",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
@@ -30,7 +31,31 @@
       "destination": "/api/sitemap"
     },
     {
-      "source": "/(.*)",
+      "source": "/about",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/disclaimer",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/legal",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/r/(.*)",
       "destination": "/index.html"
     }
   ]
