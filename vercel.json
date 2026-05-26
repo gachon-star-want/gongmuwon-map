@@ -4,6 +4,20 @@
   "installCommand": "npm install",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
+  "builds": [
+    {
+      "src": "api/[...path].ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm run build",
+        "distDir": "apps/web/dist"
+      }
+    }
+  ],
   "headers": [
     {
       "source": "/api/v1/(.*)",
@@ -49,6 +63,14 @@
     {
       "source": "/legal",
       "destination": "/index.html"
+    },
+    {
+      "source": "/community",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/[...path]"
     },
     {
       "source": "/api",
