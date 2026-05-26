@@ -131,9 +131,6 @@ export function CommunityPage() {
       <section className="community-layout">
         <aside className="community-rank">
           <Text fw={800}>소통방</Text>
-          <Text size="sm" c="dimmed">
-            식당 상세와 분리된 자유 게시판
-          </Text>
           <SponsorAd variant="rail" />
         </aside>
 
@@ -141,9 +138,6 @@ export function CommunityPage() {
           <Group justify="space-between" className="community-board-head">
             <div>
               <Title order={1}>커뮤니티</Title>
-              <Text size="sm" c="dimmed">
-                맛집을 좋아하는 사람들의 소통 공간입니다.
-              </Text>
             </div>
             <Select
               w={130}
@@ -249,4 +243,3 @@ export function CommunityPage() {
     </main>
   );
 }
-

@@ -633,6 +633,13 @@
   padding: 14px;
 }
 
+.mobile-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .mobile-grade-group {
   flex-wrap: wrap;
   min-width: 0;
@@ -773,7 +780,8 @@
 }
 
 .floating-search {
-  width: min(1280px, calc(100vw - 40px));
+  box-sizing: border-box;
+  width: min(1220px, calc(100vw - 40px));
   padding: 7px;
   border-color: rgba(216, 225, 235, 0.92);
   border-radius: 18px;
@@ -810,6 +818,7 @@
 }
 
 .desktop-action-cluster {
+  margin-left: 0;
   padding: 4px;
   border: 1px solid rgba(222, 230, 239, 0.9);
   border-radius: 15px;
@@ -845,8 +854,8 @@
 }
 
 .sort-select {
-  flex-basis: 118px;
-  min-width: 118px;
+  flex-basis: 112px;
+  min-width: 112px;
 }
 
 .sort-select input {
@@ -857,6 +866,7 @@
 }
 
 .toolbar-icon-group {
+  flex: 0 0 auto;
   padding-left: 5px;
   border-left: 1px solid rgba(212, 222, 233, 0.9);
 }
@@ -1014,10 +1024,26 @@
   padding: 18px;
 }
 
+.utility-sheet .mobile-panel-head {
+  margin-bottom: 2px;
+}
+
 .utility-sheet .filter-title,
 .utility-sheet .panel-label {
   color: #182235;
   font-size: 17px;
+}
+
+.map-ad-rail {
+  top: 282px;
+  right: auto;
+  left: 56px;
+  width: 214px;
+}
+
+.map-ad-rail .sponsor-ad {
+  min-height: min(56dvh, 640px);
+  align-content: center;
 }
 
 .info-sheet {
