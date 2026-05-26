@@ -15,7 +15,8 @@ This is the short resume file for the architecture plan series. Read this before
 - Final production smoke on `https://xn--ob0bo0wl1ax52a.com`: `/`, `/about`, `/openapi.json`, `/api/v1/regions`, `/api/v1/agencies`, `/api/v1/stats/summary`, `/api/v1/places?bbox=37.413,126.734,37.715,127.269&limit=3`, and `/api/v1/places/search?q=스타벅스&limit=3` all returned HTTP 200 with non-empty bodies.
 - Guard smoke: `GET /api/closure-report` and `GET /api/takedown-request` returned 405; `OPTIONS` for both returned 204. No destructive POST was sent.
 - Local verification on final `main`: `npm run build` pass; `npm --workspace apps/web run test` pass (4 files, 12 tests); `npm run test:api` pass (4 files, 27 tests); `npm run check:public-contracts` pass; `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` pass (163 tests).
-- `npm run test:pipeline` remains environment-blocked by uv cache permission at `/Users/lee_wonyoung/.cache/uv`. With `UV_CACHE_DIR=/private/tmp/uv-cache`, it advances to dependency resolution and remains environment-blocked by DNS to `pypi.org`.
+- 2026-05-26 follow-up: `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` passes with network access allowed (163 tests). Default `npm run test:pipeline` remains blocked only inside the Codex sandbox because uv tries to use `/Users/lee_wonyoung/.cache/uv`, which is outside the writable roots.
+- `services/pipeline/uv.lock` was synced by the successful `uv run`; the lock now includes the existing `boto3>=1.34` dependency from `services/pipeline/pyproject.toml`.
 
 ## Current Resume Point
 
@@ -118,7 +119,7 @@ None. Final handoff is complete after this STATUS update lands on `main`.
   - Public smoke: required page/API matrix returned HTTP 200.
   - Private guards: POST-only routes are not open to GET and answer OPTIONS preflight.
   - Local checks: build, web tests, API tests, public contract check, and direct pipeline pytest pass.
-  - Known blocker: repo-level `npm run test:pipeline` cannot complete in this workspace because of uv cache permission and PyPI DNS/network constraints; direct `.venv` pytest is the current code-verification basis.
+  - Sandbox note: default `npm run test:pipeline` cannot use the home uv cache in Codex. Use `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` when running inside this sandbox.
 
 ### plan13c execution checkpoint (2026-05-26)
 
