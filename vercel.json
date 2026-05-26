@@ -42,7 +42,7 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
+      "destination": "/api/[...path].ts?path=sitemap"
     },
     {
       "source": "/about",
@@ -70,7 +70,7 @@
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/[...path]"
+      "destination": "/api/[...path].ts?path=$1"
     },
     {
       "source": "/api",
