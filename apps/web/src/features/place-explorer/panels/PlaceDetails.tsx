@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Button, Group, Text, Title } from '@mantine/core';
-import { AlertTriangle, ExternalLink, FileText, Navigation, X } from 'lucide-react';
-import type { Place, Visit } from '../types';
+import { AlertTriangle, ExternalLink, FileText, Navigation, ThumbsDown, ThumbsUp, X } from 'lucide-react';
+import type { Place, PlaceReactionSummary, Visit } from '../types';
 import { formatDate, gradeClass, gradeLabel } from '../format';
 import { Metric } from './metric';
 
@@ -10,9 +10,12 @@ type PlaceDetailsProps = {
   onClose: () => void;
   onReport: () => void;
   onClosureReport: () => void;
+  reactions?: PlaceReactionSummary | null;
+  reactionPending?: boolean;
+  onReact?: (reaction: 'like' | 'dislike') => void;
 };
 
-export function PlaceDetails({ place, visits, onClose, onReport, onClosureReport }: PlaceDetailsProps) {
+export function PlaceDetails({ place, visits, onClose, onReport, onClosureReport, reactions, reactionPending, onReact }: PlaceDetailsProps) {
   const kakaoUrl = `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
   return (
     <div className="detail-content">
@@ -52,6 +55,36 @@ export function PlaceDetails({ place, visits, onClose, onReport, onClosureReport
           {place.avg_amount_per_person ? (
             <Metric label="평균 1인당" value={`${place.avg_amount_per_person.toLocaleString('ko-KR')}원`} />
           ) : null}
+        </div>
+      </section>
+
+      <section className="detail-section reaction-section">
+        <Group justify="space-between" align="center">
+          <div>
+            <Text fw={800}>이 식당 반응</Text>
+          </div>
+        </Group>
+        <div className="reaction-actions">
+          <button
+            type="button"
+            data-active={reactions?.user_reaction === 'like'}
+            disabled={reactionPending}
+            onClick={() => onReact?.('like')}
+          >
+            <ThumbsUp size={17} aria-hidden />
+            좋아요
+            <strong>{reactions?.like_count ?? 0}</strong>
+          </button>
+          <button
+            type="button"
+            data-active={reactions?.user_reaction === 'dislike'}
+            disabled={reactionPending}
+            onClick={() => onReact?.('dislike')}
+          >
+            <ThumbsDown size={17} aria-hidden />
+            싫어요
+            <strong>{reactions?.dislike_count ?? 0}</strong>
+          </button>
         </div>
       </section>
 

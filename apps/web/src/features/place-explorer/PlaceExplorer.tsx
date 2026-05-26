@@ -6,7 +6,6 @@ import {
   Modal,
   MultiSelect,
   Radio,
-  SegmentedControl,
   Select,
   Stack,
   Text,
@@ -23,20 +22,25 @@ import {
   Filter,
   Info,
   List,
+  LogIn,
   MapPin,
+  MessageCircle,
   RefreshCw,
   RotateCcw,
   Search,
   ShieldCheck,
+  UserRound,
   X,
 } from 'lucide-react';
-import type { Grade, Place, Region, SortMode, Visit } from './types';
+import type { Grade, Place, PlaceReactionSummary, Region, SortMode, Visit } from './types';
 import {
   loadPlaceById as loadPlaceByIdApi,
+  loadPlaceReactions as loadPlaceReactionsApi,
   loadPlaces as loadPlacesApi,
   loadRegions as loadRegionsApi,
   loadVisits as loadVisitsApi,
   searchPlaces as searchPlacesApi,
+  setPlaceReaction as setPlaceReactionApi,
 } from './publicData';
 import { gradeLabel, shortRegionLabel, sortPlaces } from './format';
 import { defaultGrades, normalizeQueryState, parseQueryState, serializeQueryState, type PlaceQueryState } from './queryState';
@@ -47,6 +51,10 @@ import { PlaceList } from './panels/PlaceList';
 import { MobileFilterPanel } from './panels/MobileFilterPanel';
 import { MobileInfoPanel } from './panels/MobileInfoPanel';
 import { submitClosureReport, submitTakedownRequest } from './forms/reportFlows';
+import { AuthModal } from '../auth/AuthModal';
+import type { CurrentUser } from '../auth/authApi';
+import { getCurrentUser, logout } from '../auth/authApi';
+import { SponsorAd } from '../ads/SponsorAd';
 import mascotLogo from '../../assets/officer-mascot-logo.png';
 import './styles.css';
 
@@ -67,6 +75,9 @@ export function PlaceExplorer() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [reactions, setReactions] = useState<PlaceReactionSummary | null>(null);
+  const [reactionPending, setReactionPending] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [regionLoading, setRegionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +93,7 @@ export function PlaceExplorer() {
   const [requestState, setRequestState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
   const [reportOpened, report] = useDisclosure(false);
   const [closureOpened, closure] = useDisclosure(false);
+  const [authOpened, auth] = useDisclosure(false);
 
   const regionOptions = useMemo(() => {
     const fromApi = regions.map((region) => ({ label: region.label, value: region.region }));
@@ -150,6 +162,12 @@ export function PlaceExplorer() {
   }, []);
 
   useEffect(() => {
+    void getCurrentUser()
+      .then(setCurrentUser)
+      .catch(() => setCurrentUser(null));
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
     void loadSearchPlaces(controller);
     return () => controller.abort();
@@ -173,9 +191,11 @@ export function PlaceExplorer() {
   useEffect(() => {
     if (!selectedPlace) {
       setVisits([]);
+      setReactions(null);
       return;
     }
     void loadVisits(selectedPlace.id);
+    void loadPlaceReactions(selectedPlace.id);
   }, [selectedPlace]);
 
   useEffect(() => {
@@ -260,6 +280,31 @@ export function PlaceExplorer() {
       setVisits(await loadVisitsApi(placeId));
     } catch {
       setVisits([]);
+    }
+  }
+
+  async function loadPlaceReactions(placeId: string) {
+    try {
+      setReactions(await loadPlaceReactionsApi(placeId));
+    } catch {
+      setReactions({ like_count: 0, dislike_count: 0, user_reaction: null });
+    }
+  }
+
+  async function toggleReaction(reaction: 'like' | 'dislike') {
+    if (!selectedPlace) return;
+    if (!currentUser) {
+      auth.open();
+      return;
+    }
+    setReactionPending(true);
+    try {
+      const nextReaction = reactions?.user_reaction === reaction ? null : reaction;
+      setReactions(await setPlaceReactionApi(selectedPlace.id, nextReaction));
+    } catch {
+      auth.open();
+    } finally {
+      setReactionPending(false);
     }
   }
 
@@ -361,6 +406,13 @@ export function PlaceExplorer() {
           onListToggle={() => setDesktopListOpen((current) => !current)}
           onReset={resetFilters}
           regionLoading={regionLoading}
+          currentUser={currentUser}
+          onLogin={auth.open}
+          onLogout={() =>
+            void logout()
+              .then(() => setCurrentUser(null))
+              .catch(() => setCurrentUser(null))
+          }
         />
       </section>
 
@@ -429,6 +481,12 @@ export function PlaceExplorer() {
         </aside>
       ) : null}
 
+      {!selectedPlace && mobileMode === 'map' ? (
+        <aside className="map-ad-rail desktop-layer" aria-label="광고">
+          <SponsorAd variant="rail" />
+        </aside>
+      ) : null}
+
       {selectedPlace ? (
         <aside className="detail-drawer desktop-layer" aria-label="식당 상세">
           <PlaceDetails
@@ -437,6 +495,9 @@ export function PlaceExplorer() {
             onClose={() => clearSelected()}
             onReport={report.open}
             onClosureReport={closure.open}
+            reactions={reactions}
+            reactionPending={reactionPending}
+            onReact={toggleReaction}
           />
           <AdSlot />
         </aside>
@@ -449,6 +510,8 @@ export function PlaceExplorer() {
         places={listedPlaces}
         selectedId={selectedPlace?.id}
         visits={visits}
+        reactions={reactions}
+        reactionPending={reactionPending}
         loading={searchLoading}
         regions={regionOptions}
         selectedRegions={queryState.region}
@@ -465,11 +528,14 @@ export function PlaceExplorer() {
         onClosedVisibleChange={setClosedVisible}
         onReport={report.open}
         onClosureReport={closure.open}
+        onReact={toggleReaction}
       />
 
       <SourcePill sheetOpen={mobileMode !== 'map' || Boolean(selectedPlace)} />
 
       <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
+
+      <AuthModal opened={authOpened} onClose={auth.close} onAuthenticated={setCurrentUser} />
 
       <Modal
         opened={reportOpened}
@@ -581,6 +647,9 @@ function FloatingSearchFilter({
   onListToggle,
   onReset,
   regionLoading,
+  currentUser,
+  onLogin,
+  onLogout,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
@@ -594,6 +663,9 @@ function FloatingSearchFilter({
   onListToggle: () => void;
   onReset: () => void;
   regionLoading: boolean;
+  currentUser: CurrentUser | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }) {
   return (
     <div className="floating-search">
@@ -625,47 +697,69 @@ function FloatingSearchFilter({
         clearable
         maxDropdownHeight={260}
       />
-      <div className="grade-chip-group" aria-label="등급 필터">
-        {gradeOptions.map((grade) => {
-          const selected = selectedGrades.includes(grade);
-          return (
-            <button
-              className="filter-chip"
-              data-active={selected}
-              key={grade}
-              type="button"
-              onClick={() => {
-                if (selected && selectedGrades.length === 1) return;
-                onGradesChange(selected ? selectedGrades.filter((item) => item !== grade) : [...selectedGrades, grade]);
-              }}
-            >
-              {selected ? <Check size={13} aria-hidden /> : null}
-              {gradeLabel(grade)}
-            </button>
-          );
-        })}
+      <div className="desktop-action-cluster">
+        <div className="grade-chip-group" aria-label="등급 필터">
+          {gradeOptions.map((grade) => {
+            const selected = selectedGrades.includes(grade);
+            return (
+              <button
+                className="filter-chip"
+                data-active={selected}
+                key={grade}
+                type="button"
+                onClick={() => {
+                  if (selected && selectedGrades.length === 1) return;
+                  onGradesChange(selected ? selectedGrades.filter((item) => item !== grade) : [...selectedGrades, grade]);
+                }}
+              >
+                {selected ? <Check size={13} aria-hidden /> : null}
+                {gradeLabel(grade)}
+              </button>
+            );
+          })}
+        </div>
+        <Select
+          aria-label="정렬"
+          className="sort-select"
+          value={sort}
+          onChange={(value) => value && onSortChange(value as SortMode)}
+          data={sortOptions}
+          allowDeselect={false}
+        />
+        <div className="toolbar-icon-group">
+          <Tooltip label="목록 열기">
+            <ActionIcon variant="filled" aria-label="목록 열기" onClick={onListToggle}>
+              <List size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="필터 초기화">
+            <ActionIcon variant="light" aria-label="필터 초기화" onClick={onReset}>
+              <RotateCcw size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="서비스 정보">
+            <ActionIcon component="a" href="/about" variant="light" aria-label="서비스 정보">
+              <Info size={18} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="커뮤니티">
+            <ActionIcon component="a" href="/community" variant="light" aria-label="커뮤니티">
+              <MessageCircle size={18} />
+            </ActionIcon>
+          </Tooltip>
+          {currentUser ? (
+            <Tooltip label="로그아웃">
+              <Button className="account-chip" variant="light" leftSection={<UserRound size={15} />} onClick={onLogout}>
+                {currentUser.handle}
+              </Button>
+            </Tooltip>
+          ) : (
+            <Button className="account-chip" variant="light" leftSection={<LogIn size={15} />} onClick={onLogin}>
+              로그인
+            </Button>
+          )}
+        </div>
       </div>
-      <SegmentedControl
-        className="sort-control"
-        value={sort}
-        onChange={(value) => onSortChange(value as SortMode)}
-        data={sortOptions}
-      />
-      <Tooltip label="목록 열기">
-        <ActionIcon variant="filled" aria-label="목록 열기" onClick={onListToggle}>
-          <List size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="필터 초기화">
-        <ActionIcon variant="light" aria-label="필터 초기화" onClick={onReset}>
-          <RotateCcw size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="서비스 정보">
-        <ActionIcon component="a" href="/about" variant="light" aria-label="서비스 정보">
-          <Info size={18} />
-        </ActionIcon>
-      </Tooltip>
     </div>
   );
 }
@@ -702,6 +796,10 @@ function BottomNav({
         <Filter size={18} aria-hidden />
         필터
       </button>
+      <a href="/community" className="bottom-nav-link">
+        <MessageCircle size={18} aria-hidden />
+        커뮤니티
+      </a>
       <button
         type="button"
         data-active={mode === 'info' || mode === 'detail'}
@@ -715,23 +813,7 @@ function BottomNav({
 }
 
 function AdSlot() {
-  const adSlotText = (import.meta.env.VITE_AD_SLOT_TEXT as string | undefined)?.trim();
-  const adSlotUrl = (import.meta.env.VITE_AD_SLOT_URL as string | undefined)?.trim();
-  if (!adSlotText) return null;
-  const content = (
-    <>
-      <span className="ad-label">후원</span>
-      <span>{adSlotText}</span>
-    </>
-  );
-  if (adSlotUrl) {
-    return (
-      <a className="ad-slot" href={adSlotUrl} target="_blank" rel="noreferrer">
-        {content}
-      </a>
-    );
-  }
-  return <div className="ad-slot">{content}</div>;
+  return <SponsorAd />;
 }
 
 function initialMobileMode(state: PlaceQueryState): MobileMode {

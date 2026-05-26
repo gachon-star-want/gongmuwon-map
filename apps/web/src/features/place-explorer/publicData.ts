@@ -1,4 +1,4 @@
-import type { Place, Region, RegionsResponse, SearchResponse, Visit } from './types';
+import type { Place, PlaceReactionSummary, Region, RegionsResponse, SearchResponse, Visit } from './types';
 import type { PlaceQueryState } from './queryState';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -52,4 +52,21 @@ export async function loadVisits(placeId: string): Promise<Visit[]> {
   const response = await fetch(apiUrl(`/api/v1/places/${placeId}/visits?limit=50`));
   if (!response.ok) throw new Error(`visits ${response.status}`);
   return (await response.json()) as Visit[];
+}
+
+export async function loadPlaceReactions(placeId: string): Promise<PlaceReactionSummary> {
+  const response = await fetch(apiUrl(`/api/v1/places/${placeId}/reactions`), { credentials: 'include' });
+  if (!response.ok) throw new Error(`reactions ${response.status}`);
+  return (await response.json()) as PlaceReactionSummary;
+}
+
+export async function setPlaceReaction(placeId: string, reaction: 'like' | 'dislike' | null): Promise<PlaceReactionSummary> {
+  const response = await fetch(apiUrl(`/api/v1/places/${placeId}/reactions`), {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reaction }),
+  });
+  if (!response.ok) throw new Error(`reaction ${response.status}`);
+  return (await response.json()) as PlaceReactionSummary;
 }

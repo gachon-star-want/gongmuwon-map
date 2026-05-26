@@ -1,10 +1,11 @@
 import { ChevronDown } from 'lucide-react';
-import type { Grade, Place, SortMode, Visit } from '../types';
+import type { Grade, Place, PlaceReactionSummary, SortMode, Visit } from '../types';
 
 import { MobileFilterPanel } from './MobileFilterPanel';
 import { MobileInfoPanel } from './MobileInfoPanel';
 import { PlaceDetails } from './PlaceDetails';
 import { PlaceList } from './PlaceList';
+import { SponsorAd } from '../../ads/SponsorAd';
 
 export type MobileMode = 'map' | 'list' | 'filter' | 'info' | 'detail';
 export type SheetSize = 'peek' | 'mid' | 'full';
@@ -16,6 +17,8 @@ type BottomSheetProps = {
   places: Place[];
   selectedId?: string;
   visits: Visit[];
+  reactions?: PlaceReactionSummary | null;
+  reactionPending?: boolean;
   loading: boolean;
   regions: { label: string; value: string }[];
   selectedRegions: string[];
@@ -32,6 +35,7 @@ type BottomSheetProps = {
   onClosedVisibleChange: (value: boolean) => void;
   onReport: () => void;
   onClosureReport: () => void;
+  onReact?: (reaction: 'like' | 'dislike') => void;
 };
 
 export function BottomSheet({
@@ -41,6 +45,8 @@ export function BottomSheet({
   places,
   selectedId,
   visits,
+  reactions,
+  reactionPending,
   loading,
   regions,
   selectedRegions,
@@ -57,6 +63,7 @@ export function BottomSheet({
   onClosedVisibleChange,
   onReport,
   onClosureReport,
+  onReact,
 }: BottomSheetProps) {
   if (mode === 'map' && !selectedPlace) return null;
   const activeMode = selectedPlace && mode === 'map' ? 'detail' : mode;
@@ -78,6 +85,9 @@ export function BottomSheet({
             onClose={onCloseDetail}
             onReport={onReport}
             onClosureReport={onClosureReport}
+            reactions={reactions}
+            reactionPending={reactionPending}
+            onReact={onReact}
           />
           <AdSlot />
         </>
@@ -108,21 +118,5 @@ export function BottomSheet({
 }
 
 function AdSlot() {
-  const adSlotText = (import.meta.env.VITE_AD_SLOT_TEXT as string | undefined)?.trim();
-  const adSlotUrl = (import.meta.env.VITE_AD_SLOT_URL as string | undefined)?.trim();
-  if (!adSlotText) return null;
-  const content = (
-    <>
-      <span className="ad-label">후원</span>
-      <span>{adSlotText}</span>
-    </>
-  );
-  if (adSlotUrl) {
-    return (
-      <a className="ad-slot" href={adSlotUrl} target="_blank" rel="noreferrer">
-        {content}
-      </a>
-    );
-  }
-  return <div className="ad-slot">{content}</div>;
+  return <SponsorAd />;
 }

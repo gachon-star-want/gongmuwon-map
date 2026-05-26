@@ -19,11 +19,19 @@
 | `place_visits` | 방문 트랜잭션 (1 row = 1 회식·간담회) | service-only |
 | `place_closure_reports` | 폐업 신고 | service-only insert, Vercel API Route가 SQL 함수 호출 |
 | `place_takedown_requests` | 정보 삭제 요청 | service-only insert, Vercel API Route가 SQL 함수 호출 |
+| `app_users` | 커뮤니티·반응용 앱 로그인 사용자 | service-only |
+| `app_sessions` | HttpOnly 쿠키 세션 | service-only |
+| `community_posts` | 별도 커뮤니티 게시글 | service-only write, public view read |
+| `community_comments` | 별도 커뮤니티 댓글 | service-only write, public view read |
+| `place_reactions` | 식당별 좋아요/싫어요 이진 반응 | service-only write, aggregate view read |
 | `llm_usage` | LLM 호출별 사용량/시도 이력 | service-only |
 | `place_grade_v1` (MAT VIEW) | 등급 계산 결과 | service-only |
 | `places_public` (VIEW) | anon 노출 | anon read |
 | `place_visits_public` (VIEW) | anon 노출 (마스킹된 부서·직급만) | anon read |
 | `agencies_public` (VIEW) | anon 노출 | anon read |
+| `community_posts_public` (VIEW) | 커뮤니티 게시글 공개 노출 | anon read |
+| `community_comments_public` (VIEW) | 커뮤니티 댓글 공개 노출 | anon read |
+| `place_reaction_counts` (VIEW) | 식당별 좋아요/싫어요 집계 | anon read |
 | `agency_stats_v1` (MAT VIEW) | 기관별 통계 | anon read via view |
 | `sources` | 원본 출처 (URL·파일·게시일) | service-only |
 
@@ -128,6 +136,64 @@ CREATE TABLE place_visits (
 CREATE INDEX visits_place_date ON place_visits (place_id, visit_date DESC);
 CREATE INDEX visits_agency_date ON place_visits (agency_id, visit_date DESC);
 CREATE INDEX visits_date ON place_visits (visit_date DESC);
+```
+
+### 앱 로그인·커뮤니티·이진 반응
+
+> [ADR-012](adr/ADR-012-community-auth-and-lightweight-reactions.md)에 따라 커뮤니티는 식당/좌표 상세와 분리된 별도 게시판이다. 식당 상세에는 자유 텍스트 댓글·후기·별점이 붙지 않고, 로그인 기반 좋아요/싫어요 반응만 집계한다.
+
+```sql
+CREATE TABLE app_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  handle text NOT NULL,
+  handle_normalized text NOT NULL UNIQUE,
+  password_hash text NOT NULL,
+  password_salt text NOT NULL,
+  role text NOT NULL DEFAULT 'user',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  last_login_at timestamptz,
+  deleted_at timestamptz
+);
+
+CREATE TABLE app_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  token_hash text NOT NULL UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  last_seen_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL
+);
+
+CREATE TABLE community_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id uuid NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+  category text NOT NULL DEFAULT 'free',
+  title text NOT NULL,
+  body text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  hidden_at timestamptz,
+  deleted_at timestamptz
+);
+
+CREATE TABLE community_comments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id uuid NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+  author_id uuid NOT NULL REFERENCES app_users(id) ON DELETE RESTRICT,
+  body text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  hidden_at timestamptz,
+  deleted_at timestamptz
+);
+
+CREATE TABLE place_reactions (
+  place_id uuid NOT NULL REFERENCES places(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  reaction text NOT NULL CHECK (reaction IN ('like', 'dislike')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (place_id, user_id)
+);
 ```
 
 ### `sources` — 원본 출처
