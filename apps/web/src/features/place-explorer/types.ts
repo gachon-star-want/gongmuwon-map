@@ -35,6 +35,12 @@ export type Visit = {
   source_title: string | null;
 };
 
+export type PlaceReactionSummary = {
+  like_count: number;
+  dislike_count: number;
+  user_reaction: 'like' | 'dislike' | null;
+};
+
 export type Region = {
   region: string;
   label: string;
