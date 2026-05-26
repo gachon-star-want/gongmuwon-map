@@ -23,16 +23,14 @@ import apiTakedownRequest from './takedown-request';
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
-function withId(handler: ApiHandler, req: VercelRequest, res: VercelResponse, id: string) {
-  return handler(
-    Object.assign({}, req, {
-      query: {
-        ...req.query,
-        id,
-      },
-    }),
-    res,
-  );
+export function withId(handler: ApiHandler, req: VercelRequest, res: VercelResponse, id: string) {
+  const originalQuery = req.query;
+  req.query = { ...originalQuery, id };
+  try {
+    return handler(req, res);
+  } finally {
+    req.query = originalQuery;
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
