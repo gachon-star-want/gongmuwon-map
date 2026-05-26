@@ -44,7 +44,10 @@ import { BottomSheet, type MobileMode, type SheetSize } from './panels/BottomShe
 import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
 import { PlaceList } from './panels/PlaceList';
+import { MobileFilterPanel } from './panels/MobileFilterPanel';
+import { MobileInfoPanel } from './panels/MobileInfoPanel';
 import { submitClosureReport, submitTakedownRequest } from './forms/reportFlows';
+import mascotLogo from '../../assets/officer-mascot-logo.png';
 import './styles.css';
 
 const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외';
@@ -286,6 +289,11 @@ export function PlaceExplorer() {
 
   function changeMobileMode(mode: MobileMode) {
     setMobileMode(mode);
+    if (mode === 'list') {
+      setDesktopListOpen(true);
+    } else if (mode === 'map' || mode === 'filter' || mode === 'info') {
+      setDesktopListOpen(false);
+    }
     if (mode === 'filter') {
       setSheetSize('full');
     } else {
@@ -381,17 +389,43 @@ export function PlaceExplorer() {
         </div>
       ) : null}
 
-      {desktopListOpen ? (
+      {desktopListOpen || mobileMode === 'list' ? (
         <aside className="list-sheet desktop-layer" aria-label="검색 결과 목록">
           <PlaceList
             places={listedPlaces}
             selectedId={selectedPlace?.id}
             loading={searchLoading}
             onSelect={selectPlace}
-            onClose={() => setDesktopListOpen(false)}
+            onClose={() => {
+              setDesktopListOpen(false);
+              setMobileMode((current) => (current === 'list' ? 'map' : current));
+            }}
             onReset={resetFilters}
           />
           <AdSlot />
+        </aside>
+      ) : null}
+
+      {mobileMode === 'filter' ? (
+        <aside className="utility-sheet desktop-layer" aria-label="필터">
+          <MobileFilterPanel
+            regions={regionOptions}
+            selectedRegions={queryState.region}
+            selectedGrades={queryState.grade}
+            sort={queryState.sort}
+            closedVisible={closedVisible}
+            onRegionsChange={(region) => updateQueryState({ region })}
+            onGradesChange={(grade) => updateQueryState({ grade })}
+            onSortChange={(sort) => updateQueryState({ sort })}
+            onClosedVisibleChange={setClosedVisible}
+            onReset={resetFilters}
+          />
+        </aside>
+      ) : null}
+
+      {mobileMode === 'info' ? (
+        <aside className="utility-sheet info-sheet desktop-layer" aria-label="서비스 정보">
+          <MobileInfoPanel />
         </aside>
       ) : null}
 
@@ -564,7 +598,7 @@ function FloatingSearchFilter({
   return (
     <div className="floating-search">
       <a className="brand-mark" href="/" aria-label="공무원맵 홈">
-        <MapPin size={20} aria-hidden />
+        <img src={mascotLogo} alt="" aria-hidden />
         <span>공무원맵</span>
       </a>
       <TextInput
@@ -655,7 +689,7 @@ function BottomNav({
   hasSelection: boolean;
 }) {
   return (
-    <nav className="bottom-nav" aria-label="모바일 주요 메뉴">
+    <nav className="bottom-nav" aria-label="주요 메뉴">
       <button type="button" data-active={mode === 'map'} onClick={() => onChange('map')}>
         <MapPin size={18} aria-hidden />
         지도

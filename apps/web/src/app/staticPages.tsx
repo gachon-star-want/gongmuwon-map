@@ -1,5 +1,6 @@
 import { Anchor, AppShell, Button, Group, Text, Title } from '@mantine/core';
 import { AlertTriangle, Code2, FileText, Info, MapPin, ShieldCheck } from 'lucide-react';
+import mascotLogo from '../assets/officer-mascot-logo.png';
 
 type StaticPath = '/about' | '/privacy' | '/terms' | '/disclaimer' | '/legal' | '/api';
 
@@ -25,7 +26,8 @@ export function StaticPage({ path }: { path: string }) {
       <AppShell.Header className="app-header">
         <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
-            <PageIcon size={21} aria-hidden />
+            <img className="static-logo" src={mascotLogo} alt="" aria-hidden />
+            <PageIcon className="static-page-icon" size={20} aria-hidden />
             <Title order={1}>{page.title}</Title>
           </Group>
           <Button component="a" href="/" variant="subtle" leftSection={<MapPin size={16} />}>
