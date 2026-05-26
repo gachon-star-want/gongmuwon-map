@@ -33,6 +33,7 @@ type BottomSheetProps = {
   onGradesChange: (value: Grade[]) => void;
   onSortChange: (value: SortMode) => void;
   onClosedVisibleChange: (value: boolean) => void;
+  onCloseFilter: () => void;
   onReport: () => void;
   onClosureReport: () => void;
   onReact?: (reaction: 'like' | 'dislike') => void;
@@ -61,6 +62,7 @@ export function BottomSheet({
   onGradesChange,
   onSortChange,
   onClosedVisibleChange,
+  onCloseFilter,
   onReport,
   onClosureReport,
   onReact,
@@ -110,6 +112,7 @@ export function BottomSheet({
           onSortChange={onSortChange}
           onClosedVisibleChange={onClosedVisibleChange}
           onReset={onReset}
+          onClose={onCloseFilter}
         />
       ) : null}
       {activeMode === 'info' ? <MobileInfoPanel /> : null}

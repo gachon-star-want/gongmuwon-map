@@ -471,6 +471,10 @@ export function PlaceExplorer() {
             onSortChange={(sort) => updateQueryState({ sort })}
             onClosedVisibleChange={setClosedVisible}
             onReset={resetFilters}
+            onClose={() => {
+              setMobileMode('map');
+              setSheetSize('mid');
+            }}
           />
         </aside>
       ) : null}
@@ -526,6 +530,10 @@ export function PlaceExplorer() {
         onGradesChange={(grade) => updateQueryState({ grade })}
         onSortChange={(sort) => updateQueryState({ sort })}
         onClosedVisibleChange={setClosedVisible}
+        onCloseFilter={() => {
+          setMobileMode('map');
+          setSheetSize('mid');
+        }}
         onReport={report.open}
         onClosureReport={closure.open}
         onReact={toggleReaction}
@@ -740,11 +748,6 @@ function FloatingSearchFilter({
           <Tooltip label="서비스 정보">
             <ActionIcon component="a" href="/about" variant="light" aria-label="서비스 정보">
               <Info size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="커뮤니티">
-            <ActionIcon component="a" href="/community" variant="light" aria-label="커뮤니티">
-              <MessageCircle size={18} />
             </ActionIcon>
           </Tooltip>
           {currentUser ? (

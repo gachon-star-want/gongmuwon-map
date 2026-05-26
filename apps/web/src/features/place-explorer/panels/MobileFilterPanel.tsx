@@ -1,5 +1,5 @@
-import { Button, Checkbox, MultiSelect, SegmentedControl } from '@mantine/core';
-import { Check } from 'lucide-react';
+import { ActionIcon, Button, Checkbox, MultiSelect, SegmentedControl } from '@mantine/core';
+import { Check, X } from 'lucide-react';
 import type { Grade, SortMode } from '../types';
 import { gradeLabel } from '../format';
 
@@ -16,6 +16,7 @@ type MobileFilterPanelProps = {
   onSortChange: (value: SortMode) => void;
   onClosedVisibleChange: (value: boolean) => void;
   onReset: () => void;
+  onClose?: () => void;
 };
 
 export function MobileFilterPanel({
@@ -29,10 +30,18 @@ export function MobileFilterPanel({
   onSortChange,
   onClosedVisibleChange,
   onReset,
+  onClose,
 }: MobileFilterPanelProps) {
   return (
     <div className="mobile-panel">
-      <div className="filter-title">필터</div>
+      <div className="mobile-panel-head">
+        <div className="filter-title">필터</div>
+        {onClose ? (
+          <ActionIcon variant="subtle" aria-label="필터 닫기" onClick={onClose}>
+            <X size={18} />
+          </ActionIcon>
+        ) : null}
+      </div>
       <MultiSelect data={regions} label="자치구" value={selectedRegions} onChange={onRegionsChange} searchable clearable />
       <div>
         <div className="panel-label">등급</div>
