@@ -37,7 +37,8 @@ function withId(handler: ApiHandler, req: VercelRequest, res: VercelResponse, id
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pathname = new URL(req.url ?? '/', 'https://gongmuwon.internal').pathname;
-  const segments = pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
+  const routedPath = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
+  const segments = (routedPath ?? pathname.replace(/^\/api\/?/, '')).split('/').filter(Boolean);
 
   if (segments[0] === 'community') {
     if (segments[1] === 'posts' && segments.length === 2) {
