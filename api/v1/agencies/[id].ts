@@ -1,6 +1,7 @@
 import { readQuery } from '../../_lib/db';
 import { publicReadRoute } from '../../_lib/route';
 import { stringParam } from '../../_lib/http';
+import { normalizeAgencyRow } from '../../_lib/agencies';
 
 export default publicReadRoute(async function handler({ req }) {
   const id = stringParam(req.query.id);
@@ -11,5 +12,5 @@ export default publicReadRoute(async function handler({ req }) {
   if (!rows[0]) {
     return { status: 404, body: { error: 'not_found' } };
   }
-  return rows[0];
+  return normalizeAgencyRow(rows[0]);
 }, { cache: true });
