@@ -4,31 +4,23 @@ This is the short resume file for the architecture plan series. Read this before
 
 ## Latest Inspection
 
-- Inspection date: 2026-05-26 KST.
-- Scope inspected: local worktree and `docs/architecture-improvements/2026-05-25`.
-- Verification status has been refreshed in this pass for frontend split work (`plan13a`, `plan13b`) and local pipeline pytest.
-- Worktree contains many uncommitted edits and new files. Do not revert unrelated changes.
-- The last interruption happened while `plan9.md` LLM routing work was being generated. The terminal reported repeated `context_length_exceeded` during remote compaction.
-- 2026-05-26 follow-up: plan9/plan9b/plan10 acceptance was re-verified on the current branch.
-- 2026-05-26 08:42 KST: final merge/deploy verification pass begun after code changes.
-- 2026-05-26 23:43 KST: PR #1 is merged on GitHub (`MERGED`) and API smoke checks executed on production domain.
-- 2026-05-26 23:55 KST: plan9 미해결/배포 장애 해결 구간 재개. `/api/v1/*` 핸들러 시그니처가 Vercel 타입 가이드와 맞지 않아 컴파일 타임 충돌이 발생한 것으로 확인되어 10개 API/레거시 POST 라우트를 컨텍스트 시그니처(`({ req })`)로 정리함.
-- 2026-05-26 23:56 KST: `npm run build`, `npm run test:api`, `npm run check:public-contracts` 재실행 모두 통과.
-- 2026-05-26 23:57 KST: 배포 전 상태 기록: `git status --short`에서 API 라우트 9개+2개 핸들러 수정 분만 남음. 이 변경은 PR/배포 대상 변경점으로 보류.
-- 2026-05-26 23:59 KST: PR #2 created (`fix-api-handler-signature`) and merged after CI pass.
-- 2026-05-26 23:59 KST: `gh pr checks 2` showed `Vercel` and `Vercel Preview Comments` pass.
-- 2026-05-26 23:59 KST: Production deployment `https://gongmuwon-53w4vtw25-gachon-star-wants-projects.vercel.app` reached `Ready` after merge; alias includes `https://xn--ob0bo0wl1ax52a.com`.
-- 2026-05-26 23:59 KST: API smoke via `curl` still blocked in this environment (`Could not resolve host` for both custom and Vercel domains), so runtime 200/500 verification could not be completed locally. 
-
-- 2026-05-26 23:59 KST: `npm run test:pipeline` 실행 재시도 결과는 동일 블로커(`Failed to initialize cache at /Users/lee_wonyoung/.cache/uv` 권한)로 실패.
-
-Plan 13c 이후 상태(재배포 준비):
-- Local verification of remaining fix is complete. Next action: branch + commit + PR, then merge/deploy and re-run production smoke.
+- Inspection date: 2026-05-26 10:16 KST.
+- Scope inspected: local `main`, GitHub PRs #1/#2/#3, Vercel production, public smoke endpoints, and `docs/architecture-improvements/2026-05-25`.
+- All architecture-improvement plans `plan1` through `plan13c` are complete.
+- PR #1 merged: `https://github.com/gachon-star-want/gongmuwon-map/pull/1` (`MERGED`, merge commit `0b47f0020990818de555ee87dc2ea25c6191cd09`, merged at `2026-05-25T23:42:42Z`).
+- PR #2 merged: `https://github.com/gachon-star-want/gongmuwon-map/pull/2` (`MERGED`, merge commit `0713fba31caa8d13117ae8594f54bae07d6a1a5b`, merged at `2026-05-25T23:48:15Z`).
+- PR #3 merged: `https://github.com/gachon-star-want/gongmuwon-map/pull/3` (`MERGED`, merge commit `5df1cf86186153c31d86917d53466c27c7cd9175`, merged at `2026-05-26T01:13:21Z`).
+- PR #3 fixed production `/api/v1/agencies` smoke by normalizing legacy production `agencies_public.kind` rows into ADR-011 `gov_tier`/`branch`/`jurisdiction_type` fields while still supporting the newer DB view shape.
+- Latest production deployment: `dpl_9YuCVcrd6mRGabYKySER4HVYS21t`, URL `https://gongmuwon-iv2vky0zu-gachon-star-wants-projects.vercel.app`, status `Ready`, alias includes `https://xn--ob0bo0wl1ax52a.com`.
+- Final production smoke on `https://xn--ob0bo0wl1ax52a.com`: `/`, `/about`, `/openapi.json`, `/api/v1/regions`, `/api/v1/agencies`, `/api/v1/stats/summary`, `/api/v1/places?bbox=37.413,126.734,37.715,127.269&limit=3`, and `/api/v1/places/search?q=스타벅스&limit=3` all returned HTTP 200 with non-empty bodies.
+- Guard smoke: `GET /api/closure-report` and `GET /api/takedown-request` returned 405; `OPTIONS` for both returned 204. No destructive POST was sent.
+- Local verification on final `main`: `npm run build` pass; `npm --workspace apps/web run test` pass (4 files, 12 tests); `npm run test:api` pass (4 files, 27 tests); `npm run check:public-contracts` pass; `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` pass (163 tests).
+- `npm run test:pipeline` remains environment-blocked by uv cache permission at `/Users/lee_wonyoung/.cache/uv`. With `UV_CACHE_DIR=/private/tmp/uv-cache`, it advances to dependency resolution and remains environment-blocked by DNS to `pypi.org`.
 
 ## Current Resume Point
 
-- Resume point: `plan13c.md` completed; all architecture-improvement plans complete.  
-- Current workstream: hotfix 배포 준비 (API 라우트 핸들러 시그니처 정합성 + 배포).
+- Resume point: all architecture-improvement plans are complete; production deploy and public smoke are verified.
+- Current workstream: closed. No code, deployment, or smoke follow-up remains.
 
 ## Plan Ledger
 
@@ -53,7 +45,7 @@ Plan 13c 이후 상태(재배포 준비):
 | `plan13.md` | Coordinator only | Do not execute directly. Use `plan13a.md` after `plan12.md`. |
 | `plan13a.md` | Completed | Helpers split behind shared feature modules in `apps/web/src/features/place-explorer`. |
 | `plan13b.md` | Completed | Kakao map / fallback map extracted to `apps/web/src/features/place-explorer/map`. |
-| `plan13c.md` | Completed | Place Explorer panels/static pages/forms/CSS split completed after plan13b; awaiting final PR/deploy check. |
+| `plan13c.md` | Completed (verified) | Place Explorer panels/static pages/forms/CSS split completed; final PR/deploy/smoke checks are complete. |
 
 ## Data Backfill Note
 
@@ -116,31 +108,17 @@ Plan 13c 이후 상태(재배포 준비):
 - If context grows large, stop at the next substep boundary and resume from this file.
 
 ## Next Exact Action
-Merge/deploy handoff is now completed (PR merged). Close ledger after confirming smoke checks and recording blockers.
 
-- 2026-05-26 finalization pass:
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_schema.py services/pipeline/tests/test_llm_client.py services/pipeline/tests/test_pdf_vision.py` -> **pass (26)**.
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests/test_llm_usage.py` -> **pass (7)**.
-  - `./services/pipeline/.venv/bin/pytest -q services/pipeline/tests` -> **pass (163)**.
-  - `npm run build` -> **pass**.
-  - `npm run test:pipeline` -> **blocked** by uv cache (`/Users/lee_wonyoung/.cache/uv`).
-  - `UV_CACHE_DIR=/private/tmp/uv-cache npm run test:pipeline` -> **blocked** by DNS/network on `https://pypi.org/simple/selectolax/`.
+None. Final handoff is complete after this STATUS update lands on `main`.
 
-- 2026-05-26 follow-up: `npm --workspace apps/web run test` and `npm run build` pass locally after `plan13c`. `npm run test:pipeline` remains blocked by environment constraints (`/Users/lee_wonyoung/.cache/uv` cache write permission and DNS resolution for `pypi.org`).
-
-- 2026-05-26 finalization continuation:
-  - `gh pr view 1` -> `state=MERGED`, `mergedAt=2026-05-25T23:42:42Z`, `changedFiles=162`.
-  - `gh pr checks 1` -> `Vercel` and `Vercel Preview Comments` **pass**.
-  - `npm run test:api` -> **pass** (3 files, 24 tests).
-  - `npm run check:public-contracts` -> **pass**.
-  - Production smoke (https://xn--ob0bo0wl1ax52a.com) checks:
-    - `/` and `/about` -> `HTTP 200`.
-    - `/api/v1/places/search?q=스타벅스&limit=3` -> **500 internal_error**.
-    - `/api/v1/places`, `/api/v1/places?bbox=...`, `/api/v1/regions` -> **500 internal_error**.
-    - `/api/v1/openapi.json` -> `404`.
-    - `/openapi.json` -> `200`.
-    - `/api` route on this domain does not exist (`404`).
-  - `gh pr merge 1 --squash --delete-branch` no longer available (PR already merged in prior run and branch is now `main`).
+- Final state:
+  - Plan ledger: all executable plans complete and verified.
+  - GitHub: PR #1, PR #2, and PR #3 merged.
+  - Deployment: production `dpl_9YuCVcrd6mRGabYKySER4HVYS21t` Ready with `https://xn--ob0bo0wl1ax52a.com` alias.
+  - Public smoke: required page/API matrix returned HTTP 200.
+  - Private guards: POST-only routes are not open to GET and answer OPTIONS preflight.
+  - Local checks: build, web tests, API tests, public contract check, and direct pipeline pytest pass.
+  - Known blocker: repo-level `npm run test:pipeline` cannot complete in this workspace because of uv cache permission and PyPI DNS/network constraints; direct `.venv` pytest is the current code-verification basis.
 
 ### plan13c execution checkpoint (2026-05-26)
 
