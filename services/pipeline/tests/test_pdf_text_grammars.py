@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from public_officer_pipeline.extractor import pdf_vision
 from public_officer_pipeline.extractor.pdf_text import build_default_grammars, parse_pdf_text_with_diagnostics
 
 
@@ -93,3 +94,23 @@ def test_pdf_text_parser_reports_failures_when_no_text_matches() -> None:
     assert len(result.rows) == 0
     assert all(diag.row_count == 0 for diag in result.diagnostics)
     assert all(diag.failed_reason is not None for diag in result.diagnostics)
+
+
+def test_pdf_text_module_rows_interface_matches_pdf_vision_wrapper() -> None:
+    from public_officer_pipeline.extractor.pdf_text import rows_from_pdf_text
+
+    fallback_department = "성동구의회 사무국"
+    sample_text = """
+1    2026-01-02 11:39   의정활동 홍보를 위한 언론 관계자 간담회   단정                     3         42,000    카드
+    """
+
+    module_rows = rows_from_pdf_text(sample_text, fallback_department=fallback_department)
+    wrapper_rows = pdf_vision.rows_from_pdf_text(sample_text, fallback_department=fallback_department)
+
+    assert len(module_rows) == 1
+    assert module_rows[0].department_name == fallback_department
+    assert module_rows[0].amount == 42000
+    assert module_rows[0].payment_method == "카드"
+    assert [row.model_dump(mode="json") for row in module_rows] == [
+        row.model_dump(mode="json") for row in wrapper_rows
+    ]
