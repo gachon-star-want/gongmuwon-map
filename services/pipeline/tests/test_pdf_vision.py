@@ -1,3 +1,4 @@
+from public_officer_pipeline.extractor import pdf_vision as pdf_vision_module
 from public_officer_pipeline.extractor.pdf_vision import (
     _expense_text_lacks_place_column,
     rows_from_pdf_text,
@@ -65,6 +66,35 @@ def test_expense_text_lacks_place_column_detects_unusable_expense_tables() -> No
 1 교육지원과 2026-04-01 현안업무 협의 간담회 63,000 ㈜장수마늘보쌈 5 카드
         """
     )
+
+
+def test_extract_pdf_rows_with_vision_short_circuits_on_missing_place_column(monkeypatch) -> None:
+    no_place_table_text = """
+연번 부서명 집행일자 집행목적 집행금액(원) 대상인원(명) 결제방법
+1 기획예산과 2026-04-01 현안업무 협의 간담회 63,000 5 카드
+    """
+
+    def fake_pdf_to_text(_content: bytes, *, layout: bool = True) -> str:
+        del layout
+        return no_place_table_text
+
+    def fake_rows_from_pdf_text(_text: str, *, fallback_department: str):
+        del fallback_department
+        return []
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(pdf_vision_module, "_pdf_to_text", fake_pdf_to_text)
+    monkeypatch.setattr(pdf_vision_module, "rows_from_pdf_text", fake_rows_from_pdf_text)
+
+    rows = pdf_vision_module.extract_pdf_rows_with_vision(
+        b"%PDF-1.4",
+        fallback_department="강남구청 기획예산과",
+        source_title="집행내역",
+    )
+
+    assert rows == []
 
 
 def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:

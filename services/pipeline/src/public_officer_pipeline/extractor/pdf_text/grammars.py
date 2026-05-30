@@ -9,6 +9,7 @@ from public_officer_pipeline.extractor.pdf_text.parser import (
     WHOLE_TEXT_FALLBACK_ORDER,
     PdfTextGrammar,
 )
+from public_officer_pipeline.extractor.pdf_text import text_parser
 
 
 class LineGrammar(PdfTextGrammar):
@@ -33,50 +34,55 @@ class WholeTextGrammar(PdfTextGrammar):
 
 
 def _build_default_line_grammars() -> list[PdfTextGrammar]:
-    from public_officer_pipeline.extractor import pdf_vision
-
     def _to_parse_fn(fn: Any) -> Callable[[str, str], ParsedExpenseRow | None]:
         return lambda text, fallback_department: fn(text, fallback_department=fallback_department)
 
     return [
-        LineGrammar("user_address", _to_parse_fn(pdf_vision._parse_pdf_text_user_address_line)),
-        LineGrammar("date_user_amount_place", _to_parse_fn(pdf_vision._parse_pdf_text_date_user_amount_place_line)),
-        LineGrammar("purpose_place_amount", _to_parse_fn(pdf_vision._parse_pdf_text_purpose_place_amount_line)),
-        LineGrammar("region_amount_place_purpose", _to_parse_fn(pdf_vision._parse_pdf_text_region_amount_place_purpose_line)),
-        LineGrammar("optional_user_place_purpose_amount", _to_parse_fn(pdf_vision._parse_pdf_text_optional_user_place_purpose_amount_line)),
-        LineGrammar("user_amount_place_address_purpose", _to_parse_fn(pdf_vision._parse_pdf_text_user_amount_place_address_purpose_line)),
-        LineGrammar("user_place_purpose_amount", _to_parse_fn(pdf_vision._parse_pdf_text_user_place_purpose_amount_line)),
-        LineGrammar("user_amount_purpose", _to_parse_fn(pdf_vision._parse_pdf_text_user_amount_purpose_line)),
-        LineGrammar("user_no_address", _to_parse_fn(pdf_vision._parse_pdf_text_user_no_address_line)),
-        LineGrammar("purpose_first", _to_parse_fn(pdf_vision._parse_pdf_text_purpose_first_line)),
+        LineGrammar("user_address", _to_parse_fn(text_parser._parse_pdf_text_user_address_line)),
+        LineGrammar("date_user_amount_place", _to_parse_fn(text_parser._parse_pdf_text_date_user_amount_place_line)),
+        LineGrammar("purpose_place_amount", _to_parse_fn(text_parser._parse_pdf_text_purpose_place_amount_line)),
+        LineGrammar(
+            "region_amount_place_purpose",
+            _to_parse_fn(text_parser._parse_pdf_text_region_amount_place_purpose_line),
+        ),
+        LineGrammar(
+            "optional_user_place_purpose_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_optional_user_place_purpose_amount_line),
+        ),
+        LineGrammar(
+            "user_amount_place_address_purpose",
+            _to_parse_fn(text_parser._parse_pdf_text_user_amount_place_address_purpose_line),
+        ),
+        LineGrammar("user_place_purpose_amount", _to_parse_fn(text_parser._parse_pdf_text_user_place_purpose_amount_line)),
+        LineGrammar("user_amount_purpose", _to_parse_fn(text_parser._parse_pdf_text_user_amount_purpose_line)),
+        LineGrammar("user_no_address", _to_parse_fn(text_parser._parse_pdf_text_user_no_address_line)),
+        LineGrammar("purpose_first", _to_parse_fn(text_parser._parse_pdf_text_purpose_first_line)),
         LineGrammar(
             "generic_text_row",
-            _to_parse_fn(pdf_vision._parse_pdf_text_generic_row),
+            _to_parse_fn(text_parser._parse_pdf_text_generic_row),
         ),
     ]
 
 
 def _build_default_whole_text_grammars() -> list[PdfTextGrammar]:
-    from public_officer_pipeline.extractor import pdf_vision
-
     return [
         WholeTextGrammar(
             "user_place_purpose_layout",
-            lambda text, fallback_department: pdf_vision._parse_user_place_purpose_layout_pdf_text(
+            lambda text, fallback_department: text_parser._parse_user_place_purpose_layout_pdf_text(
                 text,
                 fallback_department=fallback_department,
             ),
         ),
         WholeTextGrammar(
             "layout_office",
-            lambda text, fallback_department: pdf_vision._parse_layout_office_pdf_text(
+            lambda text, fallback_department: text_parser._parse_layout_office_pdf_text(
                 text,
                 fallback_department=fallback_department,
             ),
         ),
         WholeTextGrammar(
             "segmented_office",
-            lambda text, fallback_department: pdf_vision._parse_segmented_office_pdf_text(
+            lambda text, fallback_department: text_parser._parse_segmented_office_pdf_text(
                 text,
                 fallback_department=fallback_department,
             ),
