@@ -18,19 +18,26 @@ The repository includes `wrangler.jsonc` with `pages_build_output_dir` so the ou
 
 The repository also includes `apps/web/public/_headers`, which Vite copies to the Pages output root. It sets `X-Robots-Tag: noindex` for every Cloudflare Pages response. This is intentional: Cloudflare Pages is only a preview/check surface for this project, while canonical production remains on Vercel.
 
+## Current Connection Status
+
+Checked on 2026-05-31 with `wrangler whoami` and `wrangler pages project list --json`: the Cloudflare account is authenticated, but the Pages project list is empty (`[]`). The repository-side files are ready, but the Cloudflare dashboard still needs a Git-integrated Pages project connected to `gachon-star-want/gongmuwon-map`.
+
 ## Environment Variables
 
 Set these for both Preview and Production in the Cloudflare Pages project:
 
 - `VITE_API_BASE=https://xn--ob0bo0wl1ax52a.com`
 - `VITE_KAKAO_JS_KEY=<restricted browser key>`
+- `VITE_TURNSTILE_SITE_KEY=<Cloudflare Turnstile site key>`
 
 Optional:
 
 - `VITE_AD_SLOT_TEXT`
 - `VITE_AD_SLOT_URL`
 
-Do not add server-only secrets to Cloudflare Pages. The Pages project is only for frontend preview checks; Vercel remains the production API host.
+Do not add server-only secrets to Cloudflare Pages. The Pages project is only for frontend preview checks; Vercel remains the production API host. In particular, `TURNSTILE_SECRET_KEY` belongs only in Vercel API environment variables.
+
+The Turnstile widget must allow the production hostname and Cloudflare Pages preview hostnames used by this project. Turnstile hostname management uses exact hostnames, not wildcard patterns, so add the actual Pages hostname(s) shown in the Cloudflare Pages dashboard.
 
 ## Expected PR Behavior
 

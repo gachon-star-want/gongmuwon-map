@@ -40,7 +40,7 @@ export async function loadPosts(category?: CommunityCategory | 'all') {
   return (await jsonFetch<{ items: CommunityPost[] }>(`/api/community/posts?${params}`)).items;
 }
 
-export async function createPost(input: { category: CommunityCategory; title: string; body: string }) {
+export async function createPost(input: { category: CommunityCategory; title: string; body: string; turnstileToken: string }) {
   return jsonFetch<{ id: string }>('/api/community/posts', input);
 }
 
@@ -48,6 +48,6 @@ export async function loadComments(postId: string) {
   return (await jsonFetch<{ items: CommunityComment[] }>(`/api/community/posts/${postId}/comments`)).items;
 }
 
-export async function createComment(postId: string, body: string) {
-  return jsonFetch<{ id: string }>(`/api/community/posts/${postId}/comments`, { body });
+export async function createComment(postId: string, body: string, turnstileToken: string) {
+  return jsonFetch<{ id: string }>(`/api/community/posts/${postId}/comments`, { body, turnstile_token: turnstileToken });
 }

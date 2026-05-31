@@ -305,9 +305,35 @@
     "/api/takedown-request": {
       "post": {
         "summary": "정보 수정·삭제 요청",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["place_id", "reason", "email", "turnstile_token"],
+                "properties": {
+                  "place_id": { "type": "string", "format": "uuid" },
+                  "reason": { "type": "string", "minLength": 50, "maxLength": 2000 },
+                  "email": { "type": "string", "format": "email", "maxLength": 320 },
+                  "turnstile_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "접수 완료"
+          },
+          "400": {
+            "description": "잘못된 요청 또는 Turnstile 토큰 누락"
+          },
+          "403": {
+            "description": "Turnstile 검증 실패"
+          },
+          "503": {
+            "description": "Turnstile 서버 설정 또는 검증 서비스 오류"
           }
         }
       }
@@ -315,9 +341,34 @@
     "/api/closure-report": {
       "post": {
         "summary": "폐업 신고",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["place_id", "turnstile_token"],
+                "properties": {
+                  "place_id": { "type": "string", "format": "uuid" },
+                  "note": { "type": "string", "maxLength": 1000 },
+                  "turnstile_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "접수 완료"
+          },
+          "400": {
+            "description": "잘못된 요청 또는 Turnstile 토큰 누락"
+          },
+          "403": {
+            "description": "Turnstile 검증 실패"
+          },
+          "503": {
+            "description": "Turnstile 서버 설정 또는 검증 서비스 오류"
           }
         }
       }

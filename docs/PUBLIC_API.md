@@ -125,6 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 현재 v1 코드에는 악용 가능성이 높은 쓰기성 엔드포인트에 대해 API Route 내부 인메모리 fixed-window 제한을 둔다. 키는 서버가 관측한 첫 `x-forwarded-for` IP + User-Agent를 기본으로 하며, 인증 사용자가 확인된 경로는 user id를 함께 포함한다. 응답은 제한 초과 시 `429 { "error": "rate_limited" }`, `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`을 반환한다.
 
+아래 표의 쓰기성 엔드포인트 중 인증·신고·커뮤니티 작성 경로는 Cloudflare Turnstile 토큰도 요구한다. 프론트엔드는 `turnstile_token`을 JSON body에 포함하고, API Route는 `TURNSTILE_SECRET_KEY`로 Siteverify를 호출한다. 서버 secret이 없거나 토큰 검증이 실패하면 요청은 DB 쓰기 전에 fail-closed 된다. `POST /api/v1/places/{id}/reactions`는 로그인 세션과 별도 rate limit만 적용하며 이번 Turnstile 1차 범위에는 포함하지 않는다.
+
 | 경로 | 한도 |
 |---|---|
 | `POST /api/auth/login` | 10/min per IP+UA+normalized handle |

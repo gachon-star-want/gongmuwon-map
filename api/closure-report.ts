@@ -2,12 +2,17 @@ import { writeQuery } from './_lib/db';
 import { parseBody, reporterFingerprint } from './_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from './_lib/rate-limit';
 import { privateWriteRoute } from './_lib/route';
+import { turnstileTokenFromBody, verifyTurnstileToken } from './_lib/turnstile';
 
 export default privateWriteRoute(async function handler({ req, res }) {
   if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.closureReport)) {
     return;
   }
   const body = parseBody(req);
+  const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'closure_report');
+  if (!turnstile.ok) {
+    return { status: turnstile.status, body: { error: turnstile.error } };
+  }
   const placeId = String(body.place_id || '');
   if (!placeId) {
     return { status: 400, body: { error: 'missing_place_id' } };

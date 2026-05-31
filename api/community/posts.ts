@@ -3,6 +3,7 @@ import { readQuery, writeQuery } from '../_lib/db';
 import { numberParam, parseBody, sendJson, stringParam } from '../_lib/http';
 import { getCurrentUser } from '../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
+import { sendTurnstileError, turnstileTokenFromBody, verifyTurnstileToken } from '../_lib/turnstile';
 
 const ALLOWED_CATEGORIES = new Set(['free', 'question', 'meetup', 'tip', 'notice']);
 
@@ -50,6 +51,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return;
       }
       const body = parseBody(req);
+      const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'community_post');
+      if (!turnstile.ok) {
+        sendTurnstileError(res, turnstile);
+        return;
+      }
       const title = String(body.title || '').trim();
       const postBody = String(body.body || '').trim();
       const category = cleanCategory(String(body.category || 'free')) ?? 'free';

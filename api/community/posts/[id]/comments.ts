@@ -3,6 +3,7 @@ import { readQuery, writeQuery } from '../../../_lib/db';
 import { parseBody, sendJson, stringParam } from '../../../_lib/http';
 import { getCurrentUser } from '../../../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
+import { sendTurnstileError, turnstileTokenFromBody, verifyTurnstileToken } from '../../../_lib/turnstile';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
@@ -43,7 +44,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sendJson(res, 401, { error: 'login_required' });
         return;
       }
-      const body = String(parseBody(req).body || '').trim();
+      const parsedBody = parseBody(req);
+      const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(parsedBody), 'community_comment');
+      if (!turnstile.ok) {
+        sendTurnstileError(res, turnstile);
+        return;
+      }
+      const body = String(parsedBody.body || '').trim();
       if (!body || body.length > 1000) {
         sendJson(res, 400, { error: 'invalid_comment' });
         return;

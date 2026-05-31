@@ -63,6 +63,7 @@ import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
 import { SponsorAd } from '../ads/SponsorAd';
+import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import mascotLogo from '../../assets/officer-mascot-logo.png';
 import './styles.css';
 
@@ -101,6 +102,10 @@ export function PlaceExplorer() {
   const [requestEmail, setRequestEmail] = useState('');
   const [closureState, setClosureState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
   const [requestState, setRequestState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
+  const [closureTurnstileToken, setClosureTurnstileToken] = useState<string | null>(null);
+  const [requestTurnstileToken, setRequestTurnstileToken] = useState<string | null>(null);
+  const [closureTurnstileReset, setClosureTurnstileReset] = useState(0);
+  const [requestTurnstileReset, setRequestTurnstileReset] = useState(0);
   const [reportOpened, report] = useDisclosure(false);
   const [closureOpened, closure] = useDisclosure(false);
   const [authOpened, auth] = useDisclosure(false);
@@ -385,19 +390,34 @@ export function PlaceExplorer() {
 
   async function submitClosureReportForm() {
     if (!selectedPlace) return;
+    if (!closureTurnstileToken) {
+      setClosureState('error');
+      return;
+    }
     setClosureState('submitting');
     try {
-      await submitClosureReport({ placeId: selectedPlace.id, note: closureReason ?? 'web-ui-report' });
+      await submitClosureReport({
+        placeId: selectedPlace.id,
+        note: closureReason ?? 'web-ui-report',
+        turnstileToken: closureTurnstileToken,
+      });
       setClosureState('done');
+      setClosureTurnstileToken(null);
       await loadPlaces();
       await loadSearchPlaces(new AbortController());
     } catch {
       setClosureState('error');
+      setClosureTurnstileToken(null);
+      setClosureTurnstileReset((value) => value + 1);
     }
   }
 
   async function submitTakedownRequestForm() {
     if (!selectedPlace) return;
+    if (!requestTurnstileToken) {
+      setRequestState('error');
+      return;
+    }
     setRequestState('submitting');
     const hiddenPlaceId = selectedPlace.id;
     try {
@@ -406,13 +426,17 @@ export function PlaceExplorer() {
         placeId: selectedPlace.id,
         reason: `${requestCategory}: ${requestReason.trim()}`,
         email,
+        turnstileToken: requestTurnstileToken,
       });
       setRequestState('done');
+      setRequestTurnstileToken(null);
       setPlaces((current) => current.filter((place) => place.id !== hiddenPlaceId));
       setSearchPlaces((current) => current.filter((place) => place.id !== hiddenPlaceId));
       clearSelected('replace');
     } catch {
       setRequestState('error');
+      setRequestTurnstileToken(null);
+      setRequestTurnstileReset((value) => value + 1);
     }
   }
 
@@ -603,6 +627,8 @@ export function PlaceExplorer() {
           setRequestReason('');
           setRequestEmail('');
           setRequestState('idle');
+          setRequestTurnstileToken(null);
+          setRequestTurnstileReset((value) => value + 1);
         }}
         title="정보 수정·삭제 요청"
         centered
@@ -635,10 +661,15 @@ export function PlaceExplorer() {
             value={requestEmail}
             onChange={(event) => setRequestEmail(event.currentTarget.value)}
           />
+          <TurnstileWidget
+            action="takedown_request"
+            resetSignal={`${selectedPlace?.id ?? 'none'}-${requestTurnstileReset}`}
+            onTokenChange={setRequestTurnstileToken}
+          />
           <Button
             leftSection={<FileText size={16} />}
             loading={requestState === 'submitting'}
-            disabled={!selectedPlace || requestReason.trim().length < 50 || !EMAIL_PATTERN.test(requestEmail.trim())}
+            disabled={!selectedPlace || requestReason.trim().length < 50 || !EMAIL_PATTERN.test(requestEmail.trim()) || !requestTurnstileToken}
             onClick={() => void submitTakedownRequestForm()}
           >
             접수
@@ -658,6 +689,8 @@ export function PlaceExplorer() {
           closure.close();
           setClosureReason('방문해보니 폐업');
           setClosureState('idle');
+          setClosureTurnstileToken(null);
+          setClosureTurnstileReset((value) => value + 1);
         }}
         title="폐업 신고"
         centered
@@ -674,9 +707,15 @@ export function PlaceExplorer() {
             onChange={setClosureReason}
             data={['방문해보니 폐업', '다른 가게 입점', '장기 휴업']}
           />
+          <TurnstileWidget
+            action="closure_report"
+            resetSignal={`${selectedPlace?.id ?? 'none'}-${closureTurnstileReset}`}
+            onTokenChange={setClosureTurnstileToken}
+          />
           <Button
             leftSection={<AlertTriangle size={16} />}
             loading={closureState === 'submitting'}
+            disabled={!selectedPlace || !closureTurnstileToken}
             onClick={() => void submitClosureReportForm()}
           >
             폐업 신고 접수
