@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { writeQuery } from '../../../_lib/db';
 import { getCurrentUser } from '../../../_lib/auth';
 import { parseBody, sendJson, stringParam } from '../../../_lib/http';
+import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
 
 type Reaction = 'like' | 'dislike';
 const REACTIONS_CACHE_CONTROL = 'private, no-store';
@@ -55,14 +56,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sendNoStoreJson(res, 400, { error: 'missing_place_id' });
       return;
     }
-    const user = await getCurrentUser(req);
-
     if (method === 'GET') {
+      const user = await getCurrentUser(req);
       sendNoStoreJson(res, 200, await summary(placeId, user?.id), true);
       return;
     }
 
     if (method === 'POST') {
+      const user = await getCurrentUser(req);
+      if (
+        !applyRateLimit(req, res, RATE_LIMIT_POLICIES.placeReactions, {
+          keyParts: user ? ['user', user.id] : [],
+          cacheControl: REACTIONS_CACHE_CONTROL,
+        })
+      ) {
+        return;
+      }
       if (!user) {
         sendNoStoreJson(res, 401, { error: 'login_required' });
         return;

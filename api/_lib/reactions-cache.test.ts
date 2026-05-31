@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { writeQuery } from './db';
 import { getCurrentUser } from './auth';
 import reactionsHandler from '../v1/places/[id]/reactions';
+import { _resetRateLimiterForTest } from './rate-limit';
 
 vi.mock('./db', () => ({
   writeQuery: vi.fn(),
@@ -61,6 +62,7 @@ const mockedGetCurrentUser = vi.mocked(getCurrentUser);
 
 describe('reactions route cache policy', () => {
   beforeEach(() => {
+    _resetRateLimiterForTest();
     mockedWriteQuery.mockReset();
     mockedGetCurrentUser.mockReset();
   });
@@ -131,5 +133,50 @@ describe('reactions route cache policy', () => {
     expect(res.getHeader('Allow')).toBe('GET, HEAD, POST, OPTIONS');
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
     expect(res.body).toEqual({ error: 'method_not_allowed' });
+  });
+
+  it('rate-limits POST reactions without applying the limit to GET', async () => {
+    mockedGetCurrentUser.mockResolvedValue({ id: 'user-1' } as never);
+    const req = {
+      method: 'POST',
+      query: { id: 'place-1' },
+      headers: { 'x-forwarded-for': '203.0.113.44, 10.0.0.1', 'user-agent': 'vitest-agent' },
+      body: { reaction: 'invalid' },
+    };
+
+    for (let index = 0; index < 60; index += 1) {
+      const res = mockResponse();
+      await reactionsHandler(req as never, res as never);
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'invalid_reaction' });
+    }
+
+    const limited = mockResponse();
+    await reactionsHandler(req as never, limited as never);
+
+    expect(limited.statusCode).toBe(429);
+    expect(limited.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(limited.getHeader('Retry-After')).toMatch(/^\d+$/);
+    expect(limited.getHeader('X-RateLimit-Limit')).toBe('60');
+    expect(limited.getHeader('X-RateLimit-Remaining')).toBe('0');
+    expect(limited.body).toEqual({ error: 'rate_limited' });
+    expect(mockedWriteQuery).not.toHaveBeenCalled();
+
+    mockedWriteQuery
+      .mockResolvedValueOnce({ rows: [{ like_count: 1, dislike_count: 0 }] } as never)
+      .mockResolvedValueOnce({ rows: [] } as never);
+    const getRes = mockResponse();
+    await reactionsHandler(
+      {
+        method: 'GET',
+        query: { id: 'place-1' },
+        headers: { 'x-forwarded-for': '203.0.113.44, 10.0.0.1', 'user-agent': 'vitest-agent' },
+      } as never,
+      getRes as never,
+    );
+
+    expect(getRes.statusCode).toBe(200);
+    expect(getRes.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(getRes.body).toEqual({ like_count: 1, dislike_count: 0, user_reaction: null });
   });
 });

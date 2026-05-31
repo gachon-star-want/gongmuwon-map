@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery, writeQuery } from '../../../_lib/db';
 import { parseBody, sendJson, stringParam } from '../../../_lib/http';
 import { getCurrentUser } from '../../../_lib/auth';
+import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
@@ -35,6 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (method === 'POST') {
       const user = await getCurrentUser(req);
+      if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.communityComments, { keyParts: user ? ['user', user.id] : [] })) {
+        return;
+      }
       if (!user) {
         sendJson(res, 401, { error: 'login_required' });
         return;
@@ -69,4 +73,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sendJson(res, 500, { error: 'internal_error' });
   }
 }
-

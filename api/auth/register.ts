@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { writeQuery } from '../_lib/db';
 import { parseBody, sendJson } from '../_lib/http';
 import { createSession, hashPassword, normalizeHandle, validateHandle, validatePassword } from '../_lib/auth';
+import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
@@ -17,6 +18,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.authRegister)) {
+      return;
+    }
     const body = parseBody(req);
     const handle = String(body.handle || '').trim();
     const password = String(body.password || '');
@@ -48,4 +52,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sendJson(res, 500, { error: 'internal_error' });
   }
 }
-
