@@ -140,13 +140,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 ## Rate Limit
 
-| 키 유형 | 한도 |
-|---|---|
-| **익명 (Referer 없음 or AI bot UA)** | 60 req/min, 5,000 req/day |
-| **익명 (도메인 정상 Referer)** | 600 req/min |
-| **인증 키 (v1.1)** | 무제한 (FUP 적용) |
+현재 v1 코드에는 악용 가능성이 높은 쓰기성 엔드포인트에 대해 API Route 내부 인메모리 fixed-window 제한을 둔다. 키는 서버가 관측한 첫 `x-forwarded-for` IP + User-Agent를 기본으로 하며, 인증 사용자가 확인된 경로는 user id를 함께 포함한다. 응답은 제한 초과 시 `429 { "error": "rate_limited" }`, `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`을 반환한다.
 
-구현: Vercel Edge Middleware + Upstash Redis(무료 한도) 토큰 버킷.
+| 경로 | 한도 |
+|---|---|
+| `POST /api/auth/login` | 10/min per IP+UA+normalized handle |
+| `POST /api/auth/register` | 5/hour per IP+UA |
+| `POST /api/takedown-request` | 5/hour per IP+UA |
+| `POST /api/closure-report` | 20/hour per IP+UA |
+| `POST /api/community/posts` | 10/hour per IP+UA/user |
+| `POST /api/community/posts/{id}/comments` | 30/hour per IP+UA/user |
+| `POST /api/v1/places/{id}/reactions` | 60/min per IP+UA/user |
+
+주의: 이 제한은 Vercel serverless warm instance별 최선 노력(best-effort) 보호다. 다중 인스턴스·리전 전체에서 일관된 제한이 필요하면 이후 Cloudflare/WAF 또는 공유 KV/Redis 기반 edge limiter를 추가해야 한다. 공개 읽기 API 봇 트래픽 제한도 동일하게 edge/WAF 계층에서 별도 적용하는 것이 권장된다.
 
 ## CORS
 

@@ -143,7 +143,7 @@
 - **API 키 누설 방지**: 카카오 REST API 키는 Vercel API Route 핸들러 안에서만 사용. JS 키는 도메인 제한.
 - **DB 자격 증명 분리**: `DATABASE_URL` (service 쓰기) vs `DATABASE_URL_READONLY` (anon RLS-restricted). API Route는 요청 종류에 맞는 connection string 사용.
 - **RLS**: 원본 테이블은 `anon` 차단. 공개는 view로만 (Postgres 표준 RLS, Neon에서 동일).
-- **Rate limit**: Vercel WAF + API Route 내부 토큰 버킷(Upstash Redis 무료 한도 활용).
+- **Rate limit**: 현재 고위험 쓰기 API Route에는 인메모리 fixed-window 제한을 적용한다(서버리스 인스턴스별 best-effort). 전역 일관 제한은 이후 WAF/edge 또는 공유 KV·Redis 계층에서 보강한다.
 - **CSP**: `default-src 'self'` + 카카오·Vercel·Cloudflare R2·GA 도메인 화이트리스트.
 
 ## 관측성
