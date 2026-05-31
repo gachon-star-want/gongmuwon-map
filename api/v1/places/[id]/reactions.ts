@@ -3,12 +3,31 @@ import { writeQuery } from '../../../_lib/db';
 import { getCurrentUser } from '../../../_lib/auth';
 import { parseBody, sendJson, stringParam } from '../../../_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
+import { isAllowedPrivateOrigin } from '../../../_lib/route';
 
 type Reaction = 'like' | 'dislike';
 const REACTIONS_CACHE_CONTROL = 'private, no-store';
 
 function sendNoStoreJson(res: VercelResponse, status: number, body: unknown, cors = false) {
   sendJson(res, status, body, REACTIONS_CACHE_CONTROL, cors);
+}
+
+function headerValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function requestOrigin(req: VercelRequest) {
+  return headerValue(req.headers.origin);
+}
+
+function setPrivateCors(req: VercelRequest, res: VercelResponse) {
+  const origin = requestOrigin(req);
+  res.setHeader('Vary', 'Origin');
+  if (!isAllowedPrivateOrigin(req, origin)) {
+    return false;
+  }
+  res.setHeader('Access-Control-Allow-Origin', origin as string);
+  return true;
 }
 
 async function summary(placeId: string, userId?: string) {
@@ -46,6 +65,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Cache-Control', REACTIONS_CACHE_CONTROL);
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (headerValue(req.headers['access-control-request-method'])?.toUpperCase() === 'POST') {
+      if (!setPrivateCors(req, res)) {
+        sendNoStoreJson(res, 403, { error: 'forbidden' });
+        return;
+      }
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
     res.status(204).end();
     return;
   }
@@ -63,6 +90,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (method === 'POST') {
+      if (!setPrivateCors(req, res)) {
+        sendNoStoreJson(res, 403, { error: 'forbidden' });
+        return;
+      }
       const user = await getCurrentUser(req);
       if (
         !applyRateLimit(req, res, RATE_LIMIT_POLICIES.placeReactions, {

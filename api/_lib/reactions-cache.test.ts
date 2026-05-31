@@ -59,6 +59,7 @@ function mockResponse(): MockResponse {
 
 const mockedWriteQuery = vi.mocked(writeQuery);
 const mockedGetCurrentUser = vi.mocked(getCurrentUser);
+const sameOriginHeaders = { origin: 'http://site.example.com', host: 'site.example.com' };
 
 describe('reactions route cache policy', () => {
   beforeEach(() => {
@@ -91,12 +92,13 @@ describe('reactions route cache policy', () => {
 
     const res = mockResponse();
     await reactionsHandler(
-      { method: 'POST', query: { id: 'place-1' }, headers: {}, body: { reaction: 'dislike' } } as never,
+      { method: 'POST', query: { id: 'place-1' }, headers: sameOriginHeaders, body: { reaction: 'dislike' } } as never,
       res as never,
     );
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(res.getHeader('Access-Control-Allow-Origin')).toBe('http://site.example.com');
     expect(res.body).toEqual({ like_count: 8, dislike_count: 2, user_reaction: 'dislike' });
   });
 
@@ -105,12 +107,13 @@ describe('reactions route cache policy', () => {
 
     const res = mockResponse();
     await reactionsHandler(
-      { method: 'POST', query: { id: 'place-1' }, headers: {}, body: { reaction: 'like' } } as never,
+      { method: 'POST', query: { id: 'place-1' }, headers: sameOriginHeaders, body: { reaction: 'like' } } as never,
       res as never,
     );
 
     expect(res.statusCode).toBe(401);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(res.getHeader('Access-Control-Allow-Origin')).toBe('http://site.example.com');
     expect(res.body).toEqual({ error: 'login_required' });
   });
 
@@ -120,8 +123,62 @@ describe('reactions route cache policy', () => {
 
     expect(res.statusCode).toBe(204);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(res.getHeader('Access-Control-Allow-Origin')).toBe('*');
     expect(res.getHeader('Access-Control-Allow-Methods')).toContain('GET');
     expect(res.getHeader('Access-Control-Allow-Methods')).toContain('POST');
+  });
+
+  it('echoes allowed origin for POST preflight without wildcard CORS', async () => {
+    const res = mockResponse();
+    await reactionsHandler(
+      {
+        method: 'OPTIONS',
+        query: { id: 'place-1' },
+        headers: { ...sameOriginHeaders, 'access-control-request-method': 'POST' },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(204);
+    expect(res.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(res.getHeader('Access-Control-Allow-Origin')).toBe('http://site.example.com');
+    expect(res.getHeader('Vary')).toBe('Origin');
+  });
+
+  it('rejects unapproved origins for POST preflight and mutation', async () => {
+    const preflight = mockResponse();
+    await reactionsHandler(
+      {
+        method: 'OPTIONS',
+        query: { id: 'place-1' },
+        headers: {
+          origin: 'https://evil.example',
+          host: 'site.example.com',
+          'access-control-request-method': 'POST',
+        },
+      } as never,
+      preflight as never,
+    );
+
+    expect(preflight.statusCode).toBe(403);
+    expect(preflight.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(preflight.getHeader('Access-Control-Allow-Origin')).toBeUndefined();
+
+    const post = mockResponse();
+    await reactionsHandler(
+      {
+        method: 'POST',
+        query: { id: 'place-1' },
+        headers: { origin: 'https://evil.example', host: 'site.example.com' },
+        body: { reaction: 'like' },
+      } as never,
+      post as never,
+    );
+
+    expect(post.statusCode).toBe(403);
+    expect(post.getHeader('Cache-Control')).toBe('private, no-store');
+    expect(post.getHeader('Access-Control-Allow-Origin')).toBeUndefined();
+    expect(mockedGetCurrentUser).not.toHaveBeenCalled();
   });
 
   it('returns 405 for invalid methods with no-store', async () => {
@@ -140,7 +197,11 @@ describe('reactions route cache policy', () => {
     const req = {
       method: 'POST',
       query: { id: 'place-1' },
-      headers: { 'x-forwarded-for': '203.0.113.44, 10.0.0.1', 'user-agent': 'vitest-agent' },
+      headers: {
+        ...sameOriginHeaders,
+        'x-forwarded-for': '203.0.113.44, 10.0.0.1',
+        'user-agent': 'vitest-agent',
+      },
       body: { reaction: 'invalid' },
     };
 
