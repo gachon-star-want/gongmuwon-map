@@ -3,6 +3,7 @@ import { AlertTriangle, ExternalLink, FileText, Navigation, ThumbsDown, ThumbsUp
 import type { Place, PlaceReactionSummary, Visit } from '../types';
 import { formatDate, gradeClass, gradeLabel } from '../format';
 import { Metric } from './metric';
+import { safeExternalUrl } from '../../../shared/safeExternalUrl';
 
 type PlaceDetailsProps = {
   place: Place;
@@ -130,27 +131,35 @@ export function PlaceDetails({
         <Text fw={800}>방문 기록</Text>
         {visits.length ? (
           <div className="visit-stack">
-            {visits.slice(0, 10).map((visit) => (
-              <article className="visit-row" key={visit.id}>
-                <span>{formatDate(visit.visit_date) ?? visit.visit_date}</span>
-                <strong>{visit.amount.toLocaleString('ko-KR')}원</strong>
-                <small>{[visit.department_name, visit.rank_label, visit.purpose].filter(Boolean).join(' · ')}</small>
-                <small className="source-link">
-                  {visit.source_url ? (
-                    <a href={visit.source_url} target="_blank" rel="noreferrer" aria-label={`${place.name} 방문 기록 원문 보기`}>
-                      <ExternalLink size={13} aria-hidden /> 원문 보기
-                    </a>
-                  ) : (
-                    <span className="source-link-unavailable">
-                      <ExternalLink size={13} aria-hidden /> 원문 링크 없음
-                    </span>
-                  )}
-                </small>
-                {!visit.source_url ? (
-                  <small className="source-note">원문 링크가 미제공되어 요약만 제공됩니다.</small>
-                ) : null}
-              </article>
-            ))}
+            {visits.slice(0, 10).map((visit) => {
+              const sourceUrl = safeExternalUrl(visit.source_url);
+              return (
+                <article className="visit-row" key={visit.id}>
+                  <span>{formatDate(visit.visit_date) ?? visit.visit_date}</span>
+                  <strong>{visit.amount.toLocaleString('ko-KR')}원</strong>
+                  <small>{[visit.department_name, visit.rank_label, visit.purpose].filter(Boolean).join(' · ')}</small>
+                  <small className="source-link">
+                    {sourceUrl ? (
+                      <a
+                        href={sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${place.name} 방문 기록 원문 보기`}
+                      >
+                        <ExternalLink size={13} aria-hidden /> 원문 보기
+                      </a>
+                    ) : (
+                      <span className="source-link-unavailable">
+                        <ExternalLink size={13} aria-hidden /> 원문 링크 없음
+                      </span>
+                    )}
+                  </small>
+                  {!sourceUrl ? (
+                    <small className="source-note">원문 링크가 미제공되어 요약만 제공됩니다.</small>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <Text size="sm" c="dimmed" mt="xs">
@@ -172,7 +181,7 @@ export function PlaceDetails({
             정보 수정·삭제 요청은 즉시 임시 비공개 처리 후 운영자가 72시간 이내 검토합니다.
           </Text>
         </div>
-        <Button component="a" href={kakaoUrl} target="_blank" rel="noreferrer" leftSection={<Navigation size={16} />}>
+        <Button component="a" href={kakaoUrl} target="_blank" rel="noopener noreferrer" leftSection={<Navigation size={16} />}>
           카카오맵에서 보기
         </Button>
         <Button variant="light" leftSection={<FileText size={16} />} onClick={onReport}>

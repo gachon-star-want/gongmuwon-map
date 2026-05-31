@@ -1,10 +1,12 @@
+import { safeExternalUrl } from '../../shared/safeExternalUrl';
+
 type SponsorAdProps = {
   variant?: 'inline' | 'rail' | 'banner';
 };
 
 export function SponsorAd({ variant = 'inline' }: SponsorAdProps) {
   const text = (import.meta.env.VITE_AD_SLOT_TEXT as string | undefined)?.trim() || '광고 영역';
-  const url = (import.meta.env.VITE_AD_SLOT_URL as string | undefined)?.trim();
+  const url = safeExternalUrl(import.meta.env.VITE_AD_SLOT_URL as string | undefined);
   const content = (
     <>
       <span>AD</span>
@@ -14,7 +16,7 @@ export function SponsorAd({ variant = 'inline' }: SponsorAdProps) {
 
   if (url) {
     return (
-      <a className={`sponsor-ad sponsor-ad-${variant}`} href={url} target={url.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+      <a className={`sponsor-ad sponsor-ad-${variant}`} href={url} target="_blank" rel="noopener noreferrer">
         {content}
       </a>
     );
