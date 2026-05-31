@@ -64,14 +64,31 @@ export function reporterFingerprint(req: VercelRequest) {
 }
 
 export function requireCronSecret(req: VercelRequest, res: VercelResponse) {
-  const secret = process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET?.trim();
   if (!secret) {
-    return true;
+    sendJson(res, 503, { error: 'cron_secret_not_configured' });
+    return false;
   }
-  const header = req.headers.authorization || '';
-  if (header === `Bearer ${secret}`) {
+  const authorization = req.headers.authorization;
+  const header = Array.isArray(authorization) ? '' : authorization || '';
+  if (timingSafeStringEqual(header, `Bearer ${secret}`)) {
     return true;
   }
   sendJson(res, 401, { error: 'unauthorized' });
+  return false;
+}
+
+function timingSafeStringEqual(a: string, b: string) {
+  const aBuffer = Buffer.from(a);
+  const bBuffer = Buffer.from(b);
+  if (aBuffer.length === bBuffer.length) {
+    return crypto.timingSafeEqual(aBuffer, bBuffer);
+  }
+  const length = Math.max(aBuffer.length, bBuffer.length);
+  const aPadded = Buffer.alloc(length);
+  const bPadded = Buffer.alloc(length);
+  aBuffer.copy(aPadded);
+  bBuffer.copy(bPadded);
+  crypto.timingSafeEqual(aPadded, bPadded);
   return false;
 }

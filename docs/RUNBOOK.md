@@ -15,6 +15,7 @@
   - **LLM 3종**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` (멀티 프로바이더 라우팅 — [ADR-009](adr/ADR-009-multi-llm-provider-routing.md))
   - **카카오**: `KAKAO_JS_KEY` (도메인 제한), `KAKAO_REST_KEY` (Vercel API Route 서버 측 전용)
   - **메일**: `RESEND_API_KEY`
+  - **Cron 보호**: `CRON_SECRET` (Vercel Cron/API Route 수동 호출용 Bearer 토큰, Production·Preview·Development 모두 설정)
   - **라우팅 설정**: `LLM_PRIMARY=anthropic`, `LLM_FALLBACK_ORDER=openai,gemini,anthropic-sonnet`, `LLM_BUDGET_DAILY_USD=10`
 
 ### 자율 모드 시작 전 사용자가 마지막으로 채울 것
@@ -105,7 +106,7 @@ sed -i '' 's|운영자이메일_미확정|admin@gongmuwon-map.com|g' docs/LEGAL_
 - 멱등성 테스트(같은 sample 두 번 실행해도 row 수 동일)
 
 ### 1.7 등급 계산
-- Vercel API Route `/api/cron/recompute-grades` 호출 (수동: `curl https://<vercel-url>/api/cron/recompute-grades`)
+- Vercel API Route `/api/cron/recompute-grades` 호출 (수동: `curl -H "Authorization: Bearer $CRON_SECRET" https://<vercel-url>/api/cron/recompute-grades`)
 - `places_public` 뷰에서 grade 컬럼 채워지는지 확인
 
 ### Phase 1 셀프 체크리스트
