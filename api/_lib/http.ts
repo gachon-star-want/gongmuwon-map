@@ -52,12 +52,14 @@ export function parseBody(req: VercelRequest) {
   return req.body || {};
 }
 
-export function reporterFingerprint(req: VercelRequest, provided?: string) {
-  if (provided && provided.length >= 12) {
-    return provided.slice(0, 128);
-  }
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-  const ua = req.headers['user-agent'] || '';
+function headerValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function reporterFingerprint(req: VercelRequest) {
+  const forwardedFor = headerValue(req.headers['x-forwarded-for']);
+  const ip = forwardedFor?.split(',')[0]?.trim() || req.socket.remoteAddress || '';
+  const ua = headerValue(req.headers['user-agent']) || '';
   return crypto.createHash('sha256').update(`${ip}:${ua}`).digest('hex');
 }
 

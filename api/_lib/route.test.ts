@@ -16,6 +16,13 @@ type MockResponse = {
   end: (body?: string) => void;
 };
 
+const trustedWriteHeaders = {
+  origin: 'https://site.example.com',
+  host: 'site.example.com',
+  'x-forwarded-proto': 'https',
+  'content-type': 'application/json',
+};
+
 function mockResponse(): MockResponse {
   const headers = new Map<string, unknown>();
   return {
@@ -111,7 +118,7 @@ describe('privateWriteRoute', () => {
   it('accepts POST', async () => {
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ status: 200, body: { ok: true } }));
-    await handler({ method: 'POST', query: {}, headers: {} } as never, res);
+    await handler({ method: 'POST', query: {}, headers: trustedWriteHeaders } as never, res);
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ ok: true });
@@ -120,7 +127,7 @@ describe('privateWriteRoute', () => {
   it('accepts OPTIONS', async () => {
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'OPTIONS', query: {}, headers: {} } as never, res);
+    await handler({ method: 'OPTIONS', query: {}, headers: trustedWriteHeaders } as never, res);
 
     expect(res.statusCode).toBe(204);
   });
@@ -128,26 +135,39 @@ describe('privateWriteRoute', () => {
   it('rejects GET with 405', async () => {
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'GET', query: {}, headers: {} } as never, res);
+    await handler({ method: 'GET', query: {}, headers: trustedWriteHeaders } as never, res);
 
     expect(res.statusCode).toBe(405);
     expect(res.body).toEqual({ error: 'method_not_allowed' });
   });
 
-  it('accepts missing Origin', async () => {
+  it('rejects missing Origin', async () => {
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'POST', query: {}, headers: {} } as never, res);
+    await handler({ method: 'POST', query: {}, headers: { host: 'site.example.com', 'content-type': 'application/json' } } as never, res);
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toEqual({ error: 'forbidden' });
+  });
+
+  it('rejects non-json POST bodies', async () => {
+    const res = mockResponse();
+    const handler = privateWriteRoute(async () => ({ ok: true }));
+    await handler({
+      method: 'POST',
+      query: {},
+      headers: { ...trustedWriteHeaders, 'content-type': 'text/plain' },
+    } as never, res);
+
+    expect(res.statusCode).toBe(415);
+    expect(res.body).toEqual({ error: 'unsupported_media_type' });
   });
 
   it('accepts PUBLIC_SITE_ORIGIN', async () => {
     process.env.PUBLIC_SITE_ORIGIN = 'https://site.example.com';
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'POST', query: {}, headers: { origin: 'https://site.example.com' } } as never, res);
+    await handler({ method: 'POST', query: {}, headers: trustedWriteHeaders } as never, res);
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Access-Control-Allow-Origin')).toBe('https://site.example.com');
@@ -157,7 +177,11 @@ describe('privateWriteRoute', () => {
     process.env.PUBLIC_WRITE_ORIGIN = 'https://a.example.com, https://b.example.com';
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'POST', query: {}, headers: { origin: 'https://b.example.com' } } as never, res);
+    await handler({
+      method: 'POST',
+      query: {},
+      headers: { ...trustedWriteHeaders, origin: 'https://b.example.com' },
+    } as never, res);
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Access-Control-Allow-Origin')).toBe('https://b.example.com');
@@ -167,7 +191,11 @@ describe('privateWriteRoute', () => {
     process.env.PUBLIC_WRITE_ORIGIN = 'https://approved.example.com';
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'POST', query: {}, headers: { origin: 'https://evil.example.com' } } as never, res);
+    await handler({
+      method: 'POST',
+      query: {},
+      headers: { ...trustedWriteHeaders, origin: 'https://evil.example.com' },
+    } as never, res);
 
     expect(res.statusCode).toBe(403);
     expect(res.body).toEqual({ error: 'forbidden' });
@@ -176,7 +204,7 @@ describe('privateWriteRoute', () => {
   it('does not set cache for write routes', async () => {
     const res = mockResponse();
     const handler = privateWriteRoute(async () => ({ ok: true }));
-    await handler({ method: 'POST', query: {}, headers: {} } as never, res);
+    await handler({ method: 'POST', query: {}, headers: trustedWriteHeaders } as never, res);
 
     expect(res.getHeader('Cache-Control')).toBeUndefined();
   });

@@ -73,6 +73,7 @@ const sortOptions: { value: SortMode; label: string }[] = [
   { value: 'recent', label: '최근 방문순' },
   { value: 'visits', label: '방문 많은순' },
 ];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function PlaceExplorer() {
   const initialQuery = parseQueryState();
@@ -400,10 +401,11 @@ export function PlaceExplorer() {
     setRequestState('submitting');
     const hiddenPlaceId = selectedPlace.id;
     try {
+      const email = requestEmail.trim();
       await submitTakedownRequest({
         placeId: selectedPlace.id,
         reason: `${requestCategory}: ${requestReason.trim()}`,
-        email: requestEmail.trim() || null,
+        email,
       });
       setRequestState('done');
       setPlaces((current) => current.filter((place) => place.id !== hiddenPlaceId));
@@ -629,13 +631,14 @@ export function PlaceExplorer() {
           <TextInput
             label="이메일"
             placeholder="회신 받을 주소"
+            required
             value={requestEmail}
             onChange={(event) => setRequestEmail(event.currentTarget.value)}
           />
           <Button
             leftSection={<FileText size={16} />}
             loading={requestState === 'submitting'}
-            disabled={!selectedPlace || requestReason.trim().length < 50}
+            disabled={!selectedPlace || requestReason.trim().length < 50 || !EMAIL_PATTERN.test(requestEmail.trim())}
             onClick={() => void submitTakedownRequestForm()}
           >
             접수
