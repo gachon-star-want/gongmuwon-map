@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 import os
 import re
+import subprocess
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
-
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import httpx
@@ -57,6 +60,56 @@ def _merge_headers(base: dict[str, str], extra: dict[str, str] | None) -> dict[s
     merged = dict(base)
     merged.update(extra)
     return merged
+
+
+def _parse_curl_header_file(data: bytes) -> tuple[int, dict[str, str]]:
+    header_text = data.decode("iso-8859-1", errors="replace")
+    blocks = [block.strip() for block in re.split(r"\r?\n\r?\n", header_text) if block.strip()]
+    http_blocks = [
+        block
+        for block in blocks
+        if re.match(r"^HTTP/\S+\s+\d{3}\b", block.splitlines()[0])
+    ]
+    if not http_blocks:
+        return 200, {}
+
+    final_block = http_blocks[-1]
+    return _parse_status_from_headers(final_block), _parse_httpx_like_headers(final_block)
+
+
+async def _communicate_with_output_file_limit(
+    process: asyncio.subprocess.Process,
+    *,
+    output_path: Path,
+    max_bytes: int,
+    subject: str,
+) -> tuple[bytes | None, bytes | None]:
+    task = asyncio.create_task(process.communicate())
+    try:
+        while not task.done():
+            if output_path.exists():
+                guards.ensure_size_at_most(
+                    size=output_path.stat().st_size,
+                    max_bytes=max_bytes,
+                    subject=subject,
+                )
+            await asyncio.sleep(0.05)
+        stdout, stderr = await task
+        if output_path.exists():
+            guards.ensure_size_at_most(
+                size=output_path.stat().st_size,
+                max_bytes=max_bytes,
+                subject=subject,
+            )
+        return stdout, stderr
+    except guards.DocumentProcessingLimitError:
+        if not task.done():
+            kill = getattr(process, "kill", None)
+            if callable(kill):
+                kill()
+            with suppress(Exception):
+                await task
+        raise
 
 
 def _decode_response_text(content: bytes, headers: dict[str, str]) -> str:
@@ -195,55 +248,69 @@ class _CurlClient(AsyncHttpClient):
     ) -> SimpleHttpResponse:
         request_url = _build_url_with_params(url, params)
         request = httpx.Request("GET", request_url)
-        command = [
-            "curl",
-            "-sS",
-            "--compressed",
-            "-D-",
-            "--max-time",
-            str(int(self._timeout)),
-            "--connect-timeout",
-            str(int(self._timeout)),
-            "--retry", "0",
-            "--max-filesize",
-            str(self._max_download_bytes),
-        ]
-        if self._doh_url:
-            command.extend(["--doh-url", self._doh_url])
-        if self._follow_redirects:
-            command.append("-L")
-        for key, value in _merge_headers(self._headers, headers).items():
-            command.extend(["-H", f"{key}: {value}"])
-        command.append(request_url)
+        with tempfile.TemporaryDirectory() as directory:
+            header_path = Path(directory) / "headers.txt"
+            body_path = Path(directory) / "body.bin"
+            command = [
+                "curl",
+                "-sS",
+                "--compressed",
+                "-D",
+                str(header_path),
+                "-o",
+                str(body_path),
+                "--max-time",
+                str(int(self._timeout)),
+                "--connect-timeout",
+                str(int(self._timeout)),
+                "--retry", "0",
+                "--max-filesize",
+                str(self._max_download_bytes),
+            ]
+            if self._doh_url:
+                command.extend(["--doh-url", self._doh_url])
+            if self._follow_redirects:
+                command.append("-L")
+            for key, value in _merge_headers(self._headers, headers).items():
+                command.extend(["-H", f"{key}: {value}"])
+            command.append(request_url)
 
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            if process.returncode == 63:
-                raise guards.DocumentProcessingLimitError(
-                    f"downloaded document exceeds limit of {self._max_download_bytes} bytes"
-                )
-            raise httpx.RequestError(
-                stderr.decode("utf-8", errors="replace") if stderr else "curl request failed",
-                request=request,
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=subprocess.DEVNULL,
+                stderr=asyncio.subprocess.PIPE,
             )
+            _, stderr = await _communicate_with_output_file_limit(
+                process,
+                output_path=body_path,
+                max_bytes=self._max_download_bytes,
+                subject="downloaded document body",
+            )
+            if process.returncode != 0:
+                if process.returncode == 63:
+                    raise guards.DocumentProcessingLimitError(
+                        f"downloaded document exceeds limit of {self._max_download_bytes} bytes"
+                    )
+                raise httpx.RequestError(
+                    stderr.decode("utf-8", errors="replace") if isinstance(stderr, bytes) and stderr else "curl request failed",
+                    request=request,
+                )
 
-        status_code, body_bytes, headers = self._parse_curl_output(stdout)
-        guards.ensure_content_length_at_most(
-            headers,
-            max_bytes=self._max_download_bytes,
-            subject="downloaded document",
-        )
-        guards.ensure_size_at_most(
-            size=len(body_bytes),
-            max_bytes=self._max_download_bytes,
-            subject="downloaded document body",
-        )
-        text = _decode_response_text(body_bytes, headers)
+            header_bytes = header_path.read_bytes() if header_path.exists() else b""
+            status_code, headers = _parse_curl_header_file(header_bytes)
+            guards.ensure_content_length_at_most(
+                headers,
+                max_bytes=self._max_download_bytes,
+                subject="downloaded document",
+            )
+            body_size = body_path.stat().st_size if body_path.exists() else 0
+            guards.ensure_size_at_most(
+                size=body_size,
+                max_bytes=self._max_download_bytes,
+                subject="downloaded document body",
+            )
+            body_bytes = body_path.read_bytes() if body_path.exists() else b""
+            text = _decode_response_text(body_bytes, headers)
 
         return SimpleHttpResponse(
             status_code=status_code,
@@ -252,24 +319,6 @@ class _CurlClient(AsyncHttpClient):
             headers=headers,
             url=request_url,
         )
-
-    def _parse_curl_output(self, data: bytes) -> tuple[int, bytes, dict[str, str]]:
-        match = list(re.finditer(rb"(?m)^HTTP/\S+\s+\d{3}.*$", data))
-        if not match:
-            return 200, data, {}
-
-        latest = match[-1]
-        header_start = latest.start()
-        header_end = data.find(b"\r\n\r\n", header_start)
-        if header_end == -1:
-            return 500, data[header_start:], {}
-
-        raw_headers = data[header_start:header_end].decode("iso-8859-1", errors="replace")
-        status_code = _parse_status_from_headers(raw_headers)
-        headers = _parse_httpx_like_headers(raw_headers)
-        remaining = data[header_end + 4 :]
-        body = remaining
-        return status_code, body, headers
 
     async def aclose(self) -> None:
         return None

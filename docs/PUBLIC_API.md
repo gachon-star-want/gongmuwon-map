@@ -71,24 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 ### 캐시/CORS 헤더 정책
 
-```json
-{
-  "headers": [
-    {
-      "source": "/api/v1/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    }
-  ],
-  "crons": [
-    { "path": "/api/cron/recompute-grades", "schedule": "30 18 * * *" },
-    { "path": "/api/sitemap", "schedule": "0 19 * * *" }
-  ]
-}
-```
-
-`Cache-Control`은 `vercel.json`에서 일괄 적용하지 않고, 각 라우트가 `publicReadRoute(..., { cache: ... })`로 개별 설정한다.
+`Access-Control-Allow-Origin`과 `Cache-Control`은 `vercel.json`에서 `/api/v1/*`에 일괄 적용하지 않고, 각 라우트가 직접 설정한다. 공개 읽기 라우트는 `publicReadRoute(..., { cache: ... })`를 사용한다.
 
 - 공개 읽기 GET 엔드포인트(`places`, `places/search`, `regions` 등): 라우트별 `public, s-maxage=..., stale-while-revalidate=...`
 - `GET/POST /api/v1/places/{id}/reactions`: 로그인 사용자 상태(`user_reaction`)를 포함할 수 있으므로 `Cache-Control: private, no-store`
@@ -156,8 +139,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 ## CORS
 
-- 모든 `/api/v1/*` GET 엔드포인트: `Access-Control-Allow-Origin: *`
-- POST/PATCH는 우리 도메인만 허용
+- 공개 읽기 `/api/v1/*` GET/HEAD/OPTIONS 엔드포인트: 라우트 레벨에서 `Access-Control-Allow-Origin: *`
+- POST/PATCH는 라우트 레벨에서 우리 도메인만 허용
 
 ## OpenAPI 3.1 스펙
 

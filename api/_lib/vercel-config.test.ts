@@ -23,28 +23,34 @@ function loadVercelConfig(): VercelConfig {
 }
 
 describe('vercel /api/v1 headers', () => {
-  it('does not apply broad Cache-Control headers and keeps CORS', () => {
+  function canApplyToApiV1(source: unknown) {
+    if (typeof source !== 'string') {
+      return false;
+    }
+    if (source === '/(.*)' || source === '/*' || source === '/:path*') {
+      return true;
+    }
+    if (source === '/api/(.*)' || source === '/api/*' || source === '/api/:path*') {
+      return true;
+    }
+    return /^\/api\/v1(?:$|[/:*(])/.test(source);
+  }
+
+  it('does not configure API v1 CORS or cache headers in vercel.json', () => {
     const config = loadVercelConfig();
     const headerRules = Array.isArray(config.headers) ? config.headers : [];
-    const apiV1Rules = headerRules.filter((rule) => typeof rule.source === 'string' && rule.source.startsWith('/api/v1'));
+    const apiV1Rules = headerRules.filter((rule) => canApplyToApiV1(rule.source));
 
-    expect(apiV1Rules.length).toBeGreaterThan(0);
-
-    const hasApiV1CacheControl = apiV1Rules.some((rule) =>
-      (Array.isArray(rule.headers) ? rule.headers : []).some(
-        (entry) => typeof entry.key === 'string' && entry.key.toLowerCase() === 'cache-control',
-      ),
+    const forbiddenHeaders = apiV1Rules.flatMap((rule) =>
+      (Array.isArray(rule.headers) ? rule.headers : [])
+        .filter(
+          (entry) =>
+            typeof entry.key === 'string' &&
+            ['access-control-allow-origin', 'cache-control'].includes(entry.key.toLowerCase()),
+        )
+        .map((entry) => ({ source: rule.source, key: entry.key, value: entry.value })),
     );
-    expect(hasApiV1CacheControl).toBe(false);
 
-    const broadRule = apiV1Rules.find((rule) => rule.source === '/api/v1/(.*)');
-    expect(broadRule).toBeTruthy();
-    const hasCorsAllowAll = (Array.isArray(broadRule?.headers) ? broadRule.headers : []).some(
-      (entry) =>
-        typeof entry.key === 'string' &&
-        entry.key.toLowerCase() === 'access-control-allow-origin' &&
-        entry.value === '*',
-    );
-    expect(hasCorsAllowAll).toBe(true);
+    expect(forbiddenHeaders).toEqual([]);
   });
 });

@@ -31,9 +31,9 @@
 - 기대: 표 행 N개, 컬럼 명세 일치
 
 ### `pipeline/test_document_guards.py` / focused extractor tests
-- HTTP 다운로드: `Content-Length`가 25 MiB 초과면 본문 read 전 실패, 길이 헤더가 없어도 누적 body가 25 MiB 초과면 실패, curl 폴백은 `--max-filesize`와 파싱 후 body-size 검증 수행
-- Spreadsheet: 25 MiB 초과 입력, 20 sheets 초과, sheet당 5,000 rows/100 columns 초과, workbook 총 100,000 cells 초과 시 `DocumentProcessingLimitError`
-- PDF vision/text: 25 MiB 초과 PDF는 poppler 실행 전 실패, `pdftotext`/`pdftoppm` timeout은 `PipelineConfigError`, vision `max_pages`는 1~5로 clamp, PNG는 8 MiB/page 및 20 MiB total 초과 시 LLM 호출 전 실패
+- HTTP 다운로드: `Content-Length`가 25 MiB 초과면 본문 read 전 실패, 길이 헤더가 없어도 누적 body가 25 MiB 초과면 실패, curl 폴백은 `--max-filesize`와 `-D/-o` 임시 파일을 사용하고 실행 중/완료 후 body-size를 검증한 뒤 읽음. binary body 안의 HTTP-looking line은 상태 파싱에 영향이 없어야 함
+- Spreadsheet: 25 MiB 초과 입력, XLSX ZIP metadata(50 MiB uncompressed total, 20 MiB/entry, 1,000 entries), 20 sheets 초과, sheet당 5,000 rows/100 columns 초과, workbook 총 100,000 cells 초과 시 `DocumentProcessingLimitError`
+- PDF vision/text: 25 MiB 초과 PDF는 poppler 실행 전 실패, `pdftotext` 결과 텍스트 5 MiB 초과는 실행 중/완료 후 감시하여 디코딩 전 실패, `pdftotext`/`pdftoppm` timeout은 `PipelineConfigError`, vision `max_pages`는 1~5로 clamp, `pdftoppm`은 120 DPI로 렌더, PNG는 8 MiB/page 및 20 MiB total 초과 시 LLM 호출 전 실패
 
 ## 통합 테스트
 
