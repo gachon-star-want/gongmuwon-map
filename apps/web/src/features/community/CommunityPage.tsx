@@ -6,6 +6,7 @@ import { SponsorAd } from '../ads/SponsorAd';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
+import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import {
   createComment,
   createPost,
@@ -38,6 +39,7 @@ function formatApiError(error: unknown) {
   if (code === 'invalid_post') return '제목은 2~80자, 내용은 1~4000자여야 합니다.';
   if (code === 'invalid_comment') return '댓글은 1~1000자여야 합니다.';
   if (code === 'not_found') return '해당 게시글을 찾을 수 없습니다.';
+  if (code.startsWith('turnstile_')) return '보안 확인을 다시 시도해주세요.';
   return '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
 
@@ -64,6 +66,10 @@ export function CommunityPage() {
   const [body, setBody] = useState('');
   const [commentBody, setCommentBody] = useState('');
   const [postCategory, setPostCategory] = useState<CommunityCategory>('free');
+  const [postTurnstileToken, setPostTurnstileToken] = useState<string | null>(null);
+  const [commentTurnstileToken, setCommentTurnstileToken] = useState<string | null>(null);
+  const [postTurnstileReset, setPostTurnstileReset] = useState(0);
+  const [commentTurnstileReset, setCommentTurnstileReset] = useState(0);
   const selectedPost = useMemo(() => posts.find((post) => post.id === selectedPostId) ?? posts[0] ?? null, [posts, selectedPostId]);
 
   useEffect(() => {
@@ -78,8 +84,12 @@ export function CommunityPage() {
     if (!selectedPost) {
       setComments([]);
       setCommentsError(null);
+      setCommentTurnstileToken(null);
+      setCommentTurnstileReset((value) => value + 1);
       return;
     }
+    setCommentTurnstileToken(null);
+    setCommentTurnstileReset((value) => value + 1);
     void loadSelectedPostComments();
   }, [selectedPost?.id]);
 
@@ -124,17 +134,30 @@ export function CommunityPage() {
       return;
     }
     if (title.trim().length < 2 || !body.trim()) return;
+    if (!postTurnstileToken) {
+      setPostSubmitError('보안 확인을 완료해주세요.');
+      return;
+    }
     setPostSubmitting(true);
     setPostSubmitError(null);
     setPostsError(null);
     try {
-      const created = await createPost({ category: postCategory, title: title.trim(), body: body.trim() });
+      const created = await createPost({
+        category: postCategory,
+        title: title.trim(),
+        body: body.trim(),
+        turnstileToken: postTurnstileToken,
+      });
       setTitle('');
       setBody('');
+      setPostTurnstileToken(null);
+      setPostTurnstileReset((value) => value + 1);
       setSelectedPostId(created.id);
       await refreshPosts();
     } catch (error) {
       setPostSubmitError(formatApiError(error));
+      setPostTurnstileToken(null);
+      setPostTurnstileReset((value) => value + 1);
       if (isAuthRequiredError(error)) {
         setAuthOpen(true);
         setUser(null);
@@ -151,15 +174,23 @@ export function CommunityPage() {
       return;
     }
     if (!commentBody.trim()) return;
+    if (!commentTurnstileToken) {
+      setCommentSubmitError('보안 확인을 완료해주세요.');
+      return;
+    }
     setCommentSubmitting(true);
     setCommentSubmitError(null);
     try {
-      await createComment(selectedPost.id, commentBody.trim());
+      await createComment(selectedPost.id, commentBody.trim(), commentTurnstileToken);
       setCommentBody('');
+      setCommentTurnstileToken(null);
+      setCommentTurnstileReset((value) => value + 1);
       setComments(await loadComments(selectedPost.id));
       await refreshPosts();
     } catch (error) {
       setCommentSubmitError(formatApiError(error));
+      setCommentTurnstileToken(null);
+      setCommentTurnstileReset((value) => value + 1);
       if (isAuthRequiredError(error)) {
         setAuthOpen(true);
         setUser(null);
@@ -261,11 +292,18 @@ export function CommunityPage() {
                 if (postSubmitError) setPostSubmitError(null);
               }}
             />
+            {user ? (
+              <TurnstileWidget
+                action="community_post"
+                resetSignal={postTurnstileReset}
+                onTokenChange={setPostTurnstileToken}
+              />
+            ) : null}
             {postSubmitError ? <Text size="sm" c="red">{postSubmitError}</Text> : null}
             <Button
               leftSection={<Plus size={16} />}
               loading={postSubmitting}
-              disabled={!user || title.trim().length < 2 || !body.trim()}
+              disabled={!user || title.trim().length < 2 || !body.trim() || !postTurnstileToken}
               onClick={() => void submitPost()}
             >
               글 올리기
@@ -367,11 +405,18 @@ export function CommunityPage() {
                     if (commentSubmitError) setCommentSubmitError(null);
                   }}
                 />
+                {user ? (
+                  <TurnstileWidget
+                    action="community_comment"
+                    resetSignal={`${selectedPost.id}-${commentTurnstileReset}`}
+                    onTokenChange={setCommentTurnstileToken}
+                  />
+                ) : null}
                 {commentSubmitError ? <Text size="sm" c="red">{commentSubmitError}</Text> : null}
                 <Button
                   leftSection={<Send size={16} />}
                   loading={commentSubmitting}
-                  disabled={!user || !commentBody.trim()}
+                  disabled={!user || !commentBody.trim() || !commentTurnstileToken}
                   onClick={() => void submitComment()}
                 >
                   등록

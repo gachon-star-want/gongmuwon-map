@@ -3,6 +3,7 @@ import { writeQuery } from '../_lib/db';
 import { parseBody, sendJson } from '../_lib/http';
 import { createSession, hashPassword, normalizeHandle, validateHandle, validatePassword } from '../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
+import { sendTurnstileError, turnstileTokenFromBody, verifyTurnstileToken } from '../_lib/turnstile';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
@@ -22,6 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     const body = parseBody(req);
+    const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'auth_register');
+    if (!turnstile.ok) {
+      sendTurnstileError(res, turnstile);
+      return;
+    }
     const handle = String(body.handle || '').trim();
     const password = String(body.password || '');
     if (!validateHandle(handle)) {

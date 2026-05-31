@@ -30,12 +30,12 @@ export async function getCurrentUser() {
   return (await authFetch('/api/auth/me')).user;
 }
 
-export async function login(handle: string, password: string) {
-  return (await authFetch('/api/auth/login', { handle, password })).user;
+export async function login(handle: string, password: string, turnstileToken: string) {
+  return (await authFetch('/api/auth/login', { handle, password, turnstile_token: turnstileToken })).user;
 }
 
-export async function register(handle: string, password: string) {
-  return (await authFetch('/api/auth/register', { handle, password })).user;
+export async function register(handle: string, password: string, turnstileToken: string) {
+  return (await authFetch('/api/auth/register', { handle, password, turnstile_token: turnstileToken })).user;
 }
 
 export async function logout() {

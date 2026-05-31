@@ -1,0 +1,10 @@
+.turnstile-field {
+  display: flex;
+  min-height: 86px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.turnstile-widget {
+  min-height: 65px;
+}

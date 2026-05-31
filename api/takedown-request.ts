@@ -2,12 +2,17 @@ import { writeQuery } from './_lib/db';
 import { parseBody } from './_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from './_lib/rate-limit';
 import { privateWriteRoute } from './_lib/route';
+import { turnstileTokenFromBody, verifyTurnstileToken } from './_lib/turnstile';
 
 export default privateWriteRoute(async function handler({ req, res }) {
   if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.takedownRequest)) {
     return;
   }
   const body = parseBody(req);
+  const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'takedown_request');
+  if (!turnstile.ok) {
+    return { status: turnstile.status, body: { error: turnstile.error } };
+  }
   const placeId = String(body.place_id || '');
   const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 2000) : '';
   const email = typeof body.email === 'string' ? body.email.trim().slice(0, 320) : '';

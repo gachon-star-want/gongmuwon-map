@@ -1,12 +1,13 @@
 import { API_BASE } from '../publicData';
 
-export async function submitClosureReport(input: { placeId: string; note: string | null }) {
+export async function submitClosureReport(input: { placeId: string; note: string | null; turnstileToken: string }) {
   const response = await fetch(`${API_BASE}/api/closure-report`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       place_id: input.placeId,
       note: input.note ?? 'web-ui-report',
+      turnstile_token: input.turnstileToken,
     }),
   });
 
@@ -18,6 +19,7 @@ export async function submitTakedownRequest(input: {
   placeId: string;
   reason: string;
   email: string | null;
+  turnstileToken: string;
 }) {
   const response = await fetch(`${API_BASE}/api/takedown-request`, {
     method: 'POST',
@@ -26,6 +28,7 @@ export async function submitTakedownRequest(input: {
       place_id: input.placeId,
       reason: input.reason,
       email: input.email,
+      turnstile_token: input.turnstileToken,
     }),
   });
 
