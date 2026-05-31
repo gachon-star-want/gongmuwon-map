@@ -1,3 +1,4 @@
+import zipfile
 from io import BytesIO
 
 import pytest
@@ -11,6 +12,14 @@ from public_officer_pipeline.extractor import extract_spreadsheet_rows
 def _workbook_bytes(workbook: Workbook) -> bytes:
     content = BytesIO()
     workbook.save(content)
+    return content.getvalue()
+
+
+def _zip_bytes(entries: dict[str, bytes]) -> bytes:
+    content = BytesIO()
+    with zipfile.ZipFile(content, "w") as archive:
+        for name, value in entries.items():
+            archive.writestr(name, value)
     return content.getvalue()
 
 
@@ -324,6 +333,46 @@ def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch)
 
     with pytest.raises(guards.DocumentProcessingLimitError, match="spreadsheet document"):
         extract_spreadsheet_rows(b"not-xlsx", fallback_department="강남구청")
+
+
+def test_rejects_xlsx_zip_entry_over_limit_before_openpyxl(monkeypatch: pytest.MonkeyPatch) -> None:
+    called = False
+    monkeypatch.setattr(guards, "MAX_XLSX_ZIP_ENTRY_BYTES", 3)
+
+    def fake_load_workbook(*_args: object, **_kwargs: object) -> object:
+        nonlocal called
+        called = True
+        raise AssertionError("openpyxl should not run after ZIP preflight fails")
+
+    monkeypatch.setattr(spreadsheet_module, "load_workbook", fake_load_workbook)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="XLSX ZIP entry"):
+        extract_spreadsheet_rows(
+            _zip_bytes({"xl/sharedStrings.xml": b"1234"}),
+            fallback_department="강남구청",
+        )
+
+    assert not called
+
+
+def test_rejects_xlsx_zip_uncompressed_total_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_XLSX_ZIP_UNCOMPRESSED_BYTES", 5)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="uncompressed total"):
+        extract_spreadsheet_rows(
+            _zip_bytes({"xl/worksheets/sheet1.xml": b"123", "xl/sharedStrings.xml": b"123"}),
+            fallback_department="강남구청",
+        )
+
+
+def test_rejects_xlsx_zip_entry_count_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_XLSX_ZIP_ENTRIES", 1)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="entries"):
+        extract_spreadsheet_rows(
+            _zip_bytes({"[Content_Types].xml": b"", "xl/workbook.xml": b""}),
+            fallback_department="강남구청",
+        )
 
 
 def test_rejects_xlsx_with_too_many_rows(monkeypatch: pytest.MonkeyPatch) -> None:

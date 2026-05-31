@@ -8,6 +8,7 @@ import re
 import subprocess
 import tempfile
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -176,7 +177,7 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
             "pdftoppm",
             "-png",
             "-r",
-            "180",
+            str(guards.PDF_VISION_RENDER_DPI),
             "-f",
             "1",
             "-l",
@@ -188,7 +189,8 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
             subprocess.run(
                 command,
                 check=True,
-                capture_output=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
                 timeout=guards.PDF_SUBPROCESS_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired as exc:
@@ -221,6 +223,59 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
         return images
 
 
+def _terminate_process(process: subprocess.Popen[bytes]) -> None:
+    try:
+        process.kill()
+    except ProcessLookupError:
+        return
+    try:
+        process.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        return
+
+
+def _run_subprocess_with_output_file_limit(
+    command: list[str],
+    *,
+    output_path: Path,
+    max_bytes: int,
+    subject: str,
+    timeout_seconds: float,
+) -> None:
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    deadline = time.monotonic() + timeout_seconds
+    try:
+        while True:
+            if output_path.exists():
+                guards.ensure_size_at_most(
+                    size=output_path.stat().st_size,
+                    max_bytes=max_bytes,
+                    subject=subject,
+                )
+            returncode = process.poll()
+            if returncode is not None:
+                if output_path.exists():
+                    guards.ensure_size_at_most(
+                        size=output_path.stat().st_size,
+                        max_bytes=max_bytes,
+                        subject=subject,
+                    )
+                if returncode != 0:
+                    raise subprocess.CalledProcessError(returncode, command)
+                return
+            if time.monotonic() >= deadline:
+                _terminate_process(process)
+                raise subprocess.TimeoutExpired(command, timeout_seconds)
+            time.sleep(0.05)
+    except guards.DocumentProcessingLimitError:
+        _terminate_process(process)
+        raise
+
+
 def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
     guards.ensure_size_at_most(
         size=len(content),
@@ -229,14 +284,16 @@ def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
     )
     with tempfile.TemporaryDirectory() as directory:
         pdf_path = Path(directory) / "source.pdf"
+        text_path = Path(directory) / "output.txt"
         pdf_path.write_bytes(content)
-        command = ["pdftotext", *(["-layout"] if layout else []), str(pdf_path), "-"]
+        command = ["pdftotext", *(["-layout"] if layout else []), str(pdf_path), str(text_path)]
         try:
-            completed = subprocess.run(
+            _run_subprocess_with_output_file_limit(
                 command,
-                check=True,
-                capture_output=True,
-                timeout=guards.PDF_SUBPROCESS_TIMEOUT_SECONDS,
+                output_path=text_path,
+                max_bytes=guards.MAX_PDF_TEXT_BYTES,
+                subject="extracted PDF text",
+                timeout_seconds=guards.PDF_SUBPROCESS_TIMEOUT_SECONDS,
             )
         except subprocess.TimeoutExpired as exc:
             raise PipelineConfigError(
@@ -244,7 +301,9 @@ def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
             ) from exc
         except (FileNotFoundError, subprocess.CalledProcessError):
             return ""
-        return completed.stdout.decode("utf-8", errors="ignore")
+        if not text_path.exists():
+            return ""
+        return text_path.read_bytes().decode("utf-8", errors="ignore")
 
 
 def _expense_text_lacks_place_column(text: str) -> bool:

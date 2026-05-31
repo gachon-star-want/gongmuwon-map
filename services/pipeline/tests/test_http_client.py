@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 import pytest
 
@@ -7,6 +9,7 @@ from public_officer_pipeline.http_client import (
     _CurlClient,
     _HttpxClient,
     _build_url_with_params,
+    _parse_curl_header_file,
     create_http_client,
 )
 
@@ -18,32 +21,61 @@ def test_build_url_with_params_keeps_existing_query_values() -> None:
     )
 
 
-def test_curl_output_parser_prefers_last_http_response() -> None:
-    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=True)
+def _write_curl_files(
+    args: tuple[object, ...],
+    *,
+    header_bytes: bytes = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n",
+    body_bytes: bytes = b"ok",
+) -> None:
+    command = [str(item) for item in args]
+    Path(command[command.index("-D") + 1]).write_bytes(header_bytes)
+    Path(command[command.index("-o") + 1]).write_bytes(body_bytes)
 
-    raw_output = (
-        "HTTP/1.1 301 Moved\r\nLocation: /legacy\r\n\r\nignored\r\n"
-        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nfinal"
+
+def test_curl_header_parser_prefers_last_http_response() -> None:
+    raw_headers = (
+        "HTTP/1.1 301 Moved\r\nLocation: /legacy\r\n\r\n"
+        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
     ).encode("utf-8")
 
-    status_code, body, headers = client._parse_curl_output(raw_output)
+    status_code, headers = _parse_curl_header_file(raw_headers)
 
     assert status_code == 200
-    assert body == b"final"
     assert headers == {"Content-Type": "text/plain"}
 
 
-def test_curl_output_parser_preserves_binary_body_offsets() -> None:
-    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=True)
+@pytest.mark.asyncio
+async def test_curl_client_does_not_scan_binary_body_for_http_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binary_body = b"%PDF-1.4\nHTTP/1.1 500 fake\r\n\r\nbody"
 
-    binary_body = b"%PDF-1.4\n%\xff\xfe\xfa\n10 0 obj\n"
-    raw_output = b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\n\r\n" + binary_body
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        _write_curl_files(
+            args,
+            header_bytes=b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\n\r\n",
+            body_bytes=binary_body,
+        )
 
-    status_code, body, headers = client._parse_curl_output(raw_output)
+        class DummyProcess:
+            returncode = 0
 
-    assert status_code == 200
-    assert body == binary_body
-    assert headers == {"Content-Type": "application/pdf"}
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=False)
+    response = await client.get("https://example.com/file.pdf")
+
+    assert response.status_code == 200
+    assert response.content == binary_body
+    assert response.headers == {"Content-Type": "application/pdf"}
 
 
 @pytest.mark.asyncio
@@ -89,18 +121,16 @@ async def test_curl_client_returns_request_error_on_nonzero_exit(monkeypatch: py
 async def test_curl_client_uses_doh_url_when_configured(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
 
-    async def fake_subprocess_exec(*args: object, **kwargs: object):
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
         command = list(args)
         captured.extend(str(item) for item in command)
+        _write_curl_files(args)
 
         class DummyProcess:
             returncode = 0
 
             async def communicate(self) -> tuple[bytes, bytes]:
-                response = (
-                    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nok"
-                ).encode("utf-8")
-                return response, b""
+                return b"", b""
 
         return DummyProcess()
 
@@ -127,14 +157,15 @@ async def test_curl_client_uses_doh_url_when_configured(monkeypatch: pytest.Monk
 async def test_curl_client_allows_per_request_headers(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
 
-    async def fake_subprocess_exec(*args: object, **kwargs: object):
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
         captured.extend(str(item) for item in args)
+        _write_curl_files(args)
 
         class DummyProcess:
             returncode = 0
 
             async def communicate(self) -> tuple[bytes, bytes]:
-                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nok", b""
+                return b"", b""
 
         return DummyProcess()
 
@@ -144,7 +175,10 @@ async def test_curl_client_allows_per_request_headers(monkeypatch: pytest.Monkey
     )
 
     client = _CurlClient(timeout=1.0, headers={"User-Agent": "base"}, follow_redirects=True)
-    response = await client.get("https://example.com/file.pdf", headers={"Referer": "https://example.com/list"})
+    response = await client.get(
+        "https://example.com/file.pdf",
+        headers={"Referer": "https://example.com/list"},
+    )
 
     assert response.text == "ok"
     assert "User-Agent: base" in captured
@@ -202,14 +236,15 @@ async def test_httpx_client_rejects_oversized_streamed_body() -> None:
 async def test_curl_client_sets_max_filesize_guard(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
 
-    async def fake_subprocess_exec(*args: object, **kwargs: object):
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
         captured.extend(str(item) for item in args)
+        _write_curl_files(args)
 
         class DummyProcess:
             returncode = 0
 
             async def communicate(self) -> tuple[bytes, bytes]:
-                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nok", b""
+                return b"", b""
 
         return DummyProcess()
 
@@ -233,11 +268,13 @@ async def test_curl_client_sets_max_filesize_guard(monkeypatch: pytest.MonkeyPat
 @pytest.mark.asyncio
 async def test_curl_client_rejects_oversized_parsed_body(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_subprocess_exec(*_args: object, **_kwargs: object):
+        _write_curl_files(_args, body_bytes=b"12345")
+
         class DummyProcess:
             returncode = 0
 
             async def communicate(self) -> tuple[bytes, bytes]:
-                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n12345", b""
+                return b"", b""
 
         return DummyProcess()
 

@@ -110,12 +110,12 @@ def test_pdf_to_text_rejects_oversized_pdf_before_subprocess(
     called = False
     monkeypatch.setattr(guards, "MAX_PDF_BYTES", 3)
 
-    def fake_run(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+    def fake_popen(*_args: object, **_kwargs: object) -> object:
         nonlocal called
         called = True
-        return subprocess.CompletedProcess([], 0, stdout=b"", stderr=b"")
+        raise AssertionError("pdftotext should not run after PDF size guard fails")
 
-    monkeypatch.setattr(pdf_vision_module.subprocess, "run", fake_run)
+    monkeypatch.setattr(pdf_vision_module.subprocess, "Popen", fake_popen)
 
     with pytest.raises(guards.DocumentProcessingLimitError, match="PDF document"):
         pdf_vision_module._pdf_to_text(b"%PDF")
@@ -126,12 +126,59 @@ def test_pdf_to_text_rejects_oversized_pdf_before_subprocess(
 def test_pdf_to_text_converts_subprocess_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
-        raise subprocess.TimeoutExpired(command, timeout=30)
+    monkeypatch.setattr(guards, "PDF_SUBPROCESS_TIMEOUT_SECONDS", 0.001)
 
-    monkeypatch.setattr(pdf_vision_module.subprocess, "run", fake_run)
+    class DummyProcess:
+        def poll(self) -> None:
+            return None
 
-    with pytest.raises(PipelineConfigError, match="pdftotext timed out after 30 seconds"):
+        def kill(self) -> None:
+            return None
+
+        def wait(self, *, timeout: float | None = None) -> int:
+            del timeout
+            return -9
+
+    monkeypatch.setattr(
+        pdf_vision_module.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: DummyProcess(),
+    )
+
+    with pytest.raises(PipelineConfigError, match="pdftotext timed out after 0.001 seconds"):
+        pdf_vision_module._pdf_to_text(b"%PDF-1.4")
+
+
+def test_pdf_to_text_rejects_extracted_text_over_limit_before_decoding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(guards, "MAX_PDF_TEXT_BYTES", 4)
+
+    class DummyProcess:
+        def __init__(self, command: list[str], **kwargs: object) -> None:
+            self.killed = False
+            assert command[-1] != "-"
+            assert kwargs["stdout"] == subprocess.DEVNULL
+            Path(command[-1]).write_bytes(b"12345")
+
+        def poll(self) -> int:
+            return 0
+
+        def kill(self) -> None:
+            self.killed = True
+
+        def wait(self, *, timeout: float | None = None) -> int:
+            del timeout
+            return 0
+
+    def fake_popen(command: list[str], **kwargs: object) -> DummyProcess:
+        assert command[-1] != "-"
+        assert kwargs["stdout"] == subprocess.DEVNULL
+        return DummyProcess(command, **kwargs)
+
+    monkeypatch.setattr(pdf_vision_module.subprocess, "Popen", fake_popen)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="extracted PDF text"):
         pdf_vision_module._pdf_to_text(b"%PDF-1.4")
 
 
@@ -156,6 +203,22 @@ def test_pdf_to_png_images_clamps_requested_pages(
         for command in captured_commands
     ]
     assert first_page_limits == [str(guards.MAX_PDF_VISION_PAGES), "1"]
+    assert all(
+        command[command.index("-r") + 1] == str(guards.PDF_VISION_RENDER_DPI)
+        for command in captured_commands
+    )
+
+
+def test_pdf_to_png_images_converts_subprocess_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        raise subprocess.TimeoutExpired(command, timeout=30)
+
+    monkeypatch.setattr(pdf_vision_module.subprocess, "run", fake_run)
+
+    with pytest.raises(PipelineConfigError, match="pdftoppm timed out after 30 seconds"):
+        pdf_vision_module._pdf_to_png_images(b"%PDF-1.4", max_pages=1)
 
 
 def test_pdf_to_png_images_rejects_oversized_generated_image(
@@ -172,6 +235,23 @@ def test_pdf_to_png_images_rejects_oversized_generated_image(
 
     with pytest.raises(guards.DocumentProcessingLimitError, match="generated PDF image"):
         pdf_vision_module._pdf_to_png_images(b"%PDF-1.4", max_pages=1)
+
+
+def test_pdf_to_png_images_rejects_oversized_generated_image_total(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(guards, "MAX_PDF_IMAGE_BYTES_TOTAL", 5)
+
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        output_prefix = Path(command[-1])
+        (output_prefix.parent / "page-1.png").write_bytes(b"123")
+        (output_prefix.parent / "page-2.png").write_bytes(b"456")
+        return subprocess.CompletedProcess(command, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(pdf_vision_module.subprocess, "run", fake_run)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="generated PDF images"):
+        pdf_vision_module._pdf_to_png_images(b"%PDF-1.4", max_pages=2)
 
 
 def test_rows_from_pdf_text_parses_printed_pdf_table_rows() -> None:

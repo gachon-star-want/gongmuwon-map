@@ -16,6 +16,8 @@ Create a Pages project with Git integration:
 
 The repository includes `wrangler.jsonc` with `pages_build_output_dir` so the output directory stays source-controlled.
 
+The repository also includes `apps/web/public/_headers`, which Vite copies to the Pages output root. It sets `X-Robots-Tag: noindex` for every Cloudflare Pages response. This is intentional: Cloudflare Pages is only a preview/check surface for this project, while canonical production remains on Vercel.
+
 ## Environment Variables
 
 Set these for both Preview and Production in the Cloudflare Pages project:
@@ -38,5 +40,5 @@ After setup, verify on a test PR:
 
 1. Cloudflare Pages check appears on the PR.
 2. The preview URL opens successfully.
-3. The response includes `X-Robots-Tag: noindex` for preview deployments.
+3. The response includes `X-Robots-Tag: noindex` for Cloudflare Pages responses.
 4. Production deploy remains owned by Vercel after merge.

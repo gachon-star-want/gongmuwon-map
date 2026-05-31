@@ -92,6 +92,7 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
     )
     if content.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
         return _xls_workbook_rows(content)
+    guards.preflight_xlsx_zip(content)
     workbook = load_workbook(BytesIO(content), data_only=True, read_only=True)
     try:
         worksheets = workbook.worksheets
