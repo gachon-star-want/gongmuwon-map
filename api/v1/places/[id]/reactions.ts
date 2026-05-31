@@ -4,6 +4,11 @@ import { getCurrentUser } from '../../../_lib/auth';
 import { parseBody, sendJson, stringParam } from '../../../_lib/http';
 
 type Reaction = 'like' | 'dislike';
+const REACTIONS_CACHE_CONTROL = 'private, no-store';
+
+function sendNoStoreJson(res: VercelResponse, status: number, body: unknown, cors = false) {
+  sendJson(res, status, body, REACTIONS_CACHE_CONTROL, cors);
+}
 
 async function summary(placeId: string, userId?: string) {
   const counts = await writeQuery<{ like_count: number; dislike_count: number }>(
@@ -37,6 +42,7 @@ async function summary(placeId: string, userId?: string) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
   if (method === 'OPTIONS') {
+    res.setHeader('Cache-Control', REACTIONS_CACHE_CONTROL);
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.status(204).end();
@@ -46,29 +52,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const placeId = stringParam(req.query.id);
     if (!placeId) {
-      sendJson(res, 400, { error: 'missing_place_id' });
+      sendNoStoreJson(res, 400, { error: 'missing_place_id' });
       return;
     }
     const user = await getCurrentUser(req);
 
     if (method === 'GET') {
-      sendJson(res, 200, await summary(placeId, user?.id), false, true);
+      sendNoStoreJson(res, 200, await summary(placeId, user?.id), true);
       return;
     }
 
     if (method === 'POST') {
       if (!user) {
-        sendJson(res, 401, { error: 'login_required' });
+        sendNoStoreJson(res, 401, { error: 'login_required' });
         return;
       }
       const reaction = parseBody(req).reaction;
       if (reaction === null || reaction === '') {
         await writeQuery('DELETE FROM public.place_reactions WHERE place_id = $1 AND user_id = $2', [placeId, user.id]);
-        sendJson(res, 200, await summary(placeId, user.id));
+        sendNoStoreJson(res, 200, await summary(placeId, user.id));
         return;
       }
       if (reaction !== 'like' && reaction !== 'dislike') {
-        sendJson(res, 400, { error: 'invalid_reaction' });
+        sendNoStoreJson(res, 400, { error: 'invalid_reaction' });
         return;
       }
       await writeQuery(
@@ -80,14 +86,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `,
         [placeId, user.id, reaction],
       );
-      sendJson(res, 200, await summary(placeId, user.id));
+      sendNoStoreJson(res, 200, await summary(placeId, user.id));
       return;
     }
 
     res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS');
-    sendJson(res, 405, { error: 'method_not_allowed' });
+    sendNoStoreJson(res, 405, { error: 'method_not_allowed' });
   } catch {
-    sendJson(res, 500, { error: 'internal_error' });
+    sendNoStoreJson(res, 500, { error: 'internal_error' });
   }
 }
-

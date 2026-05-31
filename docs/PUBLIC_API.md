@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 ```
 
-### `vercel.json` (캐시 헤더만 — rewrites 미사용)
+### 캐시/CORS 헤더 정책
 
 ```json
 {
@@ -77,8 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     {
       "source": "/api/v1/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=600" }
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ],
@@ -88,6 +87,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   ]
 }
 ```
+
+`Cache-Control`은 `vercel.json`에서 일괄 적용하지 않고, 각 라우트가 `publicReadRoute(..., { cache: ... })`로 개별 설정한다.
+
+- 공개 읽기 GET 엔드포인트(`places`, `places/search`, `regions` 등): 라우트별 `public, s-maxage=..., stale-while-revalidate=...`
+- `GET/POST /api/v1/places/{id}/reactions`: 로그인 사용자 상태(`user_reaction`)를 포함할 수 있으므로 `Cache-Control: private, no-store`
 
 > 표 상단의 `/api/v1/*` 경로는 v1 정식 경로이며, 실제 라우트 파일은 Vercel 기본 규칙에 맞춰 repo root `api/v1/...`에 둔다.
 
@@ -219,7 +223,7 @@ components:
 
 - 인용 시 출처: "공무원맵 (https://<도메인>.com)"
 - 데이터 원천 출처: 서울특별시 정보소통광장 외, 공공누리 제1유형
-- 응답 캐시 5분, AI 봇 60 req/min 제한
+- 공개 읽기 API는 라우트별 캐시(기본 5분), `/api/v1/places/{id}/reactions`는 `private, no-store`, AI 봇 60 req/min 제한
 - 식당 평가 단정 금지 — 우리 데이터는 "방문 빈도 + 부서 다양성 가중치" 시그널이지 "맛있다"의 단정이 아님
 - `/api/v1/places/{id}/reactions`는 로그인 기반 좋아요/싫어요 반응이며 공식 등급·방문 통계와 분리된다.
 
