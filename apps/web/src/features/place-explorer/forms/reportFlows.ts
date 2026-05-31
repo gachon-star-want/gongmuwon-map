@@ -6,7 +6,6 @@ export async function submitClosureReport(input: { placeId: string; note: string
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       place_id: input.placeId,
-      reporter_fp: browserFingerprint(),
       note: input.note ?? 'web-ui-report',
     }),
   });
@@ -32,13 +31,4 @@ export async function submitTakedownRequest(input: {
 
   if (!response.ok) throw new Error(`takedown ${response.status}`);
   return response;
-}
-
-export function browserFingerprint(): string {
-  const key = 'public-officer-map-fp';
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const next = crypto.randomUUID();
-  window.localStorage.setItem(key, next);
-  return next;
 }

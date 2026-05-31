@@ -9,7 +9,7 @@ export default privateWriteRoute(async function handler({ req }) {
     return { status: 400, body: { error: 'missing_place_id' } };
   }
 
-  const fp = reporterFingerprint(req, body.reporter_fp);
+  const fp = reporterFingerprint(req);
   const note = typeof body.note === 'string' ? body.note.slice(0, 1000) : null;
   const { rows } = await writeQuery(
     'SELECT public.report_closure($1::uuid, $2::text, $3::text) AS result',
