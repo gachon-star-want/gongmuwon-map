@@ -30,7 +30,7 @@ function isJsonContentType(contentType: string | undefined) {
   return contentType?.toLowerCase().split(';')[0]?.trim() === 'application/json';
 }
 
-function isAllowedPrivateOrigin(req: VercelRequest, origin: string | undefined) {
+export function isAllowedPrivateOrigin(req: VercelRequest, origin: string | undefined) {
   const allowed = new Set<string>();
   const inferredOrigin = requestOrigin(req);
   if (inferredOrigin) {
