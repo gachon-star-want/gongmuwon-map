@@ -3,18 +3,11 @@ import { writeQuery } from '../_lib/db';
 import { parseBody, sendJson } from '../_lib/http';
 import { createSession, hashPassword, normalizeHandle, validateHandle, validatePassword } from '../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
+import { guardPrivateWriteRoute } from '../_lib/route';
 import { sendTurnstileError, turnstileTokenFromBody, verifyTurnstileToken } from '../_lib/turnstile';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.status(204).end();
-    return;
-  }
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST, OPTIONS');
-    sendJson(res, 405, { error: 'method_not_allowed' });
+  if (!guardPrivateWriteRoute(req, res)) {
     return;
   }
 

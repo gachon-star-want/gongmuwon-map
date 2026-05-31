@@ -12,6 +12,11 @@ export type PublicReadOptions = {
   cache?: boolean | string;
 };
 
+export type PrivateWriteGuardOptions = {
+  allowMethods?: string;
+  allowHeaders?: string;
+};
+
 function headerValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -74,6 +79,47 @@ function sendPrivateJson(res: VercelResponse, status: number, body: unknown) {
   res.status(status).json(body);
 }
 
+export function guardPrivateWriteRoute(req: VercelRequest, res: VercelResponse, options: PrivateWriteGuardOptions = {}) {
+  const requestMethod = req.method === 'HEAD' ? 'GET' : req.method;
+  const allowMethods = options.allowMethods ?? 'POST, OPTIONS';
+  const allowHeaders = options.allowHeaders ?? 'Content-Type, Authorization';
+
+  if (!req.method) {
+    sendPrivateJson(res, 400, { error: 'invalid_request' });
+    return false;
+  }
+
+  const originHeader = req.headers.origin;
+  const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
+  if (!isAllowedPrivateOrigin(req, typeof origin === 'string' ? origin : undefined)) {
+    res.setHeader('Vary', 'Origin');
+    sendPrivateJson(res, 403, { error: 'forbidden' });
+    return false;
+  }
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Vary', 'Origin');
+
+  if (requestMethod === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', allowMethods);
+    res.setHeader('Access-Control-Allow-Headers', allowHeaders);
+    res.status(204).end();
+    return false;
+  }
+  if (requestMethod !== 'POST') {
+    res.setHeader('Allow', allowMethods);
+    sendPrivateJson(res, 405, { error: 'method_not_allowed' });
+    return false;
+  }
+  if (!isJsonContentType(headerValue(req.headers['content-type']))) {
+    sendPrivateJson(res, 415, { error: 'unsupported_media_type' });
+    return false;
+  }
+
+  return true;
+}
+
 export function publicReadRoute(handler: (ctx: RouteContext) => Promise<unknown>, options?: PublicReadOptions) {
   const cache = options?.cache;
   return async (req: VercelRequest, res: VercelResponse) => {
@@ -112,37 +158,7 @@ export function publicReadRoute(handler: (ctx: RouteContext) => Promise<unknown>
 
 export function privateWriteRoute(handler: (ctx: RouteContext) => Promise<unknown>) {
   return async (req: VercelRequest, res: VercelResponse) => {
-    const requestMethod = req.method === 'HEAD' ? 'GET' : req.method;
-    if (!req.method) {
-      sendPrivateJson(res, 400, { error: 'invalid_request' });
-      return;
-    }
-
-    const originHeader = req.headers.origin;
-    const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
-    if (!isAllowedPrivateOrigin(req, typeof origin === 'string' ? origin : undefined)) {
-      res.setHeader('Vary', 'Origin');
-      sendPrivateJson(res, 403, { error: 'forbidden' });
-      return;
-    }
-    if (origin) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Vary', 'Origin');
-
-    if (requestMethod === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.status(204).end();
-      return;
-    }
-    if (requestMethod !== 'POST') {
-      res.setHeader('Allow', 'POST, OPTIONS');
-      sendPrivateJson(res, 405, { error: 'method_not_allowed' });
-      return;
-    }
-    if (!isJsonContentType(headerValue(req.headers['content-type']))) {
-      sendPrivateJson(res, 415, { error: 'unsupported_media_type' });
+    if (!guardPrivateWriteRoute(req, res)) {
       return;
     }
 

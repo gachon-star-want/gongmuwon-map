@@ -3,9 +3,11 @@ import { readQuery, writeQuery } from '../_lib/db';
 import { numberParam, parseBody, sendJson, stringParam } from '../_lib/http';
 import { getCurrentUser } from '../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
+import { guardPrivateWriteRoute } from '../_lib/route';
 import { sendTurnstileError, turnstileTokenFromBody, verifyTurnstileToken } from '../_lib/turnstile';
 
 const ALLOWED_CATEGORIES = new Set(['free', 'question', 'meetup', 'tip', 'notice']);
+const COMMUNITY_POSTS_ALLOW_METHODS = 'GET, HEAD, POST, OPTIONS';
 
 function cleanCategory(value?: string) {
   return value && ALLOWED_CATEGORIES.has(value) ? value : undefined;
@@ -14,9 +16,7 @@ function cleanCategory(value?: string) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
   if (method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.status(204).end();
+    guardPrivateWriteRoute(req, res, { allowMethods: COMMUNITY_POSTS_ALLOW_METHODS });
     return;
   }
 
@@ -42,6 +42,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (method === 'POST') {
+      if (!guardPrivateWriteRoute(req, res, { allowMethods: COMMUNITY_POSTS_ALLOW_METHODS })) {
+        return;
+      }
       const user = await getCurrentUser(req);
       if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.communityPosts, { keyParts: user ? ['user', user.id] : [] })) {
         return;
