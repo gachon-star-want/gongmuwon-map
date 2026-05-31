@@ -247,12 +247,6 @@ export function CommunityPage() {
             />
           </Group>
 
-          <div className="community-policy-banner">
-            <Text size="sm">
-              커뮤니티 글과 댓글은 지도/등급 데이터와 분리되어 운영되며, 공식 식당 등급·방문 통계 계산에 반영되지 않습니다. 개인 리뷰/점수 프레임은 사용하지 않습니다.
-            </Text>
-          </div>
-
           <section className="community-composer">
             {!user ? (
               <div className="community-auth-inline" role="note">

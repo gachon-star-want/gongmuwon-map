@@ -57,7 +57,6 @@ import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
 import { PlaceList } from './panels/PlaceList';
 import { MobileFilterPanel } from './panels/MobileFilterPanel';
-import { MobileInfoPanel } from './panels/MobileInfoPanel';
 import { submitClosureReport, submitTakedownRequest } from './forms/reportFlows';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
@@ -93,7 +92,7 @@ export function PlaceExplorer() {
   const [regionLoading, setRegionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [closedVisible, setClosedVisible] = useState(false);
-  const [desktopListOpen, setDesktopListOpen] = useState(() => Boolean(initialQuery.q));
+  const [desktopListOpen, setDesktopListOpen] = useState(true);
   const [mobileMode, setMobileMode] = useState<MobileMode>(() => initialMobileMode(initialQuery));
   const [sheetSize, setSheetSize] = useState<SheetSize>(() => (initialQuery.placeId ? 'full' : 'mid'));
   const [closureReason, setClosureReason] = useState<string | null>('방문해보니 폐업');
@@ -352,6 +351,7 @@ export function PlaceExplorer() {
 
   function selectPlace(place: Place) {
     setSelectedPlace(place);
+    setDesktopListOpen(false);
     setMobileMode('detail');
     setSheetSize('mid');
     updateQueryState({ placeId: place.id });
@@ -453,8 +453,6 @@ export function PlaceExplorer() {
 
       <section className="desktop-controls" aria-label="검색과 필터">
         <FloatingSearchFilter
-          query={searchDraft}
-          onQueryChange={setSearchDraft}
           regions={regionOptions}
           selectedRegions={queryState.region}
           onRegionsChange={(region) => {
@@ -467,7 +465,15 @@ export function PlaceExplorer() {
           onSortChange={(sort) => updateQueryState({ sort })}
           closedVisible={closedVisible}
           onClosedVisibleChange={setClosedVisible}
-          onListToggle={() => setDesktopListOpen((current) => !current)}
+          onListToggle={() => {
+            setMobileMode('map');
+            setDesktopListOpen((current) => !current);
+          }}
+          onFilterOpen={() => {
+            setDesktopListOpen(false);
+            setMobileMode('filter');
+            setSheetSize('full');
+          }}
           onReset={resetFilters}
           regionLoading={regionLoading}
           currentUser={currentUser}
@@ -514,6 +520,8 @@ export function PlaceExplorer() {
             error={listError}
             resultLabel={resultLabel}
             hasActiveFilter={hasActiveFilter}
+            query={searchDraft}
+            onQueryChange={setSearchDraft}
             onSelect={selectPlace}
             onClose={() => {
               setDesktopListOpen(false);
@@ -544,12 +552,6 @@ export function PlaceExplorer() {
               setSheetSize('mid');
             }}
           />
-        </aside>
-      ) : null}
-
-      {mobileMode === 'info' ? (
-        <aside className="utility-sheet info-sheet desktop-layer" aria-label="서비스 정보">
-          <MobileInfoPanel />
         </aside>
       ) : null}
 
@@ -733,8 +735,6 @@ export function PlaceExplorer() {
 }
 
 function FloatingSearchFilter({
-  query,
-  onQueryChange,
   regions,
   selectedRegions,
   onRegionsChange,
@@ -745,14 +745,13 @@ function FloatingSearchFilter({
   closedVisible,
   onClosedVisibleChange,
   onListToggle,
+  onFilterOpen,
   onReset,
   regionLoading,
   currentUser,
   onLogin,
   onLogout,
 }: {
-  query: string;
-  onQueryChange: (value: string) => void;
   regions: { label: string; value: string }[];
   selectedRegions: string[];
   onRegionsChange: (value: string[]) => void;
@@ -763,6 +762,7 @@ function FloatingSearchFilter({
   closedVisible: boolean;
   onClosedVisibleChange: (value: boolean) => void;
   onListToggle: () => void;
+  onFilterOpen: () => void;
   onReset: () => void;
   regionLoading: boolean;
   currentUser: CurrentUser | null;
@@ -775,20 +775,16 @@ function FloatingSearchFilter({
         <img src={mascotLogo} alt="" aria-hidden />
         <span>공무원맵</span>
       </a>
-      <TextInput
-        className="search-input"
-        leftSection={<Search size={16} />}
-        placeholder="식당명, 자치구, 부서 검색"
-        value={query}
-        onChange={(event) => onQueryChange(event.currentTarget.value)}
-        rightSection={
-          query ? (
-            <ActionIcon variant="subtle" aria-label="검색 지우기" onClick={() => onQueryChange('')}>
-              <X size={14} />
-            </ActionIcon>
-          ) : null
-        }
-      />
+      <nav className="map-mode-tabs" aria-label="화면 전환">
+        <a href="/" data-active="true">
+          <MapPin size={16} aria-hidden />
+          지도
+        </a>
+        <a href="/community">
+          <MessageCircle size={16} aria-hidden />
+          커뮤니티
+        </a>
+      </nav>
       <MultiSelect
         className="region-select"
         data={regions}
@@ -840,13 +836,18 @@ function FloatingSearchFilter({
               <List size={18} />
             </ActionIcon>
           </Tooltip>
+          <Tooltip label="필터 열기">
+            <ActionIcon variant="light" aria-label="필터 열기" onClick={onFilterOpen}>
+              <Filter size={18} />
+            </ActionIcon>
+          </Tooltip>
           <Tooltip label="필터 초기화">
             <ActionIcon variant="light" aria-label="필터 초기화" onClick={onReset}>
               <RotateCcw size={18} />
             </ActionIcon>
           </Tooltip>
           <Tooltip label="서비스 정보">
-            <ActionIcon component="a" href="/about" variant="light" aria-label="서비스 정보">
+            <ActionIcon component="a" href="/about" target="_blank" rel="noopener noreferrer" variant="light" aria-label="서비스 정보">
               <Info size={18} />
             </ActionIcon>
           </Tooltip>
@@ -903,14 +904,17 @@ function BottomNav({
         <MessageCircle size={18} aria-hidden />
         커뮤니티
       </a>
-      <button
-        type="button"
-        data-active={mode === 'info' || mode === 'detail'}
-        onClick={() => onChange(hasSelection ? 'detail' : 'info')}
-      >
-        {hasSelection ? <Building2 size={18} aria-hidden /> : <Info size={18} aria-hidden />}
-        {hasSelection ? '상세' : '정보'}
-      </button>
+      {hasSelection ? (
+        <button type="button" data-active={mode === 'detail'} onClick={() => onChange('detail')}>
+          <Building2 size={18} aria-hidden />
+          상세
+        </button>
+      ) : (
+        <a href="/about" target="_blank" rel="noopener noreferrer" className="bottom-nav-link">
+          <Info size={18} aria-hidden />
+          정보
+        </a>
+      )}
     </nav>
   );
 }
