@@ -20,6 +20,9 @@ type BottomSheetProps = {
   reactions?: PlaceReactionSummary | null;
   reactionPending?: boolean;
   loading: boolean;
+  error?: string | null;
+  resultLabel?: string;
+  hasActiveFilter?: boolean;
   regions: { label: string; value: string }[];
   selectedRegions: string[];
   selectedGrades: Grade[];
@@ -29,6 +32,7 @@ type BottomSheetProps = {
   onSelect: (place: Place) => void;
   onCloseDetail: () => void;
   onReset: () => void;
+  onRetry?: () => void;
   onRegionsChange: (value: string[]) => void;
   onGradesChange: (value: Grade[]) => void;
   onSortChange: (value: SortMode) => void;
@@ -37,6 +41,7 @@ type BottomSheetProps = {
   onReport: () => void;
   onClosureReport: () => void;
   onReact?: (reaction: 'like' | 'dislike') => void;
+  isAuthenticated?: boolean;
 };
 
 export function BottomSheet({
@@ -49,6 +54,9 @@ export function BottomSheet({
   reactions,
   reactionPending,
   loading,
+  error,
+  resultLabel,
+  hasActiveFilter,
   regions,
   selectedRegions,
   selectedGrades,
@@ -58,6 +66,7 @@ export function BottomSheet({
   onSelect,
   onCloseDetail,
   onReset,
+  onRetry,
   onRegionsChange,
   onGradesChange,
   onSortChange,
@@ -66,6 +75,7 @@ export function BottomSheet({
   onReport,
   onClosureReport,
   onReact,
+  isAuthenticated,
 }: BottomSheetProps) {
   if (mode === 'map' && !selectedPlace) return null;
   const activeMode = selectedPlace && mode === 'map' ? 'detail' : mode;
@@ -90,13 +100,24 @@ export function BottomSheet({
             reactions={reactions}
             reactionPending={reactionPending}
             onReact={onReact}
+            isAuthenticated={isAuthenticated}
           />
           <AdSlot />
         </>
       ) : null}
       {activeMode === 'list' ? (
         <>
-          <PlaceList places={places} selectedId={selectedId} loading={loading} onSelect={onSelect} onReset={onReset} />
+          <PlaceList
+            places={places}
+            selectedId={selectedId}
+            loading={loading}
+            error={error}
+            resultLabel={resultLabel}
+            hasActiveFilter={hasActiveFilter}
+            onSelect={onSelect}
+            onReset={onReset}
+            onRetry={onRetry}
+          />
           <AdSlot />
         </>
       ) : null}

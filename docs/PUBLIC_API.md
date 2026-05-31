@@ -14,8 +14,11 @@
 | 메서드 | 경로 | 용도 |
 |---|---|---|
 | GET | `/api/v1/places` | 식당 목록 (bbox·등급·자치구 필터) |
+| GET | `/api/v1/places/search` | UI/LLM 검색용 식당 목록 |
 | GET | `/api/v1/places/{id}` | 식당 상세 |
 | GET | `/api/v1/places/{id}/visits` | 방문 트랜잭션 |
+| GET | `/api/v1/places/{id}/reactions` | 공식 지표와 분리된 좋아요/싫어요 반응 요약 |
+| POST | `/api/v1/places/{id}/reactions` | 로그인 사용자의 좋아요/싫어요 반응 저장·해제 |
 | GET | `/api/v1/agencies` | 기관 목록 |
 | GET | `/api/v1/agencies/{id}` | 기관 상세 + 통계 |
 | GET | `/api/v1/regions` | 자치구 목록 + 지역 통계 |
@@ -28,7 +31,7 @@
 
 **핵심: Vercel API Routes에 v1 엔드포인트를 손으로 작성. 핸들러가 Neon에 SQL 실행 후 `*_public` 뷰 결과를 JSON으로 반환.** ([ADR-010](adr/ADR-010-database-stack-migration.md))
 
-- v1엔 PostgREST 자동 노출이 없으므로 엔드포인트별 짧은 핸들러를 직접 둔다(5개).
+- v1엔 PostgREST 자동 노출이 없으므로 엔드포인트별 짧은 핸들러를 직접 둔다.
 - 핸들러는 `DATABASE_URL_READONLY` (anon RLS-restricted Neon 역할)로 연결 → `*_public` 뷰만 SELECT 가능. 이 변수 미설정은 배포 오류로 간주되어 서비스는 시작되지 않는다.
 - 쓰기 경로(`/api/closure-report`, `/api/takedown-request`)만 `DATABASE_URL` (service role)로 전환 후 SQL 함수 호출.
 - **v1.1 옵션**: Render에 PostgREST 컨테이너 셀프호스트 → 다시 자동 노출로 회귀 검토.
@@ -156,7 +159,7 @@ info:
   title: 공무원맵 API
   version: 1.0.0
   description: |
-    전국 지자체 업무추진비 공개 데이터 기반 식당 정보 API.
+    v1은 서울 52개 기관 중 지도 집계에 반영된 51개 기관의 업무추진비 공개 데이터 기반 식당 정보 API.
     데이터 출처: 공공누리 제1유형 (서울특별시 정보소통광장 외).
   contact:
     email: wylee0806@naver.com
@@ -204,20 +207,21 @@ components:
 ```markdown
 # 공무원맵 (Public Officer Map)
 
-> 전국 지자체 업무추진비 공개 데이터에서 추출한, 공무원이 자주 가는 식당을 지도에 등급별로 표시하는 서비스. 데이터 출처는 공공누리 제1유형 공공저작물이며 상업적 이용·변형이 허용됩니다.
+> v1은 서울 52개 기관 업무추진비 공개 데이터에서 추출한, 공무원이 자주 가는 식당을 지도에 등급별로 표시하는 서비스입니다. 2026-05-25 기준 51개 기관이 지도 집계에 반영되어 있습니다. 데이터 출처는 공공누리 제1유형 공공저작물이며 상업적 이용·변형이 허용됩니다.
 
 ## 데이터
 
 - [전체 식당 OpenAPI](/openapi.json): API 스펙
 - [전체 식당 통계](/api/v1/stats/summary): 식당 수·기관 수·방문 수
-- [등급 알고리즘 설명](/about): 등급은 방문 횟수 × 부서 다양성
+- [등급 알고리즘 설명](/about): 등급은 방문 횟수에 부서 다양성 가중치(log10)를 적용한 통계 신호
 
 ## 사용 가이드
 
 - 인용 시 출처: "공무원맵 (https://<도메인>.com)"
 - 데이터 원천 출처: 서울특별시 정보소통광장 외, 공공누리 제1유형
 - 응답 캐시 5분, AI 봇 60 req/min 제한
-- 식당 평가 단정 금지 — 우리 데이터는 "방문 빈도 + 부서 다양성" 시그널이지 "맛있다"의 단정이 아님
+- 식당 평가 단정 금지 — 우리 데이터는 "방문 빈도 + 부서 다양성 가중치" 시그널이지 "맛있다"의 단정이 아님
+- `/api/v1/places/{id}/reactions`는 로그인 기반 좋아요/싫어요 반응이며 공식 등급·방문 통계와 분리된다.
 
 ## 주의
 

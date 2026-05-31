@@ -3,7 +3,7 @@
   "info": {
     "title": "공무원맵 API",
     "version": "1.0.0",
-    "description": "전국 지자체 업무추진비 공개 데이터 기반 식당 정보 API. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외. 등급은 맛 평가가 아니라 방문 빈도와 부서 다양성 기반 통계 신호입니다. 댓글, 평점, 후기 데이터는 제공하지 않습니다.",
+    "description": "v1은 서울 52개 기관 중 지도 집계에 반영된 51개 기관의 공무원 업무추진비 공개 기록 기반 식당 정보 API입니다. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외. 등급은 맛·품질 평가가 아니라 공무원 방문 빈도와 부서 다양성 통계 신호이며, 댓글·평점·후기 데이터는 제공하지 않습니다.",
     "contact": {
       "email": "wylee0806@naver.com"
     }
@@ -183,6 +183,80 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/places/{id}/reactions": {
+      "get": {
+        "summary": "식당 반응 요약",
+        "description": "좋아요/싫어요 수와 로그인 사용자의 현재 반응을 조회합니다. 반응은 공식 등급·방문 통계와 분리된 참고 신호이며 댓글·평점·후기 데이터가 아닙니다.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "식당 반응 저장",
+        "description": "로그인 사용자의 좋아요/싫어요 반응을 저장하거나 null로 제거합니다. 공식 등급·방문 통계에는 반영되지 않습니다.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reaction"
+                ],
+                "properties": {
+                  "reaction": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "like",
+                      "dislike",
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Invalid reaction"
+          },
+          "401": {
+            "description": "Login required"
           }
         }
       }

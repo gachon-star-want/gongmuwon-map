@@ -99,6 +99,16 @@
   border-bottom: 1px solid #e7edf4;
 }
 
+.community-policy-banner {
+  margin: 0 18px 12px;
+  padding: 10px 12px;
+  border: 1px solid #d3e3f5;
+  border-radius: 12px;
+  background: #f3f8ff;
+  color: #334155;
+  line-height: 1.45;
+}
+
 .community-board h1,
 .community-detail h2 {
   margin: 0;
@@ -113,8 +123,30 @@
   background: #fbfdff;
 }
 
+.community-auth-inline {
+  display: grid;
+  gap: 7px;
+}
+
 .community-title-input {
   flex: 1;
+}
+
+.community-state {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 16px 12px;
+}
+
+.community-state-loading {
+  grid-template-columns: auto auto;
+  align-items: center;
+  color: #5b6779;
+}
+
+.community-state-error {
+  color: #7f1d1d;
 }
 
 .community-post-list {
@@ -205,12 +237,6 @@
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid #e7edf4;
-}
-
-.community-loading {
-  display: grid;
-  place-content: center;
-  padding: 40px;
 }
 
 .sponsor-ad {

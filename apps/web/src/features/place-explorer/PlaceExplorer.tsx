@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActionIcon,
   Button,
+  Checkbox,
   Group,
   Modal,
   MultiSelect,
@@ -43,7 +44,14 @@ import {
   setPlaceReaction as setPlaceReactionApi,
 } from './publicData';
 import { gradeLabel, shortRegionLabel, sortPlaces } from './format';
-import { defaultGrades, normalizeQueryState, parseQueryState, serializeQueryState, type PlaceQueryState } from './queryState';
+import {
+  defaultGrades,
+  normalizeQueryState,
+  parseQueryState,
+  resolveExplorerPathname,
+  serializeQueryState,
+  type PlaceQueryState,
+} from './queryState';
 import { BottomSheet, type MobileMode, type SheetSize } from './panels/BottomSheet';
 import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
@@ -79,6 +87,7 @@ export function PlaceExplorer() {
   const [reactionPending, setReactionPending] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [regionLoading, setRegionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [closedVisible, setClosedVisible] = useState(false);
@@ -103,9 +112,12 @@ export function PlaceExplorer() {
       .map((region) => ({ label: shortRegionLabel(region), value: region }));
   }, [places, regions]);
 
-  const visibleMapPlaces = useMemo(() => {
+  const hasActiveSearchFilter = Boolean(queryState.q || queryState.region.length);
+  const activeResultPlaces = hasActiveSearchFilter ? searchPlaces : places;
+
+  const visibleResultPlaces = useMemo(() => {
     const normalizedQuery = queryState.q.trim().toLowerCase();
-    return places.filter((place) => {
+    return activeResultPlaces.filter((place) => {
       if (!closedVisible && place.is_closed) return false;
       if (!queryState.grade.includes(place.grade)) return false;
       if (queryState.region.length && (!place.road_address_part || !queryState.region.includes(place.road_address_part))) return false;
@@ -113,15 +125,32 @@ export function PlaceExplorer() {
         const haystack = `${place.name} ${place.road_address ?? ''} ${place.road_address_part ?? ''} ${place.category ?? ''}`.toLowerCase();
         if (!haystack.includes(normalizedQuery)) return false;
       }
-      return Boolean(place.latitude && place.longitude);
+      return true;
     });
-  }, [closedVisible, places, queryState.grade, queryState.q, queryState.region]);
+  }, [activeResultPlaces, closedVisible, queryState.grade, queryState.q, queryState.region]);
+
+  const visibleMapPlaces = useMemo(
+    () => visibleResultPlaces.filter((place) => Boolean(place.latitude && place.longitude)),
+    [visibleResultPlaces],
+  );
 
   const listedPlaces = useMemo(() => {
-    const source = searchPlaces.length || searchLoading ? searchPlaces : visibleMapPlaces;
-    const filtered = source.filter((place) => closedVisible || !place.is_closed);
-    return sortPlaces(filtered, queryState.sort);
-  }, [closedVisible, queryState.sort, searchLoading, searchPlaces, visibleMapPlaces]);
+    return sortPlaces(visibleResultPlaces, queryState.sort);
+  }, [queryState.sort, visibleResultPlaces]);
+
+  const resultLabel = useMemo(() => {
+    const count = listedPlaces.length.toLocaleString('ko-KR');
+    if (!hasActiveSearchFilter && !closedVisible && queryState.grade.join(',') === defaultGrades.join(',')) return `${count}곳`;
+    const parts = [];
+    if (queryState.q) parts.push(`"${queryState.q}"`);
+    if (queryState.region.length) parts.push(`${queryState.region.length}개 자치구`);
+    if (queryState.grade.join(',') !== defaultGrades.join(',')) parts.push(`${queryState.grade.length}개 등급`);
+    if (closedVisible) parts.push('폐업 포함');
+    return `${parts.join(' · ')} 결과 ${count}곳`;
+  }, [closedVisible, hasActiveSearchFilter, listedPlaces.length, queryState.grade, queryState.q, queryState.region.length]);
+  const listError = hasActiveSearchFilter ? searchError : null;
+  const listLoading = hasActiveSearchFilter ? searchLoading : false;
+  const hasActiveFilter = hasActiveSearchFilter || closedVisible || queryState.grade.join(',') !== defaultGrades.join(',');
 
   useEffect(() => {
     const onPopState = () => {
@@ -241,18 +270,25 @@ export function PlaceExplorer() {
 
   async function loadSearchPlaces(controller: AbortController) {
     setSearchLoading(true);
+    setSearchError(null);
+    setSearchPlaces([]);
     try {
       const data = await searchPlacesApi(queryState, controller.signal);
       setSearchPlaces(data.items);
     } catch (err) {
       if ((err as DOMException).name !== 'AbortError') {
         setSearchPlaces([]);
+        setSearchError('검색 결과를 불러오지 못했습니다.');
       }
     } finally {
       if (!controller.signal.aborted) {
         setSearchLoading(false);
       }
     }
+  }
+
+  function retrySearch() {
+    void loadSearchPlaces(new AbortController());
   }
 
   async function loadRegions() {
@@ -403,6 +439,8 @@ export function PlaceExplorer() {
           onGradesChange={(grade) => updateQueryState({ grade })}
           sort={queryState.sort}
           onSortChange={(sort) => updateQueryState({ sort })}
+          closedVisible={closedVisible}
+          onClosedVisibleChange={setClosedVisible}
           onListToggle={() => setDesktopListOpen((current) => !current)}
           onReset={resetFilters}
           regionLoading={regionLoading}
@@ -446,13 +484,17 @@ export function PlaceExplorer() {
           <PlaceList
             places={listedPlaces}
             selectedId={selectedPlace?.id}
-            loading={searchLoading}
+            loading={listLoading}
+            error={listError}
+            resultLabel={resultLabel}
+            hasActiveFilter={hasActiveFilter}
             onSelect={selectPlace}
             onClose={() => {
               setDesktopListOpen(false);
               setMobileMode((current) => (current === 'list' ? 'map' : current));
             }}
             onReset={resetFilters}
+            onRetry={retrySearch}
           />
           <AdSlot />
         </aside>
@@ -502,6 +544,7 @@ export function PlaceExplorer() {
             reactions={reactions}
             reactionPending={reactionPending}
             onReact={toggleReaction}
+            isAuthenticated={Boolean(currentUser)}
           />
           <AdSlot />
         </aside>
@@ -516,7 +559,10 @@ export function PlaceExplorer() {
         visits={visits}
         reactions={reactions}
         reactionPending={reactionPending}
-        loading={searchLoading}
+        loading={listLoading}
+        error={listError}
+        resultLabel={resultLabel}
+        hasActiveFilter={hasActiveFilter}
         regions={regionOptions}
         selectedRegions={queryState.region}
         selectedGrades={queryState.grade}
@@ -526,6 +572,7 @@ export function PlaceExplorer() {
         onSelect={selectPlace}
         onCloseDetail={() => clearSelected()}
         onReset={resetFilters}
+        onRetry={retrySearch}
         onRegionsChange={(region) => updateQueryState({ region })}
         onGradesChange={(grade) => updateQueryState({ grade })}
         onSortChange={(sort) => updateQueryState({ sort })}
@@ -537,6 +584,7 @@ export function PlaceExplorer() {
         onReport={report.open}
         onClosureReport={closure.open}
         onReact={toggleReaction}
+        isAuthenticated={Boolean(currentUser)}
       />
 
       <SourcePill sheetOpen={mobileMode !== 'map' || Boolean(selectedPlace)} />
@@ -652,6 +700,8 @@ function FloatingSearchFilter({
   onGradesChange,
   sort,
   onSortChange,
+  closedVisible,
+  onClosedVisibleChange,
   onListToggle,
   onReset,
   regionLoading,
@@ -668,6 +718,8 @@ function FloatingSearchFilter({
   onGradesChange: (value: Grade[]) => void;
   sort: SortMode;
   onSortChange: (value: SortMode) => void;
+  closedVisible: boolean;
+  onClosedVisibleChange: (value: boolean) => void;
   onListToggle: () => void;
   onReset: () => void;
   regionLoading: boolean;
@@ -733,6 +785,12 @@ function FloatingSearchFilter({
           onChange={(value) => value && onSortChange(value as SortMode)}
           data={sortOptions}
           allowDeselect={false}
+        />
+        <Checkbox
+          className="desktop-closed-toggle"
+          label="폐업 포함"
+          checked={closedVisible}
+          onChange={(event) => onClosedVisibleChange(event.currentTarget.checked)}
         />
         <div className="toolbar-icon-group">
           <Tooltip label="목록 열기">
@@ -826,9 +884,13 @@ function initialMobileMode(state: PlaceQueryState): MobileMode {
 }
 
 function pushUrlState(state: PlaceQueryState) {
-  window.history.pushState(null, '', `${window.location.pathname}${serializeQueryState(state)}`);
+  window.history.pushState(null, '', `${explorerPathname(state)}${serializeQueryState(state)}`);
 }
 
 function replaceUrlState(state: PlaceQueryState) {
-  window.history.replaceState(null, '', `${window.location.pathname}${serializeQueryState(state)}`);
+  window.history.replaceState(null, '', `${explorerPathname(state)}${serializeQueryState(state)}`);
+}
+
+function explorerPathname(state: PlaceQueryState) {
+  return resolveExplorerPathname(window.location.pathname, state);
 }

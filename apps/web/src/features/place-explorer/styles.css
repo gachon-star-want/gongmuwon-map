@@ -116,6 +116,18 @@
   gap: 4px;
 }
 
+.desktop-closed-toggle {
+  min-width: max-content;
+  padding: 0 4px;
+}
+
+.desktop-closed-toggle .mantine-Checkbox-label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .filter-chip {
   display: inline-flex;
   height: 34px;
@@ -209,6 +221,14 @@
 
 .sheet-scroll {
   flex: 1;
+}
+
+.result-state-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 0;
 }
 
 .sheet-empty {
@@ -362,6 +382,26 @@
   border-top: 1px solid #e8edf2;
 }
 
+.section-headline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.section-kicker {
+  display: inline-flex;
+  margin-bottom: 2px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.official-section {
+  border-left: 3px solid #1d4ed8;
+  padding-left: 12px;
+}
+
 .detail-title {
   padding-top: 4px;
   border-top: 0;
@@ -413,12 +453,15 @@
   padding: 11px 0;
   border-bottom: 1px solid #edf0f3;
   color: inherit;
-  text-decoration: none;
 }
 
 .visit-row > span {
   color: #657386;
   font-size: 12px;
+}
+
+.visit-row a {
+  color: inherit;
 }
 
 .source-link {
@@ -427,10 +470,43 @@
   gap: 4px;
 }
 
+.source-link a,
+.source-link-unavailable {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.source-link-unavailable {
+  color: #64748b;
+}
+
+.source-note {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.policy-cues {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #e6edf6;
+  border-radius: 10px;
+  background: #f8fbff;
+  color: #334155;
+}
+
+.reaction-hint {
+  margin-top: 3px;
+}
+
 .detail-actions {
   display: grid;
   gap: 8px;
   padding-bottom: 0;
+}
+
+.reaction-section {
+  position: relative;
 }
 
 .source-pill {
