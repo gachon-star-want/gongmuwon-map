@@ -37,7 +37,7 @@ Optional:
 
 Do not add server-only secrets to Cloudflare Pages. The Pages project is only for frontend preview checks; Vercel remains the production API host. In particular, `TURNSTILE_SECRET_KEY` belongs only in Vercel API environment variables.
 
-The Turnstile widget must allow the production hostname and Cloudflare Pages preview hostnames used by this project. If Cloudflare Pages uses `*.pages.dev` previews, include that Pages hostname pattern in the Turnstile widget domain allowlist.
+The Turnstile widget must allow the production hostname and Cloudflare Pages preview hostnames used by this project. Turnstile hostname management uses exact hostnames, not wildcard patterns, so add the actual Pages hostname(s) shown in the Cloudflare Pages dashboard.
 
 ## Expected PR Behavior
 

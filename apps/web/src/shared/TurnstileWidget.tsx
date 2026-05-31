@@ -48,22 +48,33 @@ function loadTurnstileScript() {
     return turnstileScriptPromise;
   }
 
+  document.querySelector<HTMLScriptElement>('script[data-turnstile-api="true"]')?.remove();
   turnstileScriptPromise = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-turnstile-api="true"]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('turnstile_load_failed')), { once: true });
-      return;
-    }
-
     const script = document.createElement('script');
+    const rejectAndRemove = () => {
+      script.remove();
+      reject(new Error('turnstile_load_failed'));
+    };
     script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.async = true;
     script.defer = true;
     script.dataset.turnstileApi = 'true';
-    script.addEventListener('load', () => resolve(), { once: true });
-    script.addEventListener('error', () => reject(new Error('turnstile_load_failed')), { once: true });
+    script.addEventListener(
+      'load',
+      () => {
+        if (window.turnstile) {
+          resolve();
+          return;
+        }
+        rejectAndRemove();
+      },
+      { once: true },
+    );
+    script.addEventListener('error', rejectAndRemove, { once: true });
     document.head.append(script);
+  }).catch((error) => {
+    turnstileScriptPromise = null;
+    throw error;
   });
   return turnstileScriptPromise;
 }
