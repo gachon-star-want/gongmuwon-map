@@ -1,5 +1,5 @@
-import { ActionIcon, Button, Loader, Group, ScrollArea, Stack, Text } from '@mantine/core';
-import { RefreshCw, RotateCcw, X } from 'lucide-react';
+import { ActionIcon, Button, Loader, Group, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
+import { RefreshCw, RotateCcw, Search, X } from 'lucide-react';
 import type { Place } from '../types';
 import { formatDate, gradeClass, markerLabel } from '../format';
 
@@ -10,6 +10,8 @@ type PlaceListProps = {
   error?: string | null;
   resultLabel?: string;
   hasActiveFilter?: boolean;
+  query?: string;
+  onQueryChange?: (value: string) => void;
   onSelect: (place: Place) => void;
   onClose?: () => void;
   onReset: () => void;
@@ -23,6 +25,8 @@ export function PlaceList({
   error,
   resultLabel,
   hasActiveFilter,
+  query,
+  onQueryChange,
   onSelect,
   onClose,
   onReset,
@@ -43,6 +47,23 @@ export function PlaceList({
           </ActionIcon>
         ) : null}
       </Group>
+      {onQueryChange ? (
+        <div className="sheet-search">
+          <TextInput
+            leftSection={<Search size={16} />}
+            placeholder="식당명, 자치구, 부서 검색"
+            value={query ?? ''}
+            onChange={(event) => onQueryChange(event.currentTarget.value)}
+            rightSection={
+              query ? (
+                <ActionIcon variant="subtle" aria-label="검색 지우기" onClick={() => onQueryChange('')}>
+                  <X size={14} />
+                </ActionIcon>
+              ) : null
+            }
+          />
+        </div>
+      ) : null}
       {loading ? (
         <div className="sheet-empty">
           <Loader size="sm" />
