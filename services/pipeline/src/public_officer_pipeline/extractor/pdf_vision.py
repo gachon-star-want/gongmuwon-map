@@ -11,6 +11,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor.pdf_text import text_parser as pdf_text_parser
 from public_officer_pipeline.llm import LLMClient, TaskType
 from public_officer_pipeline.models import ParsedExpenseRow, PipelineConfigError
@@ -161,6 +162,12 @@ def extract_pdf_rows_with_vision(
 
 
 def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
+    guards.ensure_size_at_most(
+        size=len(content),
+        max_bytes=guards.MAX_PDF_BYTES,
+        subject="PDF document",
+    )
+    page_limit = guards.clamp_pdf_vision_pages(max_pages)
     with tempfile.TemporaryDirectory() as directory:
         pdf_path = Path(directory) / "source.pdf"
         output_prefix = Path(directory) / "page"
@@ -173,24 +180,68 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
             "-f",
             "1",
             "-l",
-            str(max_pages),
+            str(page_limit),
             str(pdf_path),
             str(output_prefix),
         ]
         try:
-            subprocess.run(command, check=True, capture_output=True)
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                timeout=guards.PDF_SUBPROCESS_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PipelineConfigError(
+                f"pdftoppm timed out after {guards.PDF_SUBPROCESS_TIMEOUT_SECONDS:g} seconds"
+            ) from exc
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:
             raise PipelineConfigError("pdftoppm is required for scanned PDF vision extraction") from exc
-        return [path.read_bytes() for path in sorted(Path(directory).glob("page-*.png"))]
+        paths = sorted(Path(directory).glob("page-*.png"))
+        if len(paths) > page_limit:
+            raise guards.DocumentProcessingLimitError(
+                f"pdftoppm generated {len(paths)} images, exceeding limit of {page_limit}"
+            )
+        images: list[bytes] = []
+        total_size = 0
+        for path in paths:
+            image_size = path.stat().st_size
+            guards.ensure_size_at_most(
+                size=image_size,
+                max_bytes=guards.MAX_PDF_IMAGE_BYTES_PER_PAGE,
+                subject=f"generated PDF image {path.name}",
+            )
+            total_size += image_size
+            guards.ensure_size_at_most(
+                size=total_size,
+                max_bytes=guards.MAX_PDF_IMAGE_BYTES_TOTAL,
+                subject="generated PDF images",
+            )
+            images.append(path.read_bytes())
+        return images
 
 
 def _pdf_to_text(content: bytes, *, layout: bool = True) -> str:
+    guards.ensure_size_at_most(
+        size=len(content),
+        max_bytes=guards.MAX_PDF_BYTES,
+        subject="PDF document",
+    )
     with tempfile.TemporaryDirectory() as directory:
         pdf_path = Path(directory) / "source.pdf"
         pdf_path.write_bytes(content)
         command = ["pdftotext", *(["-layout"] if layout else []), str(pdf_path), "-"]
         try:
-            completed = subprocess.run(command, check=True, capture_output=True)
+            completed = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                timeout=guards.PDF_SUBPROCESS_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise PipelineConfigError(
+                f"pdftotext timed out after {guards.PDF_SUBPROCESS_TIMEOUT_SECONDS:g} seconds"
+            ) from exc
         except (FileNotFoundError, subprocess.CalledProcessError):
             return ""
         return completed.stdout.decode("utf-8", errors="ignore")
@@ -216,6 +267,11 @@ async def _extract_page_with_vision(
     source_title: str,
 ) -> list[ParsedExpenseRow]:
     del page_number
+    guards.ensure_size_at_most(
+        size=len(image),
+        max_bytes=guards.MAX_PDF_IMAGE_BYTES_PER_PAGE,
+        subject="generated PDF image",
+    )
     payload = {
         "source_title": source_title,
         "fallback_department": fallback_department,

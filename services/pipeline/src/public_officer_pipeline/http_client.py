@@ -10,6 +10,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import httpx
 
+from public_officer_pipeline import document_guards as guards
+
 
 Backend = {"auto", "httpx", "curl"}
 
@@ -57,6 +59,14 @@ def _merge_headers(base: dict[str, str], extra: dict[str, str] | None) -> dict[s
     return merged
 
 
+def _decode_response_text(content: bytes, headers: dict[str, str]) -> str:
+    try:
+        response = httpx.Response(200, headers=headers, content=content)
+        return response.text
+    except UnicodeDecodeError:
+        return content.decode("cp949", errors="replace")
+
+
 @dataclass
 class SimpleHttpResponse:
     status_code: int
@@ -100,12 +110,16 @@ class _HttpxClient(AsyncHttpClient):
         timeout: httpx.Timeout,
         headers: dict[str, str],
         follow_redirects: bool,
+        max_download_bytes: int = guards.MAX_DOCUMENT_DOWNLOAD_BYTES,
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._headers = headers
+        self._max_download_bytes = max_download_bytes
         self._client = httpx.AsyncClient(
             timeout=timeout,
             headers=headers,
             follow_redirects=follow_redirects,
+            transport=transport,
         )
 
     async def get(
@@ -116,13 +130,39 @@ class _HttpxClient(AsyncHttpClient):
         headers: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> SimpleHttpResponse:
-        response = await self._client.get(url, params=params, headers=_merge_headers(self._headers, headers), **kwargs)
+        async with self._client.stream(
+            "GET",
+            url,
+            params=params,
+            headers=_merge_headers(self._headers, headers),
+            **kwargs,
+        ) as response:
+            response_headers = dict(response.headers)
+            guards.ensure_content_length_at_most(
+                response_headers,
+                max_bytes=self._max_download_bytes,
+                subject="downloaded document",
+            )
+            chunks: list[bytes] = []
+            total_size = 0
+            async for chunk in response.aiter_bytes():
+                total_size += len(chunk)
+                guards.ensure_size_at_most(
+                    size=total_size,
+                    max_bytes=self._max_download_bytes,
+                    subject="downloaded document body",
+                )
+                chunks.append(chunk)
+            content = b"".join(chunks)
+            text = _decode_response_text(content, response_headers)
+            status_code = response.status_code
+            response_url = str(response.url)
         return SimpleHttpResponse(
-            status_code=response.status_code,
-            text=response.text,
-            content=response.content,
-            headers=dict(response.headers),
-            url=str(response.url),
+            status_code=status_code,
+            text=text,
+            content=content,
+            headers=response_headers,
+            url=response_url,
         )
 
     async def aclose(self) -> None:
@@ -137,11 +177,13 @@ class _CurlClient(AsyncHttpClient):
         headers: dict[str, str],
         follow_redirects: bool,
         doh_url: str | None = None,
+        max_download_bytes: int = guards.MAX_DOCUMENT_DOWNLOAD_BYTES,
     ) -> None:
         self._timeout = timeout
         self._headers = headers
         self._follow_redirects = follow_redirects
         self._doh_url = doh_url
+        self._max_download_bytes = max_download_bytes
 
     async def get(
         self,
@@ -163,6 +205,8 @@ class _CurlClient(AsyncHttpClient):
             "--connect-timeout",
             str(int(self._timeout)),
             "--retry", "0",
+            "--max-filesize",
+            str(self._max_download_bytes),
         ]
         if self._doh_url:
             command.extend(["--doh-url", self._doh_url])
@@ -179,16 +223,27 @@ class _CurlClient(AsyncHttpClient):
         )
         stdout, stderr = await process.communicate()
         if process.returncode != 0:
+            if process.returncode == 63:
+                raise guards.DocumentProcessingLimitError(
+                    f"downloaded document exceeds limit of {self._max_download_bytes} bytes"
+                )
             raise httpx.RequestError(
                 stderr.decode("utf-8", errors="replace") if stderr else "curl request failed",
                 request=request,
             )
 
         status_code, body_bytes, headers = self._parse_curl_output(stdout)
-        try:
-            text = body_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            text = body_bytes.decode("cp949", errors="replace")
+        guards.ensure_content_length_at_most(
+            headers,
+            max_bytes=self._max_download_bytes,
+            subject="downloaded document",
+        )
+        guards.ensure_size_at_most(
+            size=len(body_bytes),
+            max_bytes=self._max_download_bytes,
+            subject="downloaded document body",
+        )
+        text = _decode_response_text(body_bytes, headers)
 
         return SimpleHttpResponse(
             status_code=status_code,

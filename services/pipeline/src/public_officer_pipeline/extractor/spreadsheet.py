@@ -8,6 +8,7 @@ from typing import Any
 import xlrd
 from openpyxl import load_workbook
 
+from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 from public_officer_pipeline.models import ParsedExpenseRow
 
@@ -84,19 +85,53 @@ def extract_spreadsheet_rows(content: bytes, *, fallback_department: str) -> lis
 
 
 def _workbook_rows(content: bytes) -> list[list[list[str]]]:
+    guards.ensure_size_at_most(
+        size=len(content),
+        max_bytes=guards.MAX_SPREADSHEET_BYTES,
+        subject="spreadsheet document",
+    )
     if content.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
         return _xls_workbook_rows(content)
     workbook = load_workbook(BytesIO(content), data_only=True, read_only=True)
-    return [
-        [[_stringify(cell) for cell in row] for row in worksheet.iter_rows(values_only=True)]
-        for worksheet in workbook.worksheets
-    ]
+    try:
+        worksheets = workbook.worksheets
+        _ensure_sheet_count(len(worksheets), workbook_type="XLSX")
+        workbook_rows: list[list[list[str]]] = []
+        total_cells = 0
+        for worksheet in worksheets:
+            _ensure_declared_sheet_bounds(
+                sheet_name=worksheet.title,
+                rows=int(worksheet.max_row or 0),
+                columns=int(worksheet.max_column or 0),
+                current_total_cells=total_cells,
+            )
+            sheet_rows: list[list[str]] = []
+            for row_index, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+                total_cells += _checked_row_width(
+                    sheet_name=worksheet.title,
+                    row_index=row_index,
+                    width=len(row),
+                    current_total_cells=total_cells,
+                )
+                sheet_rows.append([_stringify(cell) for cell in row])
+            workbook_rows.append(sheet_rows)
+        return workbook_rows
+    finally:
+        workbook.close()
 
 
 def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
     workbook = xlrd.open_workbook(file_contents=content)
+    _ensure_sheet_count(workbook.nsheets, workbook_type="XLS")
     worksheets: list[list[list[str]]] = []
+    total_cells = 0
     for worksheet in workbook.sheets():
+        total_cells = _ensure_declared_sheet_bounds(
+            sheet_name=worksheet.name,
+            rows=worksheet.nrows,
+            columns=worksheet.ncols,
+            current_total_cells=total_cells,
+        )
         rows: list[list[str]] = []
         for row_index in range(worksheet.nrows):
             rows.append(
@@ -107,6 +142,65 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
             )
         worksheets.append(rows)
     return worksheets
+
+
+def _ensure_sheet_count(sheet_count: int, *, workbook_type: str) -> None:
+    if sheet_count > guards.MAX_SPREADSHEET_SHEETS:
+        raise guards.DocumentProcessingLimitError(
+            f"{workbook_type} workbook has {sheet_count} sheets, "
+            f"exceeding limit of {guards.MAX_SPREADSHEET_SHEETS}"
+        )
+
+
+def _ensure_declared_sheet_bounds(
+    *,
+    sheet_name: str,
+    rows: int,
+    columns: int,
+    current_total_cells: int,
+) -> int:
+    if rows > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet sheet {sheet_name!r} has {rows} rows, "
+            f"exceeding limit of {guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+        )
+    if columns > guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet sheet {sheet_name!r} has {columns} columns, "
+            f"exceeding limit of {guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET}"
+        )
+    total_cells = current_total_cells + (rows * columns)
+    if total_cells > guards.MAX_SPREADSHEET_CELLS_TOTAL:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet workbook has {total_cells} declared cells, "
+            f"exceeding limit of {guards.MAX_SPREADSHEET_CELLS_TOTAL}"
+        )
+    return total_cells
+
+
+def _checked_row_width(
+    *,
+    sheet_name: str,
+    row_index: int,
+    width: int,
+    current_total_cells: int,
+) -> int:
+    if row_index > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet sheet {sheet_name!r} row count exceeds limit of "
+            f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+        )
+    if width > guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet sheet {sheet_name!r} row {row_index} has {width} columns, "
+            f"exceeding limit of {guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET}"
+        )
+    if current_total_cells + width > guards.MAX_SPREADSHEET_CELLS_TOTAL:
+        raise guards.DocumentProcessingLimitError(
+            f"spreadsheet workbook cell count exceeds limit of "
+            f"{guards.MAX_SPREADSHEET_CELLS_TOTAL}"
+        )
+    return width
 
 
 def _xls_cell_value(cell: xlrd.sheet.Cell, datemode: int) -> Any:
