@@ -19,6 +19,15 @@ Official docs checked on 2026-05-31:
 - Turnstile server verification: API routes call Cloudflare Siteverify through `TURNSTILE_SECRET_KEY` and fail closed when the secret, token, or verification is missing.
 - Vercel CSP allows `https://challenges.cloudflare.com` for Turnstile script, iframe, and verification-related browser traffic.
 
+## Current Production Edge Status
+
+Checked on 2026-05-31:
+
+- `dig +short xn--ob0bo0wl1ax52a.com NS` returns Vercel DNS (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`).
+- `curl -I https://xn--ob0bo0wl1ax52a.com/` returns `server: Vercel`.
+
+That means Cloudflare WAF Custom Rules and Cloudflare Rate Limiting Rules are not currently in the production request path. They can only protect production after the domain is onboarded to Cloudflare DNS/proxy, or after another Cloudflare edge product is placed in front of Vercel. Until then, the app-side API guards and Vercel deployment settings remain the active production controls.
+
 ## Turnstile
 
 Create one Managed widget in Cloudflare Turnstile.
@@ -53,6 +62,8 @@ Do not add `TURNSTILE_SECRET_KEY` to Cloudflare Pages. Pages is static preview o
 
 ## WAF Custom Rules
 
+Prerequisite: production traffic must pass through Cloudflare. This is not true while the primary domain uses Vercel DNS directly.
+
 Free plan rule budget is limited, so keep rules coarse and high-value.
 
 Recommended rules:
@@ -66,6 +77,8 @@ Recommended rules:
 If the Cloudflare dashboard rule budget is exhausted, keep rule 1 and rule 2 first.
 
 ## Rate Limiting Rule
+
+Prerequisite: production traffic must pass through Cloudflare. This is not true while the primary domain uses Vercel DNS directly.
 
 Free plan rate limiting is coarse. Use the single rule as an edge backstop for write APIs, not as the primary correctness layer.
 
