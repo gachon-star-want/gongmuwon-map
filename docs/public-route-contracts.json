@@ -124,6 +124,24 @@
       "documented_in_llms": true
     },
     {
+      "path": "/api/v1/places/{id}/reactions",
+      "kind": "json",
+      "method": "GET",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
+      "path": "/api/v1/places/{id}/reactions",
+      "kind": "json",
+      "method": "POST",
+      "status": "implemented",
+      "source_notice_required": false,
+      "documented_in_openapi": true,
+      "documented_in_llms": true
+    },
+    {
       "path": "/api/v1/agencies",
       "kind": "json",
       "method": "GET",

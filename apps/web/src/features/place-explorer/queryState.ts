@@ -3,6 +3,8 @@ import type { Grade, SortMode } from './types';
 export const defaultGrades: Grade[] = ['★★★', '★★', '✦'];
 
 const GRADE_OPTIONS = new Set<Grade>(['★★★', '★★', '★', '✦']);
+const PLACE_DETAIL_PATH_PREFIX = '/r/';
+const UUID_PLACE_ID_PATTERN = /([0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})$/;
 
 export type PlaceQueryState = {
   q: string;
@@ -14,15 +16,38 @@ export type PlaceQueryState = {
 
 type RawSortMode = string | null | SortMode;
 
-export function parseQueryState(search = window.location.search): PlaceQueryState {
+export function parseQueryState(
+  search = typeof window === 'undefined' ? '' : window.location.search,
+  pathname = typeof window === 'undefined' ? '/' : window.location.pathname,
+): PlaceQueryState {
   const params = new URLSearchParams(search);
+  const pathPlaceId = extractPlaceIdFromRoute(pathname);
+  const queryPlaceId = params.get('place');
   return normalizeQueryState({
     q: params.get('q') ?? '',
     region: splitList(params.get('region')),
     grade: parseGrades(params.get('grade')),
     sort: parseSort(params.get('sort')),
-    placeId: params.get('place'),
+    placeId: queryPlaceId ?? pathPlaceId,
   });
+}
+
+export function extractPlaceIdFromRoute(pathname: string = typeof window === 'undefined' ? '/' : window.location.pathname): string | null {
+  const normalized = (pathname ?? '').endsWith('/') ? pathname.slice(0, -1) : pathname;
+  if (!normalized.startsWith(PLACE_DETAIL_PATH_PREFIX)) return null;
+  const route = normalized.slice(PLACE_DETAIL_PATH_PREFIX.length);
+  if (!route) return null;
+  const uuidMatch = route.match(UUID_PLACE_ID_PATTERN);
+  if (uuidMatch?.[1]) {
+    return uuidMatch[1];
+  }
+  return null;
+}
+
+export function resolveExplorerPathname(pathname: string, state: PlaceQueryState) {
+  if (!pathname.startsWith(PLACE_DETAIL_PATH_PREFIX)) return pathname;
+  const routePlaceId = extractPlaceIdFromRoute(pathname);
+  return routePlaceId && state.placeId === routePlaceId ? pathname : '/';
 }
 
 export function normalizeQueryState(state: PlaceQueryState): PlaceQueryState {

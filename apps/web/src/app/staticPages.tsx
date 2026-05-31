@@ -17,6 +17,7 @@ type StaticSection = {
 
 const footerOperatorText = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외 51개 기관';
 const footerOperatorInfo = '운영: 이원영/WonYoungLee · wylee0806@naver.com · 010-7133-0806 · 경기도 성남시 분당구 수내로 39';
+const trustBanner = '공공기관 의무 공개자료(업무추진비) 기반, 공공누리 제1유형 출처 표시, 맛·품질 점수 아님, 댓글·평점·후기 없음';
 
 export function StaticPage({ path }: { path: string }) {
   const page = staticPageContent(path as StaticPath);
@@ -90,6 +91,7 @@ function staticPageContent(path: StaticPath) {
         {
           title: '이용 목적과 보관',
           lines: [
+            '닉네임/비밀번호는 게시글·댓글 작성과 좋아요/싫어요 반응 권한 확인에만 사용하며, 공식 등급·방문 통계에는 반영하지 않습니다.',
             '익명 식별자는 중복 신고 차단에 사용하며 90일 단위 삭제를 원칙으로 합니다.',
             '이메일은 요청 회신과 분쟁 대응에만 사용하고, 응답 완료 후 30일 보관을 원칙으로 합니다.',
           ],
@@ -108,19 +110,19 @@ function staticPageContent(path: StaticPath) {
     return {
       title: '이용약관',
       icon: FileText,
-      lead: '공무원맵은 공공 공개자료를 시민이 쉽게 탐색할 수 있도록 제공하는 무료 정보 서비스입니다.',
+      lead: '공무원맵은 공무원 업무추진비 공개자료를 기반으로 방문 빈도 신호를 보여주는 무료 정보 지도입니다.',
       sections: [
         {
           title: '서비스 제공',
           lines: [
-            '데이터는 원문 공개자료, 자동 추출, 카카오 로컬 매칭 결과를 바탕으로 제공되며 정확성을 보증하지 않습니다.',
-            '사용자는 데이터 재이용 시 원 출처와 공공누리 제1유형 조건을 함께 확인해야 합니다.',
+            '데이터는 법령상 공개된 공무원 업무추진비 자료에서 파생되며 정확성을 보증하지 않습니다.',
+            '이용자는 원본 출처와 공공누리 제1유형 조건을 함께 표기해야 합니다.',
           ],
         },
         {
           title: '금지 행위',
           lines: [
-            '공무원 개인의 식습관·성향을 추론하거나 부정행위를 단정하는 방식의 이용을 금지합니다.',
+            '공무원 개인의 식습관·성향·부정행위를 단정하거나 맛·품질을 평가·등급화하는 방식의 이용을 금지합니다.',
             '서비스 안정성을 해치는 자동화 요청, 권리침해 목적의 재게시, 출처 삭제 재배포를 금지합니다.',
           ],
         },
@@ -138,7 +140,7 @@ function staticPageContent(path: StaticPath) {
     return {
       title: '면책조항',
       icon: AlertTriangle,
-      lead: '등급은 방문 빈도와 부서 다양성에 따른 통계 신호이며 맛·품질·비위 여부를 단정하지 않습니다.',
+      lead: trustBanner,
       sections: [
         {
           title: '데이터 성격',
@@ -168,7 +170,7 @@ function staticPageContent(path: StaticPath) {
     return {
       title: '데이터 출처와 법적 근거',
       icon: ShieldCheck,
-      lead: '공무원맵은 법령상 공개 대상인 업무추진비 집행내역과 공공누리 제1유형 자료를 사용합니다.',
+      lead: trustBanner,
       sections: [
         {
           title: '출처 표시',
@@ -182,6 +184,7 @@ function staticPageContent(path: StaticPath) {
           lines: [
             '선거직 고위공무원은 실명과 직급 표시가 가능하지만, 임명직과 5급 이하 일반직은 부서·직급 중심으로 마스킹합니다.',
             '민간인 동석자는 원칙적으로 마스킹하며, 식당명·주소·일자·금액은 원본 공개 항목으로 표시합니다.',
+            trustBanner,
           ],
         },
         {
@@ -199,7 +202,7 @@ function staticPageContent(path: StaticPath) {
     return {
       title: 'API 문서',
       icon: Code2,
-      lead: '공무원맵은 지도 화면과 동일한 공개 데이터를 REST API와 OpenAPI 3.1 스펙으로 제공합니다.',
+      lead: trustBanner,
       sections: [
         {
           title: '주요 엔드포인트',
@@ -208,6 +211,7 @@ function staticPageContent(path: StaticPath) {
             'GET /api/v1/places/search: 검색어, 자치구, 등급, 정렬 기반 UI 목록을 조회합니다.',
             'GET /api/v1/regions: 자치구별 식당 수와 지도 중심 좌표를 조회합니다.',
             'GET /api/v1/places/{id}/visits: 원문 링크가 포함된 방문 기록을 조회합니다.',
+            'GET/POST /api/v1/places/{id}/reactions: 공식 지표와 분리된 좋아요/싫어요 반응을 조회·저장합니다.',
           ],
           links: [
             { label: 'OpenAPI JSON', href: '/openapi.json' },
@@ -217,8 +221,8 @@ function staticPageContent(path: StaticPath) {
         {
           title: '이용 조건',
           lines: [
-            'GET API는 공개 캐시가 적용되며, 데이터 인용 시 공무원맵과 원 공공자료 출처를 함께 표시해야 합니다.',
-            '등급은 통계 신호이므로 식당 평가나 공무원 비위 판단 근거로 단정해서 사용할 수 없습니다.',
+            'GET API는 공개 캐시가 적용되며, 데이터 인용 시 원천 자료와 공무원맵 출처를 함께 표시해야 합니다.',
+            '등급은 방문 빈도와 부서 다양성 기반 통계 신호이며 맛·품질·비위 판단 근거로 사용할 수 없습니다.',
           ],
         },
       ],
@@ -227,7 +231,7 @@ function staticPageContent(path: StaticPath) {
   return {
     title: '서비스 소개',
     icon: Info,
-    lead: '공무원맵은 서울 52개 기관의 업무추진비 집행내역에서 식당 방문 신호를 추출해 지도에 표시합니다.',
+    lead: trustBanner,
     sections: [
       {
         title: '집계 현황',
@@ -247,7 +251,7 @@ function staticPageContent(path: StaticPath) {
         title: '서비스 원칙',
         lines: [
           '공식 공개자료 기반의 식당 상세에는 사용자 댓글·평점·후기를 받지 않습니다.',
-          '공무원의 부정행위나 식당의 맛을 단정하지 않고, 출처 확인 가능한 방문 빈도 신호만 제공합니다.',
+          trustBanner,
         ],
       },
     ],

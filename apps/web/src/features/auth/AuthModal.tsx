@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Modal, PasswordInput, SegmentedControl, Stack, Text, TextInput } from '@mantine/core';
+import { Anchor, Button, Modal, PasswordInput, SegmentedControl, Stack, Text, TextInput } from '@mantine/core';
 import { LogIn, UserPlus } from 'lucide-react';
 import type { CurrentUser } from './authApi';
 import { login, register } from './authApi';
@@ -76,6 +76,13 @@ export function AuthModal({ opened, onClose, onAuthenticated }: AuthModalProps) 
             {error}
           </Text>
         ) : null}
+        <Text size="xs" c="dimmed">
+          닉네임/비밀번호는 게시글·댓글 작성과 좋아요/싫어요 반응 권한 확인용으로만 사용되며, 지도 등급/방문 통계에는 반영되지 않습니다. 자세한 내용은{' '}
+          <Anchor size="xs" href="/privacy">
+            개인정보처리방침
+          </Anchor>
+          을 참고해 주세요.
+        </Text>
         <Button
           leftSection={mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}
           loading={submitting}
@@ -88,4 +95,3 @@ export function AuthModal({ opened, onClose, onAuthenticated }: AuthModalProps) 
     </Modal>
   );
 }
-
