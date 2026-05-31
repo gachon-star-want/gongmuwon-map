@@ -30,6 +30,11 @@
 - 입력 PDF: text-based 업무추진비 공개 양식
 - 기대: 표 행 N개, 컬럼 명세 일치
 
+### `pipeline/test_document_guards.py` / focused extractor tests
+- HTTP 다운로드: `Content-Length`가 25 MiB 초과면 본문 read 전 실패, 길이 헤더가 없어도 누적 body가 25 MiB 초과면 실패, curl 폴백은 `--max-filesize`와 파싱 후 body-size 검증 수행
+- Spreadsheet: 25 MiB 초과 입력, 20 sheets 초과, sheet당 5,000 rows/100 columns 초과, workbook 총 100,000 cells 초과 시 `DocumentProcessingLimitError`
+- PDF vision/text: 25 MiB 초과 PDF는 poppler 실행 전 실패, `pdftotext`/`pdftoppm` timeout은 `PipelineConfigError`, vision `max_pages`는 1~5로 clamp, PNG는 8 MiB/page 및 20 MiB total 초과 시 LLM 호출 전 실패
+
 ## 통합 테스트
 
 ### `pipeline/test_end_to_end.py`

@@ -1,8 +1,17 @@
 from io import BytesIO
 
+import pytest
 from openpyxl import Workbook
 
+from public_officer_pipeline import document_guards as guards
+from public_officer_pipeline.extractor import spreadsheet as spreadsheet_module
 from public_officer_pipeline.extractor import extract_spreadsheet_rows
+
+
+def _workbook_bytes(workbook: Workbook) -> bytes:
+    content = BytesIO()
+    workbook.save(content)
+    return content.getvalue()
 
 
 def test_extracts_gangnam_xlsx_rows() -> None:
@@ -308,3 +317,80 @@ def test_extracts_council_cost_xlsx_approval_date_headers_without_place() -> Non
     assert rows[0].place_text == "더불어민주당 의원 간담회"
     assert rows[0].user_text == "의장 5명"
     assert rows[0].amount == 110000
+
+
+def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_BYTES", 3)
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="spreadsheet document"):
+        extract_spreadsheet_rows(b"not-xlsx", fallback_department="강남구청")
+
+
+def test_rejects_xlsx_with_too_many_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_ROWS_PER_SHEET", 2)
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "식당", 10000])
+    worksheet.append(["2026-04-02", "식당", 10000])
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="rows"):
+        extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+
+def test_rejects_xlsx_with_too_many_columns(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_COLUMNS_PER_SHEET", 2)
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="columns"):
+        extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+
+def test_rejects_xlsx_with_too_many_sheets(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_SHEETS", 1)
+    workbook = Workbook()
+    workbook.create_sheet("second")
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="sheets"):
+        extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+
+def test_rejects_xlsx_cell_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_CELLS_TOTAL", 4)
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "식당", 10000])
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="cells"):
+        extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+
+def test_rejects_xls_declared_column_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_COLUMNS_PER_SHEET", 2)
+
+    class FakeSheet:
+        name = "legacy"
+        nrows = 1
+        ncols = 3
+
+    class FakeWorkbook:
+        nsheets = 1
+        datemode = 0
+
+        def sheets(self) -> list[FakeSheet]:
+            return [FakeSheet()]
+
+    monkeypatch.setattr(
+        spreadsheet_module.xlrd,
+        "open_workbook",
+        lambda *, file_contents: FakeWorkbook(),
+    )
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="columns"):
+        extract_spreadsheet_rows(
+            b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1legacy",
+            fallback_department="강남구청",
+        )

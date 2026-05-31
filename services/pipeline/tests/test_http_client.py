@@ -1,6 +1,7 @@
 import httpx
 import pytest
 
+from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.http_client import (
     _AdaptiveHttpClient,
     _CurlClient,
@@ -148,3 +149,109 @@ async def test_curl_client_allows_per_request_headers(monkeypatch: pytest.Monkey
     assert response.text == "ok"
     assert "User-Agent: base" in captured
     assert "Referer: https://example.com/list" in captured
+
+
+@pytest.mark.asyncio
+async def test_httpx_client_rejects_oversized_content_length() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            headers={"Content-Length": "5"},
+            content=b"12345",
+        )
+    )
+    client = _HttpxClient(
+        timeout=httpx.Timeout(1.0),
+        headers={},
+        follow_redirects=True,
+        max_download_bytes=4,
+        transport=transport,
+    )
+
+    try:
+        with pytest.raises(guards.DocumentProcessingLimitError, match="Content-Length"):
+            await client.get("https://example.com/file.pdf")
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_httpx_client_rejects_oversized_streamed_body() -> None:
+    class OversizedStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"12"
+            yield b"345"
+
+    transport = httpx.MockTransport(lambda _request: httpx.Response(200, stream=OversizedStream()))
+    client = _HttpxClient(
+        timeout=httpx.Timeout(1.0),
+        headers={},
+        follow_redirects=True,
+        max_download_bytes=4,
+        transport=transport,
+    )
+
+    try:
+        with pytest.raises(guards.DocumentProcessingLimitError, match="body"):
+            await client.get("https://example.com/file.pdf")
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_curl_client_sets_max_filesize_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+
+    async def fake_subprocess_exec(*args: object, **kwargs: object):
+        captured.extend(str(item) for item in args)
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nok", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(
+        timeout=1.0,
+        headers={},
+        follow_redirects=False,
+        max_download_bytes=17,
+    )
+    await client.get("https://example.com/file.pdf")
+
+    assert "--max-filesize" in captured
+    assert captured[captured.index("--max-filesize") + 1] == "17"
+
+
+@pytest.mark.asyncio
+async def test_curl_client_rejects_oversized_parsed_body(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_subprocess_exec(*_args: object, **_kwargs: object):
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n12345", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(
+        timeout=1.0,
+        headers={},
+        follow_redirects=False,
+        max_download_bytes=4,
+    )
+
+    with pytest.raises(guards.DocumentProcessingLimitError, match="body"):
+        await client.get("https://example.com/file.pdf")

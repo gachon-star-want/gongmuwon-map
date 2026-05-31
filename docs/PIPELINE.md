@@ -52,6 +52,12 @@ class CrawlerAdapter(Protocol):
 ### 2. `fetcher/` — 첨부 파일 다운로드
 
 - HTTP GET + Range 헤더 + 30초 타임아웃
+- 다운로드 DoS 가드:
+  - 문서 본문 최대 크기: **25 MiB** (`MAX_DOCUMENT_DOWNLOAD_BYTES`)
+  - `Content-Length`가 25 MiB를 초과하면 본문을 읽기 전에 거부
+  - `Content-Length`가 없거나 부정확해도 스트리밍 중 누적 본문 크기가 25 MiB를 초과하면 거부
+  - curl 폴백은 `--max-filesize`를 사용하고, 응답 파싱 후 본문 크기를 다시 검증
+  - 초과 시 `DocumentProcessingLimitError`/`PipelineConfigError`; 조용한 truncate 금지
 - SHA-256 해시 계산, 같은 해시 캐시되어 있으면 skip
 - Cloudflare R2 버킷 `officer-map-raw` 에 `{agency_id}/{yyyy-mm}/{hash}.{ext}` 키로 업로드 (S3 호환 SDK 사용, `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` 환경변수)
 - 비-dry-run 기본 실행은 업로드 후 `storage_path = r2://officer-map-raw/{agency_id}/{yyyy-mm}/{hash}.{ext}`를 `sources`에 저장
@@ -69,6 +75,24 @@ class CrawlerAdapter(Protocol):
 | HWPX | XML 파서 (ZIP 내부 `Contents/section0.xml`) | HWP 동일 폴백 |
 
 추출 결과는 **표 (rows[][])** 또는 **자유 텍스트** 둘 중 하나로 정규화. Normalizer가 둘 다 처리 가능.
+
+#### 문서 처리 DoS 가드
+
+공개 문서는 작은 월별 집행내역 파일이라는 전제하에, 파서는 다음 한도를 강제한다.
+
+| 대상 | 한도 | 실패 동작 |
+|---|---:|---|
+| 다운로드 문서 본문 | 25 MiB | 다운로드 거부 |
+| PDF 입력 | 25 MiB | poppler 실행 전 거부 |
+| PDF vision 페이지 | 요청값을 1~5쪽으로 clamp | 5쪽 초과 이미지 생성 금지 |
+| `pdftotext` / `pdftoppm` | 30초 timeout | `PipelineConfigError` |
+| PDF PNG 이미지 | 8 MiB/쪽, 20 MiB/문서 | LLM 전송 전 거부 |
+| XLS/XLSX 입력 | 25 MiB | workbook open 전 거부 |
+| Spreadsheet sheets | 20 sheets | 순회 전 거부 |
+| Spreadsheet rows/columns | 5,000 rows/sheet, 100 columns/sheet | 행 materialize 전/중 거부 |
+| Spreadsheet total cells | 100,000 cells/workbook | 전체 nested list 생성 전/중 거부 |
+
+초과 파일은 부분 파싱하거나 truncate하지 않는다. 실패는 명시적 예외로 상위 run/운영 큐가 처리하며, oversized 이미지·스프레드시트 내용은 LLM에 보내지 않는다.
 
 ### 4. `normalizer/` — LLM 정규화
 
