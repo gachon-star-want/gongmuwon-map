@@ -2011,6 +2011,70 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "명확한 자유이용 표시 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("충청북도", "청주시청"): {
+        "sourceUrl": (
+            "https://www.cheongju.go.kr/www/selectBbsNttList.do?"
+            "bbsNo=24&integrDeptCode=&key=128&pageIndex=1&searchCnd=all&searchCtgry=&searchKrwd="
+        ),
+        "extraListUrls": [
+            (
+                "https://www.cheongju.go.kr/www/selectBbsNttList.do?"
+                "bbsNo=664&integrDeptCode=&key=7838&pageIndex=1&searchCnd=all&searchCtgry=&searchKrwd="
+            )
+        ],
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 부단체장 이상 업무추진비 사용내역 목록은 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "청주시의회"): {
+        "sourceUrl": "https://council.cheongju.go.kr/content/community/operatingExpenseList.html",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역 목록과 2025년 업무추진비 게시물 경로는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "충주시의회"): {
+        "sourceUrl": "https://council.chungju.go.kr/content/news/releaseInformation.html",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 자료공개 목록과 2025년 업무추진비 집행내역 게시물은 "
+            "확인했습니다. 다만 화면 하단 저작권 문구만 확인되고 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "제천시청"): {
+        "sourceUrl": (
+            "https://www.jecheon.go.kr/www/selectBbsNttList.do?"
+            "bbsNo=259&id=www_050301030000"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2025년 업무추진비 내역 게시물은 확인했습니다. 다만 "
+            "화면 하단 저작권 문구만 확인되고 공공누리 제1유형 또는 명확한 자유이용 표시가 "
+            "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("울산광역시", "남구청"): {
         "sourceUrl": "https://www.ulsannamgu.go.kr/cop/bbs/selectBoardList.do?bbsId=PrmtFee3",
         "extraListUrls": [
