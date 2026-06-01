@@ -49,6 +49,7 @@ DOWNLOAD_HREF_PARTS = (
     "/comm/getFile",
     "/common/file/download.do",
     "/portal/cmmn/file/fileDown.do",
+    "/board/FileDown.do",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
     "/cms/download.cs",
@@ -618,10 +619,11 @@ class CouncilAttachmentCrawler:
 
     def _parse_detail_downloads(self, html: str, detail: PostRef) -> list[PostRef]:
         tree = HTMLParser(html)
+        js_download_path = _egov_download_path_from_html(html) or self.js_download_path
         refs: list[PostRef] = []
         seen_urls: set[str] = set()
         for download in [*tree.css("a[href]"), *tree.css("[onclick]")]:
-            href = _download_href_from_anchor(download, self.js_download_path)
+            href = _download_href_from_anchor(download, js_download_path)
             if not href or not _is_download_href(href):
                 continue
             filename = _filename_from_download_link(download)
@@ -674,12 +676,12 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
         return f"/common/file/FileDown.do?file_id={file_down_load.group('file_id')}"
     egov_down_file = re.search(
         r"fn_egov_downFile\('(?P<atch_file_id>[^']+)'\s*,\s*'(?P<file_sn>[^']+)'\)",
-        onclick,
+        trigger,
     )
     if egov_down_file:
+        download_path = js_download_path or "/cmm/fms/FileDown.do"
         return (
-            "/cmm/fms/FileDown.do"
-            f"?atchFileId={egov_down_file.group('atch_file_id')}"
+            f"{download_path}?atchFileId={egov_down_file.group('atch_file_id')}"
             f"&fileSn={egov_down_file.group('file_sn')}"
         )
     act_download = re.search(
@@ -729,6 +731,14 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
             f"&flCd={php_file_down_load.group('file_cd')}"
         )
     return href
+
+
+def _egov_download_path_from_html(html: str) -> str:
+    match = re.search(
+        r"window\.open\([\"'](?P<path>[^\"']*FileDown\.do(?:;jsessionid=[^?\"']+)?)\?atchFileId=",
+        html,
+    )
+    return match.group("path") if match else ""
 
 
 def _inline_post_detail_href(anchor) -> str:

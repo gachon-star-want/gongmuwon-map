@@ -1354,6 +1354,12 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "fileKinds": ["pdf", "xlsx"],
         "followDetail": True,
         "pageParam": "pageIndex",
+        "jsDownloadPath": "/board/FileDown.do",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
@@ -1382,6 +1388,12 @@ NON_CAPITAL_BASIC_COUNCIL_ATTACHMENT_BOARDS = {
         "fileKinds": ["pdf"],
         "followDetail": True,
         "pageParam": "pageIndex",
+        "jsDownloadPath": "/board/FileDown.do",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
@@ -2983,6 +2995,11 @@ def non_capital_agencies() -> list[Agency]:
                         if "userAgent" in office_board
                         else {}
                     ),
+                    **(
+                        {"jsDownloadPath": office_board["jsDownloadPath"]}
+                        if "jsDownloadPath" in office_board
+                        else {}
+                    ),
                 }
                 if office_board
                 else {
@@ -3003,6 +3020,16 @@ def non_capital_agencies() -> list[Agency]:
                     **(
                         {"extraListUrls": council_board["extraListUrls"]}
                         if "extraListUrls" in council_board
+                        else {}
+                    ),
+                    **(
+                        {"userAgent": council_board["userAgent"]}
+                        if "userAgent" in council_board
+                        else {}
+                    ),
+                    **(
+                        {"jsDownloadPath": council_board["jsDownloadPath"]}
+                        if "jsDownloadPath" in council_board
                         else {}
                     ),
                 }

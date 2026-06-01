@@ -260,6 +260,37 @@ async def test_non_seoul_normalization_blocks_missing_agency_context() -> None:
         )
 
 
+@pytest.mark.asyncio
+async def test_force_deterministic_normalizer_env_skips_llm(monkeypatch) -> None:
+    monkeypatch.setenv("FORCE_DETERMINISTIC_NORMALIZER", "1")
+    normalizer = Normalizer()
+
+    visits = await normalizer.normalize_rows(
+        agency_id=agency_uuid("jeolla:gokseong:office"),
+        agency=_agency("전라남도", JurisdictionType.GUN),
+        source_url="https://example.test/source.pdf",
+        source_title="곡성군청 업무추진비",
+        source_published_at=None,
+        source_hash_sha256="hash",
+        rows=[
+            ParsedExpenseRow(
+                department_name="곡성군청",
+                used_at=datetime(2026, 1, 6, 13, 28),
+                place_text="청학회관",
+                amount=328000,
+                user_text="군수 외 13명",
+                purpose="간담회",
+                payment_method="신용지출",
+                raw_excerpt="군수 외 13명 청학회관",
+            )
+        ],
+    )
+
+    assert len(visits) == 1
+    assert visits[0].place_raw.name == "청학회관"
+    assert visits[0].rank_label == "군수"
+
+
 def test_llm_visit_payload_coercion_accepts_common_shape_drift() -> None:
     payload = _coerce_visit_payload(
         {

@@ -71,6 +71,11 @@ class Normalizer:
         allow_deterministic_fallback: bool = False,
     ) -> None:
         self.allow_deterministic_fallback = allow_deterministic_fallback
+        self.force_deterministic = os.getenv("FORCE_DETERMINISTIC_NORMALIZER", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         model_override = model or os.getenv("ANTHROPIC_MODEL")
         model_overrides: dict[str, dict[TaskType, str | None]] = {}
         if model_override is not None:
@@ -108,6 +113,17 @@ class Normalizer:
             allowed_elected_ranks_for_agency(agency)
         except LegalVisibilityError as exc:
             raise PipelineConfigError(str(exc)) from exc
+
+        if self.force_deterministic:
+            return deterministic_normalize_rows(
+                agency=agency,
+                agency_id=agency_id,
+                source_url=source_url,
+                source_title=source_title,
+                source_published_at=source_published_at,
+                source_hash_sha256=source_hash_sha256,
+                rows=rows,
+            )
 
         try:
             return await self._normalize_with_llm(
