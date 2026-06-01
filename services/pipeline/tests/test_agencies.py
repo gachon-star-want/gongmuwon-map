@@ -743,6 +743,16 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert gunsan_council.source_pattern["pageParam"] == "pageNum"
     assert "PDF/XLS/XLSX 다운로드 구조" in gunsan_council.source_pattern["blocker"]
 
+    geumjeong_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "부산광역시" and agency.short_name == "금정구청"
+    )
+    assert geumjeong_city.source_pattern["holdStatus"] == "legal_hold"
+    assert geumjeong_city.source_pattern["fileKinds"] == ["hwpx", "xlsx"]
+    assert geumjeong_city.source_pattern["pageParam"] == "startPage"
+    assert "공공누리 제4유형" in geumjeong_city.source_pattern["blocker"]
+
     pohang_city = next(
         agency
         for agency in pending_agencies
@@ -759,6 +769,16 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert pohang_council.source_pattern["holdStatus"] == "legal_hold"
     assert pohang_council.source_pattern["fileKinds"] == ["pdf"]
     assert "PDF 다운로드 구조" in pohang_council.source_pattern["blocker"]
+
+    jinju_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "경상남도" and agency.short_name == "진주시청"
+    )
+    assert jinju_city.source_pattern["holdStatus"] == "legal_hold"
+    assert jinju_city.source_pattern["fileKinds"] == ["xlsx"]
+    assert jinju_city.source_pattern["extraListUrls"] == ["https://www.jinju.go.kr/05637.web"]
+    assert "게시물별 라이선스 필터" in jinju_city.source_pattern["blocker"]
 
     changwon_city = next(
         agency

@@ -279,13 +279,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
 
     assert summary.total == 2200
     assert summary.verified_in_code == 142
-    assert summary.pending == 1992
-    assert summary.legal_hold == 66
+    assert summary.pending == 1990
+    assert summary.legal_hold == 68
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
     assert summary.priority_group_counts["p1"].verified_in_code == 142
-    assert summary.priority_group_counts["p1"].pending == 278
-    assert summary.priority_group_counts["p1"].legal_hold == 66
+    assert summary.priority_group_counts["p1"].pending == 276
+    assert summary.priority_group_counts["p1"].legal_hold == 68
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 60
     assert summary.priority_group_counts["p3"].total == 342
@@ -301,8 +301,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 11
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 278
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 59
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 276
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 61
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -600,6 +600,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert ulju_council.verification_status == "legal_hold"
     assert "XLSX 다운로드 구조" in ulju_council.evidence_note
 
+    geumjeong_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "부산광역시" and entry.short_name == "금정구청"
+    )
+    assert geumjeong_city.verification_status == "legal_hold"
+    assert "HWPX/XLSX 첨부 구조" in geumjeong_city.evidence_note
+    assert "공공누리 제4유형" in geumjeong_city.evidence_note
+
     mokpo_city = next(
         entry
         for entry in non_capital_entries
@@ -705,6 +714,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert pohang_council.verification_status == "legal_hold"
     assert "PDF 다운로드 구조" in pohang_council.evidence_note
 
+    jinju_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상남도" and entry.short_name == "진주시청"
+    )
     changwon_city = next(
         entry
         for entry in non_capital_entries
@@ -715,6 +729,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "경상남도" and entry.short_name == "창원시의회"
     )
+    assert jinju_city.verification_status == "legal_hold"
+    assert "과장급·국소장급 업무추진비 목록" in jinju_city.evidence_note
+    assert "게시물별 라이선스 필터" in jinju_city.evidence_note
     assert changwon_city.verification_status == "verified_in_code"
     assert changwon_city.source_url == (
         "https://www.changwon.go.kr/cwportal/10312/10620/10629.web?gcode=1036"
