@@ -2061,6 +2061,110 @@ def test_attachment_crawler_extracts_egov_file_downloads() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_configured_egov_file_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="곡성군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="전라남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": (
+                    "https://www.gokseong.go.kr/kr/board/list.do?"
+                    "bbsId=BBS_000000000000540&menuNo=102006001000"
+                ),
+                "fileKinds": ["pdf"],
+                "followDetail": True,
+                "pageParam": "pageIndex",
+                "jsDownloadPath": "/board/FileDown.do",
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url=(
+            "https://www.gokseong.go.kr/kr/board/view.do?"
+            "bbsId=BBS_000000000000540&nttId=139858"
+        ),
+        title="26년 1분기 시책추진업무추진비 집행내역",
+        department_name="곡성군청 군수",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="javascript:fn_egov_downFile('FILE_000000014480507','0')"
+           title="26년 1분기 시책추진업무추진비 집행내역(군수).pdf">
+          26년 1분기 시책추진업무추진비 집행내역(군수).pdf
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.gokseong.go.kr/board/FileDown.do"
+        "?atchFileId=FILE_000000014480507&fileSn=0"
+    )
+    assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_egov_download_path_from_detail_script() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="곡성군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="전라남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": (
+                    "https://www.gokseong.go.kr/kr/board/list.do?"
+                    "bbsId=BBS_000000000000540&menuNo=102006001000"
+                ),
+                "fileKinds": ["pdf"],
+                "followDetail": True,
+                "pageParam": "pageIndex",
+                "jsDownloadPath": "/board/FileDown.do",
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url=(
+            "https://www.gokseong.go.kr/kr/board/view.do;jsessionid=ABC?"
+            "bbsId=BBS_000000000000540&nttId=109056"
+        ),
+        title="2026년 시책업무추진비 집행현황(1분기)",
+        department_name="곡성군청 군수",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <script>
+          function fn_egov_downFile(atchFileId, fileSn){
+            window.open("/board/FileDown.do;jsessionid=ABC?atchFileId="+atchFileId+"&fileSn="+fileSn+"");
+          }
+        </script>
+        <a href="javascript:fn_egov_downFile('FILE_000000014480507','0')">
+          26년 1분기 시책추진업무추진비 집행내역(군수).pdf
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.gokseong.go.kr/board/FileDown.do;jsessionid=ABC"
+        "?atchFileId=FILE_000000014480507&fileSn=0"
+    )
+    assert refs[0].file_kind == "pdf"
+
+
 def test_attachment_crawler_extracts_data_column_egov_download_tables() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
