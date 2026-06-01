@@ -1641,6 +1641,22 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "금정구청"): {
+        "sourceUrl": (
+            "https://www.geumjeong.go.kr/board/list.geumj?"
+            "boardId=BBS_0000331&menuCd=DOM_000000124001011000&orderBy=REGISTER_DATE+DESC"
+        ),
+        "fileKinds": ["hwpx", "xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 상세·HWPX/XLSX 첨부 구조는 확인했습니다. 다만 "
+            "상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 "
+            "표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
     ("울산광역시", "남구청"): {
         "sourceUrl": "https://www.ulsannamgu.go.kr/cop/bbs/selectBoardList.do?bbsId=PrmtFee3",
         "extraListUrls": [
@@ -1699,6 +1715,21 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 현황 목록과 상세·PDF 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
             "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "진주시청"): {
+        "sourceUrl": "https://www.jinju.go.kr/05638.web",
+        "extraListUrls": ["https://www.jinju.go.kr/05637.web"],
+        "fileKinds": ["xlsx"],
+        "pageParam": "cpage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 과장급·국소장급 업무추진비 목록과 상세·XLSX 첨부 구조는 확인했습니다. "
+            "다만 일부 상세는 공공누리 제1유형이지만 같은 업무추진비 보드의 다른 상세가 "
+            "공공누리 제4유형으로 표시되어, 게시물별 라이선스 필터가 구현되기 전까지 "
+            "수집하지 않습니다."
         ),
     },
     ("경상남도", "창원시의회"): {

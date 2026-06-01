@@ -272,8 +272,8 @@ def test_print_source_registry_reports_nationwide_verification_state(
     assert result == 0
     assert output["summary"]["total"] == 2200
     assert output["summary"]["verified_in_code"] == 142
-    assert output["summary"]["pending"] == 1992
-    assert output["summary"]["legal_hold"] == 66
+    assert output["summary"]["pending"] == 1990
+    assert output["summary"]["legal_hold"] == 68
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 486
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
