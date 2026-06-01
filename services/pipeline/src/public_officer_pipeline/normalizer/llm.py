@@ -46,6 +46,7 @@ _CONFIDENCE_LABELS = {
     "보통": 0.7,
     "낮음": 0.4,
 }
+_DEFAULT_LLM_CONFIDENCE = 0.8
 
 
 def _system_prompt_for(agency: Agency) -> str:
@@ -229,6 +230,9 @@ def _coerce_visit_payload(visit: Any) -> dict[str, Any]:
                 break
 
     confidence = coerced.get("confidence")
+    if confidence is None:
+        coerced["confidence"] = _DEFAULT_LLM_CONFIDENCE
+        return coerced
     if isinstance(confidence, str):
         confidence_text = confidence.strip().lower()
         try:

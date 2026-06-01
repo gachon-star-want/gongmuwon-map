@@ -341,7 +341,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         if agency.source_pattern.get("status") == "adapter_required"
     ]
 
-    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 9
+    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 10
     assert all(agency.homepage is None for agency in pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in pending_agencies)
@@ -796,6 +796,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "보령시청",
         "서산시청",
         "구미시청",
+        "밀양시청",
         "전라남도청",
         "곡성군청",
         "곡성군의회",
@@ -804,6 +805,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
+    miryang_city = next(agency for agency in verified_non_capital if agency.short_name == "밀양시청")
     jeonnam_city = next(agency for agency in verified_non_capital if agency.short_name == "전라남도청")
     gokseong_city = next(agency for agency in verified_non_capital if agency.short_name == "곡성군청")
     gokseong_council = next(
@@ -826,6 +828,15 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert gumi_city.source_pattern["fileKinds"] == ["xlsx", "xls"]
     assert gumi_city.source_pattern["pageParam"] == "page"
+    assert miryang_city.homepage == "https://www.miryang.go.kr"
+    assert miryang_city.source_pattern["adapter"] == "attachment_board"
+    assert miryang_city.source_pattern["listUrl"] == (
+        "https://www.miryang.go.kr/twn/bbs/selectBoardList.do?"
+        "bbsId=BBSMSTR_000000085910&mnNo=3040000&owd=sammun"
+    )
+    assert miryang_city.source_pattern["fileKinds"] == ["xlsx"]
+    assert miryang_city.source_pattern["pageParam"] == "pageIndex"
+    assert miryang_city.source_pattern["userAgent"].startswith("Mozilla/5.0 (Macintosh")
     assert jeonnam_city.homepage == "https://www.jeonnam.go.kr"
     assert jeonnam_city.source_pattern["adapter"] == "attachment_board"
     assert jeonnam_city.source_pattern["listUrl"] == (

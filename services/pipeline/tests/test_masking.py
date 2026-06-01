@@ -290,3 +290,17 @@ def test_llm_visit_payload_coercion_accepts_qualitative_confidence() -> None:
     )
 
     assert payload["confidence"] == 0.9
+
+
+def test_llm_visit_payload_coercion_defaults_null_confidence() -> None:
+    payload = _coerce_visit_payload(
+        {
+            "visit_date": "2026-04-24",
+            "amount": 10000,
+            "place_raw": "지베",
+            "raw_excerpt": "총무과 직원",
+            "confidence": None,
+        }
+    )
+
+    assert payload["confidence"] == 0.8

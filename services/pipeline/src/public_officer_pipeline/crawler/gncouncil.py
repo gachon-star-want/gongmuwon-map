@@ -50,6 +50,7 @@ DOWNLOAD_HREF_PARTS = (
     "/common/file/download.do",
     "/portal/cmmn/file/fileDown.do",
     "/cmm/fms/FileDown.do",
+    "/cmm/fms/FileWebDown.do",
     "/cms/download.cs",
     "/FileDownLoad.php",
     "/ExFileDownLoad.php",
@@ -917,6 +918,7 @@ def _is_detail_href(href: str) -> bool:
         return False
     return (
         "view.do" in lowered
+        or "selectboarddetail.do" in lowered
         or "mode=view" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
