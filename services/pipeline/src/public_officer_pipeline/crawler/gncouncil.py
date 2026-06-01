@@ -58,7 +58,7 @@ DOWNLOAD_HREF_PARTS = (
     "/ExFileDownLoad.php",
     "/cwsboard/board.do?mode=download",
 )
-DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
+DATE_RE = re.compile(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})")
 KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
 
 
@@ -531,6 +531,17 @@ class CouncilAttachmentCrawler:
                 href = (
                     "/site/yangcheon/ex/bbs/View.do"
                     f"?cbIdx={bbs_view.group('cb_idx')}&bcIdx={bbs_view.group('bc_idx')}"
+                )
+            bd_board_view = re.search(
+                r"jsView\(\s*['\"](?P<bbs_cd>[^'\"]+)['\"]\s*,\s*['\"](?P<seq>[^'\"]+)['\"]",
+                trigger,
+            )
+            if bd_board_view:
+                parts = urlsplit(self.list_url)
+                detail_path = re.sub(r"BD_board\.list\.do$", "BD_board.view.do", parts.path)
+                href = (
+                    f"{detail_path}?bbsCd={bd_board_view.group('bbs_cd')}"
+                    f"&seq={bd_board_view.group('seq')}"
                 )
             portal_bbs_view = re.search(
                 r"goTo\.view\('list'\s*,\s*'(?P<b_idx>[^']+)'\s*,\s*'(?P<pt_idx>[^']+)'\s*,\s*'(?P<m_id>[^']+)'",

@@ -999,6 +999,51 @@ def test_attachment_crawler_uses_title_for_generic_xls_download_label() -> None:
     assert refs[0].file_kind == "xls"
 
 
+def test_attachment_crawler_extracts_bd_board_js_view_detail_links() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="수원시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경기도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.suwon.go.kr/web/board/BD_board.list.do?bbsCd=1179",
+                "followDetail": True,
+            },
+        )
+    )
+
+    refs = crawler._parse_detail_links(
+        """
+        <table>
+          <tbody>
+            <tr>
+              <td>6804</td>
+              <td>
+                <a href="#" onclick="jsView('1179', '20260601210528273', 'Y', 'Y'); return false;">
+                  2026년 5월 아동돌봄과 업무추진비 집행내역 공개
+                </a>
+              </td>
+              <td>왕혜영</td>
+              <td>2026/06/01</td>
+              <td>2</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.suwon.go.kr/web/board/BD_board.view.do"
+        "?bbsCd=1179&seq=20260601210528273"
+    )
+    assert refs[0].published_at and refs[0].published_at.isoformat() == "2026-06-01"
+    assert refs[0].file_kind == "html"
+
+
 def test_attachment_crawler_extracts_view_path_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
