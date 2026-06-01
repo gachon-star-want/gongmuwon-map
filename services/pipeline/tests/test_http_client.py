@@ -373,6 +373,50 @@ async def test_adaptive_client_retries_decode_errors_with_identity_curl(
 
 
 @pytest.mark.asyncio
+async def test_adaptive_client_retries_protocol_errors_with_curl(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[str] = []
+
+    async def fake_primary_get(*_args: object, **_kwargs: object):
+        request = httpx.Request("GET", "https://example.com/list")
+        raise httpx.RemoteProtocolError("continuation line at start of headers", request=request)
+
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        captured.extend(str(item) for item in args)
+        _write_curl_files(args, body_bytes="업무추진비".encode())
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _AdaptiveHttpClient(
+        timeout=httpx.Timeout(1.0),
+        headers={"User-Agent": "base"},
+        follow_redirects=False,
+    )
+    monkeypatch.setattr(client._primary, "get", fake_primary_get)
+
+    try:
+        response = await client.get("https://example.com/list")
+    finally:
+        await client.aclose()
+
+    assert response.text == "업무추진비"
+    assert "--compressed" in captured
+    assert "Accept-Encoding: identity" not in captured
+
+
+@pytest.mark.asyncio
 async def test_curl_client_rejects_oversized_parsed_body(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_subprocess_exec(*_args: object, **_kwargs: object):
         _write_curl_files(_args, body_bytes=b"12345")
