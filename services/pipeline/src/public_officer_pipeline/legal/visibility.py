@@ -124,6 +124,22 @@ def _name_rank_replacement(match: re.Match[str]) -> str:
 def _validate_department_name(value: str | None) -> str | None:
     if value is None:
         return value
-    if _PERSON_NAME_WITH_RANK_RE.search(value):
+    for match in _PERSON_NAME_WITH_RANK_RE.finditer(value):
+        if _is_department_unit_rank_false_positive(match):
+            continue
         raise LegalVisibilityError(f"department_name contains unmasked personal identity: {value}")
     return value
+
+
+def _is_department_unit_rank_false_positive(match: re.Match[str]) -> bool:
+    rank = match.group("rank")
+    if rank not in {"담당관", "전문위원"}:
+        return False
+    if match.group("sep"):
+        return False
+    name = match.group("name")
+    # Korean department units such as "의사입법담당관" or "감사담당관"
+    # often look like a name directly followed by an appointed rank. Keep
+    # three-syllable prefixes rejected because they are the common personal-name
+    # shape in strings like "홍길동담당관".
+    return len(name) != 3

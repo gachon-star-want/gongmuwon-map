@@ -237,6 +237,20 @@ def test_department_name_with_embedded_name_rank_is_rejected() -> None:
         validate_normalized_visit(_visit(department_name="총무과 이영희 동장"), agency=_agency("경기도"))
 
 
+def test_department_name_allows_department_unit_ending_with_damdangwan() -> None:
+    validated = validate_normalized_visit(
+        _visit(department_name="용인시의회 의사입법담당관 외"),
+        agency=_agency("경기도"),
+    )
+
+    assert validated.department_name == "용인시의회 의사입법담당관 외"
+
+
+def test_department_name_rejects_compact_person_name_damdangwan() -> None:
+    with pytest.raises(LegalVisibilityError):
+        validate_normalized_visit(_visit(department_name="홍길동담당관"), agency=_agency("경기도"))
+
+
 @pytest.mark.asyncio
 async def test_non_seoul_normalization_blocks_missing_agency_context() -> None:
     normalizer = Normalizer(allow_deterministic_fallback=True)
