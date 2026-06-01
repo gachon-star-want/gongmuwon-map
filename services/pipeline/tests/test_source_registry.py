@@ -566,8 +566,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "PDF 다운로드 구조" in gyeongnam_council.evidence_note
     assert jeju_city.verification_status == "legal_hold"
     assert "도청 전체 업무추진비 통합 출처로 확정할 수 없고" in jeju_city.evidence_note
+    assert "상업적 목적 이용 불가" in jeju_city.evidence_note
     assert jeju_council.verification_status == "legal_hold"
-    assert "XLSX 다운로드 구조" in jeju_council.evidence_note
+    assert "XLS/XLSX 다운로드 구조" in jeju_council.evidence_note
+    assert "ALL RIGHTS RESERVED" in jeju_council.evidence_note
 
     ulsan_city = next(
         entry

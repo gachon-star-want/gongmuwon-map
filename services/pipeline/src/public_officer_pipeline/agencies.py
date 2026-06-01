@@ -1200,26 +1200,26 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
         "fileKinds": ["xlsx", "hwp"],
         "pageParam": "page",
         "followDetail": True,
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
         "blocker": (
             "공식 감사위원회 업무추진비 공개 목록과 상세·XLSX/HWP 다운로드 구조는 확인했습니다. "
             "다만 도청 전체 업무추진비 통합 출처로 확정할 수 없고, 목록/상세 화면에서 "
-            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 "
-            "수집하지 않습니다."
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않으며, 감사위원회 "
+            "저작권보호정책에 상업적 목적 이용 불가가 명시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     "제주특별자치도의회": {
         "sourceUrl": "https://www.council.jeju.kr/clicknews/openpromotion.do",
-        "fileKinds": ["xlsx"],
+        "fileKinds": ["xlsx", "xls"],
         "pageParam": "page",
         "followDetail": True,
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
         "blocker": (
-            "공식 업무추진비공개 목록과 상세·XLSX 다운로드 구조는 확인했습니다. 다만 "
-            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
-            "제1유형 확인 전까지 수집하지 않습니다."
+            "공식 업무추진비공개 목록과 상세·XLS/XLSX 다운로드 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 "
+            "푸터의 ALL RIGHTS RESERVED 저작권 문구만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     "울산시청": {

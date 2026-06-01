@@ -586,9 +586,11 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert jeju_city.source_pattern["fileKinds"] == ["xlsx", "hwp"]
     assert jeju_city.source_pattern["pageParam"] == "page"
     assert "도청 전체 업무추진비 통합 출처로 확정할 수 없고" in jeju_city.source_pattern["blocker"]
+    assert "상업적 목적 이용 불가" in jeju_city.source_pattern["blocker"]
     assert jeju_council.source_pattern["holdStatus"] == "legal_hold"
-    assert jeju_council.source_pattern["fileKinds"] == ["xlsx"]
-    assert "XLSX 다운로드 구조" in jeju_council.source_pattern["blocker"]
+    assert jeju_council.source_pattern["fileKinds"] == ["xlsx", "xls"]
+    assert "XLS/XLSX 다운로드 구조" in jeju_council.source_pattern["blocker"]
+    assert "ALL RIGHTS RESERVED" in jeju_council.source_pattern["blocker"]
 
     ulsan_city = next(
         agency
