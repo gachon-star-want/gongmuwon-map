@@ -140,6 +140,16 @@ PDF_TEXT_USER_AMOUNT_PLACE_ADDRESS_PURPOSE_ROW_RE = re.compile(
     r"(?P<party_size>\d+\s*명|-)\s+"
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
 )
+PDF_TEXT_COUNCIL_USER_PLACE_ROW_RE = re.compile(
+    r"^\s*\d+\s+"
+    r"(?P<user>\S+)\s+"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<department>\S*의회)\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?:(?P<party_size>\d+|-)\s+)?"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_SEGMENTED_OFFICE_USER_DATE_RE = re.compile(
     r"^(?P<user>.+?)\s+"
     r"(?P<date>20\d{6}|20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
@@ -286,6 +296,9 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     )
     if user_amount_place_address_purpose:
         return user_amount_place_address_purpose
+    council_user_place = _parse_pdf_text_council_user_place_line(line, fallback_department=fallback_department)
+    if council_user_place:
+        return council_user_place
     user_place_purpose_amount = _parse_pdf_text_user_place_purpose_amount_line(
         line,
         fallback_department=fallback_department,
@@ -605,6 +618,37 @@ def _parse_pdf_text_user_amount_place_address_purpose_line(
             row_match.group("amount"),
             row_match.group("payment_method"),
         ],
+    )
+
+
+def _parse_pdf_text_council_user_place_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_COUNCIL_USER_PLACE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    body_parts = [
+        _normalize_pdf_text_fragment(part)
+        for part in re.split(r"\s{2,}", row_match.group("body"), maxsplit=1)
+        if part.strip()
+    ]
+    if len(body_parts) != 2:
+        return None
+    place_text, purpose = body_parts
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "department_name": row_match.group("department") or fallback_department,
+            "used_at": row_match.group("date"),
+            "place_text": place_text,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "payment_method": row_match.group("payment_method"),
+            "user_text": row_match.group("user"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[line],
     )
 
 
