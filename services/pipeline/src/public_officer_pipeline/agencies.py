@@ -1318,6 +1318,23 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    ("경상남도", "밀양시청"): {
+        "homepage": "https://www.miryang.go.kr",
+        "listUrl": (
+            "https://www.miryang.go.kr/twn/bbs/selectBoardList.do?"
+            "bbsId=BBSMSTR_000000085910&mnNo=3040000&owd=sammun"
+        ),
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "pageIndex",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-01",
+        "verifiedBy": "공식 사이트 원격 확인",
+    },
     ("전라남도", "곡성군청"): {
         "homepage": "https://www.gokseong.go.kr",
         "listUrl": (

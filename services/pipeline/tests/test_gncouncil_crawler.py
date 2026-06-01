@@ -2235,3 +2235,68 @@ def test_attachment_crawler_extracts_configured_php_file_downloads() -> None:
     assert len(refs) == 1
     assert refs[0].url == "https://gimpocouncil.go.kr/sma/utl/FileDownLoad.php?flSn=18771&flCd=act0702"
     assert refs[0].file_kind == "xlsx"
+
+
+def test_attachment_crawler_extracts_miryang_board_detail_and_file_web_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="밀양시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경상남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": (
+                    "https://www.miryang.go.kr/twn/bbs/selectBoardList.do?"
+                    "bbsId=BBSMSTR_000000085910&mnNo=3040000&owd=sammun"
+                ),
+                "fileKinds": ["xlsx"],
+                "pageParam": "pageIndex",
+                "followDetail": True,
+            },
+        )
+    )
+
+    details = crawler._parse_detail_links(
+        """
+        <table>
+          <tbody>
+            <tr>
+              <td>42</td>
+              <td>
+                <a href="/twn/bbs/selectBoardDetail.do;jsessionid=ABC.was1?mnNo=3040000&amp;owd=sammun&amp;bbsId=BBSMSTR_000000085910&amp;nttId=191938&amp;pageIndex=1">
+                  <span class="txt">2026년 업무추진비 집행내역(5월)</span>
+                </a>
+              </td>
+              <td>삼문동</td>
+              <td>2026-05-29</td>
+              <td>12</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(details) == 1
+    assert details[0].url == (
+        "https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do;jsessionid=ABC.was1"
+        "?mnNo=3040000&owd=sammun&bbsId=BBSMSTR_000000085910&nttId=191938&pageIndex=1"
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/cmm/fms/FileWebDown.do?atchFileId=FILE_000000000082328&amp;fileSn=0"
+           title="2026년 업무추진비 집행내역(5월).xlsx">
+          <span class="F-nme">2026년 업무추진비 집행내역(5월).xlsx</span>
+        </a>
+        """,
+        details[0],
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.miryang.go.kr/cmm/fms/FileWebDown.do?"
+        "atchFileId=FILE_000000000082328&fileSn=0"
+    )
+    assert refs[0].file_kind == "xlsx"
