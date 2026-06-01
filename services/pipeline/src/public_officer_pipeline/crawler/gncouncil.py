@@ -561,6 +561,13 @@ class CouncilAttachmentCrawler:
                 query["bbsSn"] = info_bbs_view.group("bbs_sn")
                 detail_path = re.sub(r"List\.php$", "View.php", parts.path)
                 href = urlunsplit(("", "", detail_path, urlencode(query), ""))
+            inline_post_idx = anchor.attributes.get("data-req-get-p-idx", "") if anchor else ""
+            if inline_post_idx:
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["idx"] = inline_post_idx
+                detail_path = re.sub(r"list\.do$", "view.do", parts.path)
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
             inline_post_href = _inline_post_detail_href(anchor)
             if inline_post_href:
                 href = inline_post_href

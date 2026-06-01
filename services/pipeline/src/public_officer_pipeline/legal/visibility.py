@@ -86,12 +86,14 @@ def validate_normalized_visit(visit: NormalizedVisit, *, agency: Agency) -> Norm
 
     department_name = _validate_department_name(visit.department_name)
     purpose = _mask_name_rank_pairs(visit.purpose or "") or None
+    party_size = visit.party_size if visit.party_size and visit.party_size > 0 else None
 
     raw_excerpt = sanitize_raw_excerpt(visit.raw_excerpt)
 
     return visit.model_copy(
         update={
             "department_name": department_name,
+            "party_size": party_size,
             "purpose": purpose,
             "representative": representative,
             "raw_excerpt": raw_excerpt,

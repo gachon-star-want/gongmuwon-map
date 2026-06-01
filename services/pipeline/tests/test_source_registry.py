@@ -278,13 +278,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2200
-    assert summary.verified_in_code == 139
-    assert summary.pending == 1994
+    assert summary.verified_in_code == 140
+    assert summary.pending == 1993
     assert summary.legal_hold == 67
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
-    assert summary.priority_group_counts["p1"].verified_in_code == 139
-    assert summary.priority_group_counts["p1"].pending == 280
+    assert summary.priority_group_counts["p1"].verified_in_code == 140
+    assert summary.priority_group_counts["p1"].pending == 279
     assert summary.priority_group_counts["p1"].legal_hold == 67
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 60
@@ -300,8 +300,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 8
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 280
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 9
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 279
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 60
     assert all(
         entry.source_url is None
@@ -361,6 +361,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "https://council.daejeon.go.kr/svc/inf/OperatingExpenseList.do"
     )
     assert daejeon_council.homepage == "https://council.daejeon.go.kr"
+    gumi_city = next(entry for entry in non_capital_entries if entry.short_name == "구미시청")
+    assert gumi_city.verification_status == "verified_in_code"
+    assert gumi_city.source_url == (
+        "https://www.gumi.go.kr/portal/board/post/list.do?"
+        "bcIdx=164&mid=0303100000"
+    )
+    assert gumi_city.homepage == "https://www.gumi.go.kr"
+    assert gumi_city.source_file_kinds == ["xlsx", "xls"]
+    assert gumi_city.verified_at == "2026-06-01"
     jeonnam_city = next(entry for entry in non_capital_entries if entry.short_name == "전라남도청")
     jeonnam_council = next(entry for entry in non_capital_entries if entry.short_name == "전라남도의회")
     gokseong_city = next(entry for entry in non_capital_entries if entry.short_name == "곡성군청")
