@@ -262,7 +262,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
         baseline_source_url=baseline_source_url,
         verified_at=verified_at,
         verified_by=verified_by,
-        evidence_note="코드에 검증된 공식 출처 패턴이 있습니다. 대기 기관의 URL은 추정하지 않습니다.",
+        evidence_note=_verified_evidence_note(raw),
     )
 
 
@@ -338,6 +338,14 @@ def _pending_evidence_note(raw: object) -> str:
         if baseline_evidence:
             return baseline_evidence
     return "공식 업무추진비 출처 URL 검증 전입니다. adapter_required 상태로 유지합니다."
+
+
+def _verified_evidence_note(raw: object) -> str:
+    if isinstance(raw, dict):
+        evidence_note = _optional_str(raw.get("evidenceNote"))
+        if evidence_note:
+            return evidence_note
+    return "코드에 검증된 공식 출처 패턴이 있습니다. 대기 기관의 URL은 추정하지 않습니다."
 
 
 def _adapter_required_status(raw: object) -> VerificationStatus:

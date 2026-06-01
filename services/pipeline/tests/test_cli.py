@@ -273,13 +273,15 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 142
+    assert output["summary"]["verified_in_code"] == 144
     assert output["summary"]["pending"] == 1835
-    assert output["summary"]["legal_hold"] == 100
+    assert output["summary"]["legal_hold"] == 98
     assert output["summary"]["source_not_found"] == 122
     assert output["summary"]["adapter_hold"] == 1
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 486
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 144
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 98
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
     assert output["summary"]["priority_group_counts"]["p4"]["total"] == 1312
@@ -295,7 +297,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 142
+    assert output["summary"]["verified_in_code"] == 144
     assert "entries" not in output
 
 
