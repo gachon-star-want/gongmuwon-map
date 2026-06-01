@@ -1335,6 +1335,15 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    ("경상남도", "창원시청"): {
+        "homepage": "https://www.changwon.go.kr",
+        "listUrl": "https://www.changwon.go.kr/cwportal/10312/10620/10629.web?gcode=1036",
+        "fileKinds": ["xlsx", "pdf"],
+        "followDetail": True,
+        "pageParam": "cpage",
+        "verifiedAt": "2026-06-01",
+        "verifiedBy": "공식 사이트 원격 확인",
+    },
     ("전라남도", "곡성군청"): {
         "homepage": "https://www.gokseong.go.kr",
         "listUrl": (
@@ -1690,19 +1699,6 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 현황 목록과 상세·PDF 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
             "제1유형 확인 전까지 수집하지 않습니다."
-        ),
-    },
-    ("경상남도", "창원시청"): {
-        "sourceUrl": "https://www.changwon.go.kr/cwportal/10312/10620/10629.web?gcode=1036",
-        "fileKinds": ["pdf"],
-        "pageParam": "cpage",
-        "followDetail": True,
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
-        "blocker": (
-            "공식 업무추진비 공개 목록과 상세·PDF 다운로드 구조는 확인했습니다. 다만 "
-            "상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 "
-            "제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
     ("경상남도", "창원시의회"): {

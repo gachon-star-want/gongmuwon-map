@@ -53,6 +53,7 @@ DOWNLOAD_HREF_PARTS = (
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
     "/cms/download.cs",
+    "/cmsfile/download.do",
     "/FileDownLoad.php",
     "/ExFileDownLoad.php",
     "/cwsboard/board.do?mode=download",
@@ -930,6 +931,7 @@ def _is_detail_href(href: str) -> bool:
         "view.do" in lowered
         or "selectboarddetail.do" in lowered
         or "mode=view" in lowered
+        or "amode=view" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
         or re.search(r"(?:^|/)view(?:\?|$)", lowered) is not None
