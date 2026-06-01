@@ -754,6 +754,28 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert geumjeong_city.source_pattern["fileKinds"] == ["hwpx", "xlsx"]
     assert geumjeong_city.source_pattern["pageParam"] == "startPage"
     assert "공공누리 제4유형" in geumjeong_city.source_pattern["blocker"]
+    busan_seogu = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "부산광역시" and agency.short_name == "서구청"
+    )
+    busan_namgu = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "부산광역시" and agency.short_name == "남구청"
+    )
+    busan_junggu = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "부산광역시" and agency.short_name == "중구청"
+    )
+    assert busan_seogu.source_pattern["holdStatus"] == "adapter_hold"
+    assert busan_seogu.source_pattern["fileKinds"] == ["hwp"]
+    assert "HWP extractor" in busan_seogu.source_pattern["blocker"]
+    assert busan_namgu.source_pattern["holdStatus"] == "legal_hold"
+    assert "국장급 이상 업무추진비" in busan_namgu.source_pattern["blocker"]
+    assert busan_junggu.source_pattern["holdStatus"] == "source_not_found"
+    assert "searchedPaths" in busan_junggu.source_pattern
 
     pohang_city = next(
         agency
@@ -771,6 +793,13 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert pohang_council.source_pattern["holdStatus"] == "legal_hold"
     assert pohang_council.source_pattern["fileKinds"] == ["pdf"]
     assert "PDF 다운로드 구조" in pohang_council.source_pattern["blocker"]
+    mungyeong_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "경상북도" and agency.short_name == "문경시청"
+    )
+    assert mungyeong_city.source_pattern["holdStatus"] == "legal_hold"
+    assert "공공누리 제4유형" in mungyeong_city.source_pattern["blocker"]
 
     jinju_city = next(
         agency
@@ -803,6 +832,26 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert changwon_council.source_pattern["fileKinds"] == ["pdf"]
     assert changwon_council.source_pattern["pageParam"] == "pageNo"
     assert "PDF 다운로드 구조" in changwon_council.source_pattern["blocker"]
+    gimhae_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "경상남도" and agency.short_name == "김해시청"
+    )
+    geochang_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "경상남도" and agency.short_name == "거창군청"
+    )
+    hadong_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "경상남도" and agency.short_name == "하동군의회"
+    )
+    assert gimhae_city.source_pattern["holdStatus"] == "legal_hold"
+    assert "All Rights Reserved" in gimhae_city.source_pattern["blocker"]
+    assert geochang_city.source_pattern["holdStatus"] == "legal_hold"
+    assert geochang_city.source_pattern["fileKinds"] == ["xlsx", "xls"]
+    assert hadong_council.source_pattern["holdStatus"] == "source_not_found"
 
     daegu_city = next(agency for agency in pending_agencies if agency.short_name == "대구시청")
     daegu_council = next(agency for agency in pending_agencies if agency.short_name == "대구시의회")
