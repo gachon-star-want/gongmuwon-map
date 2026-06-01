@@ -12,7 +12,7 @@ __pycache__/
 *.pyc
 .ruff_cache/
 .venv/
-services/pipeline/pipeline_state.db
+services/pipeline/**/pipeline_state.db
 supabase/.branches/
 supabase/.temp/
 .vercel
