@@ -341,7 +341,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         if agency.source_pattern.get("status") == "adapter_required"
     ]
 
-    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 10
+    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 11
     assert all(agency.homepage is None for agency in pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in pending_agencies)
@@ -762,7 +762,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
 
     changwon_city = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "경상남도" and agency.short_name == "창원시청"
     )
     changwon_council = next(
@@ -770,10 +770,13 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "경상남도" and agency.short_name == "창원시의회"
     )
-    assert changwon_city.source_pattern["holdStatus"] == "legal_hold"
-    assert changwon_city.source_pattern["fileKinds"] == ["pdf"]
+    assert changwon_city.homepage == "https://www.changwon.go.kr"
+    assert changwon_city.source_pattern["adapter"] == "attachment_board"
+    assert changwon_city.source_pattern["listUrl"] == (
+        "https://www.changwon.go.kr/cwportal/10312/10620/10629.web?gcode=1036"
+    )
+    assert changwon_city.source_pattern["fileKinds"] == ["xlsx", "pdf"]
     assert changwon_city.source_pattern["pageParam"] == "cpage"
-    assert "공공누리 제4유형" in changwon_city.source_pattern["blocker"]
     assert changwon_council.source_pattern["holdStatus"] == "legal_hold"
     assert changwon_council.source_pattern["fileKinds"] == ["pdf"]
     assert changwon_council.source_pattern["pageParam"] == "pageNo"
@@ -797,6 +800,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "서산시청",
         "구미시청",
         "밀양시청",
+        "창원시청",
         "전라남도청",
         "곡성군청",
         "곡성군의회",

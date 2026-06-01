@@ -405,6 +405,64 @@ def test_attachment_crawler_extracts_daejeon_file_download_links() -> None:
     assert download_refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_changwon_amode_detail_and_cmsfile_downloads() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="창원시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경상남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.changwon.go.kr/cwportal/10312/10620/10629.web?gcode=1036",
+                "fileKinds": ["xlsx", "pdf"],
+                "followDetail": True,
+                "pageParam": "cpage",
+            },
+        )
+    )
+
+    detail_refs = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>878668</td>
+            <td><a href="?gcode=1036&amp;idx=878668&amp;amode=view&amp;" class="cv3">
+              (자치행정국 자치행정과) 2026년 5월 업무추진비 집행내역
+            </a></td>
+            <td>자치행정과</td>
+            <td>2026-06-01</td>
+            <td>첨부</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(detail_refs) == 1
+    assert detail_refs[0].url == (
+        "https://www.changwon.go.kr/cwportal/10312/10620/10629.web"
+        "?gcode=1036&idx=878668&amode=view&"
+    )
+    assert detail_refs[0].published_at.isoformat() == "2026-06-01"
+
+    download_refs = crawler._parse_detail_downloads(
+        """
+        <a href="/cwportal/cmsfile/download.do?idx=477022&amp;&amp;fsiz=88770" class="filename">
+          업무추진비 집행내역(2026.5.).pdf(86.7 KB)
+        </a>
+        """,
+        detail_refs[0],
+    )
+
+    assert len(download_refs) == 1
+    assert download_refs[0].url == (
+        "https://www.changwon.go.kr/cwportal/cmsfile/download.do?idx=477022&&fsiz=88770"
+    )
+    assert download_refs[0].file_kind == "pdf"
+    assert download_refs[0].department_name == "창원시청 자치행정국 자치행정과"
+
+
 def test_council_attachment_crawler_removes_decorative_new_badge_from_titles() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
