@@ -435,6 +435,44 @@ def test_extracts_council_cost_xlsx_approval_date_headers_without_place() -> Non
     assert rows[0].amount == 110000
 
 
+def test_extracts_html_table_served_as_spreadsheet_bytes() -> None:
+    content = """
+    <html>
+      <body>
+        <table>
+          <tr>
+            <th>집행일시</th>
+            <th>사용장소</th>
+            <th>사용목적</th>
+            <th>사용금액(원)</th>
+            <th>대상인원</th>
+            <th>결제방법</th>
+          </tr>
+          <tr>
+            <td>2026-04-03 12:30</td>
+            <td>양천식당</td>
+            <td>지역 현안 간담회</td>
+            <td>45,000</td>
+            <td>3</td>
+            <td>카드</td>
+          </tr>
+        </table>
+      </body>
+    </html>
+    """.encode("cp949")
+
+    rows = extract_spreadsheet_rows(content, fallback_department="양천구청")
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "양천구청"
+    assert rows[0].used_at.isoformat() == "2026-04-03T12:30:00"
+    assert rows[0].place_text == "양천식당"
+    assert rows[0].purpose == "지역 현안 간담회"
+    assert rows[0].amount == 45000
+    assert rows[0].user_text == "양천구청 3명"
+    assert rows[0].payment_method == "카드"
+
+
 def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(guards, "MAX_SPREADSHEET_BYTES", 3)
 
