@@ -296,6 +296,74 @@ def test_extracts_uiwang_xlsx_usage_detail_merchant_headers() -> None:
     assert rows[0].user_text == "의왕시청 안전총괄과 10명"
 
 
+def test_extracts_incheon_junggu_xlsx_payment_date_usage_content_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "업무추진비 (구)"
+    worksheet.append(["2026. 4월 업무추진비 사용내역(인천 중구청장)"])
+    worksheet.append([])
+    worksheet.append(["연번", "결제일자", "시간", "금액(원)", "사용내용", "업소명", "인원수", "업무추진비 종류", "사용자", "결제방법"])
+    worksheet.append(
+        [
+            1,
+            "2026-04-01 00:00:00",
+            "12:27",
+            234000,
+            "주민자치 협의회 운영 등 논의에 따른 간담회 업무추진비 지출",
+            "신포바다애",
+            14,
+            "시책",
+            "구청장",
+            "카드",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="인천광역시 중구청")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-04-01T12:27:00"
+    assert rows[0].place_text == "신포바다애"
+    assert rows[0].purpose == "주민자치 협의회 운영 등 논의에 따른 간담회 업무추진비 지출"
+    assert rows[0].expense_category == "시책"
+    assert rows[0].user_text == "구청장 14명"
+
+
+def test_extracts_incheon_junggu_council_xlsx_content_and_spaced_place_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의장"
+    worksheet.append(["업무추진비 사용내역"])
+    worksheet.append([])
+    worksheet.append(["연번", "결제일자", "시간", "제  목", "금액(원)", "내  용", "장  소", "인원수", "결제방법"])
+    worksheet.append(["", "합계", "", "", 6329000])
+    worksheet.append(
+        [
+            1,
+            "2026-01-04 00:00:00",
+            "18:57",
+            "의회운영업무추진비(의장) 지출",
+            86000,
+            "제3연륙교 행사 참석후 직원 노고 격려",
+            "신흥부대고기",
+            6,
+            "카드",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="인천광역시 중구의회")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-01-04T18:57:00"
+    assert rows[0].place_text == "신흥부대고기"
+    assert rows[0].purpose == "제3연륙교 행사 참석후 직원 노고 격려"
+    assert rows[0].expense_category == "의회운영업무추진비(의장) 지출"
+    assert rows[0].user_text == "인천광역시 중구의회 6명"
+
+
 def test_extracts_council_cost_xlsx_short_day_time_amount_headers() -> None:
     workbook = Workbook()
     worksheet = workbook.active
