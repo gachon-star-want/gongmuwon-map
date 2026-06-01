@@ -1796,8 +1796,22 @@ def local_public_institution_baseline() -> list[LocalPublicInstitutionBaselineRo
             institution_type,
             institution_subtype,
             operation_kind,
-        ) in _split_tsv(_LOCAL_PUBLIC_INSTITUTION_TSV, expected_columns=7)
+        ) in _split_local_public_tsv(_LOCAL_PUBLIC_INSTITUTION_TSV)
     ]
+
+
+def _split_local_public_tsv(payload: str) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in payload.splitlines():
+        if not line.strip():
+            continue
+        row = line.split("	")
+        if len(row) == 6:
+            row.append("")
+        if len(row) != 7:
+            raise ValueError(f"invalid baseline row column count: {line!r}")
+        rows.append(row)
+    return rows
 
 
 def _split_tsv(payload: str, *, expected_columns: int) -> list[list[str]]:

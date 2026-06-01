@@ -64,6 +64,29 @@ from public_officer_pipeline.normalizer import Normalizer
 from public_officer_pipeline.storage import SourceStorage, SourceStorageError, R2SourceStorage, NullSourceStorage
 
 
+AGENCY_SCOPE_CHOICES = [
+    "seoul",
+    "gyeonggi",
+    "incheon",
+    "capital-area",
+    "gyeongsang",
+    "jeolla",
+    "chungcheong",
+    "gangwon",
+    "jeju",
+    "non-capital",
+    "nationwide",
+]
+
+REGIONAL_SCOPE_PARENT_REGIONS = {
+    "gyeongsang": {"부산광역시", "대구광역시", "울산광역시", "경상북도", "경상남도"},
+    "jeolla": {"광주광역시", "전북특별자치도", "전라남도"},
+    "chungcheong": {"대전광역시", "세종특별자치시", "충청북도", "충청남도"},
+    "gangwon": {"강원특별자치도"},
+    "jeju": {"제주특별자치도"},
+}
+
+
 def _add_write_target_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--confirm-production-write",
@@ -163,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     agency_batch.add_argument(
         "--scope",
-        choices=["seoul", "gyeonggi", "incheon", "capital-area", "non-capital", "nationwide"],
+        choices=AGENCY_SCOPE_CHOICES,
         default="capital-area",
     )
     agency_batch.add_argument(
@@ -224,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     seed = subparsers.add_parser("seed-agencies", help="Seed agencies into the selected write target")
     seed.add_argument(
         "--scope",
-        choices=["seoul", "gyeonggi", "incheon", "capital-area", "non-capital", "nationwide"],
+        choices=AGENCY_SCOPE_CHOICES,
         default="seoul",
         help="Default remains seoul for v1 compatibility.",
     )
@@ -235,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     source_registry.add_argument(
         "--scope",
-        choices=["seoul", "gyeonggi", "incheon", "capital-area", "non-capital", "nationwide"],
+        choices=AGENCY_SCOPE_CHOICES,
         default="capital-area",
     )
     source_registry.add_argument("--format", choices=["json", "jsonl"], default="json")
@@ -331,6 +354,9 @@ def _agencies_for_scope(scope: str) -> list[Agency]:
         return INCHEON_AGENCIES
     if scope == "capital-area":
         return CAPITAL_AREA_AGENCIES
+    if scope in REGIONAL_SCOPE_PARENT_REGIONS:
+        parent_regions = REGIONAL_SCOPE_PARENT_REGIONS[scope]
+        return [agency for agency in NON_CAPITAL_AGENCIES if agency.parent_region in parent_regions]
     if scope == "non-capital":
         return NON_CAPITAL_AGENCIES
     if scope == "nationwide":

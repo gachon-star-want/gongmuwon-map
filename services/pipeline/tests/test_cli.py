@@ -236,6 +236,11 @@ def test_agencies_for_scope_returns_expected_registry_slices() -> None:
     assert len(cli._agencies_for_scope("gyeonggi")) == 64
     assert len(cli._agencies_for_scope("incheon")) == 22
     assert len(cli._agencies_for_scope("capital-area")) == 138
+    assert len(cli._agencies_for_scope("gyeongsang")) == 150
+    assert len(cli._agencies_for_scope("jeolla")) == 88
+    assert len(cli._agencies_for_scope("chungcheong")) == 70
+    assert len(cli._agencies_for_scope("gangwon")) == 38
+    assert len(cli._agencies_for_scope("jeju")) == 2
     assert len(cli._agencies_for_scope("non-capital")) == 348
     assert len(cli._agencies_for_scope("nationwide")) == 2200
 

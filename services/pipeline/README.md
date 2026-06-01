@@ -35,6 +35,12 @@ Inspect source verification state without crawling or writing to the database:
 uv run --project services/pipeline public-officer-pipeline source-registry --scope nationwide
 ```
 
+The batch runner can also process nationwide rollout regions one at a time.
+For the existing public service operation, use this order for direct production
+loads: `capital-area`, `gyeongsang`, `jeolla`, `chungcheong`, `gangwon`, `jeju`.
+Each region should seed agencies, run the batch, refresh public views, and verify
+the production API before moving to the next region.
+
 Run another Seoul OpenGov-backed agency from the master:
 
 ```bash

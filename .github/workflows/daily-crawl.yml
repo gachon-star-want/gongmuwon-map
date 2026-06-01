@@ -21,6 +21,11 @@ on:
           - gyeonggi
           - incheon
           - capital-area
+          - gyeongsang
+          - jeolla
+          - chungcheong
+          - gangwon
+          - jeju
           - non-capital
           - nationwide
       since:
