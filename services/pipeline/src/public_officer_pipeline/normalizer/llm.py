@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import date
+from typing import Any
 from uuid import UUID
 
 from pydantic import ValidationError
@@ -14,6 +15,7 @@ from public_officer_pipeline.legal.visibility import (
     sanitize_raw_excerpt,
 )
 from public_officer_pipeline.llm import LLMClient, TaskType
+from public_officer_pipeline.llm.schema import _loads_json_response, _repair_common_json_response
 from public_officer_pipeline.models import NormalizedVisit, ParsedExpenseRow, PipelineConfigError
 from public_officer_pipeline.normalizer.rules import deterministic_normalize_rows
 
@@ -34,6 +36,16 @@ _APPOINTED_RANK_LABELS = (
     "주무관",
     "직원",
 )
+
+_CONFIDENCE_LABELS = {
+    "high": 0.9,
+    "medium": 0.7,
+    "low": 0.4,
+    "높음": 0.9,
+    "중간": 0.7,
+    "보통": 0.7,
+    "낮음": 0.4,
+}
 
 
 def _system_prompt_for(agency: Agency) -> str:
@@ -172,6 +184,7 @@ class Normalizer:
 
         visits = []
         for visit in result.payload.get("visits", []):
+            visit = _coerce_visit_payload(visit)
             visit.setdefault("agency_id", str(agency_id))
             visit.setdefault("source_url", source_url)
             visit.setdefault("source_title", source_title)
@@ -184,6 +197,45 @@ class Normalizer:
         return visits
 
 
-from public_officer_pipeline.llm.schema import _loads_json_response, _repair_common_json_response
+def _coerce_visit_payload(visit: Any) -> dict[str, Any]:
+    if not isinstance(visit, dict):
+        raise TypeError("visit payload must be an object")
+    coerced = dict(visit)
+
+    visit_date = coerced.get("visit_date")
+    if isinstance(visit_date, str) and "T" in visit_date:
+        coerced["visit_date"] = visit_date.split("T", 1)[0]
+
+    source_published_at = coerced.get("source_published_at")
+    if isinstance(source_published_at, str) and "T" in source_published_at:
+        coerced["source_published_at"] = source_published_at.split("T", 1)[0]
+
+    place_raw = coerced.get("place_raw")
+    if isinstance(place_raw, str):
+        coerced["place_raw"] = {"name": place_raw.strip(), "address_hint": None}
+    elif isinstance(place_raw, dict):
+        place_raw = dict(place_raw)
+        if "name" not in place_raw:
+            for key in ("place_name", "place", "name_raw"):
+                if place_raw.get(key):
+                    place_raw["name"] = place_raw[key]
+                    break
+        place_raw.setdefault("address_hint", place_raw.get("address") or place_raw.get("address_hint"))
+        coerced["place_raw"] = place_raw
+    else:
+        for key in ("place_name", "place", "place_text"):
+            if coerced.get(key):
+                coerced["place_raw"] = {"name": str(coerced[key]).strip(), "address_hint": None}
+                break
+
+    confidence = coerced.get("confidence")
+    if isinstance(confidence, str):
+        confidence_text = confidence.strip().lower()
+        try:
+            coerced["confidence"] = float(confidence_text)
+        except ValueError:
+            if confidence_text in _CONFIDENCE_LABELS:
+                coerced["confidence"] = _CONFIDENCE_LABELS[confidence_text]
+    return coerced
 
 __all__ = ["_loads_json_response", "_repair_common_json_response"]

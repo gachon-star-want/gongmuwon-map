@@ -111,6 +111,11 @@ class _FakeNormalizer:
         return self.visits
 
 
+class _FailingNormalizer:
+    async def normalize_rows(self, **_kwargs: Any) -> list[NormalizedVisit]:
+        raise PipelineConfigError("normalizer failed")
+
+
 def _row_extractor(*, rows: int) -> Any:
     def _extract(_detail: PostDetail) -> list[ParsedExpenseRow]:
         return [
@@ -184,7 +189,7 @@ async def test_run_sequence_invokes_all_stages_in_order() -> None:
         loader=loader,
     )
 
-    await runner.run_agency(agency, crawler)
+    stats = await runner.run_agency(agency, crawler)
 
     assert crawler.calls[0].startswith("list_posts")
     assert crawler.calls[1].startswith("fetch_post")
@@ -193,6 +198,44 @@ async def test_run_sequence_invokes_all_stages_in_order() -> None:
     assert len(resolver.calls) == 1
     assert extractor_calls == ["extract:https://example.com/expense/1"]
     assert len(loader.calls) == 1
+    assert stats.last_stage == "complete"
+    assert stats.current_stage == "complete"
+    assert "list_posts" in stats.stage_elapsed_ms
+    assert "fetch_post" in stats.stage_elapsed_ms
+
+
+@pytest.mark.asyncio
+async def test_run_attaches_partial_stats_to_config_errors() -> None:
+    agency = _agency()
+    crawler = _FakeCrawler(
+        [
+            PostRef(
+                agency_id=agency.id,
+                url="https://example.com/expense/1",
+                title="내역",
+                published_at=date(2026, 5, 1),
+                department_name="총무과",
+            )
+        ]
+    )
+    runner = PipelineRunner(
+        config=_run_config(),
+        normalizer=_FailingNormalizer(),
+        resolver=_FakeResolver(),
+        storage=_FakeStorage(),
+        row_extractor=_row_extractor(rows=2),
+    )
+
+    with pytest.raises(PipelineConfigError) as exc_info:
+        await runner.run_agency(agency, crawler)
+
+    stats = getattr(exc_info.value, "stats")
+    assert stats.posts_seen == 1
+    assert stats.posts_fetched == 1
+    assert stats.raw_parsed_rows == 2
+    assert stats.parsed_rows == 2
+    assert stats.last_stage == "close_crawler"
+    assert "normalize_rows" in stats.stage_elapsed_ms
 
 
 @pytest.mark.asyncio
@@ -234,6 +277,100 @@ async def test_run_respects_skip_posts_and_max_posts() -> None:
     assert extractor_calls == ["https://example.com/expense/1"]
     assert len(loader.calls) == 1
     assert len(resolver.calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_run_tracks_raw_rows_before_row_since_filter() -> None:
+    agency = _agency()
+    crawler = _FakeCrawler(
+        [
+            PostRef(
+                agency_id=agency.id,
+                url="https://example.com/expense/1",
+                title="내역",
+                published_at=date(2026, 5, 1),
+                department_name="총무과",
+            )
+        ]
+    )
+
+    def extract_rows(_detail: PostDetail) -> list[ParsedExpenseRow]:
+        return [
+            ParsedExpenseRow(
+                department_name="총무과",
+                used_at=datetime(2026, 4, 25, 12),
+                place_text="4월 식당",
+                purpose="회의",
+                amount=10000,
+                raw_excerpt="4월 식당",
+            ),
+            ParsedExpenseRow(
+                department_name="총무과",
+                used_at=datetime(2026, 5, 1, 12),
+                place_text="5월 식당",
+                purpose="회의",
+                amount=10000,
+                raw_excerpt="5월 식당",
+            ),
+        ]
+
+    normalizer = _FakeNormalizer([_visit(name="식당")])
+    runner = PipelineRunner(
+        config=_run_config(since=date(2026, 5, 1), row_since=date(2026, 4, 1), dry_run=True),
+        normalizer=normalizer,
+        resolver=_FakeResolver(),
+        storage=_FakeStorage(),
+        row_extractor=extract_rows,
+    )
+
+    stats = await runner.run_agency(agency, crawler)
+
+    assert stats.raw_parsed_rows == 2
+    assert stats.parsed_rows == 2
+    assert normalizer.calls == ["normalize:00000000-0000-0000-0000-000000000001:2"]
+
+
+@pytest.mark.asyncio
+async def test_run_uses_since_as_default_row_filter() -> None:
+    agency = _agency()
+    crawler = _FakeCrawler(
+        [
+            PostRef(
+                agency_id=agency.id,
+                url="https://example.com/expense/1",
+                title="내역",
+                published_at=date(2026, 5, 1),
+                department_name="총무과",
+            )
+        ]
+    )
+
+    def extract_rows(_detail: PostDetail) -> list[ParsedExpenseRow]:
+        return [
+            ParsedExpenseRow(
+                department_name="총무과",
+                used_at=datetime(2026, 4, 25, 12),
+                place_text="4월 식당",
+                purpose="회의",
+                amount=10000,
+                raw_excerpt="4월 식당",
+            ),
+        ]
+
+    normalizer = _FakeNormalizer([])
+    runner = PipelineRunner(
+        config=_run_config(since=date(2026, 5, 1), dry_run=True),
+        normalizer=normalizer,
+        resolver=_FakeResolver(),
+        storage=_FakeStorage(),
+        row_extractor=extract_rows,
+    )
+
+    stats = await runner.run_agency(agency, crawler)
+
+    assert stats.raw_parsed_rows == 1
+    assert stats.parsed_rows == 0
+    assert normalizer.calls == ["normalize:00000000-0000-0000-0000-000000000001:0"]
 
 
 @pytest.mark.asyncio
@@ -329,7 +466,7 @@ async def test_quality_fail_mode_stops_before_load() -> None:
         loader=loader,
     )
 
-    with pytest.raises(PipelineConfigError):
+    with pytest.raises(PipelineConfigError, match="low_average_confidence"):
         await runner.run_agency(agency, crawler)
 
     assert not loader.calls
@@ -374,3 +511,42 @@ async def test_loader_receives_resolved_place_keys_matching_place_resolution_key
     assert len(batch.visits) == 2
     assert len(resolver.calls) == 1
     assert batch.resolved_places[expected_key].kakao_place_id == "kakao-id"
+
+
+@pytest.mark.asyncio
+async def test_run_skips_placeholder_places_before_resolution_and_load() -> None:
+    agency = _agency()
+    crawler = _FakeCrawler(
+        [
+            PostRef(
+                agency_id=agency.id,
+                url="https://example.com/expense/1",
+                title="내역",
+                published_at=date(2026, 5, 1),
+                department_name="총무과",
+            )
+        ]
+    )
+    normalizer = _FakeNormalizer([
+        _visit(name="정보 없음"),
+        _visit(name="반가안동국시"),
+    ])
+    resolver = _FakeResolver()
+    loader = _FakeLoader()
+
+    runner = PipelineRunner(
+        config=_run_config(),
+        normalizer=normalizer,
+        resolver=resolver,
+        storage=_FakeStorage(),
+        row_extractor=_row_extractor(rows=2),
+        loader=loader,
+    )
+
+    stats = await runner.run_agency(agency, crawler)
+
+    assert stats.normalized_visits == 2
+    assert stats.skipped_invalid_places == 1
+    assert len(resolver.calls) == 1
+    assert len(loader.calls) == 1
+    assert loader.calls[0].visits[0].place_raw.name == "반가안동국시"

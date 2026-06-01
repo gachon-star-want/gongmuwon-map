@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from decimal import Decimal, InvalidOperation
-from typing import Any, Literal, Protocol
+import os
+from typing import Literal, Protocol
 
 from pydantic import BaseModel
 import psycopg
@@ -78,7 +79,7 @@ def _parse_decimal(value: str | None) -> Decimal:
 
 class PostgresLLMUsageRecorder:
     def __init__(self, *, database_url: str | None = None) -> None:
-        self._database_url = database_url
+        self._database_url = database_url or os.getenv("DATABASE_URL")
 
     async def record(self, record: LLMUsageRecord) -> None:
         if not self._database_url:

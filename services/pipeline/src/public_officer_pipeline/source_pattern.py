@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
@@ -28,11 +28,15 @@ class SeoulOpenGovPattern(SourcePattern):
 class AttachmentBoardPattern(SourcePattern):
     adapter: Literal["attachment_board", "council_attachment_board", "gangnam_xlsx_board"]
     listUrl: str
+    extraListUrls: list[str] = Field(default_factory=list)
     fileKinds: list[FileKind] = Field(default_factory=lambda: list(ALLOWED_FILE_KINDS))
+    defaultFileKind: FileKind | None = None
     followDetail: bool = False
     pageParam: str = "page"
     pageUnitParam: str | None = None
     rowsPerPage: int = 10
+    jsDownloadPath: str | None = None
+    userAgent: str | None = None
 
     @field_validator("fileKinds", mode="before")
     @classmethod

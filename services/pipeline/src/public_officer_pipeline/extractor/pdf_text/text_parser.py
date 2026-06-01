@@ -98,6 +98,16 @@ PDF_TEXT_PURPOSE_PLACE_AMOUNT_ROW_RE = re.compile(
     r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
 )
+PDF_TEXT_DATE_PURPOSE_PARTY_AMOUNT_PLACE_ROW_RE = re.compile(
+    r"^\s*"
+    r"(?P<date>20\d{2}[.]\d{1,2}[.]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<purpose>.+?)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_REGION_AMOUNT_PLACE_PURPOSE_ROW_RE = re.compile(
     r"^\s*(?P<region>서울시\s+\S+)\s+"
     r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
@@ -252,6 +262,12 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     )
     if purpose_place_amount:
         return purpose_place_amount
+    date_purpose_party_amount_place = _parse_pdf_text_date_purpose_party_amount_place_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if date_purpose_party_amount_place:
+        return date_purpose_party_amount_place
     region_amount_place_purpose = _parse_pdf_text_region_amount_place_purpose_line(
         line,
         fallback_department=fallback_department,
@@ -432,6 +448,40 @@ def _parse_pdf_text_purpose_place_amount_line(line: str, *, fallback_department:
             purpose,
             party_size,
             row_match.group("amount"),
+            row_match.group("payment_method"),
+        ],
+    )
+
+
+def _parse_pdf_text_date_purpose_party_amount_place_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_DATE_PURPOSE_PARTY_AMOUNT_PLACE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_text": row_match.group("place_text").strip(),
+            "purpose": row_match.group("purpose").strip(),
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": fallback_department,
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("date"),
+            row_match.group("time"),
+            row_match.group("purpose"),
+            party_size,
+            row_match.group("amount"),
+            row_match.group("place_text"),
             row_match.group("payment_method"),
         ],
     )

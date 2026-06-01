@@ -17,7 +17,7 @@ These documents describe *what we intend to do* and *how we will verify it befor
 - Keep the existing Seoul coverage (52 agencies) exactly as-is.
 - Add Gyeonggi-do: provincial office, provincial council, 31 city/county offices, 31 city/county councils.
 - Add Incheon: metropolitan office, metropolitan council, 10 district/county offices, 10 district/county councils.
-- Do all of this **without breaking any v1 policy** — no comments, ratings, reviews, likes, or community features; no exposure of masked personal identities; no loss of the public-domain (공공누리 제1유형) attribution.
+- Do all of this **without breaking any v1 policy** — no user comments, ratings, or reviews on restaurant/place pages; no exposure of masked personal identities; no loss of the public-domain (공공누리 제1유형) attribution. Existing login/community/reaction surfaces are governed separately by [ADR-012](../../adr/ADR-012-community-auth-and-lightweight-reactions.md) and are not expanded by this v2 data rollout.
 
 ## Non-goals for this stage
 

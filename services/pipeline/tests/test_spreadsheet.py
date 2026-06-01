@@ -172,6 +172,113 @@ def test_extracts_council_cost_xlsx_approval_amount_header() -> None:
     assert rows[0].user_text == "정대근 6명"
 
 
+def test_extracts_council_cost_xlsx_expense_amount_header() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의회사무과"
+    worksheet.append(["업무추진비 사용내역"])
+    worksheet.append(["<2026년 4월/의회사무과장/기관>"])
+    worksheet.append([])
+    worksheet.append(["일시", "집행목적", "장소(사용처)", "방법", "인원", "지출액"])
+    worksheet.append(
+        [
+            "2026-04-22 15:25:09",
+            "업무추진 직원 격려 식사",
+            "굽네치킨 여주점",
+            "신용카드",
+            19,
+            182300,
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="여주시의회")
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "여주시의회"
+    assert rows[0].place_text == "굽네치킨 여주점"
+    assert rows[0].purpose == "업무추진 직원 격려 식사"
+    assert rows[0].payment_method == "신용카드"
+    assert rows[0].amount == 182300
+    assert rows[0].user_text == "여주시의회 19명"
+
+
+def test_extracts_daejeon_xlsx_date_with_weekday_suffix() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "시책추진"
+    worksheet.append(["업무추진비 사용내역('26.5월)"])
+    worksheet.append(
+        [
+            "사용자",
+            "사용일자(일시)",
+            "사용장소\n(가맹점명)",
+            "사용목적(내역)\n*사용대상 포함",
+            "사용금액(원)",
+            "대상인원(명)",
+            "사용방법",
+        ]
+    )
+    worksheet.append(
+        [
+            "환경국장",
+            "2026. 5. 8.(금) 12:00",
+            "서가앤쿡,스타벅스 / 서구 둔산동",
+            "환경정책 관련 의견수렴 및 정책반영 등",
+            78900,
+            4,
+            "카드",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="대전시청 환경국")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-05-08T12:00:00"
+    assert rows[0].department_name == "대전시청 환경국"
+    assert rows[0].place_text == "서가앤쿡,스타벅스 / 서구 둔산동"
+    assert rows[0].amount == 78900
+    assert rows[0].user_text == "환경국장 4명"
+    assert rows[0].payment_method == "카드"
+
+
+def test_extracts_council_cost_xlsx_short_day_time_amount_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의장단"
+    worksheet.append(["2026년 4월 의장단 업무추진비 집행내역"])
+    worksheet.append([])
+    worksheet.append(["번호", "사용자", "일", "시", "장소", "집행목적", "대상인원수", "금액(원)", "결제방법", "비목"])
+    worksheet.append(
+        [
+            1,
+            "의장",
+            "2026-04-01 00:00:00",
+            "1899-12-31 12:10:00",
+            "차순옥",
+            "결산검사위원과의 간담회",
+            12,
+            240000,
+            "카드결제",
+            "의회운영",
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="평택시의회")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-04-01T12:10:00"
+    assert rows[0].place_text == "차순옥"
+    assert rows[0].purpose == "결산검사위원과의 간담회"
+    assert rows[0].amount == 240000
+    assert rows[0].user_text == "의장 12명"
+
+
 def test_extracts_council_cost_xlsx_short_merchant_and_party_headers() -> None:
     workbook = Workbook()
     worksheet = workbook.active
@@ -385,6 +492,34 @@ def test_rejects_xlsx_with_too_many_rows(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with pytest.raises(guards.DocumentProcessingLimitError, match="rows"):
         extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+
+def test_extracts_xlsx_with_large_blank_formatted_range() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "식당", 10000])
+    worksheet.cell(row=guards.MAX_SPREADSHEET_ROWS_PER_SHEET + 1000, column=1).number_format = "@"
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="서구의회")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "식당"
+    assert rows[0].amount == 10000
+
+
+def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "식당", 10000])
+    worksheet.cell(row=1, column=guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET + 1000).number_format = "@"
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="구리시청")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "식당"
+    assert rows[0].amount == 10000
 
 
 def test_rejects_xlsx_with_too_many_columns(monkeypatch: pytest.MonkeyPatch) -> None:

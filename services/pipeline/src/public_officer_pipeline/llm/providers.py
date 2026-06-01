@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import os
 from json import JSONDecodeError
@@ -22,6 +21,41 @@ from public_officer_pipeline.llm.config import ReasoningConfig
 ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+ANTHROPIC_DEFAULT_MAX_TOKENS = 8192
+ANTHROPIC_MIN_THINKING_BUDGET_TOKENS = 1024
+ANTHROPIC_THINKING_RESPONSE_BUFFER_TOKENS = 1024
+
+
+def _provider_http_error(provider: str, response: httpx.Response, task: TaskType) -> LLMRetryableError:
+    message = ""
+    try:
+        body = response.json()
+        if isinstance(body, dict):
+            error = body.get("error")
+            if isinstance(error, dict):
+                message = str(error.get("message") or "")
+    except ValueError:
+        message = response.text[:500]
+    suffix = f": {message}" if message else ""
+    return LLMRetryableError(f"{provider} HTTP {response.status_code} for {task.value}{suffix}")
+
+
+def _anthropic_thinking_budget(reasoning: ReasoningConfig | None) -> int | None:
+    if reasoning is None or reasoning.anthropic_thinking_tokens is None:
+        return None
+    return max(
+        int(reasoning.anthropic_thinking_tokens),
+        ANTHROPIC_MIN_THINKING_BUDGET_TOKENS,
+    )
+
+
+def _anthropic_max_tokens(thinking_budget: int | None) -> int:
+    if thinking_budget is None:
+        return ANTHROPIC_DEFAULT_MAX_TOKENS
+    return max(
+        ANTHROPIC_DEFAULT_MAX_TOKENS,
+        thinking_budget + ANTHROPIC_THINKING_RESPONSE_BUFFER_TOKENS,
+    )
 
 
 def _extract_prompt_parts(prompt: str) -> tuple[str, str, str | None]:
@@ -115,14 +149,16 @@ class AnthropicProvider:
                 },
             )
 
+        thinking_budget = _anthropic_thinking_budget(reasoning)
         request_payload = {
             "model": model,
-            "max_tokens": 8192,
-            "temperature": 0,
+            "max_tokens": _anthropic_max_tokens(thinking_budget),
             "messages": [{"role": "user", "content": content}],
         }
-        if reasoning and reasoning.anthropic_thinking_tokens is not None:
-            request_payload["extended_thinking"] = {"budget_tokens": reasoning.anthropic_thinking_tokens}
+        if thinking_budget is not None:
+            request_payload["thinking"] = {"type": "enabled", "budget_tokens": thinking_budget}
+        else:
+            request_payload["temperature"] = 0
         if system_prompt:
             request_payload["system"] = system_prompt
 
@@ -148,7 +184,7 @@ class AnthropicProvider:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise RuntimeError(f"Anthropic request failed with status {response.status_code}") from exc
+            raise _provider_http_error("Anthropic", response, task) from exc
 
         body = response.json()
         text = "".join(
@@ -223,11 +259,6 @@ class GeminiProvider:
                 "responseMimeType": "application/json",
             },
         }
-        if reasoning and reasoning.gemini_thinking_level is not None:
-            request_payload["generationConfig"]["thinkingConfig"] = {
-                "thinkingLevel": reasoning.gemini_thinking_level
-            }
-
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -246,7 +277,7 @@ class GeminiProvider:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise RuntimeError(f"Gemini request failed with status {response.status_code}") from exc
+            raise _provider_http_error("Gemini", response, task) from exc
 
         body = response.json()
         parts_payload = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
@@ -319,9 +350,6 @@ class OpenAIProvider:
             "response_format": {"type": "json_object"},
             "messages": messages,
         }
-        if reasoning and reasoning.openai_reasoning_effort is not None:
-            request_payload["reasoning"] = {"effort": reasoning.openai_reasoning_effort}
-
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -340,7 +368,7 @@ class OpenAIProvider:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise RuntimeError(f"OpenAI request failed with status {response.status_code}") from exc
+            raise _provider_http_error("OpenAI", response, task) from exc
 
         body = response.json()
         choices = body.get("choices", [])

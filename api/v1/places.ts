@@ -2,7 +2,6 @@ import { readQuery } from '../_lib/db';
 import { publicReadRoute } from '../_lib/route';
 import { numberParam, stringParam } from '../_lib/http';
 
-const SEOUL_BBOX = [37.413, 126.734, 37.715, 127.269] as const;
 const ALLOWED_GRADES = new Set(['★★★', '★★', '★', '✦']);
 
 function parseGrades(raw?: string) {
@@ -14,15 +13,40 @@ function parseGrades(raw?: string) {
     .filter((item) => ALLOWED_GRADES.has(item));
 }
 
+function parseBbox(raw?: string) {
+  if (!raw) return undefined;
+  const bbox = raw.split(',').map(Number);
+  if (bbox.length !== 4 || !bbox.every(Number.isFinite)) return null;
+  return bbox;
+}
+
 export default publicReadRoute(async function handler({ req }) {
-  const bbox = stringParam(req.query.bbox)?.split(',').map(Number) ?? [...SEOUL_BBOX];
-  const [minLat, minLng, maxLat, maxLng] = bbox.length === 4 && bbox.every(Number.isFinite) ? bbox : SEOUL_BBOX;
+  const bbox = parseBbox(stringParam(req.query.bbox));
   const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);
   const grades = parseGrades(stringParam(req.query.grade));
 
-  const values: unknown[] = [minLat, minLng, maxLat, maxLng, limit];
-  const gradeWhere = grades.length ? 'AND grade = ANY($6)' : '';
-  if (grades.length) values.push(grades);
+  if (bbox === null) {
+    return { status: 400, body: { error: 'invalid_bbox' } };
+  }
+
+  const values: unknown[] = [];
+  const where = ['latitude IS NOT NULL', 'longitude IS NOT NULL'];
+
+  if (bbox) {
+    const start = values.length + 1;
+    const [minLat, minLng, maxLat, maxLng] = bbox;
+    values.push(minLat, minLng, maxLat, maxLng);
+    where.push(`latitude BETWEEN $${start} AND $${start + 2}`);
+    where.push(`longitude BETWEEN $${start + 1} AND $${start + 3}`);
+  }
+
+  if (grades.length) {
+    values.push(grades);
+    where.push(`grade = ANY($${values.length}::text[])`);
+  }
+
+  values.push(limit);
+  const limitParam = values.length;
 
   const { rows } = await readQuery(
     `
@@ -31,11 +55,9 @@ export default publicReadRoute(async function handler({ req }) {
       is_closed, closure_report_count, score, grade, last_visit_at,
       visit_count_12m, unique_department_count_12m
     FROM public.places_public
-    WHERE latitude BETWEEN $1 AND $3
-      AND longitude BETWEEN $2 AND $4
-      ${gradeWhere}
+    WHERE ${where.join('\n      AND ')}
     ORDER BY score DESC NULLS LAST, last_visit_at DESC NULLS LAST
-    LIMIT $5
+    LIMIT $${limitParam}
   `,
     values,
   );

@@ -14,20 +14,40 @@ SEOUL_CITY_HALL_AGENCY_ID = UUID("00000000-0000-0000-0000-000000000001")
 class GovTier(StrEnum):
     REGIONAL = "regional"
     BASIC = "basic"
+    NATIONAL = "national"
+    CONSTITUTIONAL = "constitutional"
+    PUBLIC = "public"
+    LOCAL_PUBLIC = "local_public"
 
 
 class GovBranch(StrEnum):
     ADMIN = "admin"
     COUNCIL = "council"
+    CONSTITUTIONAL = "constitutional"
+    PUBLIC = "public"
 
 
 class JurisdictionType(StrEnum):
     SPECIAL_CITY = "special_city"
     METRO_CITY = "metro_city"
     PROVINCE = "province"
+    SPECIAL_SELF_GOVERNING_CITY = "special_self_governing_city"
+    SPECIAL_SELF_GOVERNING_PROVINCE = "special_self_governing_province"
     AUTONOMOUS_GU = "autonomous_gu"
     SI = "si"
     GUN = "gun"
+    CENTRAL_ADMINISTRATIVE_AGENCY = "central_administrative_agency"
+    CONSTITUTIONAL_INSTITUTION = "constitutional_institution"
+    INDEPENDENT_STATE_AGENCY = "independent_state_agency"
+    PUBLIC_INSTITUTION = "public_institution"
+    LOCAL_PUBLIC_INSTITUTION = "local_public_institution"
+
+
+class ExpansionPhase(StrEnum):
+    P1 = "p1"
+    P2 = "p2"
+    P3 = "p3"
+    P4 = "p4"
 
 
 class Agency(BaseModel):
@@ -37,6 +57,7 @@ class Agency(BaseModel):
     gov_tier: GovTier = GovTier.REGIONAL
     branch: GovBranch = GovBranch.ADMIN
     jurisdiction_type: JurisdictionType = JurisdictionType.SPECIAL_CITY
+    expansion_phase: ExpansionPhase = ExpansionPhase.P1
     parent_region: str = "서울특별시"
     sub_region: str | None = None
     homepage: str | None = "https://opengov.seoul.go.kr/expense/list"
@@ -110,12 +131,19 @@ class ResolvedPlace(BaseModel):
     category: str | None = None
     phone: str | None = None
     matched: bool
+    valid_place: bool = True
+    is_restaurant_like: bool = True
+    is_chain: bool = False
+    is_large_chain: bool = False
+    chain_brand: str | None = None
+    chain_scale: str | None = None
     raw: dict[str, Any] = Field(default_factory=dict)
 
 
 class PipelineStats(BaseModel):
     posts_seen: int = 0
     posts_fetched: int = 0
+    raw_parsed_rows: int = 0
     parsed_rows: int = 0
     normalized_visits: int = 0
     places_seen: int = 0
@@ -123,6 +151,10 @@ class PipelineStats(BaseModel):
     loaded_sources: int = 0
     loaded_places: int = 0
     loaded_visits: int = 0
+    skipped_invalid_places: int = 0
+    current_stage: str | None = None
+    last_stage: str | None = None
+    stage_elapsed_ms: dict[str, int] = Field(default_factory=dict)
 
     @property
     def kakao_match_rate(self) -> float:

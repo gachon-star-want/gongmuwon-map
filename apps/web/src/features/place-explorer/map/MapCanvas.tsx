@@ -148,6 +148,9 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
     if (entries.length > 1 && (!hasFitBoundsRef.current || places.length < 20)) {
       map.setBounds(bounds);
       hasFitBoundsRef.current = true;
+    } else if (entries.length === 1 && !hasFitBoundsRef.current) {
+      map.setCenter(entries[0].marker.getPosition());
+      hasFitBoundsRef.current = true;
     }
   }, [kakaoReady, places, selectedPlace?.id]);
 
@@ -172,5 +175,5 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
 }
 
 function markerAccessibleName(place: Place) {
-  return `${gradeLabel(place.grade)} 등급, ${place.name}, ${shortRegionLabel(place.road_address_part ?? '서울')}`;
+  return `${gradeLabel(place.grade)} 등급, ${place.name}, ${shortRegionLabel(place.road_address_part ?? '지역 미상')}`;
 }

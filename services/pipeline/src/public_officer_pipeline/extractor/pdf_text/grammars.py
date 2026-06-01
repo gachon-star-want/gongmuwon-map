@@ -42,6 +42,10 @@ def _build_default_line_grammars() -> list[PdfTextGrammar]:
         LineGrammar("date_user_amount_place", _to_parse_fn(text_parser._parse_pdf_text_date_user_amount_place_line)),
         LineGrammar("purpose_place_amount", _to_parse_fn(text_parser._parse_pdf_text_purpose_place_amount_line)),
         LineGrammar(
+            "date_purpose_party_amount_place",
+            _to_parse_fn(text_parser._parse_pdf_text_date_purpose_party_amount_place_line),
+        ),
+        LineGrammar(
             "region_amount_place_purpose",
             _to_parse_fn(text_parser._parse_pdf_text_region_amount_place_purpose_line),
         ),

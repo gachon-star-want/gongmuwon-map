@@ -2,21 +2,88 @@ name: Daily crawl
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run or staging-load"
+        required: true
+        default: "staging-load"
+        type: choice
+        options:
+          - dry-run
+          - staging-load
+      scope:
+        description: "Agency scope to process"
+        required: true
+        default: "nationwide"
+        type: choice
+        options:
+          - seoul
+          - gyeonggi
+          - incheon
+          - capital-area
+          - gyeongsang
+          - jeolla
+          - chungcheong
+          - gangwon
+          - jeju
+          - non-capital
+          - nationwide
+      since:
+        description: "ISO date. Blank means 31 days ago UTC."
+        required: false
+        type: string
+      row_since:
+        description: "Expense row ISO date cutoff. Blank means 12 months ago UTC."
+        required: false
+        type: string
+      limit_pages:
+        description: "Crawler page cap per agency"
+        required: true
+        default: "3"
+        type: string
+      max_posts:
+        description: "Post cap per agency"
+        required: true
+        default: "10"
+        type: string
+      concurrency:
+        description: "Batch concurrency"
+        required: true
+        default: "6"
+        type: string
+      agency_timeout_seconds:
+        description: "Wall-clock timeout per agency across all attempts. 0 disables."
+        required: true
+        default: "180"
+        type: string
   schedule:
     - cron: "0 18 * * *"
+
+permissions:
+  contents: read
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      UV_CACHE_DIR: /tmp/uv-cache
+      PIPELINE_HTTP_BACKEND: auto
+      DATABASE_URL_READONLY: ${{ secrets.DATABASE_URL_READONLY }}
+      DATABASE_URL_STAGING: ${{ secrets.DATABASE_URL_STAGING }}
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       KAKAO_REST_KEY: ${{ secrets.KAKAO_REST_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      PIPELINE_HTTP_BACKEND: auto
-      UV_CACHE_DIR: /tmp/uv-cache
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-mini' }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_STAGING_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_STAGING_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_STAGING_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_STAGING_BUCKET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,38 +91,363 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install uv
-        run: python -m pip install uv
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-      - name: Seed agencies
-        run: uv run --project services/pipeline public-officer-pipeline seed-agencies
-
-      - name: Crawl recent public expense posts
+      - name: Install dependencies
         run: |
-          set +e
-          since="$(date -u -d '31 days ago' +%F)"
-          failures=0
-          uv run --project services/pipeline python -c 'from public_officer_pipeline.agencies import SEOUL_AGENCIES; [print(agency.short_name) for agency in SEOUL_AGENCIES]' > /tmp/agencies.txt
-          while IFS= read -r agency; do
-            echo "::group::${agency}"
-            uv run --project services/pipeline public-officer-pipeline run-agency "$agency" \
-              --since "$since" \
-              --limit-pages 2 \
-              --max-posts 2 \
-              --allow-deterministic-normalizer \
-              --allow-unmatched-places
-            status=$?
-            echo "::endgroup::"
-            if [ "$status" -ne 0 ]; then
-              failures=$((failures + 1))
-              echo "${agency} failed with status ${status}" >> /tmp/crawl-failures.txt
-            fi
-          done < /tmp/agencies.txt
-          if [ "$failures" -gt 0 ]; then
-            cat /tmp/crawl-failures.txt
-            exit 1
+          set -euo pipefail
+          python -m pip install uv
+          npm ci
+
+      - name: Normalize crawl inputs
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/nationwide
+
+          mode="${{ github.event.inputs.mode }}"
+          scope="${{ github.event.inputs.scope }}"
+          since="${{ github.event.inputs.since }}"
+          row_since="${{ github.event.inputs.row_since }}"
+          limit_pages="${{ github.event.inputs.limit_pages }}"
+          max_posts="${{ github.event.inputs.max_posts }}"
+          concurrency="${{ github.event.inputs.concurrency }}"
+          agency_timeout_seconds="${{ github.event.inputs.agency_timeout_seconds }}"
+
+          if [ -z "$mode" ]; then mode="staging-load"; fi
+          if [ -z "$scope" ]; then scope="nationwide"; fi
+          if [ -z "$since" ]; then since="$(date -u -d '31 days ago' +%F)"; fi
+          if [ -z "$row_since" ]; then row_since="$(date -u -d '12 months ago' +%F)"; fi
+          if [ -z "$limit_pages" ]; then limit_pages="3"; fi
+          if [ -z "$max_posts" ]; then max_posts="10"; fi
+          if [ -z "$concurrency" ]; then concurrency="6"; fi
+          if [ -z "$agency_timeout_seconds" ]; then agency_timeout_seconds="180"; fi
+
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            mode="staging-load"
+            scope="nationwide"
           fi
 
-      - name: Refresh public views
+          case "$mode" in
+            dry-run|staging-load) ;;
+            *) echo "Unsupported mode: $mode" >&2; exit 2 ;;
+          esac
+
+          {
+            echo "CRAWL_MODE=$mode"
+            echo "CRAWL_SCOPE=$scope"
+            echo "CRAWL_SINCE=$since"
+            echo "CRAWL_ROW_SINCE=$row_since"
+            echo "CRAWL_LIMIT_PAGES=$limit_pages"
+            echo "CRAWL_MAX_POSTS=$max_posts"
+            echo "CRAWL_CONCURRENCY=$concurrency"
+            echo "CRAWL_AGENCY_TIMEOUT_SECONDS=$agency_timeout_seconds"
+            echo "SOURCE_REGISTRY_JSON=artifacts/nationwide/source-registry.json"
+            echo "PRODUCTION_BASELINE_JSON=artifacts/nationwide/production-baseline.json"
+            echo "STAGING_BASELINE_BEFORE_JSON=artifacts/nationwide/staging-baseline-before.json"
+            echo "STAGING_BASELINE_AFTER_JSON=artifacts/nationwide/staging-baseline-after.json"
+            echo "DRY_RUN_JSON=artifacts/nationwide/dry-run.json"
+            echo "STAGING_LOAD_JSON=artifacts/nationwide/staging-load.json"
+            echo "PUBLIC_CONTRACT_STATUS=artifacts/nationwide/public-contract.status"
+            echo "VERIFICATION_REPORT=artifacts/nationwide/nationwide-verification-report.md"
+          } >> "$GITHUB_ENV"
+
+      - name: Generate source registry artifact
+        run: |
+          set -euo pipefail
+          uv run --project services/pipeline public-officer-pipeline source-registry \
+            --scope "$CRAWL_SCOPE" \
+            --format json \
+            --summary-only > "$SOURCE_REGISTRY_JSON"
+
+      - name: Capture production read-only baseline
+        continue-on-error: true
+        run: |
+          set +e
+          if [ -z "${DATABASE_URL_READONLY:-}" ]; then
+            echo "DATABASE_URL_READONLY secret is required for read-only production baseline" >&2
+            echo "2" > artifacts/nationwide/production-baseline.exit
+            exit 2
+          fi
+          npm run report:db-baseline -- \
+            --target=readonly \
+            --env-file=/dev/null \
+            --output="$PRODUCTION_BASELINE_JSON"
+          status=$?
+          echo "$status" > artifacts/nationwide/production-baseline.exit
+          exit "$status"
+
+      - name: Capture staging baseline before load
+        continue-on-error: true
+        run: |
+          set +e
+          if [ "$CRAWL_MODE" = "dry-run" ]; then
+            echo "Skipping staging baseline in dry-run mode"
+            echo "0" > artifacts/nationwide/staging-baseline-before.exit
+            exit 0
+          fi
+          if [ -z "${DATABASE_URL_STAGING:-}${STAGING_DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL_STAGING or STAGING_DATABASE_URL secret is required for staging baseline" >&2
+            echo "2" > artifacts/nationwide/staging-baseline-before.exit
+            exit 2
+          fi
+          npm run report:db-baseline -- \
+            --target=staging \
+            --env-file=/dev/null \
+            --output="$STAGING_BASELINE_BEFORE_JSON"
+          status=$?
+          echo "$status" > artifacts/nationwide/staging-baseline-before.exit
+          exit "$status"
+
+      - name: Apply schema and seed agencies in staging
+        continue-on-error: true
+        run: |
+          set +e
+          if [ "$CRAWL_MODE" != "staging-load" ]; then
+            echo "Skipping staging schema/seed for $CRAWL_MODE"
+            echo "0" > artifacts/nationwide/staging-schema-seed.exit
+            exit 0
+          fi
+          if [ -z "${DATABASE_URL_STAGING:-}${STAGING_DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL_STAGING or STAGING_DATABASE_URL secret is required for staging schema/seed" >&2
+            echo "2" > artifacts/nationwide/staging-schema-seed.exit
+            exit 2
+          fi
+          status=0
+          for migration in \
+            supabase/migrations/20260524150100_allow_xls_sources.sql \
+            supabase/migrations/20260526200000_add_llm_usage_metadata.sql \
+            supabase/migrations/20260601030000_migrate_live_agency_kind_to_taxonomy.sql \
+            supabase/migrations/20260601040000_add_place_exposure_policy.sql \
+            supabase/migrations/20260601090000_extend_agency_jurisdiction_types.sql \
+            supabase/migrations/20260601103000_extend_agency_public_taxonomy_labels.sql
+          do
+            uv run --project services/pipeline public-officer-pipeline apply-schema \
+              --migration "$migration"
+            status=$?
+            if [ "$status" != "0" ]; then
+              break
+            fi
+          done
+          if [ "$status" = "0" ]; then
+            uv run --project services/pipeline public-officer-pipeline seed-agencies \
+              --scope "$CRAWL_SCOPE"
+            status=$?
+          fi
+          echo "$status" > artifacts/nationwide/staging-schema-seed.exit
+          exit "$status"
+
+      - name: Nationwide dry-run with retry metadata
+        continue-on-error: true
+        run: |
+          set +e
+          uv run --project services/pipeline public-officer-pipeline run-agencies \
+            --scope "$CRAWL_SCOPE" \
+            --since "$CRAWL_SINCE" \
+            --row-since "$CRAWL_ROW_SINCE" \
+            --limit-pages "$CRAWL_LIMIT_PAGES" \
+            --max-posts "$CRAWL_MAX_POSTS" \
+            --dry-run \
+            --quality-mode fail \
+            --max-attempts 5 \
+            --agency-timeout-seconds "$CRAWL_AGENCY_TIMEOUT_SECONDS" \
+            --concurrency "$CRAWL_CONCURRENCY" > "$DRY_RUN_JSON"
+          status=$?
+          set -e
+          echo "$status" > artifacts/nationwide/dry-run.exit
+          exit "$status"
+
+      - name: Staging load with retry metadata
+        continue-on-error: true
+        run: |
+          set +e
+          if [ "$CRAWL_MODE" != "staging-load" ]; then
+            echo "Skipping staging load for $CRAWL_MODE"
+            echo "0" > artifacts/nationwide/staging-load.exit
+            exit 0
+          fi
+          if [ ! -s artifacts/nationwide/staging-schema-seed.exit ] || [ "$(cat artifacts/nationwide/staging-schema-seed.exit)" != "0" ]; then
+            echo "Skipping staging load because staging schema/seed did not pass" >&2
+            echo "2" > artifacts/nationwide/staging-load.exit
+            exit 2
+          fi
+          if [ ! -s "$DRY_RUN_JSON" ]; then
+            echo "Skipping staging load because nationwide dry-run JSON is missing" >&2
+            echo "2" > artifacts/nationwide/staging-load.exit
+            exit 2
+          fi
+          dry_run_success="$(node -e 'const fs=require("fs"); const path=process.env.DRY_RUN_JSON; let count=0; try { count=Number(JSON.parse(fs.readFileSync(path, "utf8")).summary?.success ?? 0); } catch { count=0; } console.log(count);')"
+          if [ "$dry_run_success" -le 0 ]; then
+            echo "Skipping staging load because nationwide dry-run had no successful agencies" >&2
+            echo "2" > artifacts/nationwide/staging-load.exit
+            exit 2
+          fi
+          dry_run_status="$(cat artifacts/nationwide/dry-run.exit 2>/dev/null || echo 1)"
+          if [ "$dry_run_status" != "0" ]; then
+            echo "Nationwide dry-run exited $dry_run_status; continuing staging load for $dry_run_success successful dry-run agencies and preserving failures in the report" >&2
+          fi
+          if [ -z "${DATABASE_URL_STAGING:-}${STAGING_DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL_STAGING or STAGING_DATABASE_URL secret is required for staging load" >&2
+            echo "2" > artifacts/nationwide/staging-load.exit
+            exit 2
+          fi
+          for name in R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
+            if [ -z "${!name:-}" ]; then
+              echo "$name staging secret is required for staging load" >&2
+              echo "2" > artifacts/nationwide/staging-load.exit
+              exit 2
+            fi
+          done
+          uv run --project services/pipeline public-officer-pipeline run-agencies \
+            --scope "$CRAWL_SCOPE" \
+            --since "$CRAWL_SINCE" \
+            --row-since "$CRAWL_ROW_SINCE" \
+            --limit-pages "$CRAWL_LIMIT_PAGES" \
+            --max-posts "$CRAWL_MAX_POSTS" \
+            --write-target staging \
+            --quality-mode fail \
+            --max-attempts 5 \
+            --agency-timeout-seconds "$CRAWL_AGENCY_TIMEOUT_SECONDS" \
+            --concurrency "$CRAWL_CONCURRENCY" > "$STAGING_LOAD_JSON"
+          status=$?
+          echo "$status" > artifacts/nationwide/staging-load.exit
+          exit "$status"
+
+      - name: Refresh staging public views
+        run: |
+          set -euo pipefail
+          if [ "$CRAWL_MODE" != "staging-load" ]; then
+            echo "Skipping staging view refresh for $CRAWL_MODE"
+            exit 0
+          fi
+          staging_loaded_visits="$(node -e 'const fs=require("fs"); const path=process.env.STAGING_LOAD_JSON; let count=0; try { count=Number(JSON.parse(fs.readFileSync(path, "utf8")).summary?.loaded_visits ?? 0); } catch { count=0; } console.log(count);')"
+          if [ ! -s artifacts/nationwide/staging-load.exit ]; then
+            echo "Skipping staging view refresh because staging load status is missing"
+            exit 0
+          fi
+          if [ "$(cat artifacts/nationwide/staging-load.exit)" != "0" ] && [ "$staging_loaded_visits" -le 0 ]; then
+            echo "Skipping staging view refresh because staging load did not pass and loaded no visits"
+            exit 0
+          fi
+          if [ "$(cat artifacts/nationwide/staging-load.exit)" != "0" ]; then
+            echo "Refreshing staging views after partial staging load with $staging_loaded_visits loaded visits"
+          fi
+          uv run --project services/pipeline public-officer-pipeline refresh-views
+
+      - name: Capture staging baseline after load
+        continue-on-error: true
+        run: |
+          set +e
+          if [ "$CRAWL_MODE" != "staging-load" ]; then
+            echo "Skipping staging after baseline for $CRAWL_MODE"
+            echo "0" > artifacts/nationwide/staging-baseline-after.exit
+            exit 0
+          fi
+          if [ -z "${DATABASE_URL_STAGING:-}${STAGING_DATABASE_URL:-}" ]; then
+            echo "DATABASE_URL_STAGING or STAGING_DATABASE_URL secret is required for staging after baseline" >&2
+            echo "2" > artifacts/nationwide/staging-baseline-after.exit
+            exit 2
+          fi
+          npm run report:db-baseline -- \
+            --target=staging \
+            --env-file=/dev/null \
+            --output="$STAGING_BASELINE_AFTER_JSON"
+          status=$?
+          echo "$status" > artifacts/nationwide/staging-baseline-after.exit
+          exit "$status"
+
+      - name: Check public route contracts
+        run: |
+          set +e
+          npm run check:public-contracts
+          status=$?
+          set -e
+          if [ "$status" = "0" ]; then
+            echo "pass" > "$PUBLIC_CONTRACT_STATUS"
+          else
+            echo "fail" > "$PUBLIC_CONTRACT_STATUS"
+          fi
+          exit 0
+
+      - name: Build nationwide verification report
+        run: |
+          set -euo pipefail
+          public_contract="$(cat "$PUBLIC_CONTRACT_STATUS")"
+          args=(
+            "--source-registry=$SOURCE_REGISTRY_JSON"
+            "--public-contract=$public_contract"
+            "--run-id=${GITHUB_RUN_ID}"
+            "--run-attempt=${GITHUB_RUN_ATTEMPT}"
+            "--commit-sha=${GITHUB_SHA}"
+            "--workflow=${GITHUB_WORKFLOW}"
+            "--event-name=${GITHUB_EVENT_NAME}"
+            "--actor=${GITHUB_ACTOR}"
+            "--artifact-name=nationwide-crawl-${GITHUB_RUN_ID}"
+            "--output=$VERIFICATION_REPORT"
+          )
+          if [ -s "$DRY_RUN_JSON" ]; then
+            args+=("--dry-run=$DRY_RUN_JSON")
+          fi
+          if [ -s "$PRODUCTION_BASELINE_JSON" ]; then
+            args+=("--production-baseline=$PRODUCTION_BASELINE_JSON")
+          fi
+          if [ -s "$STAGING_BASELINE_BEFORE_JSON" ]; then
+            args+=("--staging-baseline-before=$STAGING_BASELINE_BEFORE_JSON")
+          fi
+          if [ -s "$STAGING_BASELINE_AFTER_JSON" ]; then
+            args+=("--staging-baseline-after=$STAGING_BASELINE_AFTER_JSON")
+          fi
+          if [ -s "$STAGING_LOAD_JSON" ]; then
+            args+=("--staging-load=$STAGING_LOAD_JSON")
+          fi
+          npm run report:nationwide-verification -- "${args[@]}"
+
+      - name: Upload crawl artifacts
         if: always()
-        run: uv run --project services/pipeline public-officer-pipeline refresh-views
+        uses: actions/upload-artifact@v4
+        with:
+          name: nationwide-crawl-${{ github.run_id }}
+          path: artifacts/nationwide/
+          retention-days: 30
+
+      - name: Fail on collection errors
+        run: |
+          set -euo pipefail
+          dry_run_status="$(cat artifacts/nationwide/dry-run.exit 2>/dev/null || echo 1)"
+          production_baseline_status="$(cat artifacts/nationwide/production-baseline.exit 2>/dev/null || echo 1)"
+          staging_before_status="$(cat artifacts/nationwide/staging-baseline-before.exit 2>/dev/null || echo 0)"
+          staging_schema_seed_status="$(cat artifacts/nationwide/staging-schema-seed.exit 2>/dev/null || echo 0)"
+          staging_status="$(cat artifacts/nationwide/staging-load.exit 2>/dev/null || echo 0)"
+          staging_after_status="$(cat artifacts/nationwide/staging-baseline-after.exit 2>/dev/null || echo 0)"
+          public_contract="$(cat "$PUBLIC_CONTRACT_STATUS" 2>/dev/null || echo fail)"
+
+          if [ "$production_baseline_status" != "0" ]; then
+            echo "Production read-only baseline failed with status $production_baseline_status" >&2
+            exit "$production_baseline_status"
+          fi
+          if [ "$dry_run_status" != "0" ]; then
+            echo "Nationwide dry-run failed with status $dry_run_status" >&2
+            exit "$dry_run_status"
+          fi
+          if [ "$CRAWL_MODE" = "staging-load" ] && [ "$staging_before_status" != "0" ]; then
+            echo "Staging baseline before load failed with status $staging_before_status" >&2
+            exit "$staging_before_status"
+          fi
+          if [ "$CRAWL_MODE" = "staging-load" ] && [ "$staging_schema_seed_status" != "0" ]; then
+            echo "Staging schema/seed failed with status $staging_schema_seed_status" >&2
+            exit "$staging_schema_seed_status"
+          fi
+          if [ "$CRAWL_MODE" = "staging-load" ] && [ "$staging_status" != "0" ]; then
+            echo "Staging load failed with status $staging_status" >&2
+            exit "$staging_status"
+          fi
+          if [ "$CRAWL_MODE" = "staging-load" ] && [ "$staging_after_status" != "0" ]; then
+            echo "Staging baseline after load failed with status $staging_after_status" >&2
+            exit "$staging_after_status"
+          fi
+          if [ "$public_contract" != "pass" ]; then
+            echo "Public route contract check failed" >&2
+            exit 1
+          fi

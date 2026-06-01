@@ -44,20 +44,23 @@ CREATE TABLE agencies (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name            text NOT NULL,              -- "서울특별시청", "강남구의회"
   short_name      text NOT NULL,              -- "서울시청", "강남구의회"
-  gov_tier        text NOT NULL,              -- 'regional' | 'basic'
-  branch          text NOT NULL,              -- 'admin' | 'council'
-  jurisdiction_type text NOT NULL,            -- 'special_city' | 'metro_city' | 'province' | 'autonomous_gu' | 'si' | 'gun'
+  gov_tier        text NOT NULL,              -- 'regional' | 'basic' | 'national' | 'constitutional' | 'public' | 'local_public'
+  branch          text NOT NULL,              -- 'admin' | 'council' | 'constitutional' | 'public'
+  jurisdiction_type text NOT NULL,            -- 'special_city' | ... | 'central_administrative_agency' | 'constitutional_institution' | 'independent_state_agency' | 'public_institution' | 'local_public_institution'
+  expansion_phase text NOT NULL DEFAULT 'p1', -- 'p1' | 'p2' | 'p3' | 'p4'
   parent_region   text NOT NULL,              -- '서울특별시'
   sub_region      text,                       -- '강남구' (시청·시의회는 NULL)
   homepage        text,
   source_pattern  jsonb,                      -- 크롤러 어댑터 힌트
   created_at      timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (gov_tier, branch, parent_region, sub_region)
+  UNIQUE (gov_tier, branch, parent_region, sub_region, short_name)
 );
 
 CREATE INDEX agencies_tier_region ON agencies (gov_tier, branch, parent_region, sub_region);
 
-`agencies_public` 뷰는 `kind` 대신 `gov_tier`, `branch`, `jurisdiction_type`을 노출한다.
+`agencies_public` 뷰는 `kind` 대신 `gov_tier`, `branch`, `jurisdiction_type`, `expansion_phase`를 노출한다.
+각 내부 코드는 정렬·호환용이며, 공개/표시용으로 `gov_tier_label`, `branch_label`,
+`jurisdiction_type_label`, `expansion_phase_label` 한국어 라벨도 함께 노출한다.
 ```
 
 ### `places` — 식당 마스터
@@ -79,6 +82,14 @@ CREATE TABLE places (
   longitude           double precision,
   category            text,                   -- 카카오 분류 (식당 > 한식 등)
   phone               text,
+
+  -- 공개 노출 정책
+  valid_place         boolean NOT NULL DEFAULT true,   -- 빈값·정보 없음·미상 등 표시용 빈값이면 false
+  is_restaurant_like  boolean NOT NULL DEFAULT true,   -- 카카오 분류/원문 근거상 식당·카페류
+  is_chain            boolean NOT NULL DEFAULT false,
+  is_large_chain      boolean NOT NULL DEFAULT false,  -- 대형 전국 체인은 기본 지도/등급에서 제외
+  chain_brand         text,
+  chain_scale         text,                   -- '대형전국체인' | '지역체인'
 
   -- 운영 상태
   is_closed           boolean NOT NULL DEFAULT false,
@@ -205,7 +216,7 @@ CREATE TABLE sources (
   url             text NOT NULL,
   title           text,
   published_at    date,
-  file_kind       text,                       -- 'html' | 'pdf' | 'hwp' | 'xlsx'
+  file_kind       text,                       -- 'html' | 'pdf' | 'hwp' | 'hwpx' | 'xlsx'
   storage_path    text,                       -- r2://officer-map-raw/{agency_id}/{yyyy-mm}/{hash}.{ext}
                                                  -- production(비 dry-run, allow-missing-r2 미사용)에서는 실사용 run에서 null 허용 안 함
   fetched_at      timestamptz NOT NULL DEFAULT now(),
@@ -287,6 +298,12 @@ SELECT
   p.latitude,
   p.longitude,
   p.category,
+  p.valid_place,
+  p.is_restaurant_like,
+  p.is_chain,
+  p.is_large_chain,
+  p.chain_brand,
+  p.chain_scale,
   p.is_closed,
   p.closure_report_count,
   COALESCE(g.score, 0) AS score,
@@ -296,7 +313,11 @@ SELECT
   g.unique_department_count_12m
 FROM places p
 LEFT JOIN place_grade_v1 g ON g.place_id = p.id
-WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
+WHERE p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE;
 ```
 
 ### `place_grade_v1` — 등급 머티리얼라이즈드 뷰
@@ -310,6 +331,9 @@ WITH window_visits AS (
   WHERE v.visit_date >= (current_date - interval '12 months')
     AND p.hidden_at IS NULL
     AND p.deleted_at IS NULL
+    AND p.valid_place IS TRUE
+    AND p.is_restaurant_like IS TRUE
+    AND p.is_large_chain IS FALSE
 ),
 agg AS (
   SELECT
@@ -364,15 +388,18 @@ Vercel Cron이 매일 03:30 KST에 `/api/cron/recompute-grades`를 호출하여 
 CREATE MATERIALIZED VIEW agency_stats_v1 AS
 SELECT
   a.id AS agency_id,
-  COUNT(v.id)::integer AS visit_count,
-  COUNT(DISTINCT v.place_id)::integer AS place_count,
-  MAX(v.visit_date) AS last_visit_at
+  COUNT(v.id) FILTER (WHERE p.id IS NOT NULL)::integer AS visit_count,
+  COUNT(DISTINCT v.place_id) FILTER (WHERE p.id IS NOT NULL)::integer AS place_count,
+  MAX(v.visit_date) FILTER (WHERE p.id IS NOT NULL) AS last_visit_at
 FROM agencies a
 LEFT JOIN place_visits v ON v.agency_id = a.id
 LEFT JOIN places p
   ON p.id = v.place_id
   AND p.hidden_at IS NULL
   AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE
 GROUP BY a.id;
 
 CREATE UNIQUE INDEX agency_stats_v1_pk ON agency_stats_v1 (agency_id);
@@ -400,7 +427,11 @@ SELECT
 FROM place_visits v
 JOIN sources s ON s.id = v.source_id
 JOIN places p ON p.id = v.place_id
-WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
+WHERE p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE;
 ```
 
 ## SQL 함수 (Vercel API Route 핸들러가 호출하는 쓰기 진입점)

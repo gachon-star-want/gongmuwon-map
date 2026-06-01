@@ -3,7 +3,7 @@ import { Layers } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Place } from '../types';
 import { gradeClass, markerLabel, shortRegionLabel } from '../format';
-import { average, positionStyle } from './geo';
+import { average, boundsForCoordinates, positionStyle } from './geo';
 import { SEOUL_CENTER } from './geo';
 
 type FallbackMapProps = {
@@ -14,10 +14,14 @@ type FallbackMapProps = {
 
 export function FallbackMap({ places, selectedId, onSelect }: FallbackMapProps) {
   const located = places.filter((place) => place.latitude && place.longitude);
+  const bounds = useMemo(
+    () => boundsForCoordinates(located.map((place) => ({ latitude: place.latitude!, longitude: place.longitude! }))),
+    [located],
+  );
   const clusters = useClusters(located);
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
   const markerPlaces = expandedRegion
-    ? located.filter((place) => (place.road_address_part ?? '서울') === expandedRegion)
+    ? located.filter((place) => (place.road_address_part ?? '지역 미상') === expandedRegion)
     : located.length > 30
       ? []
       : located;
@@ -30,7 +34,7 @@ export function FallbackMap({ places, selectedId, onSelect }: FallbackMapProps) 
               className="fallback-cluster"
               key={cluster.region}
               type="button"
-              style={positionStyle(cluster.latitude, cluster.longitude)}
+              style={positionStyle(cluster.latitude, cluster.longitude, bounds)}
               onClick={() => setExpandedRegion(cluster.region)}
               aria-label={`${shortRegionLabel(cluster.region)} 식당 ${cluster.items.length}곳 확대`}
             >
@@ -49,7 +53,7 @@ export function FallbackMap({ places, selectedId, onSelect }: FallbackMapProps) 
           data-active={place.id === selectedId}
           key={place.id}
           type="button"
-          style={positionStyle(place.latitude ?? SEOUL_CENTER.latitude, place.longitude ?? SEOUL_CENTER.longitude)}
+          style={positionStyle(place.latitude ?? SEOUL_CENTER.latitude, place.longitude ?? SEOUL_CENTER.longitude, bounds)}
           onClick={() => onSelect(place)}
           aria-label={`${place.name} ${place.road_address_part ?? ''}`}
         >
@@ -64,7 +68,7 @@ function useClusters(places: Place[]) {
   return useMemo(() => {
     const grouped = new Map<string, Place[]>();
     places.forEach((place) => {
-      const region = place.road_address_part ?? '서울';
+      const region = place.road_address_part ?? '지역 미상';
       grouped.set(region, [...(grouped.get(region) ?? []), place]);
     });
     return Array.from(grouped.entries()).map(([region, items]) => ({

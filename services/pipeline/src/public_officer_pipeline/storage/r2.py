@@ -21,17 +21,23 @@ class R2SourceStorage:
         self._bucket = bucket
 
     @classmethod
-    def from_env(cls) -> "R2SourceStorage":
-        account_id = os.getenv("R2_ACCOUNT_ID")
-        access_key_id = os.getenv("R2_ACCESS_KEY_ID")
-        secret_access_key = os.getenv("R2_SECRET_ACCESS_KEY")
-        bucket = os.getenv("R2_BUCKET")
+    def from_env(cls, *, prefix: str = "R2") -> "R2SourceStorage":
+        names = {
+            "account_id": f"{prefix}_ACCOUNT_ID",
+            "access_key_id": f"{prefix}_ACCESS_KEY_ID",
+            "secret_access_key": f"{prefix}_SECRET_ACCESS_KEY",
+            "bucket": f"{prefix}_BUCKET",
+        }
+        account_id = os.getenv(names["account_id"])
+        access_key_id = os.getenv(names["access_key_id"])
+        secret_access_key = os.getenv(names["secret_access_key"])
+        bucket = os.getenv(names["bucket"])
 
         missing = [name for name, value in {
-            "R2_ACCOUNT_ID": account_id,
-            "R2_ACCESS_KEY_ID": access_key_id,
-            "R2_SECRET_ACCESS_KEY": secret_access_key,
-            "R2_BUCKET": bucket,
+            names["account_id"]: account_id,
+            names["access_key_id"]: access_key_id,
+            names["secret_access_key"]: secret_access_key,
+            names["bucket"]: bucket,
         }.items() if not value]
 
         if missing:

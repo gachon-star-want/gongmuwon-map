@@ -393,6 +393,20 @@ def test_rows_from_pdf_text_parses_date_user_amount_place_pdf_table_rows() -> No
     assert rows[1].place_text == "소주물 신당．중앙시"
 
 
+def test_rows_from_pdf_text_skips_invalid_time_like_amount_without_crashing() -> None:
+    rows = rows_from_pdf_text(
+        """
+1    2026.05.07   34:21   의장    148,800   잘못된행        의정활동 및 직무활동을 위한 경비     5       카드     의회운영업무추진비
+2    2026.05.07   19:35   의장    148,800   정상식당        의정활동 및 직무활동을 위한 경비     5       카드     의회운영업무추진비
+        """,
+        fallback_department="구로구의회 의장단",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-05-07T19:35:00"
+    assert rows[0].place_text == "정상식당"
+
+
 def test_rows_from_pdf_text_parses_user_place_purpose_amount_pdf_table_rows() -> None:
     rows = rows_from_pdf_text(
         """
@@ -427,6 +441,25 @@ def test_rows_from_pdf_text_parses_purpose_place_amount_pdf_table_rows() -> None
     assert rows[0].amount == 42000
     assert rows[0].user_text == "성동구의회 사무국 3명"
     assert rows[1].place_text == "하이존에프앤씨"
+
+
+def test_rows_from_pdf_text_parses_date_purpose_party_amount_place_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+산업경제수석전문위원
+일시 적요 사용대상 지출금액 장소 집행방법
+2026.04.01. 12:00 도시농업 활성화 방안 논의를 위한 간담회 4 77,400 황제삼계탕, 참새커피 카드
+        """,
+        fallback_department="인천시의회 산업경제수석전문위원",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-04-01T12:00:00"
+    assert rows[0].place_text == "황제삼계탕, 참새커피"
+    assert rows[0].purpose == "도시농업 활성화 방안 논의를 위한 간담회"
+    assert rows[0].amount == 77400
+    assert rows[0].user_text == "인천시의회 산업경제수석전문위원 4명"
+    assert rows[0].payment_method == "카드"
 
 
 def test_rows_from_pdf_text_parses_region_amount_place_purpose_pdf_table_rows() -> None:

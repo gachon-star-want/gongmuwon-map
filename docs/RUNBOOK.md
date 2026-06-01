@@ -10,8 +10,9 @@
 - ✅ **Vercel CLI 로그인** (`vercel login`) 완료, 프로젝트 이미 연결됨
 - ✅ **GitHub CLI 로그인** (`gh auth status` 확인 완료), 저장소 + 도메인 이미 설정됨
 - ✅ **외부 API 키** — 사용자가 직접 마련, 배포 직전 환경변수로 주입
-  - **DB**: `DATABASE_URL` (Neon, service 쓰기용), `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted)
-  - **R2**: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=officer-map-raw`
+  - **DB**: `DATABASE_URL` (Neon, production service 쓰기용), `DATABASE_URL_READONLY` (Neon `anon` RLS-restricted), `DATABASE_URL_STAGING` 또는 `STAGING_DATABASE_URL` (GitHub Actions staging-first 수집용)
+  - **R2 production**: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=officer-map-raw`
+  - **R2 staging**: `R2_STAGING_ACCOUNT_ID`, `R2_STAGING_ACCESS_KEY_ID`, `R2_STAGING_SECRET_ACCESS_KEY`, `R2_STAGING_BUCKET` (production bucket과 분리. 같은 계정을 쓰더라도 bucket은 별도 권장)
   - **LLM 3종**: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` (멀티 프로바이더 라우팅 — [ADR-009](adr/ADR-009-multi-llm-provider-routing.md))
   - **카카오**: `KAKAO_JS_KEY` (도메인 제한), `KAKAO_REST_KEY` (Vercel API Route 서버 측 전용)
   - **메일**: `RESEND_API_KEY`
@@ -34,7 +35,7 @@
 | Cloudflare R2 버킷 생성 | 대시보드에서 `officer-map-raw` 버킷 + API 토큰 발급 (R2 SDK 사용) |
 | Vercel 프로젝트 연결 확인 | (이미 연결됨) `vercel link` — 재실행 불필요 |
 | GitHub 저장소 push | (이미 생성됨) `git push origin main` |
-| GitHub Secret 주입 | `gh secret set DATABASE_URL`, `gh secret set R2_ACCESS_KEY_ID` 등 |
+| GitHub Secret 주입 | staging-first 기본값부터 `gh secret set DATABASE_URL_STAGING`, `gh secret set R2_STAGING_BUCKET` 등. production 수동 주입용은 `DATABASE_URL`, `R2_BUCKET` 등 별도 |
 | Vercel 환경변수 주입 | `vercel env add DATABASE_URL production`, `vercel env add R2_ACCOUNT_ID production` 등 |
 
 미확정 운영자 토큰이 모든 MD에 남아 있는지 시작 시 grep으로 확인: `grep -rn '<<''TBD' --include='*.md'`. 0건이어야 자율 모드 Phase 1 진입 가능.
@@ -177,7 +178,12 @@ sed -i '' 's|운영자이메일_미확정|admin@gongmuwon-map.com|g' docs/LEGAL_
 - 환경변수 Production·Preview·Development 모두 설정
 
 ### 3.4 GitHub Actions cron 활성화
-- `daily-crawl.yml` 활성화
+- `daily-crawl.yml` 활성화. 스케줄 실행은 매일 03:00 KST에 `mode=staging-load`, `scope=nationwide`로 고정된다.
+- 스케줄 경로는 production service `DATABASE_URL`을 로드하지 않는다. production 기준선은 `DATABASE_URL_READONLY`로만 읽고, schema/seed/load/refresh는 `DATABASE_URL_STAGING` 또는 `STAGING_DATABASE_URL`에서만 수행한다.
+- 매 실행은 `source-registry`, production read-only baseline, staging before/after baseline, nationwide dry-run, staging load, public contract status, verification report를 GitHub Actions artifact로 남긴다.
+- staging load는 dry-run artifact에 성공 기관이 1개 이상 있으면 진행한다. dry-run 또는 staging load가 일부 실패하더라도 성공 기관은 적재하고, 실패 기관은 `attempt_count`, `attempts[]`, `failure_reason`, `timeout_stage`로 verification report에 남긴다.
+- staging load는 `public-officer-pipeline run-agencies --scope nationwide --max-attempts 5 --agency-timeout-seconds 180`를 사용한다. 원문 provenance를 위해 GitHub Secrets의 `R2_STAGING_*` 값을 runtime `R2_*` env로 매핑한다.
+- production load는 `daily-crawl.yml`에서 실행하지 않는다. 별도 승인 뒤 CLI에서 `--write-target production --confirm-production-write --allow-production-write --production-gate-report <검증리포트>`를 명시해야 한다.
 - Slack/이메일 알림 채널 설정
 
 ### 3.5 외부 모니터링
@@ -207,6 +213,7 @@ sed -i '' 's|운영자이메일_미확정|admin@gongmuwon-map.com|g' docs/LEGAL_
 - [ ] 폐업 신고·정보 삭제 요청 폼 실제 동작
 - [ ] 운영자 이메일로 테스트 이메일 도달
 - [ ] GitHub Actions cron 다음 실행 예정
+- [ ] 최근 `daily-crawl.yml` artifact의 staging verification report에서 dry-run, staging load, public contract가 통과
 
 ## 자율 모드 운영 원칙
 
@@ -221,7 +228,7 @@ sed -i '' 's|운영자이메일_미확정|admin@gongmuwon-map.com|g' docs/LEGAL_
 | 에러 | 행동 |
 |---|---|
 | Neon 연결 실패 | `DATABASE_URL` / `DATABASE_URL_READONLY` 재확인, Neon scale-to-zero 콜드 스타트 대기(최대 5초), 3회 실패 시 중단 보고 |
-| R2 업로드 실패 | `R2_*` 키 + 버킷명 재확인, 일시적 5xx면 지수 백오프 3회, 최종 실패 시 R2 캐시 skip하고 in-memory만 사용 |
+| R2 업로드 실패 | `R2_*` 키 + 버킷명 재확인, 일시적 5xx면 지수 백오프 3회, staging/production load에서는 provenance 보존을 위해 중단. 수동 진단 dry-run에서만 `--allow-missing-r2`로 in-memory 경로 허용 |
 | 카카오 API 401/403 | 키·도메인 제한 확인, 사용자 보고 후 중단 |
 | 카카오 일 한도 초과 | 다음 사이클로 미루기, GitHub Issue 생성 |
 | Anthropic 429 | 지수 백오프, 즉시 다음 프로바이더(OpenAI → Gemini)로 폴백 ([ADR-009](adr/ADR-009-multi-llm-provider-routing.md) 매트릭스). 모든 프로바이더 429면 5분 대기 후 재시도 |

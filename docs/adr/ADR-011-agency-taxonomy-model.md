@@ -2,6 +2,7 @@
 
 - **Status**: Accepted
 - **Date**: 2026-05-25
+- **Superseded in part by**: [ADR-013](ADR-013-special-self-governing-jurisdiction-types.md) (`jurisdiction_type` value set only), [ADR-014](ADR-014-public-sector-priority-groups.md) (non-local-government enum values and natural key)
 - **Supersedes (부분)**: the `agencies.kind` enum defined in [ADR-006](ADR-006-stack.md) / [DATA_MODEL.md](../DATA_MODEL.md) (the 4-value `kind` column only). All other parts of those documents stand.
 - **Driven by**: [docs/v2/001_capital_area_expansion/](../v2/001_capital_area_expansion/) (capital-area expansion needs to represent 도/광역시/시/군/자치구, which the Seoul-only `kind` enum cannot).
 

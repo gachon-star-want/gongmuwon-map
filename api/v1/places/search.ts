@@ -4,7 +4,7 @@ import { numberParam, stringParam } from '../../_lib/http';
 
 const ALLOWED_GRADES = new Set(['★★★', '★★', '★', '✦']);
 const ALLOWED_SORTS = new Set(['score', 'recent', 'visits']);
-const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외';
+const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외 수도권 지자체·의회 공식 공개자료';
 
 function splitList(raw?: string) {
   return raw

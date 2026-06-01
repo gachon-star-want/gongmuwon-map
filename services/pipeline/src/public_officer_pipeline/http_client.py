@@ -77,6 +77,18 @@ def _parse_curl_header_file(data: bytes) -> tuple[int, dict[str, str]]:
     return _parse_status_from_headers(final_block), _parse_httpx_like_headers(final_block)
 
 
+def _httpx_safe_headers(headers: dict[str, str]) -> dict[str, str]:
+    safe_headers: dict[str, str] = {}
+    for key, value in headers.items():
+        try:
+            key.encode("ascii")
+            value.encode("ascii")
+        except UnicodeEncodeError:
+            continue
+        safe_headers[key] = value
+    return safe_headers
+
+
 async def _communicate_with_output_file_limit(
     process: asyncio.subprocess.Process,
     *,
@@ -114,9 +126,9 @@ async def _communicate_with_output_file_limit(
 
 def _decode_response_text(content: bytes, headers: dict[str, str]) -> str:
     try:
-        response = httpx.Response(200, headers=headers, content=content)
+        response = httpx.Response(200, headers=_httpx_safe_headers(headers), content=content)
         return response.text
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, UnicodeEncodeError):
         return content.decode("cp949", errors="replace")
 
 
@@ -134,7 +146,7 @@ class SimpleHttpResponse:
         request = httpx.Request("GET", self.url)
         response = httpx.Response(
             status_code=self.status_code,
-            headers=self.headers,
+            headers=_httpx_safe_headers(self.headers),
             content=self.content,
             request=request,
         )
@@ -231,12 +243,14 @@ class _CurlClient(AsyncHttpClient):
         follow_redirects: bool,
         doh_url: str | None = None,
         max_download_bytes: int = guards.MAX_DOCUMENT_DOWNLOAD_BYTES,
+        compressed: bool = True,
     ) -> None:
         self._timeout = timeout
         self._headers = headers
         self._follow_redirects = follow_redirects
         self._doh_url = doh_url
         self._max_download_bytes = max_download_bytes
+        self._compressed = compressed
 
     async def get(
         self,
@@ -254,7 +268,6 @@ class _CurlClient(AsyncHttpClient):
             command = [
                 "curl",
                 "-sS",
-                "--compressed",
                 "-D",
                 str(header_path),
                 "-o",
@@ -267,6 +280,8 @@ class _CurlClient(AsyncHttpClient):
                 "--max-filesize",
                 str(self._max_download_bytes),
             ]
+            if self._compressed:
+                command.append("--compressed")
             if self._doh_url:
                 command.extend(["--doh-url", self._doh_url])
             if self._follow_redirects:
@@ -340,6 +355,13 @@ class _AdaptiveHttpClient(AsyncHttpClient):
             follow_redirects=follow_redirects,
             doh_url=doh_url,
         )
+        self._identity_fallback = _CurlClient(
+            timeout=fallback_timeout,
+            headers={**headers, "Accept-Encoding": "identity"},
+            follow_redirects=follow_redirects,
+            doh_url=doh_url,
+            compressed=False,
+        )
 
     async def get(
         self,
@@ -353,6 +375,8 @@ class _AdaptiveHttpClient(AsyncHttpClient):
             return await self._primary.get(url, params=params, headers=headers, **kwargs)
         except (httpx.ConnectError, httpx.NetworkError, httpx.TimeoutException, OSError):
             return await self._fallback.get(url, params=params, headers=headers, **kwargs)
+        except httpx.DecodingError:
+            return await self._identity_fallback.get(url, params=params, headers=headers, **kwargs)
 
     async def aclose(self) -> None:
         await self._primary.aclose()
