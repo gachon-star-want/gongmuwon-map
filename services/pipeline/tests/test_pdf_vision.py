@@ -298,6 +298,29 @@ def test_rows_from_pdf_text_parses_user_place_purpose_layout_rows() -> None:
     assert rows[1].purpose == "교육경비보조사업 지원 관련 간담회"
 
 
+def test_rows_from_pdf_text_parses_council_user_place_rows_without_time() -> None:
+    rows = rows_from_pdf_text(
+        """
+1       의장       2026-01-05   곡성군의회          나루터                           의정홍보 간담회 참석자 식비 지급                      187,000      8      신용카드
+21    산업건설위원장    2026-01-29   곡성군의회       순한한우명품관        산업건설위원회 소관 주요 현안 논의 및 의정 자료 수집 간담회 참석자 급식비 지급(산업건설위원장)    368,500     13      신용카드
+39      의장       2026-02-24   곡성군의회         1번지마트                           내방객 제공용 음료 다과 등 구입                     300,000             신용카드
+        """,
+        fallback_department="곡성군의회",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].used_at.isoformat() == "2026-01-05T00:00:00"
+    assert rows[0].department_name == "곡성군의회"
+    assert rows[0].place_text == "나루터"
+    assert rows[0].purpose == "의정홍보 간담회 참석자 식비 지급"
+    assert rows[0].amount == 187000
+    assert rows[0].user_text == "의장 8명"
+    assert rows[1].place_text == "순한한우명품관"
+    assert rows[1].user_text == "산업건설위원장 13명"
+    assert rows[2].place_text == "1번지마트"
+    assert rows[2].user_text == "의장"
+
+
 def test_rows_from_pdf_text_parses_purpose_first_pdf_table_rows() -> None:
     rows = rows_from_pdf_text(
         """
