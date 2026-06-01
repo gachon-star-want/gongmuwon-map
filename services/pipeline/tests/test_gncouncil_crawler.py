@@ -1,3 +1,4 @@
+from datetime import date
 from urllib.parse import parse_qs, urlsplit
 
 import public_officer_pipeline.crawler.gncouncil as gncouncil
@@ -1335,6 +1336,61 @@ def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None
         == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
     )
     assert details[0].title == "2026년 4월 업무추진비 집행내역 공개"
+
+
+def test_attachment_crawler_ignores_yangcheon_download_view_previews() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="양천구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/List.do?cbIdx=397",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url="https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310813",
+        title="2026년 5월 업무추진비 집행내역 공개",
+        published_at=date(2026, 6, 1),
+        department_name="양천구청 가족정책과",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/common/board/Download.do?bcIdx=310813&amp;cbIdx=397&amp;streFileNm=aaaa.xlsx">
+          2026._5월_업무추진비_사용내역(가족정책과).xlsx
+        </a>
+        <a href="/common/board/DownloadView.do;jsessionid=abc?bcIdx=310813&amp;cbIdx=397&amp;streFileNm=aaaa.xlsx">
+          바로보기
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.yangcheon.go.kr/common/board/Download.do"
+        "?bcIdx=310813&cbIdx=397&streFileNm=aaaa.xlsx"
+    )
+
+
+def test_attachment_crawler_ignores_synap_and_convert_previews() -> None:
+    assert gncouncil._is_download_href("/www/downloadBbsFile.do?atchmnflNo=1131437")
+    assert gncouncil._is_download_href(
+        "/cwsboard/board.do?mode=download&bid=179&cid=1451405704&filename=145140.xlsx"
+    )
+    assert not gncouncil._is_download_href(
+        "/common/program/synap.jsp?fileName=%2FDATA%2Fbbs%2F715%2Fpreview.xlsx"
+    )
+    assert not gncouncil._is_download_href(
+        "/convert.jsp?bid=179&cid=1451405704&fileName=145140.xlsx"
+    )
 
 
 def test_attachment_crawler_extracts_nowon_direct_downloads_and_department_cell() -> None:

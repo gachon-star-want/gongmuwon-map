@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import re
+import zipfile
 from datetime import date, datetime, time
 from io import BytesIO
 from typing import Any
 
 import xlrd
 from openpyxl import load_workbook
+from selectolax.parser import HTMLParser
 
 from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
@@ -20,6 +22,7 @@ HEADER_ALIASES = {
     "사용일": "used_date",
     "승인일": "used_date",
     "사용일시": "used_date",
+    "집행일시": "used_date",
     "일시": "used_date",
     "일자": "used_date",
     "일": "used_date",
@@ -104,7 +107,13 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
     )
     if content.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
         return _xls_workbook_rows(content)
-    guards.preflight_xlsx_zip(content)
+    try:
+        guards.preflight_xlsx_zip(content)
+    except zipfile.BadZipFile:
+        html_rows = _html_table_rows(content)
+        if html_rows:
+            return html_rows
+        raise
     workbook = load_workbook(BytesIO(content), data_only=True, read_only=True)
     try:
         worksheets = workbook.worksheets[: guards.MAX_SPREADSHEET_SHEETS]
@@ -170,6 +179,52 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
             )
         worksheets.append(rows)
     return worksheets
+
+
+def _html_table_rows(content: bytes) -> list[list[list[str]]]:
+    text = _decode_htmlish_content(content)
+    if "<table" not in text.lower():
+        return []
+
+    tree = HTMLParser(text)
+    tables: list[list[list[str]]] = []
+    total_cells = 0
+    for table_index, table in enumerate(tree.css("table"), start=1):
+        if table_index > guards.MAX_SPREADSHEET_SHEETS:
+            break
+        sheet_name = f"html table {table_index}"
+        rows: list[list[str]] = []
+        for tr in table.css("tr"):
+            row_values = _trim_trailing_empty_cells(
+                [_clean(cell.text(separator=" ", strip=True)) for cell in tr.css("th,td")]
+            )
+            if not any(row_values):
+                continue
+            row_index = len(rows) + 1
+            if row_index > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+                raise guards.DocumentProcessingLimitError(
+                    f"spreadsheet sheet {sheet_name!r} rows count exceeds limit of "
+                    f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+                )
+            total_cells += _checked_row_width(
+                sheet_name=sheet_name,
+                row_index=row_index,
+                width=len(row_values),
+                current_total_cells=total_cells,
+            )
+            rows.append(row_values)
+        if rows:
+            tables.append(rows)
+    return tables
+
+
+def _decode_htmlish_content(content: bytes) -> str:
+    for encoding in ("utf-8-sig", "cp949", "euc-kr"):
+        try:
+            return content.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return content.decode("utf-8", errors="replace")
 
 
 def _ensure_declared_sheet_bounds(
@@ -241,9 +296,6 @@ def _extract_department(rows: list[list[str]]) -> str | None:
 def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
     for index, row in enumerate(rows[:20]):
         mapped = _disambiguate_headers(row, [_map_header(cell) for cell in row])
-        has_place_hint = "place_text" in mapped or "purpose" in mapped or "expense_category" in mapped
-        if "used_date" in mapped and has_place_hint and "amount" in mapped:
-            return index, mapped
         if index + 1 < len(rows):
             width = max(len(row), len(rows[index + 1]))
             overlaid = [
@@ -251,11 +303,25 @@ def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
                 or (row[column] if column < len(row) else "")
                 for column in range(width)
             ]
-            mapped = _disambiguate_headers(overlaid, [_map_header(cell) for cell in overlaid])
-            has_place_hint = "place_text" in mapped or "purpose" in mapped or "expense_category" in mapped
-            if "used_date" in mapped and has_place_hint and "amount" in mapped:
-                return index + 1, mapped
+            overlaid_mapped = _disambiguate_headers(overlaid, [_map_header(cell) for cell in overlaid])
+            if (
+                any(mapped)
+                and _has_required_headers(overlaid_mapped)
+                and _header_score(overlaid_mapped) >= _header_score(mapped)
+            ):
+                return index + 1, overlaid_mapped
+        if _has_required_headers(mapped):
+            return index, mapped
     return None, []
+
+
+def _has_required_headers(mapped: list[str | None]) -> bool:
+    has_place_hint = "place_text" in mapped or "purpose" in mapped or "expense_category" in mapped
+    return "used_date" in mapped and has_place_hint and "amount" in mapped
+
+
+def _header_score(mapped: list[str | None]) -> int:
+    return sum(1 for header in mapped if header)
 
 
 def _map_header(header: str) -> str | None:

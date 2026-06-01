@@ -915,7 +915,13 @@ def _is_download_href(href: str) -> bool:
     if _is_placeholder_href(href):
         return False
     lowered = href.lower()
-    if "synep.jsp" in lowered:
+    if (
+        "downloadview.do" in lowered
+        or "synap.jsp" in lowered
+        or "synap/" in lowered
+        or "synep.jsp" in lowered
+        or "convert.jsp" in lowered
+    ):
         return False
     return any(part.lower() in lowered for part in DOWNLOAD_HREF_PARTS) or re.search(
         r"\.(?:pdf|xls|xlsx|hwpx)(?:$|[?#&])",
