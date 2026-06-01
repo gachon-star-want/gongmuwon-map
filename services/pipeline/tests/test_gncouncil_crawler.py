@@ -1044,6 +1044,49 @@ def test_attachment_crawler_extracts_bd_board_js_view_detail_links() -> None:
     assert refs[0].file_kind == "html"
 
 
+def test_attachment_crawler_extracts_michuhol_and_yeonsu_download_paths() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="연수구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            parent_region="인천광역시",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.yeonsu.go.kr/main/administration/open_info/charge.asp",
+                "followDetail": True,
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url="https://www.yeonsu.go.kr/main/administration/open_info/charge.asp?page=v&idx=11571",
+        title="2026년 5월 업무추진비 집행내역(송도건강생활지원센터)",
+        published_at=None,
+        department_name="연수구청 송도건강생활지원센터",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <a href="/other/file_down.do?sq=1214696&amp;key=22D57C1BD1">
+          부서운영업무추진비+집행내역(2026년+5월).xlsx
+        </a>
+        <a href="/shareEtc/download_utf.asp?filename=2026%EB%85%84_5%EC%9B%94_%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84.xlsx&amp;filepath=etc_account">
+          2026년_5월_업무추진비_집행내역(송도건강생활지원센터).xlsx
+        </a>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 2
+    assert refs[0].url == "https://www.yeonsu.go.kr/other/file_down.do?sq=1214696&key=22D57C1BD1"
+    assert refs[0].file_kind == "xlsx"
+    assert refs[1].url.startswith("https://www.yeonsu.go.kr/shareEtc/download_utf.asp?")
+    assert refs[1].file_kind == "xlsx"
+
+
 def test_attachment_crawler_extracts_view_path_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
