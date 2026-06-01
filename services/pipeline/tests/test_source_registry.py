@@ -278,18 +278,18 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2200
-    assert summary.verified_in_code == 142
+    assert summary.verified_in_code == 144
     assert summary.pending == 1835
-    assert summary.legal_hold == 100
+    assert summary.legal_hold == 98
     assert summary.source_not_found == 122
     assert summary.no_recent_data == 0
     assert summary.pdf_vision_hold == 0
     assert summary.adapter_hold == 1
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
-    assert summary.priority_group_counts["p1"].verified_in_code == 142
+    assert summary.priority_group_counts["p1"].verified_in_code == 144
     assert summary.priority_group_counts["p1"].pending == 121
-    assert summary.priority_group_counts["p1"].legal_hold == 100
+    assert summary.priority_group_counts["p1"].legal_hold == 98
     assert summary.priority_group_counts["p1"].source_not_found == 122
     assert summary.priority_group_counts["p1"].adapter_hold == 1
     assert summary.priority_group_counts["p2"].total == 60
@@ -306,9 +306,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 11
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 13
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 121
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 93
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 91
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 122
@@ -590,12 +590,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "자유이용을 불가" in gyeongnam_city.evidence_note
     assert gyeongnam_council.verification_status == "legal_hold"
     assert "PDF 다운로드 구조" in gyeongnam_council.evidence_note
-    assert jeju_city.verification_status == "legal_hold"
-    assert "도청 전체 업무추진비 통합 출처로 확정할 수 없고" in jeju_city.evidence_note
-    assert "상업적 목적 이용 불가" in jeju_city.evidence_note
-    assert jeju_council.verification_status == "legal_hold"
-    assert "XLS/XLSX 다운로드 구조" in jeju_council.evidence_note
-    assert "ALL RIGHTS RESERVED" in jeju_council.evidence_note
+    assert jeju_city.verification_status == "verified_in_code"
+    assert jeju_city.source_url == "https://www.jeju.go.kr/open/open/work/work2.htm?category=1409"
+    assert jeju_city.homepage == "https://www.jeju.go.kr"
+    assert "도 본청 업무추진비" in jeju_city.evidence_note
+    assert "공공저작물 이용안내" in jeju_city.evidence_note
+    assert jeju_council.verification_status == "verified_in_code"
+    assert jeju_council.source_url == "https://www.council.jeju.kr/clicknews/openpromotion.do"
+    assert jeju_council.homepage == "https://www.council.jeju.kr"
+    assert "업무추진비 현황" in jeju_council.evidence_note
+    assert "의회 이용약관" in jeju_council.evidence_note
 
     ulsan_city = next(
         entry

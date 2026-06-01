@@ -1203,33 +1203,6 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
-    "제주특별자치도청": {
-        "sourceUrl": "https://audit.jeju.go.kr/news/notice/open.htm",
-        "fileKinds": ["xlsx", "hwp"],
-        "pageParam": "page",
-        "followDetail": True,
-        "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 재확인",
-        "blocker": (
-            "공식 감사위원회 업무추진비 공개 목록과 상세·XLSX/HWP 다운로드 구조는 확인했습니다. "
-            "다만 도청 전체 업무추진비 통합 출처로 확정할 수 없고, 목록/상세 화면에서 "
-            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않으며, 감사위원회 "
-            "저작권보호정책에 상업적 목적 이용 불가가 명시되어 제1유형 확인 전까지 수집하지 않습니다."
-        ),
-    },
-    "제주특별자치도의회": {
-        "sourceUrl": "https://www.council.jeju.kr/clicknews/openpromotion.do",
-        "fileKinds": ["xlsx", "xls"],
-        "pageParam": "page",
-        "followDetail": True,
-        "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 재확인",
-        "blocker": (
-            "공식 업무추진비공개 목록과 상세·XLS/XLSX 다운로드 구조는 확인했습니다. 다만 "
-            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 "
-            "푸터의 ALL RIGHTS RESERVED 저작권 문구만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
-        ),
-    },
     "울산시청": {
         "sourceUrl": "https://www.ulsan.go.kr/u/rep/transfer/chief/list.ulsan?mId=001003002005000000",
         "fileKinds": ["html"],
@@ -1278,6 +1251,31 @@ NON_CAPITAL_REGIONAL_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    "제주특별자치도청": {
+        "homepage": "https://www.jeju.go.kr",
+        "listUrl": "https://www.jeju.go.kr/open/open/work/work2.htm?category=1409",
+        "extraListUrls": [
+            "https://www.jeju.go.kr/open/open/work/work1.htm?category=1003",
+        ],
+        "fileKinds": ["xlsx", "xls"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "evidenceNote": (
+            "공식 원문은 제주넷 정보공개 > 업무추진비 공개의 도 본청 업무추진비 "
+            "(https://www.jeju.go.kr/open/open/work/work2.htm?category=1409)와 도지사·부지사 "
+            "업무추진비(https://www.jeju.go.kr/open/open/work/work1.htm?category=1003)입니다. "
+            "목록·상세에서 act=view 및 act=download XLS/XLSX 첨부 구조를 확인했습니다. "
+            "제주특별자치도 공개 자료는 「지방자치단체 업무추진비 집행에 관한 규칙」과 "
+            "「제주특별자치도 행정정보공개에 관한 조례」 제7조에 따라 월 1회 홈페이지 공개되는 "
+            "행정정보이며, 제주넷 저작권보호정책(https://www.jeju.go.kr/help/policy/copyright.htm)과 "
+            "공공저작물 이용안내(https://www.jeju.go.kr/open/publicmedia/use.htm)는 "
+            "저작권법 제24조의2 및 공공누리 표시 공공저작물의 자유이용, 제1유형의 출처표시 "
+            "자유이용을 안내합니다. 공무원맵은 출처표시 조건으로 법정 공개 사실 데이터만 "
+            "정규화합니다."
+        ),
+    },
 }
 
 NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS = {
@@ -1289,6 +1287,31 @@ NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS = {
         "pageParam": "pageNo",
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 화면 확인",
+    },
+    "제주특별자치도의회": {
+        "homepage": "https://www.council.jeju.kr",
+        "listUrl": "https://www.council.jeju.kr/clicknews/openpromotion.do",
+        "extraListUrls": [
+            "https://www.council.jeju.kr/notice/informationdisclosure/operations/expenses.do",
+        ],
+        "fileKinds": ["xlsx", "xls"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "evidenceNote": (
+            "공식 원문은 제주특별자치도의회 자료실 > 업무추진비공개 "
+            "(https://www.council.jeju.kr/clicknews/openpromotion.do)와 알림마당 > 의정활동정보공개 "
+            "> 의회운영 > 업무추진비 현황 "
+            "(https://www.council.jeju.kr/notice/informationdisclosure/operations/expenses.do)입니다. "
+            "목록 act=view, 상세 act=down XLS/XLSX 첨부 구조와 의장·부의장·전문위원 부서장 "
+            "업무추진비, 의회운영업무추진비, 의정운영공통경비 파일을 확인했습니다. "
+            "의회 이용약관(https://www.council.jeju.kr/help/terms.do)은 홈페이지 및 모바일서비스에 "
+            "제주넷 이용약관이 적용된다고 안내하며, 제주넷 저작권보호정책과 공공저작물 "
+            "이용안내는 저작권법 제24조의2 및 공공누리 표시 공공저작물의 자유이용, 제1유형의 "
+            "출처표시 자유이용을 안내합니다. 공무원맵은 출처표시 조건으로 법정 공개 사실 "
+            "데이터만 정규화합니다."
+        ),
     },
 }
 
@@ -3411,6 +3434,26 @@ def non_capital_agencies() -> list[Agency]:
                 "pageParam": office_board["pageParam"],
                 "verifiedAt": office_board["verifiedAt"],
                 "verifiedBy": office_board["verifiedBy"],
+                **(
+                    {"extraListUrls": office_board["extraListUrls"]}
+                    if "extraListUrls" in office_board
+                    else {}
+                ),
+                **(
+                    {"userAgent": office_board["userAgent"]}
+                    if "userAgent" in office_board
+                    else {}
+                ),
+                **(
+                    {"jsDownloadPath": office_board["jsDownloadPath"]}
+                    if "jsDownloadPath" in office_board
+                    else {}
+                ),
+                **(
+                    {"evidenceNote": office_board["evidenceNote"]}
+                    if "evidenceNote" in office_board
+                    else {}
+                ),
             }
             if office_board
             else {
@@ -3434,6 +3477,26 @@ def non_capital_agencies() -> list[Agency]:
                 "pageParam": council_board["pageParam"],
                 "verifiedAt": council_board["verifiedAt"],
                 "verifiedBy": council_board["verifiedBy"],
+                **(
+                    {"extraListUrls": council_board["extraListUrls"]}
+                    if "extraListUrls" in council_board
+                    else {}
+                ),
+                **(
+                    {"userAgent": council_board["userAgent"]}
+                    if "userAgent" in council_board
+                    else {}
+                ),
+                **(
+                    {"jsDownloadPath": council_board["jsDownloadPath"]}
+                    if "jsDownloadPath" in council_board
+                    else {}
+                ),
+                **(
+                    {"evidenceNote": council_board["evidenceNote"]}
+                    if "evidenceNote" in council_board
+                    else {}
+                ),
             }
             if council_board
             else {

@@ -59,6 +59,8 @@ DOWNLOAD_HREF_PARTS = (
     "/FileDownLoad.php",
     "/ExFileDownLoad.php",
     "/cwsboard/board.do?mode=download",
+    "act=download",
+    "act=down",
 )
 DATE_RE = re.compile(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})")
 KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
@@ -952,6 +954,7 @@ def _is_detail_href(href: str) -> bool:
         or "selectboarddetail.do" in lowered
         or "mode=view" in lowered
         or "amode=view" in lowered
+        or "act=view" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
         or re.search(r"(?:^|/)view(?:\?|$)", lowered) is not None
