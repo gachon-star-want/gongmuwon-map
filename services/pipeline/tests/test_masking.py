@@ -158,6 +158,14 @@ def test_legal_visibility_masks_elected_rank_out_of_region() -> None:
     assert validated.representative is None
 
 
+def test_legal_visibility_treats_zero_party_size_as_unknown() -> None:
+    visit = _visit(party_size=0, raw_excerpt="간담회")
+
+    validated = validate_normalized_visit(visit, agency=_agency("서울특별시"))
+
+    assert validated.party_size is None
+
+
 def test_legal_visibility_allows_gyeonggi_elected_ranks() -> None:
     agency = _agency("경기도", JurisdictionType.PROVINCE)
 

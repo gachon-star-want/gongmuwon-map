@@ -1306,6 +1306,18 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    ("경상북도", "구미시청"): {
+        "homepage": "https://www.gumi.go.kr",
+        "listUrl": (
+            "https://www.gumi.go.kr/portal/board/post/list.do?"
+            "bcIdx=164&mid=0303100000"
+        ),
+        "fileKinds": ["xlsx", "xls"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-01",
+        "verifiedBy": "공식 사이트 원격 확인",
+    },
     ("전라남도", "곡성군청"): {
         "homepage": "https://www.gokseong.go.kr",
         "listUrl": (

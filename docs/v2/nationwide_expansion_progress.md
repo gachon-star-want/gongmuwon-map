@@ -308,6 +308,7 @@ P2 기준은 정부조직관리정보시스템의 2026 정부기구도·조직�
 |---|---|---|---|---|---|
 | 보령시청 | `https://www.brcn.go.kr/cop/bbs/BBSMSTR_000000000386/selectBoardList.do?bbsId=BBSMSTR_000000000386&pageIndex=1` | 공식 업무추진비 목록에서 2025년 게시물이 확인되고, 같은 `BBSMSTR_000000000386` 상세가 공공누리 1유형 `출처표시` 조건으로 표시된다. | XLS/XLSX 중심, 일부 HWP/PDF 혼재 | `attachment_board`, `pageParam=pageIndex`, `followDetail=true`, `fileKinds=["xls","xlsx","hwp","pdf"]` | `verified_candidate` |
 | 진도군청 | `https://www.jindo.go.kr/home/board/B0071.cs?m=52` | 공식 업무추진비 집행내역 목록과 상세 PDF 첨부가 확인되고, 상세 하단이 공공누리 `[출처표시]` 조건으로 표시된다. | PDF 중심 | `attachment_board`, `pageParam=pageIndex`, `followDetail=true`, `fileKinds=["pdf"]` | `verified_candidate` |
+| 구미시청 | `https://www.gumi.go.kr/portal/board/post/list.do?bcIdx=164&mid=0303100000` | 공식 업무 추진비 목록에서 2026년 게시물이 확인되고, 상세 하단이 공공누리 제1유형 `출처표시` 조건으로 표시된다. 상세 링크는 `yhLib.inline.post`/`data-req-get-p-idx`, 파일 다운로드는 `yhLib.file.download` 구조다. | XLS/XLSX | `attachment_board`, `pageParam=page`, `followDetail=true`, `fileKinds=["xlsx","xls"]` | `verified_candidate` |
 | 밀양시청 | `https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do?bbsId=BBSMSTR_000000085910&mnNo=3040000&nttId=174279&owd=sammun&pageIndex=1` | 공식 밀양시 읍면동 공개자료실 상세에서 XLSX 첨부와 공공누리 `출처표시` 조건이 확인된다. 다만 조사 URL은 삼문동 세부 보드라 시청 전체 업무추진비 통합 list URL과 부서별 보드 범위 매핑이 추가로 필요하다. | XLSX | 다중 `attachment_board` 후보, `pageIndex`, `followDetail=true` | `pending` |
 | 진주시청 | `https://www.jinju.go.kr/05638.web` / `https://www.jinju.go.kr/05637.web` | 과장급·국소장급 업무추진비 상세와 XLSX 첨부가 확인된다. 일부 상세는 공공누리 1유형이지만 같은 업무추진비 보드 다수 상세가 제4유형으로 표시되어 게시물별 라이선스 필터 없이는 수집 불가다. | XLSX | `attachment_board`, `gcode`별 extra list, `followDetail=true` | `legal_hold` |
 | 인제군청 | `https://inje.gangwon.kr/portal/adm/public/operatingexpense?pageIndex=1` | 공식 업무추진비 공개 목록과 XLS/XLSX/PDF 첨부가 확인된다. 상세 화면은 공공누리 `출처표시+상업적 이용금지+변형 등 2차적 저작물 작성 금지` 조건으로 표시된다. | XLSX/XLS/PDF | `attachment_board`, `pageParam=pageIndex`, `followDetail=true` | `legal_hold` |
@@ -372,7 +373,7 @@ git diff --check
 전국 업무추진비 원문 데이터를 기존 DB와 같은 구조로 재수집·적재하는 실행계획은 [전국 업무추진비 데이터셋 수집 실행 계획](nationwide_collection_execution_plan.md)을 기준으로 진행한다. 현재 기준선과 production 주입 판정은 [전국 수집 검증 리포트](nationwide_verification_report.md)에 기록한다.
 
 1. 수도권은 현재 0 pending / 7 legal_hold 상태다. legal_hold는 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 적재하지 않는다.
-2. 비수도권은 현재 8 verified / 280 pending / 60 legal_hold 상태다. 지역별로 공식 URL 검증을 진행하되, 광주·부산·대구·세종·강원·전북·전남·충남·충북·경북·경남·제주·울산·대전 기초·충남 기초·전남 기초 보류 기관은 제1유형 또는 수집 접근성 확인 전까지 적재하지 않는다.
+2. 비수도권은 현재 9 verified / 279 pending / 60 legal_hold 상태다. 지역별로 공식 URL 검증을 진행하되, 광주·부산·대구·세종·강원·전북·전남·충남·충북·경북·경남·제주·울산·대전 기초·충남 기초·전남 기초 보류 기관은 제1유형 또는 수집 접근성 확인 전까지 적재하지 않는다.
 3. P2 60개, P3 342개, P4 1,312개는 공식 기준 명부만 확정된 pending 상태다. 기관별 업무추진비 원문 URL·공공누리/라이선스·첨부 패턴 검증 전까지 크롤·적재하지 않는다.
 4. 새 기관마다 공식 URL, 공공누리/라이선스, 첨부 패턴, crawler dry-run, parser 샘플 검증, 공공누리/출처 표시 업데이트를 완료한 뒤에만 staging 적재를 검토한다.
 5. staging load 전 `DATABASE_URL_STAGING` 또는 `STAGING_DATABASE_URL`, `R2_STAGING_ACCOUNT_ID`, `R2_STAGING_ACCESS_KEY_ID`, `R2_STAGING_SECRET_ACCESS_KEY`, `R2_STAGING_BUCKET`을 GitHub Secrets 또는 로컬 shell에 주입한다. CLI 실행 시에는 staging R2 secret을 `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`으로 매핑한다. secret 값은 문서와 리포트에 남기지 않는다.

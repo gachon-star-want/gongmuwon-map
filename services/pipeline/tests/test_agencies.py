@@ -341,7 +341,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         if agency.source_pattern.get("status") == "adapter_required"
     ]
 
-    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 8
+    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 9
     assert all(agency.homepage is None for agency in pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in pending_agencies)
@@ -795,6 +795,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "대전시의회",
         "보령시청",
         "서산시청",
+        "구미시청",
         "전라남도청",
         "곡성군청",
         "곡성군의회",
@@ -802,6 +803,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     }
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
+    gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
     jeonnam_city = next(agency for agency in verified_non_capital if agency.short_name == "전라남도청")
     gokseong_city = next(agency for agency in verified_non_capital if agency.short_name == "곡성군청")
     gokseong_council = next(
@@ -816,6 +818,14 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert daejeon_council.homepage == "https://council.daejeon.go.kr"
     assert daejeon_council.source_pattern["adapter"] == "council_attachment_board"
     assert daejeon_council.source_pattern["pageParam"] == "pageNo"
+    assert gumi_city.homepage == "https://www.gumi.go.kr"
+    assert gumi_city.source_pattern["adapter"] == "attachment_board"
+    assert gumi_city.source_pattern["listUrl"] == (
+        "https://www.gumi.go.kr/portal/board/post/list.do?"
+        "bcIdx=164&mid=0303100000"
+    )
+    assert gumi_city.source_pattern["fileKinds"] == ["xlsx", "xls"]
+    assert gumi_city.source_pattern["pageParam"] == "page"
     assert jeonnam_city.homepage == "https://www.jeonnam.go.kr"
     assert jeonnam_city.source_pattern["adapter"] == "attachment_board"
     assert jeonnam_city.source_pattern["listUrl"] == (

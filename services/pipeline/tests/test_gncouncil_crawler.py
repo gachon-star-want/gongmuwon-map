@@ -1891,6 +1891,54 @@ def test_attachment_crawler_extracts_inline_post_detail_links() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_inline_post_idx_detail_links() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="구미시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경상북도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gumi.go.kr/portal/board/post/list.do?bcIdx=164&mid=0303100000",
+                "followDetail": True,
+                "pageParam": "page",
+            },
+        )
+    )
+
+    details = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>8843</td>
+            <td class="list_tit">
+              <a href="#" title="게시글 상세 열람"
+                 onclick="yhLib.inline.post(this); return false;"
+                 data-req-form-id="viewForm"
+                 data-req-merge-form-id="listForm"
+                 data-req-get-p-idx="836663">
+                2026년 5월 업무추진비 집행내역(신산업정책과)
+              </a>
+            </td>
+            <td class="list_file"><img src="/common/img/board/xls.gif" alt="엑셀 파일"/></td>
+            <td class="list_write">신산업정책과</td>
+            <td class="list_date">2026-06-01(Mon)</td>
+            <td class="list_hit">1</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(details) == 1
+    assert details[0].url == (
+        "https://www.gumi.go.kr/portal/board/post/view.do?bcIdx=164&mid=0303100000&idx=836663"
+    )
+    assert details[0].department_name == "구미시청 신산업정책과"
+    assert details[0].published_at and details[0].published_at.isoformat() == "2026-06-01"
+
+
 def test_attachment_crawler_extracts_page_list_bbs_fn_go_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
