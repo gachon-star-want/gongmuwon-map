@@ -133,7 +133,12 @@ class PipelineRunner:
                     )
                     stats.raw_parsed_rows += len(raw_rows)
                     row_since = self.config.row_since or self.config.since
-                    rows = [row for row in raw_rows if row.used_at.date() >= row_since]
+                    today = date.today()
+                    rows = [
+                        row
+                        for row in raw_rows
+                        if row_since <= row.used_at.date() <= today
+                    ]
                     stats.parsed_rows += len(rows)
 
                     _mark_stage(stats, "normalize_rows")
@@ -150,6 +155,11 @@ class PipelineRunner:
                     try:
                         _mark_stage(stats, "validate_visits")
                         visits = validate_normalized_visits(raw_visits, agency=agency)
+                        visits = [
+                            visit
+                            for visit in visits
+                            if row_since <= visit.visit_date <= today
+                        ]
                     except LegalVisibilityError as exc:
                         quality = [
                             QualityGateResult(

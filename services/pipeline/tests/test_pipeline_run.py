@@ -239,6 +239,45 @@ async def test_run_attaches_partial_stats_to_config_errors() -> None:
 
 
 @pytest.mark.asyncio
+async def test_run_filters_future_normalized_visit_dates() -> None:
+    agency = _agency()
+    crawler = _FakeCrawler(
+        [
+            PostRef(
+                agency_id=agency.id,
+                url="https://example.com/expense/1",
+                title="내역",
+                published_at=date(2026, 5, 1),
+                department_name="총무과",
+            )
+        ]
+    )
+    normalizer = _FakeNormalizer(
+        [
+            _visit(name="정상식당"),
+            _visit(name="미래식당").model_copy(update={"visit_date": date(2206, 5, 28)}),
+        ]
+    )
+    resolver = _FakeResolver()
+    loader = _FakeLoader()
+
+    runner = PipelineRunner(
+        config=_run_config(row_since=date(2026, 1, 1)),
+        normalizer=normalizer,
+        resolver=resolver,
+        storage=_FakeStorage(),
+        row_extractor=_row_extractor(rows=2),
+        loader=loader,
+    )
+
+    stats = await runner.run_agency(agency, crawler)
+
+    assert stats.normalized_visits == 1
+    assert len(loader.calls) == 1
+    assert [visit.place_raw.name for visit in loader.calls[0].visits] == ["정상식당"]
+
+
+@pytest.mark.asyncio
 async def test_run_respects_skip_posts_and_max_posts() -> None:
     agency = _agency()
     posts = [
