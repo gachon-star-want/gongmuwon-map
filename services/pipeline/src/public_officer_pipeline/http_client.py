@@ -373,7 +373,13 @@ class _AdaptiveHttpClient(AsyncHttpClient):
     ) -> SimpleHttpResponse:
         try:
             return await self._primary.get(url, params=params, headers=headers, **kwargs)
-        except (httpx.ConnectError, httpx.NetworkError, httpx.TimeoutException, OSError):
+        except (
+            httpx.ConnectError,
+            httpx.NetworkError,
+            httpx.ProtocolError,
+            httpx.TimeoutException,
+            OSError,
+        ):
             return await self._fallback.get(url, params=params, headers=headers, **kwargs)
         except httpx.DecodingError:
             return await self._identity_fallback.get(url, params=params, headers=headers, **kwargs)
