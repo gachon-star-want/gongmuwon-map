@@ -886,6 +886,7 @@ def _file_kind(filename: str) -> str:
             re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered)
             or f"{file_kind}파일" in lowered
             or re.search(rf"\b{file_kind}\s*파일\b", lowered)
+            or re.search(rf"\b{file_kind}\s*첨부파일\b", lowered)
         ):
             return file_kind
     return ""
@@ -967,7 +968,12 @@ def _is_placeholder_href(href: str) -> bool:
 
 def _looks_like_generic_file_label(filename: str) -> bool:
     normalized = _normalize_spaces(filename).lower()
-    return bool(re.fullmatch(r"(?:pdf|xls|xlsx|hwpx)\s*파일\s*(?:첨부|다운로드|미리보기)", normalized))
+    return bool(
+        re.fullmatch(
+            r"(?:pdf|xls|xlsx|hwpx)\s*(?:(?:첨부)?파일\s*)?(?:첨부|다운로드|미리보기)",
+            normalized,
+        )
+    )
 
 
 def _looks_like_uninformative_file_label(filename: str) -> bool:

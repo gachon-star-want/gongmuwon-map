@@ -943,6 +943,62 @@ def test_attachment_crawler_extracts_bd_select_bbs_detail_downloads() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_uses_title_for_generic_xls_download_label() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="파주시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경기도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.paju.go.kr/user/policy_02/board/BD_board.list.do?bbsCd=1018",
+                "fileKinds": ["xls", "xlsx"],
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table>
+          <thead>
+            <tr>
+              <th>번호</th>
+              <th>제목</th>
+              <th>부서명</th>
+              <th>등록일</th>
+              <th>첨부</th>
+              <th>조회수</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>4471</td>
+              <td>2026년 1분기 업무추진비 집행내역(문화예술과)</td>
+              <td>문화예술과</td>
+              <td>2026/05/04</td>
+              <td>
+                <a href="/component/file/ND_fileDownload.do?id=13fd97d2-c11f-40ba-99b1-6024aca87c5e">
+                  xls 첨부파일 다운로드
+                </a>
+              </td>
+              <td>23</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.paju.go.kr/component/file/ND_fileDownload.do"
+        "?id=13fd97d2-c11f-40ba-99b1-6024aca87c5e"
+    )
+    assert refs[0].department_name == "파주시청 문화예술과"
+    assert refs[0].file_kind == "xls"
+
+
 def test_attachment_crawler_extracts_view_path_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
