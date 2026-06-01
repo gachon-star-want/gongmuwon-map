@@ -5,6 +5,7 @@ import zipfile
 from datetime import date, datetime, time
 from io import BytesIO
 from typing import Any
+from xml.etree import ElementTree
 
 import xlrd
 from openpyxl import load_workbook
@@ -114,7 +115,7 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
         if html_rows:
             return html_rows
         raise
-    workbook = load_workbook(BytesIO(content), data_only=True, read_only=True)
+    workbook = _load_xlsx_workbook(content)
     try:
         worksheets = workbook.worksheets[: guards.MAX_SPREADSHEET_SHEETS]
         workbook_rows: list[list[list[str]]] = []
@@ -156,6 +157,77 @@ def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
         if value:
             last_non_empty = index
     return row_values[: last_non_empty + 1]
+
+
+def _load_xlsx_workbook(content: bytes):
+    try:
+        return load_workbook(BytesIO(content), data_only=True, read_only=True)
+    except TypeError as exc:
+        message = str(exc)
+        if "_NamedCellStyle" not in message or "name should be" not in message:
+            raise
+        repaired = _repair_xlsx_missing_cell_style_names(content)
+        if repaired == content:
+            raise
+        return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
+
+
+def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
+    with zipfile.ZipFile(BytesIO(content)) as source:
+        if "xl/styles.xml" not in source.namelist():
+            return content
+        repaired_styles = _repair_styles_xml_missing_cell_style_names(source.read("xl/styles.xml"))
+        if repaired_styles is None:
+            return content
+        output = BytesIO()
+        with zipfile.ZipFile(output, "w") as target:
+            for item in source.infolist():
+                data = repaired_styles if item.filename == "xl/styles.xml" else source.read(item.filename)
+                target.writestr(item, data)
+    return output.getvalue()
+
+
+def _repair_styles_xml_missing_cell_style_names(styles_xml: bytes) -> bytes | None:
+    try:
+        root = ElementTree.fromstring(styles_xml)
+    except ElementTree.ParseError:
+        return None
+
+    namespace = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else ""
+    cell_style_tag = f"{{{namespace}}}cellStyle" if namespace else "cellStyle"
+    existing_names = {element.attrib["name"] for element in root.iter(cell_style_tag) if element.attrib.get("name")}
+    repaired = False
+    for index, element in enumerate(root.iter(cell_style_tag), start=1):
+        if element.attrib.get("name"):
+            continue
+        base_name = _builtin_cell_style_name(element.attrib.get("builtinId")) or f"Recovered Style {index}"
+        name = _unique_cell_style_name(base_name, existing_names)
+        element.set("name", name)
+        existing_names.add(name)
+        repaired = True
+    if not repaired:
+        return None
+    return ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
+
+
+def _builtin_cell_style_name(builtin_id: str | None) -> str | None:
+    return {
+        "0": "Normal",
+        "3": "Comma",
+        "4": "Currency",
+        "5": "Percent",
+        "6": "Comma [0]",
+        "7": "Currency [0]",
+    }.get(builtin_id or "")
+
+
+def _unique_cell_style_name(base_name: str, existing_names: set[str]) -> str:
+    if base_name not in existing_names:
+        return base_name
+    suffix = 2
+    while f"{base_name} {suffix}" in existing_names:
+        suffix += 1
+    return f"{base_name} {suffix}"
 
 
 def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:

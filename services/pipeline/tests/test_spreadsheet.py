@@ -1,3 +1,4 @@
+import re
 import zipfile
 from io import BytesIO
 
@@ -21,6 +22,24 @@ def _zip_bytes(entries: dict[str, bytes]) -> bytes:
         for name, value in entries.items():
             archive.writestr(name, value)
     return content.getvalue()
+
+
+def _workbook_bytes_without_normal_style_name(workbook: Workbook) -> bytes:
+    original = _workbook_bytes(workbook)
+    output = BytesIO()
+    with zipfile.ZipFile(BytesIO(original)) as source, zipfile.ZipFile(output, "w") as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == "xl/styles.xml":
+                data, count = re.subn(
+                    rb'(<[^:>]*:?cellStyle\b)([^>]*?)\sname="Normal"([^>]*/?>)',
+                    rb"\1\2\3",
+                    data,
+                    count=1,
+                )
+                assert count == 1
+            target.writestr(item, data)
+    return output.getvalue()
 
 
 def test_extracts_gangnam_xlsx_rows() -> None:
@@ -471,6 +490,23 @@ def test_extracts_html_table_served_as_spreadsheet_bytes() -> None:
     assert rows[0].amount == 45000
     assert rows[0].user_text == "양천구청 3명"
     assert rows[0].payment_method == "카드"
+
+
+def test_extracts_xlsx_with_missing_builtin_cell_style_name() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "남양주식당", 33000])
+
+    rows = extract_spreadsheet_rows(
+        _workbook_bytes_without_normal_style_name(workbook),
+        fallback_department="남양주시의회",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "남양주시의회"
+    assert rows[0].place_text == "남양주식당"
+    assert rows[0].amount == 33000
 
 
 def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
