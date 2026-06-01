@@ -105,6 +105,10 @@ def _provider_model_by_task(
     return overrides[task]
 
 
+def _openai_supports_temperature(model: str) -> bool:
+    return not model.startswith("gpt-5")
+
+
 class AnthropicProvider:
     def __init__(
         self,
@@ -346,10 +350,11 @@ class OpenAIProvider:
 
         request_payload = {
             "model": model,
-            "temperature": 0,
             "response_format": {"type": "json_object"},
             "messages": messages,
         }
+        if _openai_supports_temperature(model):
+            request_payload["temperature"] = 0
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
