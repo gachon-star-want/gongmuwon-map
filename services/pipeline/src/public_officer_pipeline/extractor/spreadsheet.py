@@ -27,6 +27,7 @@ HEADER_ALIASES = {
     "일시": "used_date",
     "일자": "used_date",
     "일": "used_date",
+    "결제일자": "used_date",
     "집행시간": "used_time",
     "사용시간": "used_time",
     "사용시각": "used_time",
@@ -53,7 +54,9 @@ HEADER_ALIASES = {
     "집행목적": "purpose",
     "사용목적": "purpose",
     "사용내역": "purpose",
+    "사용내용": "purpose",
     "집행내역": "purpose",
+    "내용": "purpose",
     "내역": "purpose",
     "대상인원수": "party_size",
     "대상인원": "party_size",
@@ -76,6 +79,8 @@ HEADER_ALIASES = {
     "방법": "payment_method",
     "사용방법및비고": "payment_method",
     "비목": "expense_category",
+    "업무추진비종류": "expense_category",
+    "제목": "expense_category",
 }
 
 DEPARTMENT_RE = re.compile(r"부서명\s*[:：]\s*(?P<department>.+)")
