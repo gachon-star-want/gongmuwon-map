@@ -2162,6 +2162,19 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
+    ("광주광역시", "동구의회"): {
+        "sourceUrl": "https://gjdc.donggu.kr/board.es?mid=a10801040000&bid=0020",
+        "fileKinds": ["xlsx"],
+        "pageParam": "nPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의정활동 정보공개 업무추진비 현황 목록과 XLSX 첨부 다운로드 구조는 "
+            "확인했습니다. 다만 목록 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("전북특별자치도", "전주시청"): {
         "sourceUrl": (
             "https://www.jeonju.go.kr/planweb/board/list.9is?"
@@ -2190,6 +2203,50 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비공개 목록과 상세·PDF/XLS/XLSX 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
             "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "익산시의회"): {
+        "sourceUrl": "https://council.iksan.go.kr/board/list.iksan?boardId=BBS_0000012&menuCd=DOM_000000107010000000",
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 열린의회 업무추진비 공개 목록과 상세·PDF 다운로드 구조는 확인했습니다. "
+            "다만 공공누리 영역이 주석 처리되어 있고, 상세 화면의 확인 가능한 표시는 "
+            "공공누리 제4유형(출처표시+상업적이용금지+변경금지)이므로 제1유형 원칙을 "
+            "바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "남원시청"): {
+        "sourceUrl": (
+            "https://www.namwon.go.kr/board/post/list.do?"
+            "boardUid=ff8080818eacb22f018ebb2ab0f900fc&"
+            "menuUid=ff8080818e3beff0018e40d3b21d022c&page=1"
+        ),
+        "fileKinds": ["pdf", "hwp", "hwpx", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정보공개 업무추진비공개 시장 목록과 첨부 구조는 확인했습니다. 다만 "
+            "목록 화면이 공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 표시되어 "
+            "제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "장수군청"): {
+        "sourceUrl": "https://www.jangsu.go.kr/mayor/board/list.jangsu?boardId=BBS_0000114&contentsSid=450&cpath=%2Fmayor&menuCd=DOM_000000302004000000",
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비 목록과 상세·PDF 다운로드 구조는 확인했습니다. 다만 "
+            "목록/상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 "
+            "표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
 }
