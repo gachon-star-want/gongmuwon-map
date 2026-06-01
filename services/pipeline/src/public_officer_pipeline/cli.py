@@ -1015,8 +1015,14 @@ def _emit_run_payload(status: int, payload: dict[str, object]) -> int:
 
 def _adapter_required_failure_reason(agency: Agency) -> str:
     raw = agency.source_pattern
-    if isinstance(raw, dict) and raw.get("holdStatus") == "legal_hold":
-        return "legal_hold"
+    if isinstance(raw, dict):
+        hold_status = str(raw.get("holdStatus") or "")
+        if hold_status == "legal_hold":
+            return "legal_hold"
+        if hold_status in {"source_not_found", "no_recent_data", "pdf_vision_hold"}:
+            return hold_status
+        if hold_status == "adapter_hold":
+            return "parser_missing"
     return "source_not_found"
 
 
