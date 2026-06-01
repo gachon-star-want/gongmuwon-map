@@ -12,16 +12,96 @@ from public_officer_pipeline.models import PlaceRaw, ResolvedPlace
 _SEOUL_REGION_RE = re.compile(r"(서울(?:특별시)?|서울)\s+([가-힣]+[구군시])")
 _GYEONGGI_REGION_RE = re.compile(r"(경기(?:도)?|경기도)\s+([가-힣]+[시군구])")
 _INCHEON_REGION_RE = re.compile(r"(인천(?:광역시)?|인천)\s+([가-힣]+[시군구])")
+_PLACEHOLDER_PLACE_KEYS = {
+    "unknown",
+    "none",
+    "na",
+    "정보없음",
+    "미상",
+    "해당없음",
+    "없음",
+    "장소없음",
+    "불명",
+}
+_RESTAURANT_CATEGORY_HINTS = (
+    "음식점",
+    "한식",
+    "중식",
+    "일식",
+    "양식",
+    "분식",
+    "뷔페",
+    "패스트푸드",
+    "간식",
+    "카페",
+    "커피",
+    "제과",
+    "베이커리",
+)
+_LARGE_CHAIN_BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("스타벅스", ("스타벅스", "starbucks")),
+    ("투썸플레이스", ("투썸플레이스", "투썸", "twosome")),
+    ("메가커피", ("메가커피", "메가mgc커피", "mega coffee", "megacoffee")),
+    ("컴포즈커피", ("컴포즈커피", "컴포즈", "compose coffee", "composecoffee")),
+    ("파리바게뜨", ("파리바게뜨", "파리바게트", "paris baguette", "parisbaguette")),
+    ("맥도날드", ("맥도날드", "mcdonald", "mcdonalds", "mcDonald's")),
+    ("버거킹", ("버거킹", "burger king", "burgerking")),
+    ("롯데리아", ("롯데리아", "lotteria")),
+    ("써브웨이", ("써브웨이", "서브웨이", "subway")),
+    ("이디야커피", ("이디야", "ediya")),
+    ("빽다방", ("빽다방", "paik")),
+    ("커피빈", ("커피빈", "coffee bean", "coffeebean")),
+    ("할리스", ("할리스", "hollys")),
+    ("배스킨라빈스", ("배스킨라빈스", "베스킨라빈스", "baskin")),
+    ("던킨", ("던킨", "dunkin")),
+    ("KFC", ("kfc",)),
+    ("맘스터치", ("맘스터치", "mom's touch", "momstouch")),
+)
 
 
 def normalize_name(value: str) -> str:
     return re.sub(r"[\s㈜주식회사()（）·.,-]+", "", value).lower()
 
 
+def is_valid_place_name(value: str | None) -> bool:
+    if value is None:
+        return False
+    key = _placeholder_key(value)
+    return bool(key) and key not in _PLACEHOLDER_PLACE_KEYS
+
+
+def classify_large_chain_brand(value: str | None) -> str | None:
+    if not value:
+        return None
+    key = _brand_key(value)
+    for brand, aliases in _LARGE_CHAIN_BRANDS:
+        if any(_brand_key(alias) in key for alias in aliases):
+            return brand
+    return None
+
+
+def is_restaurant_like_category(category_group_code: str | None, category_name: str | None) -> bool:
+    if category_group_code == "FD6":
+        return True
+    if category_group_code and category_group_code != "FD6":
+        return False
+    if not category_name:
+        return True
+    return any(hint in category_name for hint in _RESTAURANT_CATEGORY_HINTS)
+
+
 def normalize_address(value: str | None) -> str:
     if not value:
         return ""
     return re.sub(r"[\s·.,-]", "", value)
+
+
+def _placeholder_key(value: str) -> str:
+    return re.sub(r"[\s./_()（）-]+", "", value).lower()
+
+
+def _brand_key(value: str) -> str:
+    return re.sub(r"[^0-9a-zA-Z가-힣]+", "", value).lower()
 
 
 def _normalize_address_tokens(value: str | None) -> set[str]:
@@ -227,18 +307,30 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
         latitude, longitude = _extract_document_coordinates(document)
         address = road_address or jibun_address or place.address_hint
         place_id = document.get("id") or None
+        name = document.get("place_name") or place.name
+        category_name = document.get("category_name") or None
+        chain_brand = classify_large_chain_brand(name)
         return ResolvedPlace(
             kakao_place_id=place_id,
             natural_key=natural_key(place.name, address, latitude, longitude),
-            name=document.get("place_name") or place.name,
+            name=name,
             road_address=road_address,
             jibun_address=jibun_address,
             road_address_part=road_address_part(address),
             latitude=latitude,
             longitude=longitude,
-            category=document.get("category_name") or None,
+            category=category_name,
             phone=document.get("phone") or None,
             matched=bool(place_id),
+            valid_place=is_valid_place_name(name),
+            is_restaurant_like=is_restaurant_like_category(
+                document.get("category_group_code"),
+                category_name,
+            ),
+            is_chain=chain_brand is not None,
+            is_large_chain=chain_brand is not None,
+            chain_brand=chain_brand,
+            chain_scale="대형전국체인" if chain_brand else None,
             raw=document,
         )
 
@@ -249,6 +341,7 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
         latitude: float | None = None,
         longitude: float | None = None,
     ) -> ResolvedPlace:
+        chain_brand = classify_large_chain_brand(place.name)
         return ResolvedPlace(
             kakao_place_id=None,
             natural_key=natural_key(place.name, place.address_hint, latitude, longitude),
@@ -261,5 +354,11 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
             category=None,
             phone=None,
             matched=False,
+            valid_place=is_valid_place_name(place.name),
+            is_restaurant_like=True,
+            is_chain=chain_brand is not None,
+            is_large_chain=chain_brand is not None,
+            chain_brand=chain_brand,
+            chain_scale="대형전국체인" if chain_brand else None,
             raw={},
         )

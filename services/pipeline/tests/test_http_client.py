@@ -79,6 +79,43 @@ async def test_curl_client_does_not_scan_binary_body_for_http_status(
 
 
 @pytest.mark.asyncio
+async def test_curl_client_decodes_text_when_non_ascii_headers_are_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        _write_curl_files(
+            args,
+            header_bytes=(
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/plain; charset=utf-8\r\n"
+                "Content-Disposition: attachment; filename=\"업무추진비.pdf\"\r\n"
+                "\r\n"
+            ).encode(),
+            body_bytes="업무추진비".encode(),
+        )
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=False)
+    response = await client.get("https://example.com/file.pdf")
+
+    assert response.status_code == 200
+    assert response.text == "업무추진비"
+    assert "Content-Disposition" in response.headers
+
+
+@pytest.mark.asyncio
 async def test_create_http_client_from_env_setting(monkeypatch: pytest.MonkeyPatch) -> None:
     timeout = httpx.Timeout(3.0, connect=2.0)
 
@@ -263,6 +300,76 @@ async def test_curl_client_sets_max_filesize_guard(monkeypatch: pytest.MonkeyPat
 
     assert "--max-filesize" in captured
     assert captured[captured.index("--max-filesize") + 1] == "17"
+
+
+@pytest.mark.asyncio
+async def test_curl_client_can_disable_compressed_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        captured.extend(str(item) for item in args)
+        _write_curl_files(args)
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=False, compressed=False)
+    await client.get("https://example.com/file.pdf")
+
+    assert "--compressed" not in captured
+
+
+@pytest.mark.asyncio
+async def test_adaptive_client_retries_decode_errors_with_identity_curl(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[str] = []
+
+    async def fake_primary_get(*_args: object, **_kwargs: object):
+        raise httpx.DecodingError("incorrect header check")
+
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        captured.extend(str(item) for item in args)
+        _write_curl_files(args, body_bytes="업무추진비".encode())
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _AdaptiveHttpClient(
+        timeout=httpx.Timeout(1.0),
+        headers={"User-Agent": "base"},
+        follow_redirects=False,
+    )
+    monkeypatch.setattr(client._primary, "get", fake_primary_get)
+
+    try:
+        response = await client.get("https://example.com/file.pdf")
+    finally:
+        await client.aclose()
+
+    assert response.text == "업무추진비"
+    assert "--compressed" not in captured
+    assert "Accept-Encoding: identity" in captured
 
 
 @pytest.mark.asyncio

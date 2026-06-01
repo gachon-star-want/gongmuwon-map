@@ -22,12 +22,14 @@ HEADER_ALIASES = {
     "사용일시": "used_date",
     "일시": "used_date",
     "일자": "used_date",
+    "일": "used_date",
     "집행시간": "used_time",
     "사용시간": "used_time",
     "사용시각": "used_time",
     "승인시각": "used_time",
     "시각": "used_time",
     "시간": "used_time",
+    "시": "used_time",
     "사용자": "user_text",
     "집행자": "user_text",
     "구분": "user_text",
@@ -58,6 +60,8 @@ HEADER_ALIASES = {
     "집행액": "amount",
     "사용금액": "amount",
     "승인금액": "amount",
+    "지출액": "amount",
+    "지출금액": "amount",
     "결제방법": "payment_method",
     "결재방법": "payment_method",
     "집행방법": "payment_method",
@@ -71,8 +75,16 @@ DEPARTMENT_RE = re.compile(r"부서명\s*[:：]\s*(?P<department>.+)")
 
 
 def extract_spreadsheet_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    return extract_grid_rows(_workbook_rows(content), fallback_department=fallback_department)
+
+
+def extract_grid_rows(
+    grid_rows: list[list[list[str]]],
+    *,
+    fallback_department: str,
+) -> list[ParsedExpenseRow]:
     rows: list[ParsedExpenseRow] = []
-    for sheet_rows in _workbook_rows(content):
+    for sheet_rows in grid_rows:
         department = _extract_department(sheet_rows) or fallback_department
         header_index, mapped_headers = _find_header(sheet_rows)
         if header_index is None:
@@ -100,25 +112,42 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
         workbook_rows: list[list[list[str]]] = []
         total_cells = 0
         for worksheet in worksheets:
-            _ensure_declared_sheet_bounds(
-                sheet_name=worksheet.title,
-                rows=int(worksheet.max_row or 0),
-                columns=int(worksheet.max_column or 0),
-                current_total_cells=total_cells,
-            )
             sheet_rows: list[list[str]] = []
+            empty_run = 0
+            non_empty_row_count = 0
             for row_index, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+                row_values = _trim_trailing_empty_cells([_stringify(cell) for cell in row])
+                if not any(row_values):
+                    empty_run += 1
+                    if sheet_rows and empty_run >= guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+                        break
+                    continue
+                empty_run = 0
+                non_empty_row_count += 1
+                if non_empty_row_count > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+                    raise guards.DocumentProcessingLimitError(
+                        f"spreadsheet sheet {worksheet.title!r} rows count exceeds limit of "
+                        f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+                    )
                 total_cells += _checked_row_width(
                     sheet_name=worksheet.title,
-                    row_index=row_index,
-                    width=len(row),
+                    row_index=non_empty_row_count,
+                    width=len(row_values),
                     current_total_cells=total_cells,
                 )
-                sheet_rows.append([_stringify(cell) for cell in row])
+                sheet_rows.append(row_values)
             workbook_rows.append(sheet_rows)
         return workbook_rows
     finally:
         workbook.close()
+
+
+def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
+    last_non_empty = -1
+    for index, value in enumerate(row_values):
+        if value:
+            last_non_empty = index
+    return row_values[: last_non_empty + 1]
 
 
 def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
@@ -188,7 +217,7 @@ def _checked_row_width(
 ) -> int:
     if row_index > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
         raise guards.DocumentProcessingLimitError(
-            f"spreadsheet sheet {sheet_name!r} row count exceeds limit of "
+            f"spreadsheet sheet {sheet_name!r} rows count exceeds limit of "
             f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
         )
     if width > guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET:
@@ -198,7 +227,7 @@ def _checked_row_width(
         )
     if current_total_cells + width > guards.MAX_SPREADSHEET_CELLS_TOTAL:
         raise guards.DocumentProcessingLimitError(
-            f"spreadsheet workbook cell count exceeds limit of "
+            f"spreadsheet workbook cells count exceeds limit of "
             f"{guards.MAX_SPREADSHEET_CELLS_TOTAL}"
         )
     return width
@@ -242,6 +271,10 @@ def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
 def _map_header(header: str) -> str | None:
     compact = re.sub(r"\s+", "", header)
     normalized = re.sub(r"[（(][^)）]+[)）]", "", compact)
+    if normalized.startswith(("집행목적", "사용목적", "집행내역")):
+        return "purpose"
+    if normalized.startswith(("사용장소", "집행장소")):
+        return "place_text"
     return HEADER_ALIASES.get(normalized) or HEADER_ALIASES.get(compact)
 
 

@@ -3,7 +3,21 @@
   "info": {
     "title": "공무원맵 API",
     "version": "1.0.0",
-    "description": "v1은 서울 52개 기관 중 지도 집계에 반영된 51개 기관의 공무원 업무추진비 공개 기록 기반 식당 정보 API입니다. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외. 등급은 맛·품질 평가가 아니라 공무원 방문 빈도와 부서 다양성 통계 신호이며, 댓글·평점·후기 데이터는 제공하지 않습니다.",
+    "description": "v1은 서울 52개 기관 중 지도 집계에 반영된 51개 기관의 공무원 업무추진비 공개 기록을 기준으로 시작한 식당 정보 API입니다. 2026-06-01 기준 전국 출처 등록부는 P1-P4 2,200개 기관 중 137개 공식 출처 검증 완료, 1,996개 검증 대기, 67개 법적 검토 보류 상태를 추적합니다. 데이터 출처: 공공누리 제1유형, 서울특별시 정보소통광장 외 수도권·대전·전남·충남 지자체·의회 공식 공개자료. 등급은 맛·품질 평가가 아니라 공무원 방문 빈도와 부서 다양성 통계 신호이며, 댓글·평점·후기 데이터는 제공하지 않습니다.",
+    "x-source-registry-status": {
+      "as_of": "2026-06-01",
+      "total": 2200,
+      "verified_in_code": 137,
+      "pending": 1996,
+      "legal_hold": 67,
+      "invalid_source_pattern": 0,
+      "priority_groups": {
+        "p1": { "label": "P1 지방자치단체·의회", "total": 486, "verified_in_code": 137, "pending": 282, "legal_hold": 67 },
+        "p2": { "label": "P2 중앙행정기관·독립기관", "total": 60, "verified_in_code": 0, "pending": 60, "legal_hold": 0 },
+        "p3": { "label": "P3 지정 공공기관", "total": 342, "verified_in_code": 0, "pending": 342, "legal_hold": 0 },
+        "p4": { "label": "P4 지방공공기관", "total": 1312, "verified_in_code": 0, "pending": 1312, "legal_hold": 0 }
+      }
+    },
     "contact": {
       "email": "wylee0806@naver.com"
     }
@@ -24,7 +38,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "min_lat,min_lng,max_lat,max_lng"
+            "description": "Optional min_lat,min_lng,max_lat,max_lng. Omit to query the nationwide coordinate-bearing list."
           },
           {
             "name": "grade",

@@ -1,7 +1,7 @@
 from .visibility import (
     APPOINTED_RANKS,
-    CAPITAL_AREA_ELECTED_RANKS_BY_PARENT_REGION,
     ALLOWED_ELECTED_RANKS,
+    ELECTED_RANKS_BY_PARENT_REGION,
     ELECTED_RANKS,
     allowed_elected_ranks_for_agency,
     LegalVisibilityError,
@@ -14,7 +14,7 @@ from .visibility import (
 
 __all__ = [
     "ALLOWED_ELECTED_RANKS",
-    "CAPITAL_AREA_ELECTED_RANKS_BY_PARENT_REGION",
+    "ELECTED_RANKS_BY_PARENT_REGION",
     "ELECTED_RANKS",
     "LegalVisibilityError",
     "APPOINTED_RANKS",

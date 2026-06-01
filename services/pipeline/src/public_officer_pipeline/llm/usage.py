@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from decimal import Decimal, InvalidOperation
-from typing import Any, Literal, Protocol
+from typing import Literal, Protocol
 
 from pydantic import BaseModel
 import psycopg

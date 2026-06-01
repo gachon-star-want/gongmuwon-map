@@ -3,6 +3,8 @@ from pathlib import Path
 from public_officer_pipeline.entity import (
     DefaultPlaceResolutionPolicy,
     KakaoResolver,
+    classify_large_chain_brand,
+    is_valid_place_name,
     normalize_name,
     natural_key,
     road_address_part,
@@ -67,3 +69,56 @@ def test_policy_uses_fallback_key_with_coordinates_when_address_coordinates_exis
     first = natural_key(place.name, place.address_hint, 37.5665, 126.978)
     second = natural_key(place.name, place.address_hint, 37.5665, 126.978)
     assert first == second
+
+
+def test_placeholder_place_names_are_not_valid_place_candidates() -> None:
+    for value in ("", "-", "unknown", "none", "N/A", "정보 없음", "미상", "해당없음", "없음", "장소 없음", "불명"):
+        assert is_valid_place_name(value) is False
+
+    assert is_valid_place_name("반가안동국시") is True
+
+
+def test_policy_classifies_large_national_chain_candidates() -> None:
+    assert classify_large_chain_brand("스타벅스 코리아") == "스타벅스"
+    assert classify_large_chain_brand("파리바게뜨 종로구청점") == "파리바게뜨"
+    assert classify_large_chain_brand("동네식당") is None
+
+
+def test_kakao_document_sets_public_exposure_flags() -> None:
+    policy = DefaultPlaceResolutionPolicy()
+    resolved = policy.from_kakao_document(
+        PlaceRaw(name="스타벅스 코리아", address_hint="서울 중구"),
+        {
+            "id": "chain-1",
+            "place_name": "스타벅스 코리아",
+            "category_group_code": "FD6",
+            "category_name": "음식점 > 카페",
+            "road_address_name": "서울특별시 중구 세종대로 1",
+            "x": "126.978",
+            "y": "37.5665",
+        },
+    )
+
+    assert resolved.valid_place is True
+    assert resolved.is_restaurant_like is True
+    assert resolved.is_chain is True
+    assert resolved.is_large_chain is True
+    assert resolved.chain_brand == "스타벅스"
+    assert resolved.chain_scale == "대형전국체인"
+
+
+def test_non_food_kakao_document_is_not_restaurant_like() -> None:
+    policy = DefaultPlaceResolutionPolicy()
+    resolved = policy.from_kakao_document(
+        PlaceRaw(name="문구점", address_hint="서울 중구"),
+        {
+            "id": "store-1",
+            "place_name": "문구점",
+            "category_group_code": "CS2",
+            "category_name": "소매 > 문구",
+            "road_address_name": "서울특별시 중구 세종대로 1",
+        },
+    )
+
+    assert resolved.valid_place is True
+    assert resolved.is_restaurant_like is False

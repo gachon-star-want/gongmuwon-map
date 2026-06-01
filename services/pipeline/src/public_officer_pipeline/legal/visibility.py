@@ -5,10 +5,26 @@ import re
 from public_officer_pipeline.models import Agency, NormalizedVisit
 
 ALLOWED_ELECTED_RANKS = ("시장", "구청장", "시의원", "구의원")
-CAPITAL_AREA_ELECTED_RANKS_BY_PARENT_REGION = {
+METRO_CITY_ELECTED_RANKS = ("시장", "구청장", "군수", "시의원", "구의원", "군의원")
+PROVINCE_ELECTED_RANKS = ("도지사", "시장", "군수", "도의원", "시의원", "군의원")
+ELECTED_RANKS_BY_PARENT_REGION = {
     "서울특별시": ("시장", "구청장", "시의원", "구의원"),
-    "경기도": ("도지사", "시장", "군수", "도의원", "시의원", "군의원"),
-    "인천광역시": ("시장", "구청장", "군수", "시의원", "구의원", "군의원"),
+    "부산광역시": METRO_CITY_ELECTED_RANKS,
+    "대구광역시": METRO_CITY_ELECTED_RANKS,
+    "인천광역시": METRO_CITY_ELECTED_RANKS,
+    "광주광역시": METRO_CITY_ELECTED_RANKS,
+    "대전광역시": METRO_CITY_ELECTED_RANKS,
+    "울산광역시": METRO_CITY_ELECTED_RANKS,
+    "세종특별자치시": ("시장", "시의원"),
+    "경기도": PROVINCE_ELECTED_RANKS,
+    "강원특별자치도": PROVINCE_ELECTED_RANKS,
+    "충청북도": PROVINCE_ELECTED_RANKS,
+    "충청남도": PROVINCE_ELECTED_RANKS,
+    "전북특별자치도": PROVINCE_ELECTED_RANKS,
+    "전라남도": PROVINCE_ELECTED_RANKS,
+    "경상북도": PROVINCE_ELECTED_RANKS,
+    "경상남도": PROVINCE_ELECTED_RANKS,
+    "제주특별자치도": ("도지사", "도의원"),
 }
 APPOINTED_RANKS = (
     "부시장",
@@ -22,6 +38,9 @@ APPOINTED_RANKS = (
     "팀장",
     "담당관",
     "전문위원",
+    "읍장",
+    "면장",
+    "동장",
     "주무관",
     "직원",
 )
@@ -30,15 +49,12 @@ ELECTED_RANKS = ALLOWED_ELECTED_RANKS
 _ALL_RANKS = tuple(
     dict.fromkeys(
         APPOINTED_RANKS
-        + tuple({rank for ranks in CAPITAL_AREA_ELECTED_RANKS_BY_PARENT_REGION.values() for rank in ranks})
+        + tuple({rank for ranks in ELECTED_RANKS_BY_PARENT_REGION.values() for rank in ranks})
     )
 )
 _RANK_PATTERN = "|".join(sorted(_ALL_RANKS, key=len, reverse=True))
 _PERSON_NAME_WITH_RANK_RE = re.compile(
     rf"(?<![가-힣a-zA-Z0-9_])(?P<name>[가-힣]{{2,4}})(?P<sep>\s*)(?P<rank>{_RANK_PATTERN})(?![가-힣])"
-)
-_DEPARTMENT_NAME_PREFIX_RE = re.compile(
-    rf"^\s*(?P<name>[가-힣]{{2,4}})(?P<sep>\s*)(?P<rank>{_RANK_PATTERN})(?![가-힣])"
 )
 
 
@@ -47,11 +63,11 @@ class LegalVisibilityError(ValueError):
 
 
 def allowed_elected_ranks_for_agency(agency: Agency) -> tuple[str, ...]:
-    ranks = CAPITAL_AREA_ELECTED_RANKS_BY_PARENT_REGION.get(agency.parent_region)
+    ranks = ELECTED_RANKS_BY_PARENT_REGION.get(agency.parent_region)
     if ranks is None:
         raise LegalVisibilityError(
             f"Unsupported parent_region for masking policy: {agency.parent_region}; "
-            "add a capital-area mapping before loading"
+            "add a nationwide elected-rank mapping before loading"
         )
     return ranks
 
@@ -106,6 +122,6 @@ def _name_rank_replacement(match: re.Match[str]) -> str:
 def _validate_department_name(value: str | None) -> str | None:
     if value is None:
         return value
-    if _DEPARTMENT_NAME_PREFIX_RE.match(value):
+    if _PERSON_NAME_WITH_RANK_RE.search(value):
         raise LegalVisibilityError(f"department_name contains unmasked personal identity: {value}")
     return value

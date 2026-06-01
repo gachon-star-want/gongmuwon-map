@@ -3,6 +3,13 @@
 - **Status**: Planning (documentation only)
 - **Date**: 2026-05-25
 
+> Implementation note (2026-06-01): the code now exposes a generated source registry(출처 등록부) via
+> `public-officer-pipeline source-registry --scope capital-area`. Current code-tracked status is
+> **138 total / 131 verified_in_code(공식 출처 검증 완료) / 0 pending(검증 대기) /
+> 7 legal_hold(법적 검토 보류) / 0 invalid_source_pattern(출처 패턴 오류)**. New 경기·인천 verified entries require official
+> homepage/source URL alignment plus `verifiedAt` and `verifiedBy`; unverified agencies stay
+> `adapter_required` with no fabricated URL, while legally blocked sources stay `legal_hold` until an ADR/legal decision changes the 제1유형 policy.
+
 ## 1. Purpose
 
 Design a per-agency **source registry** for the 86 new capital-area agencies (Gyeonggi 64 + Incheon 22), define the fields each entry needs, and specify how a candidate source is **verified** before it is allowed to drive a crawl.
@@ -63,32 +70,57 @@ Optional/derived fields (to align with existing code so the registry can later b
 
 ## 4. Registry skeleton (URLs intentionally TODO)
 
-The registry is maintained as a structured table per region. Below is the **shape**; rows are stubs with `TODO` URLs. We do **not** fabricate URLs.
+The registry is maintained as a structured table per region. Below is the **shape**; unverified rows remain `TODO`. We do **not** fabricate URLs.
 
 ### 4.1 Gyeonggi-do (64 entries)
 
 | organization_name | jurisdiction_type | council_or_admin | source_url | document_format | crawl_difficulty | adapter | notes |
 |---|---|---|---|---|---|---|---|
 | 경기도청 | province | admin | `TODO` | `TODO` | medium | `gyeonggi_admin_required` | Province-level top office. |
-| 경기도의회 | province | council | `TODO` | `TODO` | medium | `gyeonggi_council_required` | |
-| 수원시청 | si | admin | `TODO` | `TODO` | medium | `gg_office_required` | 특례시; check per-일반구 publication. |
-| 수원시의회 | si | council | `TODO` | `TODO` | medium | `gg_council_required` | |
-| … (remaining 29 cities + 3 counties, ×2 for office+council) | … | … | `TODO` | `TODO` | … | `*_required` | One office row + one council row each. |
+| 경기도의회 | province | council | `https://www.ggc.go.kr/site/main/disclosureinfo/ParliaOper/duty/list?sortOrder=DT_USE_DT&listType=list` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code. |
+| 수원시청 | si | admin | `https://www.suwon.go.kr/web/board/BD_board.list.do?bbsCd=1179` | pdf/xls/xlsx | medium | `attachment_board` | Verified in code. |
+| 수원시의회 | si | council | `https://council.suwon.go.kr/kr/costBBS.do?flag=all&list_style=&schwrd=` | xls/xlsx/pdf | medium | `council_attachment_board` | Verified in code. |
+| 성남시청 | si | admin | `https://www.seongnam.go.kr/city/1000199/30218/bbsList.do` | hwpx/xlsx/xls/pdf | medium | `attachment_board` | Verified in code; HWPX extraction supported. |
+| 평택시청 | si | admin | `https://www.pyeongtaek.go.kr/pyeongtaek/board/post/list.do?bcIdx=264&mid=0110000000` | xls/xlsx/pdf | medium | `attachment_board` | Verified in code; `boardViewRenewal` detail links and `yhLib.file.download` attachments. |
+| 의정부시청 | si | admin | `https://www.ui4u.go.kr/portal/bbs/list.do?mId=0114010300&ptIdx=25` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code; extra list URLs cover mayor/deputy/other tabs. |
+| 동두천시청 | si | admin | `https://www.ddc.go.kr/ddc/selectBbsNttList.do?bbsNo=38&key=122` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 안산시청 | si | admin | `https://www.ansan.go.kr/www/common/bbs/selectPageListBbs.do?bbs_code=B0471` | xls/xlsx/pdf | medium | `attachment_board` | Verified in code. |
+| 부천시청 | si | admin | `https://www.bucheon.go.kr/site/program/board/basicboard/list?boardid=1192347&boardtypeid=26716&menuid=148004005002` | xlsx/xls/pdf/hwpx | medium | `attachment_board` | Verified in code. |
+| 고양시청 | si | admin | `https://www.goyang.go.kr/www/publict/ntt/BD_selectPublictNttList.do?q_publictClCode=3062&q_searchKeyTy=1001&q_searchVal=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84` | xlsx/xls/pdf | low | `attachment_board` | Verified in code; direct download list. |
+| 오산시청 | si | admin | `https://www.osan.go.kr/portal/bbs/list.do?ptIdx=176&mId=0203010000` | pdf/xls/xlsx | medium | `attachment_board` | Verified in code; `goTo.view` detail links and eGov file downloads. |
+| 의왕시청 | si | admin | `https://www.uiwang.go.kr/UWKOROPEN0210` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code; same-board numeric detail URLs. |
+| 안성시청 | si | admin | `https://www.anseong.go.kr/portal/businessExpense/list.do?mId=0402050000` | xlsx/xls/pdf | low | `attachment_board` | Verified in code; inline `data-column` download table. |
+| 과천시청 | si | admin | `https://www.gccity.go.kr/portal/bbs/list.do?ptIdx=225&mId=0203080000` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 광주시청 | si | admin | `https://www.gjcity.go.kr/portal/bbs/list.do?mId=0311000000&ptIdx=53` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 가평군청 | gun | admin | `https://www.gp.go.kr/portal/selectBbsNttList.do?bbsNo=78&key=454` | pdf/xlsx/xls | medium | `attachment_board` | Verified in code. |
+| 동두천시의회 | si | council | `https://council.ddc.go.kr/kr/news/bbsCost.do` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code. |
+| 안성시의회 | si | council | `https://www.anseongcl.go.kr/kr/costBBS.do?flag=all&list_style=&schwrd=` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code. |
+| 김포시의회 | si | council | `https://gimpocouncil.go.kr/cnts/bbs/infoList.php?bbsCd=act&bbsSubCd=act0702` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code; uses configured `fileDownLoad` path. |
+| 화성시의회 | si | council | `https://council.hscity.go.kr/cnts/bbs/boardList.php?bbsCd=cns&bbsSubCd=cns08` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code; uses configured `fileDownLoad` path. |
+| 여주시의회 | si | council | `https://www.yeojucouncil.go.kr/kr/costBBS.do` | xls/xlsx/pdf | medium | `council_attachment_board` | Verified in code. |
+| … (remaining 경기 entries) | … | … | `TODO` or verified URL in code | `TODO` or file kinds in code | … | `*_required` or concrete adapter | Code-generated registry is the source of truth for the full row set. |
 
-> Full row set = 2 (province office+council) + 31×2 (시·군 office+council) = **64 rows**. All `source_url` start as `TODO`.
+> Full row set = 2 (province office+council) + 31×2 (시·군 office+council) = **64 rows**. Verified rows are listed in code; unverified rows keep `source_url = TODO`/`adapter_required`.
 
 ### 4.2 Incheon (22 entries)
 
 | organization_name | jurisdiction_type | council_or_admin | source_url | document_format | crawl_difficulty | adapter | notes |
 |---|---|---|---|---|---|---|---|
-| 인천광역시청 | metro_city | admin | `TODO` | `TODO` | medium | `incheon_admin_required` | Metro-level top office. |
-| 인천광역시의회 | metro_city | council | `TODO` | `TODO` | medium | `incheon_council_required` | |
-| 인천광역시 중구청 | autonomous_gu | admin | `TODO` | `TODO` | medium | `ic_office_required` | Note: 중구 name collides with Seoul 중구 — disambiguate by region. |
-| 인천광역시 중구의회 | autonomous_gu | council | `TODO` | `TODO` | medium | `ic_council_required` | |
-| 인천광역시 강화군청 | gun | admin | `TODO` | `TODO` | medium | `ic_office_required` | |
-| … (remaining 군·구, ×2) | … | … | `TODO` | `TODO` | … | `*_required` | |
+| 인천광역시청 | metro_city | admin | `https://www.incheon.go.kr/open/OPEN010305` | pdf/xlsx/xls | medium | `attachment_board` | Verified in code. |
+| 인천광역시의회 | metro_city | council | `https://www.icouncil.go.kr/main/participate/expense_office.jsp` | pdf | medium | `council_attachment_board` | Verified in code; extra list URL covers council expense page. |
+| 인천광역시 중구청 | autonomous_gu | admin | `https://www.icjg.go.kr/krop0307c` | xlsx/xls/pdf | medium | `attachment_board` | Note: 중구 name collides with Seoul 중구 — disambiguate by region. |
+| 인천광역시 중구의회 | autonomous_gu | council | `https://www.icjg.go.kr/council/cnac04b` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code. |
+| 인천광역시 동구청 | autonomous_gu | admin | `https://www.icdonggu.go.kr/main/bbs/bbsMsgList.do?bcd=notice&keyfield=title&keyword=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code; official notice search result board. |
+| 인천광역시 미추홀구청 | autonomous_gu | admin | `https://www.michuhol.go.kr/main/board/list.do?board_code=business_promotion&dept_sq=333&page=1&srchCate=&year=` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 인천광역시 연수구청 | autonomous_gu | admin | `https://www.yeonsu.go.kr/main/administration/open_info/charge.asp` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 인천광역시 부평구청 | autonomous_gu | admin | `https://www.icbp.go.kr/main/bbs/bbsMsgList.do?bcd=cost` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 인천광역시 남동구청 | autonomous_gu | admin | `https://biz.namdong.go.kr/main/bbs/bbsMsgList.do?bcd=disclosure` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 인천광역시 남동구의회 | autonomous_gu | council | `https://council.namdong.go.kr/kr/data/bbsBreakdown.do` | xlsx/xls/pdf | medium | `council_attachment_board` | Verified in code. |
+| 인천광역시 강화군청 | gun | admin | `https://www.ganghwa.go.kr/open_content/main/bbs/bbsMsgList.do?bcd=operation` | xlsx/xls/pdf | medium | `attachment_board` | Verified in code. |
+| 인천광역시 옹진군청 | gun | admin | `https://www.ongjin.go.kr/open_content/main/bbs/bbsMsgList.do?bcd=opendata1` | xlsx/xls/pdf | low | `attachment_board` | Verified in code; direct attachment list. |
+| … (remaining 인천 entries) | … | … | `TODO` or verified URL in code | `TODO` or file kinds in code | … | `*_required` or concrete adapter | Code-generated registry is the source of truth for the full row set. |
 
-> Full row set = 2 (metro office+council) + 10×2 (군·구 office+council) = **22 rows**. All `source_url` start as `TODO`.
+> Full row set = 2 (metro office+council) + 10×2 (군·구 office+council) = **22 rows**. Verified rows are listed in code; unverified rows keep `source_url = TODO`/`adapter_required`.
 
 ### 4.3 Name-collision note **[FACT/RISK]**
 

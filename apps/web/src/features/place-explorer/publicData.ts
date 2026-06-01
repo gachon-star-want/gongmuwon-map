@@ -3,15 +3,12 @@ import type { PlaceQueryState } from './queryState';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
-const SEOUL_BBOX = '37.413,126.734,37.715,127.269';
-
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
 
 export async function loadPlaces(query: Pick<PlaceQueryState, 'grade'>): Promise<Place[]> {
   const params = new URLSearchParams({
-    bbox: SEOUL_BBOX,
     grade: query.grade.join(','),
     limit: '500',
   });

@@ -15,7 +15,7 @@ describe('publicData', () => {
     vi.restoreAllMocks();
   });
 
-  it('loads places list from /api/v1/places with grade bbox limit', async () => {
+  it('loads places list from /api/v1/places without forcing a Seoul bbox', async () => {
     const mockResponse = [{ id: '1', name: 'a' }];
     const fetchMock = vi.fn() as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue(createJsonResponse(mockResponse));
@@ -27,7 +27,8 @@ describe('publicData', () => {
     await loadPlaces(query);
 
     const calledUrl = (fetchMock.mock.calls[0]?.[0] ?? '') as string;
-    expect(calledUrl).toBe(`${API_BASE}/api/v1/places?bbox=37.413%2C126.734%2C37.715%2C127.269&grade=%E2%98%85%E2%98%85%E2%98%85%2C%E2%98%85%E2%98%85%2C%E2%9C%A6&limit=500`);
+    expect(calledUrl).toBe(`${API_BASE}/api/v1/places?grade=%E2%98%85%E2%98%85%E2%98%85%2C%E2%98%85%E2%98%85%2C%E2%9C%A6&limit=500`);
+    expect(calledUrl).not.toContain('bbox=');
   });
 
   it('loads search results with q and region', async () => {

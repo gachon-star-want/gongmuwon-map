@@ -9,6 +9,7 @@ from public_officer_pipeline.legal.visibility import (
     ALLOWED_ELECTED_RANKS,
     allowed_elected_ranks_for_agency,
 )
+from public_officer_pipeline.entity.policy import is_valid_place_name
 from public_officer_pipeline.models import Agency, NormalizedVisit, ParsedExpenseRow, PlaceRaw
 from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 
@@ -28,6 +29,8 @@ def deterministic_normalize_rows(
     visits: list[NormalizedVisit] = []
     for row in rows:
         place_raw = parse_place_text(row.place_text)
+        if not is_valid_place_name(place_raw.name):
+            continue
         if not place_raw.address_hint:
             region_hint = _region_hint_from_department(row.department_name)
             if region_hint:

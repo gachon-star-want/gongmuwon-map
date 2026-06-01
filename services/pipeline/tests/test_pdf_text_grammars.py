@@ -11,6 +11,7 @@ def test_pdf_text_parser_selects_expected_line_grammar_for_each_representative_c
         "user_address": "1    행정기획위원장   2026-04-01   08:10:04   좋은소리카페（길음실   서울 성북구 삼양로2길 55       지역 현안 업무 협의                    5     29,500    카드    의회운영",
         "date_user_amount_place": "1   2026.04.01   11:57:10   의장    218,000       김삼보        의정활동 및 직무활동을 위한 경비     17      카드     의회운영업무추진비",
         "purpose_place_amount": "1    2026-01-02 11:39   의정활동 홍보를 위한 언론 관계자 간담회   단정                     3         42,000    카드",
+        "date_purpose_party_amount_place": "2026.04.01. 12:00 도시농업 활성화 방안 논의를 위한 간담회 4 77,400 황제삼계탕, 참새커피 카드",
         "region_amount_place_purpose": "서울시 성동구    2026-01-02   12:19:13   220,000              부성식당              의정활동 및 업무추진을 위한 각종 회의·간담회·행사   10    카드       의장",
         "optional_user_place_purpose_amount": "1            2026.04.01    12:09:03    원양참치        2026년 상반기 청소년 의회교실 개최 관련 간담회        7     203,000   신용카드   시책",
         "user_amount_place_address_purpose": "1     의장     2026.01.05   13:00:30     334,000       화사랑화로구이          선유로9가길 16          지역 현안사항 논의를 위한 간담회 개최         의원 등   12명   카드",

@@ -46,22 +46,18 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { bbox, grade, limit = '100' } = req.query;
-  // bbox = "min_lat,min_lng,max_lat,max_lng"
-  const [minLat, minLng, maxLat, maxLng] = String(bbox).split(',').map(Number);
+  // bbox is optional. When omitted, return the nationwide coordinate-bearing list.
+  const parsedBbox = bbox ? String(bbox).split(',').map(Number) : null;
   const grades = grade ? String(grade).split(',') : [];
-  const values = [minLat, minLng, maxLat, maxLng, Number(limit)];
-  const sql = grades.length
-    ? `SELECT * FROM places_public
-       WHERE latitude BETWEEN $1 AND $3
-         AND longitude BETWEEN $2 AND $4
-         AND grade = ANY($6)
-       LIMIT $5`
-    : `SELECT * FROM places_public
-       WHERE latitude BETWEEN $1 AND $3
-         AND longitude BETWEEN $2 AND $4
-       LIMIT $5`;
-
-  const { rows } = await pool.query(sql, grades.length ? [...values, grades] : values);
+  // 실제 구현은 bbox/grade 조건과 parameter index를 요청된 경우에만 추가한다.
+  const { rows } = await pool.query(
+    `SELECT * FROM places_public
+     WHERE latitude IS NOT NULL
+       AND longitude IS NOT NULL
+     ORDER BY score DESC NULLS LAST
+     LIMIT $1`,
+    [Number(limit)],
+  );
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
@@ -80,7 +76,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 ## 응답 스키마 예시
 
-### `GET /api/v1/places?bbox=37.5,127.0,37.6,127.1&grade=in.(★★★,★★)`
+### `GET /api/v1/places?grade=★★★,★★`
+
+`bbox=min_lat,min_lng,max_lat,max_lng`는 선택값이다. 생략하면 전국 좌표 보유 식당 목록을 점수순으로 조회한다.
 
 ```json
 [
@@ -155,7 +153,8 @@ info:
   version: 1.0.0
   description: |
     v1은 서울 52개 기관 중 지도 집계에 반영된 51개 기관의 업무추진비 공개 데이터 기반 식당 정보 API.
-    데이터 출처: 공공누리 제1유형 (서울특별시 정보소통광장 외).
+    2026-06-01 기준 전국 출처 등록부는 P1-P4 2,200개 기관 중 137개 공식 출처 검증 완료, 1,996개 검증 대기, 67개 법적 검토 보류 상태.
+    데이터 출처: 공공누리 제1유형 (서울특별시 정보소통광장 외 수도권·대전·전남·충남 지자체·의회 공식 공개자료).
   contact:
     email: wylee0806@naver.com
 servers:
@@ -168,7 +167,7 @@ paths:
         - name: bbox
           in: query
           schema: { type: string }
-          description: "min_lat,min_lng,max_lat,max_lng"
+          description: "Optional min_lat,min_lng,max_lat,max_lng. Omit for nationwide coordinate-bearing list."
         - name: grade
           in: query
           schema: { type: string, enum: ['★★★', '★★', '★', '✦'] }

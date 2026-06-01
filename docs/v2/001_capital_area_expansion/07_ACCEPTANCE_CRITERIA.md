@@ -3,6 +3,13 @@
 - **Status**: Planning (documentation only)
 - **Date**: 2026-05-25
 
+> Implementation note (2026-06-01): code now has the 138-agency taxonomy, `source-registry`,
+> guarded batch `run-agencies`, and dry-run smoke coverage for selected 경기·인천 sources.
+> Current registry status is **131 verified_in_code / 0 pending / 7 legal_hold**. Gate B's crawlable
+> source discovery is complete for the capital area, but legal_hold entries remain excluded until a
+> separate ADR/legal decision changes the 제1유형 policy. Gate C/D/E remain **not passed**
+> because no staging/prod DB load has been approved or performed.
+
 ## 1. Purpose
 
 Define the explicit "done" gates for each phase of v2, from this documentation stage through to deployment. Each gate must be fully satisfied before the next phase begins. Gates are sequential: docs → registry → dry-run → DB injection → deployment.
@@ -15,7 +22,7 @@ This planning stage is done when:
 - [ ] Scope is unambiguous: Seoul 52 unchanged, Gyeonggi 64 new, Incheon 22 new, **total 138** ([01_SCOPE.md](01_SCOPE.md)).
 - [ ] The fact that **Seoul is already fully wired (0 `adapter_required`)** is reflected, so v2 is framed as purely additive (86 new agencies) ([02_SOURCE_REGISTRY_PLAN.md](02_SOURCE_REGISTRY_PLAN.md) §2).
 - [ ] Every document distinguishes **[FACT] / [ASSUMPTION] / [TODO]** and invents no real source URLs.
-- [ ] v1 forbidden features (comments/ratings/reviews/likes/community) are reaffirmed as forbidden ([06_LEGAL_AND_RISK_PLAN.md](06_LEGAL_AND_RISK_PLAN.md) §3).
+- [ ] v1 forbidden features (restaurant/place comments, ratings, reviews, and any data-rollout expansion of community/reactions beyond ADR-012) are reaffirmed as forbidden ([06_LEGAL_AND_RISK_PLAN.md](06_LEGAL_AND_RISK_PLAN.md) §3).
 - [ ] [docs/LEGAL_PRIVACY.md](../../LEGAL_PRIVACY.md) is named as the final authority and the governor/county-head masking enumeration is flagged as a prerequisite edit.
 - [ ] [RESOLVED] ADR-011 taxonomy (`gov_tier`, `branch`, `jurisdiction_type`) is adopted as the contract basis for province/metro/county agencies before gating to Gate D.
 - [ ] No code, DB, deploy, or crawl was performed.

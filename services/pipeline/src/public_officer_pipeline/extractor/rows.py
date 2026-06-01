@@ -12,6 +12,11 @@ from public_officer_pipeline.models import ParsedExpenseRow
 _SHORT_YEAR_DATE_RE = re.compile(
     r"^\s*(?P<year>\d{2})\s*[./-]\s*(?P<month>\d{1,2})\s*[./-]\s*(?P<day>\d{1,2})(?P<rest>.*)$"
 )
+_FULL_YEAR_DATE_RE = re.compile(
+    r"^\s*(?P<year>20\d{2})\s*[./-]\s*(?P<month>\d{1,2})\s*[./-]\s*(?P<day>\d{1,2})(?P<rest>.*)$"
+)
+_VALID_TIME_RE = re.compile(r"\b(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\b")
+_TIME_LIKE_RE = re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b")
 
 
 class RawExpenseFields(BaseModel):
@@ -129,9 +134,9 @@ def parse_used_at(date_text: str | None, time_text: str | None) -> datetime | No
     if not date_value:
         return None
 
-    short_year = _parse_short_year_datetime(date_value, time_text)
-    if short_year:
-        return short_year.replace(tzinfo=None)
+    numeric_date = _parse_numeric_datetime(date_value, time_text)
+    if numeric_date:
+        return numeric_date.replace(tzinfo=None)
 
     combined_time = _extract_time_text(time_text)
     combined = f"{date_value} {combined_time}" if combined_time else date_value
@@ -170,35 +175,53 @@ def _extract_time_text(time_text: str | None) -> str | None:
     compact = _clean(time_text)
     if not compact:
         return None
-    match = re.search(r"\b\d{1,2}:\d{2}(?::\d{2})?\b", compact)
+    match = _VALID_TIME_RE.search(compact)
     if match:
         return match.group(0)
     return compact
 
 
-def _parse_short_year_datetime(date_value: str, time_text: str | None) -> datetime | None:
-    match = _SHORT_YEAR_DATE_RE.match(date_value)
+def _parse_numeric_datetime(date_value: str, time_text: str | None) -> datetime | None:
+    match = _FULL_YEAR_DATE_RE.match(date_value)
+    short_year = False
+    if not match:
+        match = _SHORT_YEAR_DATE_RE.match(date_value)
+        short_year = True
     if not match:
         return None
 
-    year = int(match.group("year"))
-    month = int(match.group("month"))
-    day = int(match.group("day"))
-    parsed_date = date(2000 + year if year < 70 else 1900 + year, month, day)
+    try:
+        year = int(match.group("year"))
+        month = int(match.group("month"))
+        day = int(match.group("day"))
+        if short_year:
+            year = 2000 + year if year < 70 else 1900 + year
+        parsed_date = date(year, month, day)
+    except ValueError:
+        return None
 
     parse_time = time_text or None
+    rest = match.group("rest")
     if not parse_time:
-        parse_time = _extract_time_from_text(match.group("rest"))
+        parse_time = _extract_time_from_text(rest)
+        if parse_time is None and _TIME_LIKE_RE.search(rest or ""):
+            return None
     if parse_time is None:
         return datetime.combine(parsed_date, time.min)
 
-    parsed = date_parser.parse(f"{parsed_date.isoformat()} {parse_time}", fuzzy=True)
+    try:
+        parsed = date_parser.parse(f"{parsed_date.isoformat()} {parse_time}", fuzzy=True)
+    except (TypeError, ValueError):
+        return None
     return parsed.replace(tzinfo=None)
 
 
 def _extract_time_from_text(value: str | None) -> str | None:
     if not value:
         return None
+    match = _VALID_TIME_RE.search(value)
+    if match:
+        return match.group(0)
     try:
         parsed = date_parser.parse(value, fuzzy=True)
         return parsed.time().isoformat(timespec="seconds")

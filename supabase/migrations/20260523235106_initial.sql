@@ -23,15 +23,16 @@ CREATE TABLE public.agencies (
   id uuid PRIMARY KEY DEFAULT extensions.gen_random_uuid(),
   name text NOT NULL,
   short_name text NOT NULL,
-  gov_tier text NOT NULL CHECK (gov_tier IN ('regional', 'basic')),
-  branch text NOT NULL CHECK (branch IN ('admin', 'council')),
-  jurisdiction_type text NOT NULL CHECK (jurisdiction_type IN ('special_city', 'metro_city', 'province', 'autonomous_gu', 'si', 'gun')),
+  gov_tier text NOT NULL CHECK (gov_tier IN ('regional', 'basic', 'national', 'constitutional', 'public', 'local_public')),
+  branch text NOT NULL CHECK (branch IN ('admin', 'council', 'constitutional', 'public')),
+  jurisdiction_type text NOT NULL CHECK (jurisdiction_type IN ('special_city', 'metro_city', 'province', 'special_self_governing_city', 'special_self_governing_province', 'autonomous_gu', 'si', 'gun', 'central_administrative_agency', 'constitutional_institution', 'independent_state_agency', 'public_institution', 'local_public_institution')),
+  expansion_phase text NOT NULL DEFAULT 'p1' CHECK (expansion_phase IN ('p1', 'p2', 'p3', 'p4')),
   parent_region text NOT NULL,
   sub_region text,
   homepage text,
   source_pattern jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE NULLS NOT DISTINCT (gov_tier, branch, parent_region, sub_region)
+  UNIQUE NULLS NOT DISTINCT (gov_tier, branch, parent_region, sub_region, short_name)
 );
 
 CREATE INDEX agencies_tier_region ON public.agencies (gov_tier, branch, parent_region, sub_region);
@@ -63,6 +64,12 @@ CREATE TABLE public.places (
   longitude double precision,
   category text,
   phone text,
+  valid_place boolean NOT NULL DEFAULT true,
+  is_restaurant_like boolean NOT NULL DEFAULT true,
+  is_chain boolean NOT NULL DEFAULT false,
+  is_large_chain boolean NOT NULL DEFAULT false,
+  chain_brand text,
+  chain_scale text CHECK (chain_scale IS NULL OR chain_scale IN ('대형전국체인', '지역체인')),
   is_closed boolean NOT NULL DEFAULT false,
   closure_report_count integer NOT NULL DEFAULT 0,
   closed_at timestamptz,
@@ -157,6 +164,9 @@ WITH window_visits AS (
   WHERE v.visit_date >= (current_date - interval '12 months')
     AND p.hidden_at IS NULL
     AND p.deleted_at IS NULL
+    AND p.valid_place IS TRUE
+    AND p.is_restaurant_like IS TRUE
+    AND p.is_large_chain IS FALSE
 ),
 agg AS (
   SELECT
@@ -209,12 +219,18 @@ CREATE UNIQUE INDEX place_grade_v1_pk ON public.place_grade_v1 (place_id);
 CREATE MATERIALIZED VIEW public.agency_stats_v1 AS
 SELECT
   a.id AS agency_id,
-  COUNT(v.id)::integer AS visit_count,
-  COUNT(DISTINCT v.place_id)::integer AS place_count,
-  MAX(v.visit_date) AS last_visit_at
+  COUNT(v.id) FILTER (WHERE p.id IS NOT NULL)::integer AS visit_count,
+  COUNT(DISTINCT v.place_id) FILTER (WHERE p.id IS NOT NULL)::integer AS place_count,
+  MAX(v.visit_date) FILTER (WHERE p.id IS NOT NULL) AS last_visit_at
 FROM public.agencies a
 LEFT JOIN public.place_visits v ON v.agency_id = a.id
-LEFT JOIN public.places p ON p.id = v.place_id AND p.hidden_at IS NULL AND p.deleted_at IS NULL
+LEFT JOIN public.places p
+  ON p.id = v.place_id
+  AND p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE
 GROUP BY a.id;
 
 CREATE UNIQUE INDEX agency_stats_v1_pk ON public.agency_stats_v1 (agency_id);
@@ -228,6 +244,12 @@ SELECT
   p.latitude,
   p.longitude,
   p.category,
+  p.valid_place,
+  p.is_restaurant_like,
+  p.is_chain,
+  p.is_large_chain,
+  p.chain_brand,
+  p.chain_scale,
   p.is_closed,
   p.closure_report_count,
   COALESCE(g.score, 0) AS score,
@@ -237,7 +259,11 @@ SELECT
   g.unique_department_count_12m
 FROM public.places p
 LEFT JOIN public.place_grade_v1 g ON g.place_id = p.id
-WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
+WHERE p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE;
 
 CREATE VIEW public.place_visits_public WITH (security_barrier = true) AS
 SELECT
@@ -256,7 +282,11 @@ SELECT
 FROM public.place_visits v
 JOIN public.sources s ON s.id = v.source_id
 JOIN public.places p ON p.id = v.place_id
-WHERE p.hidden_at IS NULL AND p.deleted_at IS NULL;
+WHERE p.hidden_at IS NULL
+  AND p.deleted_at IS NULL
+  AND p.valid_place IS TRUE
+  AND p.is_restaurant_like IS TRUE
+  AND p.is_large_chain IS FALSE;
 
 CREATE VIEW public.agencies_public WITH (security_barrier = true) AS
 SELECT
@@ -264,8 +294,48 @@ SELECT
   a.name,
   a.short_name,
   a.gov_tier,
+  CASE a.gov_tier
+    WHEN 'regional' THEN '광역자치단체'
+    WHEN 'basic' THEN '기초자치단체'
+    WHEN 'national' THEN '국가기관'
+    WHEN 'constitutional' THEN '헌법기관'
+    WHEN 'public' THEN '공공기관'
+    WHEN 'local_public' THEN '지방공공기관'
+    ELSE a.gov_tier
+  END AS gov_tier_label,
   a.branch,
+  CASE a.branch
+    WHEN 'admin' THEN '집행기관'
+    WHEN 'council' THEN '의회'
+    WHEN 'constitutional' THEN '헌법기관'
+    WHEN 'public' THEN '공공기관'
+    ELSE a.branch
+  END AS branch_label,
   a.jurisdiction_type,
+  CASE a.jurisdiction_type
+    WHEN 'special_city' THEN '특별시'
+    WHEN 'metro_city' THEN '광역시'
+    WHEN 'province' THEN '도'
+    WHEN 'special_self_governing_city' THEN '특별자치시'
+    WHEN 'special_self_governing_province' THEN '특별자치도'
+    WHEN 'autonomous_gu' THEN '자치구'
+    WHEN 'si' THEN '시'
+    WHEN 'gun' THEN '군'
+    WHEN 'central_administrative_agency' THEN '중앙행정기관'
+    WHEN 'constitutional_institution' THEN '헌법기관'
+    WHEN 'independent_state_agency' THEN '독립국가기관'
+    WHEN 'public_institution' THEN '지정 공공기관'
+    WHEN 'local_public_institution' THEN '지방공공기관'
+    ELSE a.jurisdiction_type
+  END AS jurisdiction_type_label,
+  a.expansion_phase,
+  CASE a.expansion_phase
+    WHEN 'p1' THEN 'P1 지방자치단체·의회'
+    WHEN 'p2' THEN 'P2 중앙행정기관·독립기관'
+    WHEN 'p3' THEN 'P3 지정 공공기관'
+    WHEN 'p4' THEN 'P4 지방공공기관'
+    ELSE a.expansion_phase
+  END AS expansion_phase_label,
   a.parent_region,
   a.sub_region,
   a.homepage,

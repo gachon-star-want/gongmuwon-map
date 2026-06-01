@@ -12,6 +12,7 @@ from psycopg.types.json import Jsonb
 
 from public_officer_pipeline.models import (
     Agency,
+    NormalizedVisit,
     PipelineConfigError,
     ResolvedPlace,
 )
@@ -49,11 +50,15 @@ class PostgresLoader:
 
                 place_ids: dict[str, UUID] = {}
                 for place in batch.resolved_places.values():
+                    if not place.valid_place:
+                        continue
                     place_ids[place.natural_key] = await self._upsert_place(conn, place)
 
                 visit_ids = []
                 for visit in visits:
                     resolved = batch.resolved_places[place_resolution_key(visit.place_raw)]
+                    if resolved.natural_key not in place_ids:
+                        continue
                     visit_ids.append(
                         await self._upsert_visit(
                             conn,
@@ -81,12 +86,15 @@ class PostgresLoader:
             conn,
             """
             INSERT INTO public.agencies (
-              id, name, short_name, gov_tier, branch, jurisdiction_type, parent_region, sub_region, homepage, source_pattern
+              id, name, short_name, gov_tier, branch, jurisdiction_type, expansion_phase,
+              parent_region, sub_region, homepage, source_pattern
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (gov_tier, branch, parent_region, sub_region) DO UPDATE SET
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (gov_tier, branch, parent_region, sub_region, short_name) DO UPDATE SET
               name = EXCLUDED.name,
               short_name = EXCLUDED.short_name,
+              jurisdiction_type = EXCLUDED.jurisdiction_type,
+              expansion_phase = EXCLUDED.expansion_phase,
               homepage = EXCLUDED.homepage,
               source_pattern = EXCLUDED.source_pattern
             RETURNING id
@@ -98,6 +106,7 @@ class PostgresLoader:
                 agency.gov_tier.value,
                 agency.branch.value,
                 agency.jurisdiction_type.value,
+                agency.expansion_phase.value,
                 agency.parent_region,
                 agency.sub_region,
                 agency.homepage,
@@ -152,9 +161,10 @@ class PostgresLoader:
                 """
                 INSERT INTO public.places (
                   kakao_place_id, natural_key, name, road_address, jibun_address,
-                  road_address_part, latitude, longitude, category, phone
+                  road_address_part, latitude, longitude, category, phone,
+                  valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (kakao_place_id) DO UPDATE SET
                   name = EXCLUDED.name,
                   road_address = EXCLUDED.road_address,
@@ -164,6 +174,12 @@ class PostgresLoader:
                   longitude = EXCLUDED.longitude,
                   category = EXCLUDED.category,
                   phone = EXCLUDED.phone,
+                  valid_place = EXCLUDED.valid_place,
+                  is_restaurant_like = EXCLUDED.is_restaurant_like,
+                  is_chain = EXCLUDED.is_chain,
+                  is_large_chain = EXCLUDED.is_large_chain,
+                  chain_brand = EXCLUDED.chain_brand,
+                  chain_scale = EXCLUDED.chain_scale,
                   updated_at = now()
                 RETURNING id
                 """,
@@ -178,6 +194,12 @@ class PostgresLoader:
                     place.longitude,
                     place.category,
                     place.phone,
+                    place.valid_place,
+                    place.is_restaurant_like,
+                    place.is_chain,
+                    place.is_large_chain,
+                    place.chain_brand,
+                    place.chain_scale,
                 ),
             )
             return UUID(str(row["id"]))
@@ -187,9 +209,10 @@ class PostgresLoader:
             """
             INSERT INTO public.places (
               kakao_place_id, natural_key, name, road_address, jibun_address,
-              road_address_part, latitude, longitude, category, phone
+              road_address_part, latitude, longitude, category, phone,
+              valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (natural_key) DO UPDATE SET
               kakao_place_id = COALESCE(EXCLUDED.kakao_place_id, public.places.kakao_place_id),
               name = EXCLUDED.name,
@@ -200,6 +223,12 @@ class PostgresLoader:
               longitude = EXCLUDED.longitude,
               category = EXCLUDED.category,
               phone = EXCLUDED.phone,
+              valid_place = EXCLUDED.valid_place,
+              is_restaurant_like = EXCLUDED.is_restaurant_like,
+              is_chain = EXCLUDED.is_chain,
+              is_large_chain = EXCLUDED.is_large_chain,
+              chain_brand = EXCLUDED.chain_brand,
+              chain_scale = EXCLUDED.chain_scale,
               updated_at = now()
             RETURNING id
             """,
@@ -214,6 +243,12 @@ class PostgresLoader:
                 place.longitude,
                 place.category,
                 place.phone,
+                place.valid_place,
+                place.is_restaurant_like,
+                place.is_chain,
+                place.is_large_chain,
+                place.chain_brand,
+                place.chain_scale,
             ),
         )
         return UUID(str(row["id"]))

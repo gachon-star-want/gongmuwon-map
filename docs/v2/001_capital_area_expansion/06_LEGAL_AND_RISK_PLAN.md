@@ -22,9 +22,10 @@ Re-confirm that v2 stays inside the v1 legal/privacy envelope, enumerate the v2-
 
 ## 3. Forbidden features — reaffirmed (v1 merge-block policy)
 
-**[FACT]** Carried over verbatim from [docs/LEGAL_PRIVACY.md](../../LEGAL_PRIVACY.md) §"위반 시 머지 금지" and [docs/RISK_MITIGATION.md](../../RISK_MITIGATION.md) §"No-Go". v2 must **not** add any of:
+**[FACT]** Carried over from [docs/LEGAL_PRIVACY.md](../../LEGAL_PRIVACY.md) §"위반 시 머지 금지" and [docs/RISK_MITIGATION.md](../../RISK_MITIGATION.md) §"No-Go", with the later [ADR-012](../../adr/ADR-012-community-auth-and-lightweight-reactions.md) narrowing applied. v2 data expansion must **not** add any of:
 
-- ❌ User comments, ratings, reviews, likes, or any community feature (defamation risk).
+- ❌ User comments, ratings, or reviews on restaurant/place pages (defamation risk).
+- ❌ New community or reaction scope beyond ADR-012 as part of this data rollout.
 - ❌ Storing personal real names in plaintext and masking at display time (masking must happen at load time).
 - ❌ Omitting source attribution.
 - ❌ Weakening the disclaimer / terms.
