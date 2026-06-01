@@ -79,11 +79,14 @@ HEADER_ALIASES = {
     "방법": "payment_method",
     "사용방법및비고": "payment_method",
     "비목": "expense_category",
+    "세목": "expense_category",
     "업무추진비종류": "expense_category",
     "제목": "expense_category",
+    "사용액": "amount",
 }
 
 DEPARTMENT_RE = re.compile(r"부서명\s*[:：]\s*(?P<department>.+)")
+SHEET_MONTH_RE = re.compile(r"(?P<year>20\d{2})\s*(?:년|[./-])\s*(?P<month>\d{1,2})\s*월?")
 
 
 def extract_spreadsheet_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
@@ -98,11 +101,12 @@ def extract_grid_rows(
     rows: list[ParsedExpenseRow] = []
     for sheet_rows in grid_rows:
         department = _extract_department(sheet_rows) or fallback_department
+        sheet_month = _extract_sheet_month(sheet_rows)
         header_index, mapped_headers = _find_header(sheet_rows)
         if header_index is None:
             continue
         for raw_row in sheet_rows[header_index + 1 :]:
-            parsed = _parse_row(raw_row, mapped_headers, department)
+            parsed = _parse_row(raw_row, mapped_headers, department, sheet_month=sheet_month)
             if parsed:
                 rows.append(parsed)
     return rows
@@ -373,6 +377,19 @@ def _extract_department(rows: list[list[str]]) -> str | None:
     return None
 
 
+def _extract_sheet_month(rows: list[list[str]]) -> tuple[int, int] | None:
+    for row in rows[:10]:
+        text = " ".join(cell for cell in row if cell)
+        match = SHEET_MONTH_RE.search(text)
+        if not match:
+            continue
+        try:
+            return int(match.group("year")), int(match.group("month"))
+        except ValueError:
+            continue
+    return None
+
+
 def _find_header(rows: list[list[str]]) -> tuple[int | None, list[str | None]]:
     for index, row in enumerate(rows[:20]):
         mapped = _disambiguate_headers(row, [_map_header(cell) for cell in row])
@@ -428,7 +445,13 @@ def _disambiguate_headers(raw_headers: list[str], mapped_headers: list[str | Non
     return mapped
 
 
-def _parse_row(raw_row: list[str], mapped_headers: list[str | None], department: str) -> ParsedExpenseRow | None:
+def _parse_row(
+    raw_row: list[str],
+    mapped_headers: list[str | None],
+    department: str,
+    *,
+    sheet_month: tuple[int, int] | None = None,
+) -> ParsedExpenseRow | None:
     item = {
         mapped_headers[index]: _clean(value)
         for index, value in enumerate(raw_row[: len(mapped_headers)])
@@ -440,10 +463,11 @@ def _parse_row(raw_row: list[str], mapped_headers: list[str | None], department:
 
     user_text = item.get("user_text") or department
     amount_text = item.get("amount")
+    date_text = _row_date_text(raw_row, mapped_headers, item["used_date"], sheet_month=sheet_month)
     return build_expense_row(
         RawExpenseFields(
             department_name=department,
-            date_text=item["used_date"],
+            date_text=date_text,
             time_text=item.get("used_time"),
             place_name=place_text,
             address=item.get("address_hint"),
@@ -458,6 +482,37 @@ def _parse_row(raw_row: list[str], mapped_headers: list[str | None], department:
         fallback_department=department,
         address_separator=" (",
     )
+
+
+def _row_date_text(
+    raw_row: list[str],
+    mapped_headers: list[str | None],
+    used_date: str,
+    *,
+    sheet_month: tuple[int, int] | None,
+) -> str:
+    if sheet_month is None or not re.fullmatch(r"\d{1,2}", used_date):
+        return used_date
+    try:
+        date_index = mapped_headers.index("used_date")
+    except ValueError:
+        return used_date
+
+    year, sheet_month_value = sheet_month
+    next_value = _clean(raw_row[date_index + 1]) if date_index + 1 < len(raw_row) else ""
+    if re.fullmatch(r"\d{1,2}", next_value):
+        first = int(used_date)
+        day = int(next_value)
+        month = first if 1 <= first <= 12 else sheet_month_value
+        if first == sheet_month_value:
+            month = sheet_month_value
+    else:
+        month = sheet_month_value
+        day = int(used_date)
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return used_date
 
 
 def _stringify(value: Any) -> str:

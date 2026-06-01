@@ -364,6 +364,33 @@ def test_extracts_incheon_junggu_council_xlsx_content_and_spaced_place_headers()
     assert rows[0].user_text == "인천광역시 중구의회 6명"
 
 
+def test_extracts_michuhol_xlsx_split_month_day_usage_amount_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "부서운영"
+    worksheet.append(["기초생활보장과 업무추진비 집행현황(2026. 5월)"])
+    worksheet.append(["▣ 총 1건  126,100원"])
+    worksheet.append(["▣ 세부내역", None, None, None, None, None, None, None, "[단위: 원]"])
+    worksheet.append([])
+    worksheet.append(["세 목", "사용일자", None, "사용처", "사용방법", "사용목적", "사용대상", "인원", "사용액"])
+    worksheet.append([])
+    worksheet.append(["부서운영", "계", None, None, None, None, None, None, 126100])
+    worksheet.append(["", 5, 7, "코차 인터내셔널", "법인카드", "차류 구입", "직원", "39명", 126100])
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="미추홀구청 기초생활보장과")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-05-07T00:00:00"
+    assert rows[0].department_name == "미추홀구청 기초생활보장과"
+    assert rows[0].place_text == "코차 인터내셔널"
+    assert rows[0].purpose == "차류 구입"
+    assert rows[0].amount == 126100
+    assert rows[0].user_text == "미추홀구청 기초생활보장과 39명"
+    assert rows[0].payment_method == "법인카드"
+
+
 def test_extracts_council_cost_xlsx_short_day_time_amount_headers() -> None:
     workbook = Workbook()
     worksheet = workbook.active
