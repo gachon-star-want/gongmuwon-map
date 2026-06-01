@@ -1409,6 +1409,278 @@ NON_CAPITAL_BASIC_COUNCIL_ATTACHMENT_BOARDS = {
 }
 
 NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
+    ("강원특별자치도", "춘천시청"): {
+        "sourceUrl": "https://www.chuncheon.go.kr/cityhall/information-disclosure/business-expenses/chuncheon-cityhall",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 춘천시청 업무추진비 집행내역 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "춘천시의회"): {
+        "sourceUrl": "https://council.chuncheon.go.kr/basic/view.do?b=50&k=2479&n=682&pu=10&sortField=RGSDE",
+        "fileKinds": ["pdf"],
+        "pageParam": "p",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 춘천시의회 업무추진비 현황 상세와 PDF 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "원주시청"): {
+        "sourceUrl": "https://www.wonju.go.kr/www/selectBbsNttList.do?bbsNo=1095&integrDeptCode=&key=5126&pageUnit=20",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 원주시청 업무추진비 공개 목록과 PDF/XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "강릉시청"): {
+        "sourceUrl": "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 강릉시청 업무추진비 목록과 첨부 구조는 확인했습니다. 다만 확인 가능한 "
+            "저작권 표시는 공공누리 제4유형으로 상업적 이용이 금지되므로 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "강릉시의회"): {
+        "sourceUrl": "https://www.gncl.go.kr/kr/bbs?bbs_id=open",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 강릉시의회 업무추진비/정보공개 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "동해시의회"): {
+        "sourceUrl": "https://www.dhcc.go.kr/content/public/infoOpen_council.html",
+        "fileKinds": ["html", "pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 동해시의회 의정활동 정보공개 업무추진비 현황 경로는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않고 푸터가 저작권 보유 표기 중심이므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "태백시청"): {
+        "sourceUrl": "https://www.taebaek.go.kr/www/selectBbsNttList.do?bbsNo=132&key=1552",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 태백시청 업무추진비 목록과 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "속초시의회"): {
+        "sourceUrl": "https://www.sokchocl.go.kr/kr/news/bbsCost.do",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 속초시의회 업무추진비 공개 목록과 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "삼척시청"): {
+        "sourceUrl": "https://www.samcheok.go.kr/02815.web?gcode=1321",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "cpage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 삼척시청 업무추진비 공개 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "삼척시의회"): {
+        "sourceUrl": "https://www.sccl.go.kr/kr/bbs?bbs_id=business&flag=&keyword=&list_style=&page=1&reform=list&search_code=",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 삼척시의회 업무추진비 현황 목록과 첨부 구조는 확인했습니다. 다만 푸터가 "
+            "All rights reserved로 표시되고 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "홍천군청"): {
+        "sourceUrl": "https://www.hongcheon.go.kr/www/selectBbsNttList.do?bbsNo=61&key=175",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 홍천군청 업무추진비 목록과 XLS/XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "평창군청"): {
+        "sourceUrl": "https://www.pc.go.kr/portal/info/info-finance/info-finance-history",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 평창군청 업무추진비 집행내역 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않고 저작권 보유 표기만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "정선군청"): {
+        "sourceUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정선군청 업무추진비 공개 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "정선군의회"): {
+        "sourceUrl": "https://assembly.jeongseon.go.kr/source/kr/info/info3.html?table=board_business",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정선군의회 업무추진비 목록과 XLSX 첨부 구조는 확인했습니다. 다만 푸터가 "
+            "all rights reserved로 표시되고 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "철원군청"): {
+        "sourceUrl": "https://www.cwg.go.kr/www/selectBbsNttList.do?bbsNo=36&key=1595",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 철원군청 업무추진비 목록과 XLSX 첨부 구조는 확인했습니다. 다만 최근 12개월 "
+            "게시 지속성과 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "화천군청"): {
+        "sourceUrl": "https://www.ihc.go.kr/www/selectBbsNttList.do?bbsNo=106&key=2424",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 화천군청 업무추진비 집행내역 목록과 첨부 구조는 확인했습니다. 다만 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되고 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "화천군의회"): {
+        "sourceUrl": "https://council.ihc.go.kr/bbs/board.php?bo_table=sub06_7",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 화천군의회 업무추진비 사용내역 목록과 PDF 첨부 구조는 확인했습니다. 다만 "
+            "푸터가 All rights reserved로 표시되고 공공누리 제1유형 또는 명확한 상업적 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "인제군청"): {
+        "sourceUrl": "https://www.inje.go.kr/portal/adm/public/operatingexpense",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 인제군청 업무추진비 집행내역 목록과 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "고성군의회"): {
+        "sourceUrl": "https://council.gwgs.go.kr/Home/H30000/H30500/boardList",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 고성군의회 정보공개 업무추진비 집행 현황 목록과 첨부 구조는 확인했습니다. "
+            "다만 푸터가 ALL RIGHT RESERVED로 표시되고 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "양양군청"): {
+        "sourceUrl": "https://yangyang.go.kr/gw/portal/yyc_opinfo_adinfo_disclosure",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 양양군청 업무추진비 공개 경로와 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("강원특별자치도", "양양군의회"): {
+        "sourceUrl": "https://www.yangyangcouncil.go.kr/kr/costBBS.do",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 양양군의회 업무추진비공개 목록과 첨부 구조는 확인했습니다. 다만 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되고 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("대전광역시", "동구청"): {
         "sourceUrl": "https://www.donggu.go.kr/dg/kor/article/senior",
         "fileKinds": ["xlsx", "xls", "pdf"],
