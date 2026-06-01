@@ -264,6 +264,38 @@ def test_extracts_daejeon_xlsx_date_with_weekday_suffix() -> None:
     assert rows[0].payment_method == "카드"
 
 
+def test_extracts_uiwang_xlsx_usage_detail_merchant_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "국장"
+    worksheet.append(["시책추진업무추진비 사용내역(2월)"])
+    worksheet.append(["안전환경교통국", None, None, None, None, "(단위 : 원)"])
+    worksheet.append(["사용일시", "사 용 내 역", "참석자", "사용처", "사 용 금 액", "비 고"])
+    worksheet.append(["합계", None, None, None, 1313400])
+    worksheet.append(
+        [
+            "2026. 2. 4.(수) 20:45",
+            "백운호수 생태로 탐방 사업 관련하여 관계자와의 간담회",
+            "관계자 등 10명",
+            "천장어",
+            352400,
+            None,
+        ]
+    )
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="의왕시청 안전총괄과")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-02-04T20:45:00"
+    assert rows[0].department_name == "의왕시청 안전총괄과"
+    assert rows[0].place_text == "천장어"
+    assert rows[0].purpose == "백운호수 생태로 탐방 사업 관련하여 관계자와의 간담회"
+    assert rows[0].amount == 352400
+    assert rows[0].user_text == "의왕시청 안전총괄과 10명"
+
+
 def test_extracts_council_cost_xlsx_short_day_time_amount_headers() -> None:
     workbook = Workbook()
     worksheet = workbook.active
