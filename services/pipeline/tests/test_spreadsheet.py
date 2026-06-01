@@ -532,13 +532,20 @@ def test_rejects_xlsx_with_too_many_columns(monkeypatch: pytest.MonkeyPatch) -> 
         extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
 
 
-def test_rejects_xlsx_with_too_many_sheets(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_extracts_first_xlsx_sheets_within_sheet_budget(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(guards, "MAX_SPREADSHEET_SHEETS", 1)
     workbook = Workbook()
-    workbook.create_sheet("second")
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "첫번째식당", 10000])
+    second = workbook.create_sheet("second")
+    second.append(["집행일자", "장소", "금액"])
+    second.append(["2026-04-02", "두번째식당", 20000])
 
-    with pytest.raises(guards.DocumentProcessingLimitError, match="sheets"):
-        extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="강남구청")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "첫번째식당"
 
 
 def test_rejects_xlsx_cell_budget(monkeypatch: pytest.MonkeyPatch) -> None:

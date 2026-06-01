@@ -107,8 +107,7 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
     guards.preflight_xlsx_zip(content)
     workbook = load_workbook(BytesIO(content), data_only=True, read_only=True)
     try:
-        worksheets = workbook.worksheets
-        _ensure_sheet_count(len(worksheets), workbook_type="XLSX")
+        worksheets = workbook.worksheets[: guards.MAX_SPREADSHEET_SHEETS]
         workbook_rows: list[list[list[str]]] = []
         total_cells = 0
         for worksheet in worksheets:
@@ -152,10 +151,9 @@ def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
 
 def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
     workbook = xlrd.open_workbook(file_contents=content)
-    _ensure_sheet_count(workbook.nsheets, workbook_type="XLS")
     worksheets: list[list[list[str]]] = []
     total_cells = 0
-    for worksheet in workbook.sheets():
+    for worksheet in workbook.sheets()[: guards.MAX_SPREADSHEET_SHEETS]:
         total_cells = _ensure_declared_sheet_bounds(
             sheet_name=worksheet.name,
             rows=worksheet.nrows,
@@ -172,14 +170,6 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
             )
         worksheets.append(rows)
     return worksheets
-
-
-def _ensure_sheet_count(sheet_count: int, *, workbook_type: str) -> None:
-    if sheet_count > guards.MAX_SPREADSHEET_SHEETS:
-        raise guards.DocumentProcessingLimitError(
-            f"{workbook_type} workbook has {sheet_count} sheets, "
-            f"exceeding limit of {guards.MAX_SPREADSHEET_SHEETS}"
-        )
 
 
 def _ensure_declared_sheet_bounds(
