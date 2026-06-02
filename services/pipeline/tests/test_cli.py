@@ -274,16 +274,16 @@ def test_print_source_registry_reports_nationwide_verification_state(
     assert result == 0
     assert output["summary"]["total"] == 2200
     assert output["summary"]["verified_in_code"] == 145
-    assert output["summary"]["pending"] == 117
-    assert output["summary"]["legal_hold"] == 102
+    assert output["summary"]["pending"] == 114
+    assert output["summary"]["legal_hold"] == 104
     assert output["summary"]["source_not_found"] == 182
-    assert output["summary"]["no_recent_data"] == 277
+    assert output["summary"]["no_recent_data"] == 278
     assert output["summary"]["pdf_vision_hold"] == 8
     assert output["summary"]["adapter_hold"] == 1369
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 486
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 144
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 102
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 104
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
