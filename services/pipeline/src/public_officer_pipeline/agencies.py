@@ -2182,7 +2182,7 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
     },
     "충청북도청": {
         "sourceUrl": "https://www.chungbuk.go.kr/www/selectBbsNttList.do?bbsNo=2&key=211",
-        "fileKinds": ["xlsx", "xls"],
+        "fileKinds": ["xlsx"],
         "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-01",
@@ -2195,7 +2195,7 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
     },
     "충청북도의회": {
         "sourceUrl": "https://council.chungbuk.kr/kr/memberCostBBS.do?flag=all&list_style=&page=1&publish=&schwrd=&th_sch=",
-        "fileKinds": ["xlsx", "xls"],
+        "fileKinds": ["xlsx"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-01",
@@ -2514,6 +2514,84 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-02",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    ("전북특별자치도", "정읍시청"): {
+        "homepage": "https://www.jeongeup.go.kr",
+        "listUrl": (
+            "https://www.jeongeup.go.kr/board/list.jeongeup?"
+            "boardId=BBS_0000012&orderBy=REGISTER_DATE%20DESC&paging=ok&"
+            "startPage=1&searchType=DATA_TITLE&keyword=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84"
+        ),
+        "fileKinds": ["xlsx"],
+        "followDetail": False,
+        "pageParam": "startPage",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 정읍시청 게시판 제목검색 업무추진비 목록에서 2026년 5월 감곡면, "
+            "2026년 4월 고부면, 2026년 1분기 내장상동 등 최근 업무추진비 XLS/XLSX "
+            "첨부 구조를 확인했습니다. 상세 화면에서도 2025년 6월 업무추진비 "
+            "집행내역 XLSX 첨부를 확인했습니다. 원본 XLS/XLSX는 재배포하지 않고 "
+            "날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·"
+            "출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "임실군청"): {
+        "homepage": "https://www.imsil.go.kr",
+        "listUrl": (
+            "https://www.imsil.go.kr/board/list.imsil?"
+            "boardId=BBS_0000012&menuCd=DOM_000000101002001000&"
+            "paging=ok&startPage=1"
+        ),
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "startPage",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 임실군청 열린군정 업무추진비 목록에서 2026-06-02 등록된 농촌지원과, "
+            "종합민원과 및 2026년 5월 단체장·부단체장 등 최근 게시물과 상세 XLSX "
+            "다운로드 구조를 확인했습니다. 목록/상세 화면에는 공공누리 영역 주석과 "
+            "All right reserved 푸터가 있으나 명시적인 상업적 이용금지·변경금지·"
+            "무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 XLSX는 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual "
+            "row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "순창군청"): {
+        "homepage": "https://old.sunchang.go.kr",
+        "listUrl": (
+            "https://old.sunchang.go.kr/index.sunchang?"
+            "menuCd=DOM_000000104010001000"
+        ),
+        "extraListUrls": [
+            (
+                "https://old.sunchang.go.kr/index.sunchang?"
+                "menuCd=DOM_000000104010002000"
+            ),
+            (
+                "https://old.sunchang.go.kr/index.sunchang?"
+                "menuCd=DOM_000000104010004000"
+            ),
+            (
+                "https://old.sunchang.go.kr/index.sunchang?"
+                "menuCd=DOM_000000104010005000"
+            ),
+        ],
+        "fileKinds": ["xlsx"],
+        "followDetail": False,
+        "pageParam": "startPage",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 순창군청 정보공개 업무추진비 공개 군수·부군수·실과소·읍면 목록에서 "
+            "2026년 2월 군수, 동계면·구림면·인계면 등 최근 게시물과 "
+            "/board/download.sunchang XLSX 직접 첨부 구조를 확인했습니다. 화면에는 "
+            "공공누리 영역 주석과 All Rights Reserved 푸터가 있으나 명시적인 상업적 "
+            "이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. "
+            "원본 XLSX는 재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 "
+            "factual row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
     ("전라남도", "곡성군청"): {
         "homepage": "https://www.gokseong.go.kr",
         "listUrl": (
@@ -2555,6 +2633,47 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
     },
+    ("전라남도", "영암군청"): {
+        "homepage": "https://www.yeongam.go.kr",
+        "listUrl": "https://www.yeongam.go.kr/home/www/openinfo/workcost/workcost_01/yeongam.go",
+        "fileKinds": ["xls"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 영암군청 정보공개 업무추진비 사용내역 목록에서 2026년 1분기 "
+            "게시물과 상세 XLS 첨부를 확인했습니다. 상세 URL: "
+            "https://www.yeongam.go.kr/home/www/openinfo/workcost/workcost_01/show/"
+            "5sowi4csxk7y63de6df?page=1, 첨부 URL: "
+            "https://www.yeongam.go.kr/file/wsboard/data/gunsu/1777542220.xls/"
+            "%EC%98%81%EC%95%94%EA%B5%B0%EC%88%98+%EC%97%85%EB%AC%B4%EC%B6%94"
+            "%EC%A7%84%EB%B9%84+%EC%82%AC%EC%9A%A9%EB%82%B4%EC%97%AD%2826%EB%85%84"
+            "+1%EB%B6%84%EA%B8%B0%29.xls?idx=84522. 화면 푸터는 All Rights Reserved이나 "
+            "명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 "
+            "확인되지 않았습니다. 원본 XLS는 재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "무안군청"): {
+        "homepage": "https://www.muan.go.kr",
+        "listUrl": "https://www.muan.go.kr/www/openmuan/budget/work_coast",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 무안군청 열린군정 업무추진비 사용내역 목록에서 2026년 1분기 "
+            "자치행정과 게시물과 상세 PDF 첨부를 확인했습니다. 상세 URL: "
+            "https://www.muan.go.kr/www/openmuan/budget/work_coast?idx=15200900&mode=view, "
+            "첨부 URL: https://www.muan.go.kr/ybscript.io/common/file_download/15200900/"
+            "296766/%25EA%25B8%25B0%25EC%25B4%2588%25EC%259E%2590%25EC%25B9%2598%25EB%258B%25A8"
+            "%25EC%25B2%25B4%25EC%259E%25A5%2520%25EC%2597%2585%25EB%25AC%25B4%25EC%25B6%2594"
+            "%25EC%25A7%2584%25EB%25B9%2584%252826.1%7E26.3%2529.pdf?pkey=mSktaFMQ6. "
+            "해당 상세 화면은 공공누리 제1유형으로 표시되어 있으며, 원본 PDF는 "
+            "재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
 }
 
 NON_CAPITAL_BASIC_COUNCIL_ATTACHMENT_BOARDS = {
@@ -2576,6 +2695,196 @@ NON_CAPITAL_BASIC_COUNCIL_ATTACHMENT_BOARDS = {
             "재사용 제한 문구는 확인하지 못했습니다."
         ),
     },
+    ("전북특별자치도", "남원시의회"): {
+        "homepage": "https://council.namwon.go.kr",
+        "listUrl": "https://council.namwon.go.kr/news/cost.php",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 남원시의회 의회소식 업무추진비 목록에서 2026년 1~3월 및 "
+            "2025년 10~12월 업무추진비 집행내역 PDF 첨부 구조를 확인했습니다. "
+            "원본 PDF는 재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 "
+            "등 factual row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "정읍시의회"): {
+        "homepage": "https://council.jcc.or.kr",
+        "listUrl": "https://council.jcc.or.kr/kr/costBBS.do",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 정읍시의회 정보공개 의회 운영 분야 업무추진비 현황 목록에서 "
+            "2025년 1분기 및 2024년 4분기 업무추진비 집행내역 PDF 첨부 구조를 "
+            "확인했습니다. 원본 PDF는 재배포하지 않고 날짜·기관·부서/직급 마스킹·"
+            "장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 정책 기준으로 "
+            "적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "김제시의회"): {
+        "homepage": "https://council.gimje.go.kr",
+        "listUrl": (
+            "https://council.gimje.go.kr/index.gimje?"
+            "menuCd=DOM_000000108004000000"
+        ),
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "startPage",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 김제시의회 의정활동 정보공개 업무추진비 현황 목록에서 "
+            "2025년 의회사무국 업무추진비 2분기·1분기 및 2024년 4분기 "
+            "게시물과 /board/download.gimje PDF 첨부 구조를 확인했습니다. "
+            "명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 "
+            "문구는 확인되지 않았습니다. 원본 PDF는 재배포하지 않고 날짜·기관·"
+            "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·"
+            "출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "완주군의회"): {
+        "homepage": "https://council.wanju.go.kr",
+        "listUrl": "https://council.wanju.go.kr/board?depth_1=9&depth_2=45",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "pageNum",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 완주군의회 의회자료실 업무추진비 목록에서 2025년 10~12월, "
+            "7~9월, 4~6월, 1~3월 의장단 업무추진비 사용내역과 "
+            "/education/fileDownload PDF 첨부 구조를 확인했습니다. 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 "
+            "확인되지 않았습니다. 원본 PDF는 재배포하지 않고 날짜·기관·부서/"
+            "직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 "
+            "저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "무주군의회"): {
+        "homepage": "https://assem.muju.go.kr",
+        "listUrl": "https://assem.muju.go.kr/content/data/expense.html",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 무주군의회 정보공개 의회운영 업무추진비 집행 현황 목록에서 "
+            "2026년도 1분기, 2025년도 4분기·3분기·2분기 등 최근 게시물과 "
+            "/gtb_download.php PDF 첨부 구조를 확인했습니다. 화면에서 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 "
+            "않았습니다. 원본 PDF는 재배포하지 않고 날짜·기관·부서/직급 마스킹·"
+            "장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 정책 기준으로 "
+            "적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "진안군의회"): {
+        "homepage": "https://council.jinan.go.kr",
+        "listUrl": "https://council.jinan.go.kr/kr/costBBS.do",
+        "detailUrl": "https://council.jinan.go.kr/kr/costBBSview.do?uid=34DE623B10E6EF25B30CE44E6EC6499A",
+        "attachmentUrl": "https://council.jinan.go.kr/kr/bbs/download.do?bbs_id=cost&uid=28C453AEFA7855F6C9E25215E8E6CC2D",
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 진안군의회 정보공개 업무추진비 공개 목록에서 2026년 1분기 및 "
+            "2025년 4분기·3분기 업무추진비 사용내역과 /kr/bbs/download.do XLSX "
+            "첨부 구조를 확인했습니다. 사이트 하단은 All rights reserved이나 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 "
+            "않았습니다. 원본 XLSX는 재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전북특별자치도", "장수군의회"): {
+        "homepage": "https://council.jangsu.go.kr",
+        "listUrl": (
+            "https://council.jangsu.go.kr/cnts/bbs/infoList.php?"
+            "bbsCd=inf&bbsSubCd=inf0204"
+        ),
+        "fileKinds": ["xlsx"],
+        "followDetail": False,
+        "pageParam": "pageNo",
+        "jsDownloadPath": "/cms/utl/FileDownLoad.php",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 장수군의회 의정활동 정보공개 업무추진비 현황 목록에서 "
+            "2026년 1분기 및 2025년 4분기·3분기 의장단 업무추진비 사용내역과 "
+            "fileDownLoad('file_id','inf0204') XLSX 첨부 구조를 확인했습니다. "
+            "명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 "
+            "문구는 확인되지 않았습니다. 원본 XLSX는 재배포하지 않고 날짜·기관·"
+            "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·"
+            "출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "임실군의회"): {
+        "homepage": "https://council.imsil.go.kr",
+        "listUrl": "https://council.imsil.go.kr/main/board/8",
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 임실군의회 열린의회 사전정보공개 업무추진비 목록에서 "
+            "2026년 4월·3월·2월·1월 업무추진비 사용내역과 "
+            "/main/board/8/1/download XLSX 첨부 구조를 확인했습니다. 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 "
+            "확인되지 않았습니다. 원본 XLSX는 재배포하지 않고 날짜·기관·부서/"
+            "직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 "
+            "저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "순창군의회"): {
+        "homepage": "https://www.sunchangcouncil.go.kr",
+        "listUrl": "https://www.sunchangcouncil.go.kr/main/board/45",
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 순창군의회 의정자료실 의원업무추진비사용내역 목록에서 "
+            "2026년 1~3월, 2025년 10~12월·7~9월·4~6월 등 최근 게시물과 "
+            "/main/board/45/1/download XLSX 첨부 구조를 확인했습니다. 화면에는 "
+            "All Right Reserved 푸터가 있으나 명시적인 상업적 이용금지·변경금지·"
+            "무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 XLSX는 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual "
+            "row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전북특별자치도", "부안군의회"): {
+        "homepage": "https://council.buan.go.kr",
+        "listUrl": (
+            "https://council.buan.go.kr/index.buan?"
+            "menuCd=DOM_000000105004000000"
+        ),
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "startPage",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 부안군의회 참여마당 의회자료실 목록에서 2026년 1분기 및 "
+            "2025년 4분기·3분기·2분기 부안군의회 업무추진비 집행내역과 "
+            "/board/download.buan XLSX 첨부 구조를 확인했습니다. 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 "
+            "확인되지 않았습니다. 원본 XLSX는 재배포하지 않고 날짜·기관·부서/"
+            "직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 "
+            "저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
     ("전라남도", "곡성군의회"): {
         "homepage": "https://www.gokseong.go.kr",
         "listUrl": (
@@ -2593,6 +2902,259 @@ NON_CAPITAL_BASIC_COUNCIL_ATTACHMENT_BOARDS = {
         ),
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 원격 확인",
+    },
+    ("전라남도", "순천시의회"): {
+        "homepage": "https://www.sccouncil.go.kr",
+        "listUrl": "https://www.sccouncil.go.kr/kr/costBBS.do",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 순천시의회 정보공개 의회 운영 분야 업무추진비 현황 목록에서 "
+            "2025년 4분기·3분기·2분기 업무추진비 집행내역과 "
+            "/kr/bbs/download.do?bbs_id=cost PDF 첨부 구조를 확인했습니다. "
+            "명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 "
+            "문구는 확인되지 않았습니다. 원본 PDF는 재배포하지 않고 날짜·기관·"
+            "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·"
+            "출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전라남도", "여수시의회"): {
+        "homepage": "https://council.yeosu.go.kr",
+        "listUrl": "https://council.yeosu.go.kr/source/korean/dataroom/info.html",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 여수시의회 의회자료실 정보공개 목록에서 2026년 5월·4월·3월·"
+            "2월·1월 업무추진비 및 의정공통경비 사용내역과 /Mboard/download.html "
+            "PDF 첨부 구조를 확인했습니다. 명시적인 상업적 이용금지·변경금지·무단 "
+            "이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 PDF는 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 "
+            "factual row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전라남도", "나주시의회"): {
+        "homepage": "https://council.naju.go.kr",
+        "listUrl": "https://council.naju.go.kr/kr/costBBS.do",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 나주시의회 의회소식 정보공개 업무추진비 공개 목록에서 "
+            "2026년 1분기 및 2025년 4분기·3분기·2분기 의회운영업무추진비·"
+            "시책추진업무추진비·의정운영공통경비 사용내역과 "
+            "/kr/bbs/download.do?bbs_id=cost PDF 첨부 구조를 확인했습니다. "
+            "명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 "
+            "문구는 확인되지 않았습니다. 원본 PDF는 재배포하지 않고 날짜·기관·"
+            "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·"
+            "출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전라남도", "광양시의회"): {
+        "homepage": "https://council.gwangyang.go.kr",
+        "listUrl": (
+            "https://council.gwangyang.go.kr/content/data/"
+            "operatingExpenses.html?f_code=&opt=&page=1&sword="
+        ),
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 광양시의회 정보마당 정보공개 업무추진비 목록에서 2026년 1/4분기, "
+            "2025년 4/4분기·3/4분기·2/4분기 업무추진비 사용내역과 상세 PDF "
+            "첨부 구조를 확인했습니다. 명시적인 상업적 이용금지·변경금지·무단 "
+            "이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 PDF는 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 "
+            "factual row만 추출·정규화·출처 저장하는 정책 기준으로 적재 후보입니다."
+        ),
+    },
+    ("전라남도", "담양군의회"): {
+        "homepage": "http://dycouncil.go.kr",
+        "listUrl": "http://dycouncil.go.kr/main/board/6",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 담양군의회 정보공개 업무추진비 집행 현황 목록에서 2026년 1월~3월 "
+            "업무추진비 사용내역과 /main/board/6/1/download PDF 첨부 구조를 확인했습니다. "
+            "화면 푸터는 All rights reserved이나 명시적인 상업적 이용금지·변경금지·"
+            "무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 PDF는 "
+            "재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "화순군의회"): {
+        "homepage": "https://council.hwasun.go.kr",
+        "listUrl": "https://council.hwasun.go.kr/index.do?PID=119",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 화순군의회 의정활동 정보공개 업무추진비 현황 목록에서 2026년 1분기 "
+            "의회사무과·의회운영 업무추진비 사용내역과 /download.do?attSeq=... PDF "
+            "첨부 구조를 확인했습니다. 화면에서 명시적인 상업적 이용금지·변경금지·"
+            "무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 PDF는 "
+            "재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "장흥군의회"): {
+        "homepage": "https://www.jhc.go.kr",
+        "listUrl": "https://www.jhc.go.kr/source/kr/info/cost.html",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 장흥군의회 의회정보 업무추진비 목록에서 2025년 4분기 "
+            "의회운영업무추진비 집행내역과 /board_down.php PDF 첨부 구조를 "
+            "확인했습니다. 화면 푸터는 All rights reserved이나 명시적인 상업적 "
+            "이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. "
+            "원본 PDF는 재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "해남군의회"): {
+        "homepage": "https://council.haenam.go.kr",
+        "listUrl": "https://council.haenam.go.kr/kr/data/bbsReport2.do",
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "pageNum",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 해남군의회 자료실 업무추진비 목록에서 2026년 3월 의회운영업무추진비 "
+            "사용내역과 /bbsAttachDownload.do XLSX 첨부 구조를 확인했습니다. 화면 "
+            "푸터는 All rights reserved이나 명시적인 상업적 이용금지·변경금지·"
+            "무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. 원본 XLSX는 "
+            "재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "영암군의회"): {
+        "homepage": "https://yacl.go.kr",
+        "listUrl": "https://yacl.go.kr/source/kr/news/cost.html",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 영암군의회 의정소식 업무추진비 목록에서 2026년 4월 의장·부의장·"
+            "상임위원장 및 의회사무과 업무추진비 사용내역과 /board_down.php PDF "
+            "첨부 구조를 확인했습니다. 화면 푸터는 All rights reserved이나 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 "
+            "않았습니다. 원본 PDF는 재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "무안군의회"): {
+        "homepage": "http://www.muan.or.kr",
+        "listUrl": "http://www.muan.or.kr/muassem/board/32",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 무안군의회 의회자료실 업무추진비 목록에서 2026년 의장단 업무추진비 "
+            "집행내역 1분기 게시물과 /muassem/board/32/1/download PDF 첨부 구조를 "
+            "확인했습니다. 명시적인 상업적 이용금지·변경금지·무단 이용금지·사전협의 "
+            "필요 문구는 확인되지 않았습니다. 원본 PDF는 재배포하지 않고 factual row만 "
+            "적재합니다."
+        ),
+    },
+    ("전라남도", "함평군의회"): {
+        "homepage": "https://www.hpcouncil.go.kr",
+        "listUrl": "https://www.hpcouncil.go.kr/hpassem/board/11/1",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 함평군의회 열린의회 업무추진비 목록에서 2026년 4월·3월·2월·1월 "
+            "업무추진비 사용내역과 PDF 첨부 구조를 확인했습니다. 화면 푸터는 All "
+            "rights reserved이나 명시적인 상업적 이용금지·변경금지·무단 이용금지·"
+            "사전협의 필요 문구는 확인되지 않았습니다. 원본 PDF는 재배포하지 않고 "
+            "factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "영광군의회"): {
+        "homepage": "https://www.yeonggwang.go.kr/ygcouncil",
+        "listUrl": "https://www.yeonggwang.go.kr/ygcouncil/bbs/board.php?bo_table=info_01_03",
+        "fileKinds": ["pdf"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 영광군의회 의정활동 정보공개 업무추진비 목록에서 2026년 3월·2월·1월 "
+            "업무추진비 사용내역과 /ygcouncil/bbs/download.php PDF 첨부 구조를 "
+            "확인했습니다. 화면 푸터는 All Rights Reserved이나 명시적인 상업적 "
+            "이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 않았습니다. "
+            "원본 PDF는 재배포하지 않고 factual row만 적재합니다."
+        ),
+    },
+    ("전라남도", "완도군의회"): {
+        "homepage": "http://wdcc.or.kr",
+        "listUrl": "http://wdcc.or.kr/main/board/45",
+        "fileKinds": ["xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "evidenceNote": (
+            "공식 완도군의회 의정자료 업무추진비 사용내역 목록에서 2026년 1분기 "
+            "완도군의회 업무추진비 사용내역과 /main/board/45/download XLSX 첨부 "
+            "구조를 확인했습니다. 명시적인 상업적 이용금지·변경금지·무단 이용금지·"
+            "사전협의 필요 문구는 확인되지 않았습니다. 원본 XLSX는 재배포하지 않고 "
+            "factual row만 적재합니다."
+        ),
     },
 }
 
@@ -2710,17 +3272,151 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "전까지 수집하지 않습니다."
         ),
     },
-    ("전북특별자치도", "진안군의회"): {
-        "sourceUrl": "https://council.jinan.go.kr/kr/tjobBBS.do",
-        "fileKinds": ["pdf", "hwp", "xlsx", "xls"],
+    ("전북특별자치도", "완주군청"): {
+        "sourceUrl": (
+            "https://www.wanju.go.kr/planweb/board/list.9is?"
+            "contentUid=ff8080818b024d8e018b274f4b712b5b"
+        ),
+        "detailUrl": (
+            "https://www.wanju.go.kr/planweb/board/view.9is?"
+            "boardUid=ff8080818b5bc68c018ba358197b6c86&"
+            "categoryUid1=ff8080818b5bc68c018ba3587a936c93&"
+            "contentUid=ff8080818b024d8e018b274f4b712b5b&"
+            "dataUid=4028a6029bdaa74e019d619ba6485c3a&page=1"
+        ),
+        "fileKinds": ["xlsx"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
         "blocker": (
-            "공식 진안군의회 정보공개 업무추진비 공개 메뉴는 확인했습니다. 다만 화면에서 "
-            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 사이트 하단이 "
-            "All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+            "공식 완주군청 업무추진비 게시판에서 2026년 3월 보건소장 업무추진비 "
+            "사용내역 상세와 XLSX 첨부 구조를 확인했습니다. 다만 상세 화면이 "
+            "공공누리 제4유형: 출처표시+상업적 이용금지+변경금지로 표시되어 "
+            "상업 가능성을 포기하지 않는 facts-only 적재 기준에서도 production "
+            "적재하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "무주군청"): {
+        "sourceUrl": (
+            "https://www.muju.go.kr/index.9is?"
+            "contentUid=ff8080816fac1fbe016fac2f54670070&"
+            "keyword=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84"
+        ),
+        "detailUrl": (
+            "https://www.muju.go.kr/planweb/board/view.9is?"
+            "dataUid=4028a6d2928a60a5019e82626d1602cb&page=1&"
+            "boardUid=ff8080816d4d1b7a016d6228a59a0d1d&"
+            "contentUid=ff8080816c5f9d47016cbd6bee0301db"
+        ),
+        "attachmentUrl": (
+            "https://www.muju.go.kr/planweb/board/download.9is?"
+            "boardUid=ff8080816d4d1b7a016d6228a59a0d1d&"
+            "fileUid=4028a6d2928a60a5019e82626d1b02cc"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_2",
+        "derivativeUseStatus": "allowed_with_attribution",
+        "blocker": (
+            "공식 무주군청 부서별 업무 추진비 검색/상세에서 2026년 5월 설천면 "
+            "업무추진비 집행내역과 XLSX 첨부 구조를 확인했습니다. 다만 상세 화면이 "
+            "공공누리 제2유형: 출처표시+상업적 이용금지로 표시되어 상업 가능성을 "
+            "포기하지 않는 facts-only 적재 기준에서도 production 적재하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "익산시청"): {
+        "sourceUrl": (
+            "https://www.iksan.go.kr/index.do?"
+            "menuUid=ff80808198eafcbd019902abebd02c0e"
+        ),
+        "detailUrl": (
+            "https://www.iksan.go.kr/board/post/view.do?"
+            "boardUid=ff80808199dd1d7d0199e154ccc40a32&"
+            "menuUid=ff80808198eafcbd019902abebd02c0e&"
+            "postUid=a48e8b97e67f4cb28616c0f16109e3dd"
+        ),
+        "attachmentUrl": (
+            "https://www.iksan.go.kr/board/post/download.do?"
+            "boardUid=ff80808199dd1d7d0199e154ccc40a32&"
+            "postUid=a48e8b97e67f4cb28616c0f16109e3dd&"
+            "atchFileUid=557a676b5daa47b59c283bd01faba7f3"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 익산시청 익산소식 시정홍보 업무추진비 목록에서 2025년 10월 업무추진비 "
+            "집행내역과 상세 XLSX 첨부 구조를 확인했습니다. 다만 목록/상세 화면이 "
+            "공공누리 제4유형: 출처표시+상업적 이용금지+변경금지로 표시되어 "
+            "상업 가능성을 포기하지 않는 facts-only 적재 기준에서도 production "
+            "적재하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "부안군청"): {
+        "sourceUrl": (
+            "https://www.buan.go.kr/board/list.buan?"
+            "boardId=BBS_0000099&listCel=1&listRow=10&"
+            "menuCd=DOM_000000105006010000&paging=ok"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 부안군청 정보공개 업무추진비 공개 목록은 확인했습니다. 다만 해당 "
+            "목록/상세가 공공누리 출처표시+상업적 이용금지+변경금지 조건으로 표시되어 "
+            "상업 가능성을 포기하지 않는 facts-only 적재 기준에서도 production "
+            "적재하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "고창군청"): {
+        "sourceUrl": (
+            "https://www.gochang.go.kr/chief/board/list.gochang?"
+            "boardId=BBS_0000059&menuCd=DOM_000000507003000000&"
+            "contentsSid=2915&cpath=%2Fchief"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 고창군 열린군수실 업무추진비공개 목록에서 2026년 4월·3월·2월·1월 "
+            "업무추진비 이용내역과 첨부 구조를 확인했습니다. 다만 목록 화면이 "
+            "공공누리 출처표시+상업적이용금지+변경금지로 표시되어 상업 가능성을 "
+            "포기하지 않는 facts-only 적재 기준에서도 production 적재하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "진안군의회"): {
+        "sourceUrl": "https://council.jinan.go.kr/kr/costBBS.do",
+        "detailUrl": "https://council.jinan.go.kr/kr/costBBSview.do?uid=34DE623B10E6EF25B30CE44E6EC6499A",
+        "attachmentUrl": "https://council.jinan.go.kr/kr/bbs/download.do?bbs_id=cost&uid=28C453AEFA7855F6C9E25215E8E6CC2D",
+        "fileKinds": ["xlsx", "xls", "pdf", "hwp"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "blocker": (
+            "공식 진안군의회 정보공개 업무추진비 공개 목록에서 2026년 1분기 및 "
+            "2025년 4분기·3분기 업무추진비 사용내역과 /kr/bbs/download.do XLSX "
+            "첨부 구조를 확인했습니다. 사이트 하단은 All rights reserved이나 명시적인 "
+            "상업적 이용금지·변경금지·무단 이용금지·사전협의 필요 문구는 확인되지 "
+            "않았습니다. 원본 XLSX는 재배포하지 않고 factual row만 적재합니다."
         ),
     },
     ("광주광역시", "남구의회"): {
@@ -5170,6 +5866,192 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "2025년 2분기 게시물과 첨부파일 표시는 확인했습니다. 다만 화면에서 "
             "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 푸터가 "
             "All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전라남도", "담양군청"): {
+        "sourceUrl": (
+            "http://www.damyang.go.kr/board/list?boardId=BBS_0000233&"
+            "domainId=DOM_0000001&menuCd=DOM_000000190005002004&contentsSid=134"
+        ),
+        "detailUrl": (
+            "http://www.damyang.go.kr/board/detail?boardId=BBS_0000233&"
+            "domainId=DOM_0000001&menuCd=DOM_000000190005002004&contentsSid=134&"
+            "dataSid=817373"
+        ),
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 담양군청 업무추진비 목록에서 2026-05-29 용면, 2026-05-28 환경과 등 "
+            "최근 게시물과 상세 첨부 구조를 확인했습니다. 다만 상세 화면이 공공누리 "
+            "제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 facts-only "
+            "적재에서도 상업적 이용금지·변경금지 명시 제한을 회피하기 어렵습니다."
+        ),
+    },
+    ("전라남도", "보성군청"): {
+        "sourceUrl": "https://www.boseong.go.kr/www/open_data/budget/busi_expense",
+        "detailUrl": (
+            "https://www.boseong.go.kr/www/open_data/budget/busi_expense?"
+            "idx=1158015&mode=view"
+        ),
+        "attachmentUrl": (
+            "https://www.boseong.go.kr/ybscript.io/common/file_download/1158015/"
+            "167557/%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84%20%EC%82%AC"
+            "%EC%9A%A9%EB%82%B4%EC%97%AD%2826%EB%85%84%201%EB%B6%84%EA%B8%B0%29.pdf?pkey="
+        ),
+        "copyrightUrl": "https://www.boseong.go.kr/www/operation_guide/copyright",
+        "publicWorksPolicyUrl": "https://www.boseong.go.kr/www/operation_guide/copyright",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 보성군청 업무추진비 공개 목록에서 2026년 1분기 기획예산실 "
+            "업무추진비 공개 게시물과 상세 PDF 첨부를 확인했습니다. 다만 목록/상세 "
+            "화면이 공공누리 제4유형 및 AI유형으로 표시되고, 저작권보호정책도 "
+            "제4유형은 상업적 이용금지+변경금지 조건이라고 안내하므로 production "
+            "적재하지 않습니다."
+        ),
+    },
+    ("전라남도", "보성군의회"): {
+        "holdStatus": "no_recent_data",
+        "sourceUrl": "http://www.bscouncil.go.kr/boassem/board/37",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "not_applicable_no_recent_data",
+        "derivativeUseStatus": "not_applicable_no_recent_data",
+        "blocker": (
+            "공식 보성군의회 의정자료실 업무추진비 현황 게시판은 확인했지만 2026-06-02 "
+            "현재 목록 본문이 '등록된 게시물이 없습니다.'로 표시됩니다. 보성군청 "
+            "통합검색에서도 최근 보성군의회 업무추진비 list/detail/attachment를 "
+            "추가로 확인하지 못해 최근 12개월 적재 대상 데이터가 없습니다."
+        ),
+    },
+    ("전라남도", "화순군청"): {
+        "sourceUrl": (
+            "https://www.hwasun.go.kr/board.do?S=S01&M=031401000000&"
+            "b_code=0000000199&keyWord=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84"
+        ),
+        "detailUrl": (
+            "https://www.hwasun.go.kr/board.do?S=S01&M=031401000000&"
+            "b_code=0000000199&act=view&list_no=3612&nPage=1&cg_code="
+        ),
+        "attachmentUrl": (
+            "https://www.hwasun.go.kr/fileDownload.do?"
+            "filename=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84%EC%A7%91"
+            "%ED%96%89%EB%82%B4%EC%97%AD_2026_3%EC%9B%94.pdf&f_path=board&b_code=0000000199"
+        ),
+        "copyrightUrl": "https://www.hwasun.go.kr/contents.do?S=S01&M=080300000000",
+        "publicWorksPolicyUrl": "https://www.hwasun.go.kr/contents.do?S=S01&M=080300000000",
+        "fileKinds": ["pdf"],
+        "pageParam": "nPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_requires_prior_consultation",
+        "derivativeUseStatus": "prohibited_requires_prior_consultation",
+        "blocker": (
+            "공식 화순군청 업무추진비 공개 목록과 2026년 3월 PDF 첨부는 확인했습니다. "
+            "다만 화순군 저작권정책은 공공누리 미부착 자료 이용 시 공공저작물 "
+            "관리책임관 및 실무담당자와 사전협의가 필요하다고 안내하므로 production "
+            "적재하지 않습니다."
+        ),
+    },
+    ("전라남도", "장흥군청"): {
+        "sourceUrl": "https://www.jangheung.go.kr/www/open_data/bid_budget/business_expense",
+        "detailUrl": (
+            "https://www.jangheung.go.kr/www/open_data/bid_budget/business_expense?"
+            "idx=374117&mode=view"
+        ),
+        "attachmentUrl": "https://www.jangheung.go.kr/ybscript.io/common/file_download/374117/159164/",
+        "copyrightUrl": "https://www.jangheung.go.kr/www/operation_guide/public_copyright",
+        "publicWorksPolicyUrl": "https://www.jangheung.go.kr/www/operation_guide/public_copyright",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_requires_prior_consultation",
+        "derivativeUseStatus": "prohibited_requires_prior_consultation",
+        "blocker": (
+            "공식 장흥군청 업무추진비 공개 목록에서 2026년 1분기 등 최근 게시물과 "
+            "상세 XLS 첨부 구조는 확인했습니다. 다만 장흥군 공공저작물 자유이용 "
+            "정책은 공공누리 미부착 자료 이용 시 공공저작물 관리책임관 및 실무담당자와 "
+            "사전협의가 필요하다고 안내하므로 production 적재하지 않습니다."
+        ),
+    },
+    ("전라남도", "함평군청"): {
+        "sourceUrl": "https://www.hampyeong.go.kr/boardList.do?boardId=WORK_COST&pageId=www311",
+        "fileKinds": ["xlsx"],
+        "pageParam": "movePage",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 함평군청 업무추진비 목록에서 2026-06-02 등 최근 XLSX 직접 첨부 "
+            "구조를 확인했습니다. 다만 목록 화면이 공공누리 제4유형(출처표시+상업적 "
+            "이용금지+변경금지)으로 표시되어 production 적재하지 않습니다."
+        ),
+    },
+    ("전라남도", "영광군청"): {
+        "holdStatus": "no_recent_data",
+        "sourceUrl": (
+            "https://www.yeonggwang.go.kr/bbs/?b_id=open_data&mn=9007&per_page=15&"
+            "sc_cate=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84&"
+            "sc_key=subject&site=headquarter_new&type=lists"
+        ),
+        "copyrightUrl": "https://www.yeonggwang.go.kr/subpage/?site=headquarter_new&mn=9648",
+        "publicWorksPolicyUrl": "https://www.yeonggwang.go.kr/subpage/?site=headquarter_new&mn=9648",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "per_page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "not_applicable_no_recent_data",
+        "derivativeUseStatus": "not_applicable_no_recent_data",
+        "blocker": (
+            "공식 영광군청 사전정보공표 업무추진비 카테고리 목록은 확인했지만 최신 "
+            "업무추진비 게시물이 2024년 4분기로 확인되어 2025-06-02 이후 최근 12개월 "
+            "적재 대상 데이터가 없습니다."
+        ),
+    },
+    ("전라남도", "완도군청"): {
+        "sourceUrl": "https://www.wando.go.kr/wando/sub.cs?m=404",
+        "detailUrl": (
+            "https://www.wando.go.kr/wando/sub.cs?m=1057&nttId=10012274&"
+            "pBoardId=BBSMSTR_000000000088"
+        ),
+        "attachmentUrl": (
+            "https://ws.wando.go.kr/ext/html5fileupload/fileDownload.do?"
+            "fileStoreDir=bbs&fileId=19d6fd403249&fileSeq=1"
+        ),
+        "copyrightUrl": "https://www.wando.go.kr/wando/sub.cs?m=363",
+        "publicWorksPolicyUrl": "https://www.wando.go.kr/wando/sub.cs?m=363",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+        "commercialUseStatus": "prohibited_kogl_type_4",
+        "derivativeUseStatus": "prohibited_kogl_type_4",
+        "blocker": (
+            "공식 완도군청 정보공개 업무추진비 목록에서 2026년 1분기 수산경영과·"
+            "환경수질관리과·군수 등 최근 게시물과 상세 PDF 첨부 구조를 확인했습니다. "
+            "다만 업무추진비 목록/상세 화면이 공공누리 출처표시-상업적 이용금지-"
+            "변경금지 조건으로 표시되고, 저작권정책도 제4유형의 상업·변경 금지를 "
+            "안내하므로 production 적재하지 않습니다."
         ),
     },
     ("광주광역시", "동구청"): {
@@ -8009,6 +8891,408 @@ def _chungcheong_has_strong_reuse_limit(blocker: str) -> bool:
     return any(marker in blocker for marker in strong_markers)
 
 
+JEOLLA_PARENT_REGIONS = {"광주광역시", "전북특별자치도", "전라남도"}
+
+JEOLLA_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
+    ("전북특별자치도", "고창군의회"): [
+        "https://assembly.gochang.go.kr/ (2026-06-02 현재 HTTP/HTTPS 모두 403 Forbidden)",
+        "https://assembly.gochang.go.kr/assem/viewer.do?cdUid=7007 (공식 회의록은 검색되나 업무추진비 사용내역 게시판이 아님)",
+        "공식 도메인 및 웹 검색: '고창군의회 업무추진비 2026', '고창군의회 의원 업무추진비' 결과는 자치법규·회의록 중심으로, 최근 12개월 사용내역 list/detail/attachment URL 미확정",
+    ],
+    ("전라남도", "해남군청"): [
+        "https://www.haenam.go.kr/index.9is?contentUid=ff8080815bf1bf8b015bfb2b3d910521 (재정공시 메뉴이며 업무추진비 사용내역 목록이 아님)",
+        "https://www.haenam.go.kr/index.9is?contentUid=18e3368f674f6db0016776af9e7a51c9 (본예산 메뉴이며 업무추진비 사용내역 목록이 아님)",
+        "https://www.haenam.go.kr/index.9is?contentUid=18e3368f655bdbc60166c79c2abe160b&keyword=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84 (공식 검색 결과 없음)",
+        "https://www.haenam.go.kr/index.9is?contentUid=18e3368f5d745106015e568170ae3760 (저작권정책은 확인했지만 최근 업무추진비 list/detail/attachment URL 미확정)",
+    ],
+    ("전라남도", "진도군의회"): [
+        "https://www.jindo.go.kr/council/main.cs (공식 의회 메인/메뉴 확인)",
+        "https://www.jindo.go.kr/council/board/B0220.cs?m=109 (공무국외출장 게시판으로 업무추진비 사용내역 목록이 아님)",
+        "https://www.jindo.go.kr/council/board/B0220.cs?m=110 (공무국외출장 관련 게시판으로 업무추진비 사용내역 목록이 아님)",
+        "공식 의회 메뉴와 사이트 검색에서 최근 12개월 업무추진비 list/detail/attachment URL을 확정하지 못했습니다.",
+    ],
+}
+
+JEOLLA_TECHNICAL_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("전라남도", "나주시청"): (
+        "adapter_hold",
+        "공식 예산살림 업무추진비 메뉴와 단체장업무추진비사용내역 목록은 확인했습니다. "
+        "개정 legal_hold 기준상 공공누리 제1유형 미표시만으로 보류하지 않습니다. 다만 "
+        "현재 수집 환경에서 목록 본문이 0바이트로 내려와 generic attachment_board가 "
+        "최근 게시물과 첨부를 안정적으로 파싱하지 못하므로, 나주시 목록 접근성/parser "
+        "보강 후 dry-run을 재검증해야 합니다.",
+    )
+}
+
+JEOLLA_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("광주광역시", "남구의회"): (
+        "no_recent_data",
+        "공식 광주광역시 남구의회 행정정보공표 업무추진비 목록은 확인했지만 "
+        "2026-06-02 기준 최근 게시물이 2025-04-30 등록 2025년 1분기 자료로 "
+        "최근 12개월 row window 이전입니다. 최근 자료가 게시되기 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "전주시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "군산시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "김제시청"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비공개 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "정읍시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 현황 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision extraction을 "
+        "요구했고 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "종료되었습니다. PDF vision 처리 성공 전까지 production 적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "김제시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 의정활동 정보공개 업무추진비 현황 목록은 "
+        "posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 production "
+        "적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "완주군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 의회자료실 업무추진비 목록은 브라우저형 "
+        "User-Agent 보강 후 posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF "
+        "첨부가 scanned PDF vision extraction을 요구했고 현재 실행 환경에 LLM vision "
+        "API key가 없어 raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 "
+        "전까지 production 적재하지 않습니다.",
+    ),
+    ("전라남도", "순천시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 현황 목록의 최신 첫 PDF는 "
+        "posts_seen=1, posts_fetched=1, raw_parsed_rows=206, normalized_visits=206으로 "
+        "파싱됐지만, 같은 최근 기간의 다음 PDF 첨부를 포함하면 scanned PDF vision "
+        "extraction을 요구해 기관 단위 12개월 적재가 실패합니다. PDF vision 처리 "
+        "성공 전까지 production 적재하지 않습니다.",
+    ),
+    ("전라남도", "여수시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 의회자료실 정보공개 목록은 "
+        "posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 production "
+        "적재하지 않습니다.",
+    ),
+    ("전라남도", "광양시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=1, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 production "
+        "적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "남원시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 URL 인코딩 보강 후 "
+        "posts_seen=1, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 production "
+        "적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "무주군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 무주군의회 업무추진비 집행 현황 목록은 "
+        "posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 production "
+        "적재하지 않습니다.",
+    ),
+    ("전북특별자치도", "진안군청"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 부군수 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "목포시청"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 공개 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "목포시의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 게시판은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "곡성군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 곡성군의회 업무추진비 목록은 일부 "
+        "PDF에서 raw_parsed_rows=71, normalized_visits=69까지 진행됐지만 같은 최근 "
+        "기간의 다음 PDF 첨부가 scanned PDF vision extraction을 요구해 기관 단위 "
+        "12개월 적재가 실패합니다. PDF vision 처리 성공 전까지 production 적재하지 "
+        "않습니다.",
+    ),
+    ("전라남도", "담양군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 집행 현황 목록은 "
+        "posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "화순군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 공개 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "장흥군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "강진군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 현황 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "영암군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "무안군청"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 사용내역 목록은 "
+        "posts_seen=2, posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF "
+        "vision extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "무안군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "영광군의회"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 업무추진비 목록은 posts_seen=2, "
+        "posts_fetched=1까지 진행했지만 최신 PDF 첨부가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. PDF vision 처리 성공 전까지 "
+        "production 적재하지 않습니다.",
+    ),
+    ("전라남도", "진도군청"): (
+        "pdf_vision_hold",
+        "전라도권 facts-only dry-run에서 공식 진도군청 업무추진비 목록은 일부 "
+        "PDF에서 raw_parsed_rows=22, normalized_visits=22까지 진행됐지만 같은 최근 "
+        "기간의 다음 PDF 첨부가 scanned PDF vision extraction을 요구해 기관 단위 "
+        "12개월 적재가 실패합니다. PDF vision 처리 성공 전까지 production 적재하지 "
+        "않습니다.",
+    ),
+}
+
+
+def _apply_jeolla_source_not_found(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in JEOLLA_PARENT_REGIONS:
+        return
+    if source_pattern.get("status") != "adapter_required" or source_pattern.get("holdStatus"):
+        return
+
+    searched_paths = JEOLLA_SOURCE_NOT_FOUND_EVIDENCE.get((parent_region, short_name))
+    if not searched_paths:
+        return
+
+    keyword = str(source_pattern.get("searchKeyword") or "").strip()
+    source_pattern.update(
+        {
+            "holdStatus": "source_not_found",
+            "searchedPaths": searched_paths,
+            "blocker": (
+                "전라도권 revised legal 기준으로 공식 홈페이지/의회 사이트와 웹 검색을 "
+                f"재확인했지만 source_registry 검색어 '{keyword}'에 대응하는 최근 "
+                "공식 업무추진비 list/detail/attachment URL을 확정하지 못했습니다. "
+                "공식 출처가 확정되기 전까지 dry-run 및 production 적재를 진행하지 않습니다."
+            ),
+        }
+    )
+
+
+def _apply_jeolla_facts_only_release_or_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+    *,
+    is_council: bool,
+) -> None:
+    if parent_region not in JEOLLA_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus") != "legal_hold":
+        return
+
+    technical_hold = JEOLLA_TECHNICAL_HOLDS.get((parent_region, short_name))
+    if technical_hold:
+        hold_status, blocker = technical_hold
+        source_pattern.update(
+            {
+                "holdStatus": hold_status,
+                "blocker": blocker,
+                "commercialUseStatus": "not_applicable_technical_hold",
+                "derivativeUseStatus": "not_applicable_technical_hold",
+            }
+        )
+        return
+
+    blocker = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    if _jeolla_has_strong_reuse_limit(source_pattern, blocker):
+        return
+
+    source_url = str(source_pattern.get("sourceUrl") or "").strip()
+    if not source_url:
+        return
+
+    file_kinds = [
+        kind
+        for kind in (str(value).lower().strip() for value in source_pattern.get("fileKinds", []))
+        if kind in SUPPORTED_ATTACHMENT_FILE_KINDS
+    ]
+    if not file_kinds:
+        file_kinds = ["xlsx", "xls", "pdf"]
+
+    page_param = str(source_pattern.get("pageParam") or "page")
+    follow_detail = bool(source_pattern.get("followDetail", True))
+    extra_list_urls = [
+        str(value)
+        for value in source_pattern.get("extraListUrls", [])
+        if str(value).strip()
+    ]
+    optional_fields = {
+        key: source_pattern[key]
+        for key in (
+            "detailUrl",
+            "attachmentUrl",
+            "copyrightUrl",
+            "publicWorksPolicyUrl",
+            "jsDownloadPath",
+            "userAgent",
+        )
+        if source_pattern.get(key)
+    }
+    evidence_note = (
+        "공식 업무추진비 공개자료의 원본 파일은 재배포하지 않고, 날짜·기관·부서/직급 "
+        "마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 개정 "
+        "legal_hold 기준으로 적재 후보입니다. 공공누리 제1유형 미표시 또는 All Rights "
+        "Reserved 표기만으로는 보류하지 않으며, 현재 확인 근거에서는 명시적 상업적 "
+        "이용금지·변경금지·무단 이용금지·사전협의 필요 문구를 확인하지 못했습니다."
+    )
+    if blocker:
+        evidence_note = f"{evidence_note} 이전 출처 확인 메모: {blocker}"
+
+    source_pattern.clear()
+    source_pattern.update(
+        {
+            "adapter": "council_attachment_board" if is_council else "attachment_board",
+            "listUrl": source_url,
+            "fileKinds": file_kinds,
+            "followDetail": follow_detail,
+            "pageParam": page_param,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+            "commercialUseStatus": "factual_rows_candidate_no_explicit_reuse_limit",
+            "derivativeUseStatus": "factual_rows_candidate_no_explicit_reuse_limit",
+            "evidenceNote": evidence_note,
+            **optional_fields,
+        }
+    )
+    if extra_list_urls:
+        source_pattern["extraListUrls"] = extra_list_urls
+
+
+def _apply_jeolla_dry_run_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in JEOLLA_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus"):
+        return
+
+    hold = JEOLLA_DRY_RUN_HOLDS.get((parent_region, short_name))
+    if not hold:
+        return
+
+    hold_status, blocker = hold
+    source_pattern.update({"holdStatus": hold_status, "blocker": blocker})
+
+
+def _jeolla_has_strong_reuse_limit(
+    source_pattern: dict[str, object],
+    blocker: str,
+) -> bool:
+    commercial_status = str(source_pattern.get("commercialUseStatus") or "")
+    derivative_status = str(source_pattern.get("derivativeUseStatus") or "")
+    if commercial_status.startswith("prohibited_") or derivative_status.startswith("prohibited_"):
+        return True
+
+    strong_markers = (
+        "공공누리 제2유형",
+        "공공누리 제3유형",
+        "공공누리 제4유형",
+        "상업적이용금지",
+        "상업적 이용금지",
+        "상업적 이용 금지",
+        "변경금지",
+        "변경 금지",
+        "자유이용 불가",
+        "무단 이용 금지",
+        "무단이용 금지",
+        "무단 이용",
+        "무단이용",
+        "무단사용",
+        "사전 협의",
+        "사전협의",
+    )
+    return any(marker in blocker for marker in strong_markers)
+
+
 def _homepage_from_source_pattern(source_pattern: dict[str, object]) -> str | None:
     if (
         source_pattern.get("officialCommonPortal") is True
@@ -8130,6 +9414,17 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_jeolla_source_not_found(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
+            _apply_jeolla_facts_only_release_or_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+                is_council=False,
+            )
 
         council_board = NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS.get(council_short_name)
         council_source_pattern = (
@@ -8221,6 +9516,17 @@ def non_capital_agencies() -> list[Agency]:
                 council_source_pattern,
                 parent_region,
                 council_short_name,
+            )
+            _apply_jeolla_source_not_found(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_jeolla_facts_only_release_or_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+                is_council=True,
             )
 
         agencies.extend(
@@ -8476,12 +9782,44 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_jeolla_source_not_found(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
+            _apply_jeolla_facts_only_release_or_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+                is_council=False,
+            )
+            _apply_jeolla_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             _apply_chungcheong_facts_only_release(
                 council_source_pattern,
                 parent_region,
                 is_council=True,
             )
             _apply_chungcheong_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_jeolla_source_not_found(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_jeolla_facts_only_release_or_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+                is_council=True,
+            )
+            _apply_jeolla_dry_run_hold(
                 council_source_pattern,
                 parent_region,
                 council_short_name,

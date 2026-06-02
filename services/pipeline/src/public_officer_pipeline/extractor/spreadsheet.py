@@ -202,16 +202,24 @@ def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
 
 
 def _load_xlsx_workbook(content: bytes):
-    try:
-        return load_workbook(BytesIO(content), data_only=True, read_only=True)
-    except TypeError as exc:
-        message = str(exc)
-        if "_NamedCellStyle" not in message or "name should be" not in message:
-            raise
-        repaired = _repair_xlsx_missing_cell_style_names(content)
-        if repaired == content:
-            raise
-        return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
+    repaired = content
+    for _ in range(3):
+        try:
+            return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
+        except TypeError as exc:
+            updated = _repair_xlsx_for_openpyxl_type_error(repaired, str(exc))
+            if updated == repaired:
+                raise
+            repaired = updated
+    return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
+
+
+def _repair_xlsx_for_openpyxl_type_error(content: bytes, message: str) -> bytes:
+    if "_NamedCellStyle" in message and "name should be" in message:
+        return _repair_xlsx_missing_cell_style_names(content)
+    if "StringProperty" in message and "name should be" in message:
+        return _repair_xlsx_missing_custom_property_names(content)
+    return content
 
 
 def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
@@ -227,6 +235,45 @@ def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
                 data = repaired_styles if item.filename == "xl/styles.xml" else source.read(item.filename)
                 target.writestr(item, data)
     return output.getvalue()
+
+
+def _repair_xlsx_missing_custom_property_names(content: bytes) -> bytes:
+    with zipfile.ZipFile(BytesIO(content)) as source:
+        if "docProps/custom.xml" not in source.namelist():
+            return content
+        repaired_props = _repair_custom_xml_missing_property_names(
+            source.read("docProps/custom.xml")
+        )
+        if repaired_props is None:
+            return content
+        output = BytesIO()
+        with zipfile.ZipFile(output, "w") as target:
+            for item in source.infolist():
+                data = repaired_props if item.filename == "docProps/custom.xml" else source.read(item.filename)
+                target.writestr(item, data)
+    return output.getvalue()
+
+
+def _repair_custom_xml_missing_property_names(custom_xml: bytes) -> bytes | None:
+    try:
+        root = ElementTree.fromstring(custom_xml)
+    except ElementTree.ParseError:
+        return None
+
+    namespace = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else ""
+    property_tag = f"{{{namespace}}}property" if namespace else "property"
+    existing_names = {element.attrib["name"] for element in root.iter(property_tag) if element.attrib.get("name")}
+    repaired = False
+    for index, element in enumerate(root.iter(property_tag), start=1):
+        if element.attrib.get("name"):
+            continue
+        name = _unique_cell_style_name(f"Recovered Custom Property {index}", existing_names)
+        element.set("name", name)
+        existing_names.add(name)
+        repaired = True
+    if not repaired:
+        return None
+    return ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
 def _repair_styles_xml_missing_cell_style_names(styles_xml: bytes) -> bytes | None:
