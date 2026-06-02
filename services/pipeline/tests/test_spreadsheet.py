@@ -76,6 +76,34 @@ def test_extracts_gangnam_xlsx_rows() -> None:
     assert rows[0].user_text == "지방소득세과장 6명"
 
 
+def test_extracts_spreadsheet_amounts_marked_in_thousand_won() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["2025년 기관장 업무추진비 세부집행내역"])
+    worksheet.append(["(단위 : 천원)"])
+    worksheet.append(["사용일자", "집행목적", "장소", "대상 인원수(명)", "지출금액(천원)"])
+    worksheet.append(["2025-07-04", "업무협의", "테스트식당", 4, 160])
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="테스트기관")
+
+    assert len(rows) == 1
+    assert rows[0].amount == 160000
+
+
+def test_keeps_large_won_amounts_when_sheet_mentions_thousand_unit_summary() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["2025년 기관장 업무추진비"])
+    worksheet.append(["(단위 : 천원)"])
+    worksheet.append(["사용일자", "집행목적", "장소", "대상 인원수(명)", "지출금액(원)"])
+    worksheet.append(["2025-07-04", "업무협의", "테스트식당", 4, 160000])
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="테스트기관")
+
+    assert len(rows) == 1
+    assert rows[0].amount == 160000
+
+
 def test_extracts_council_cost_xlsx_header_variants() -> None:
     workbook = Workbook()
     worksheet = workbook.active

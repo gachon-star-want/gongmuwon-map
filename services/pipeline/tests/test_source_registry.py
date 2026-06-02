@@ -285,13 +285,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 147
+    assert summary.verified_in_code == 151
     assert summary.pending == 51
     assert summary.legal_hold == 176
     assert summary.source_not_found == 170
-    assert summary.no_recent_data == 279
+    assert summary.no_recent_data == 284
     assert summary.pdf_vision_hold == 9
-    assert summary.adapter_hold == 1370
+    assert summary.adapter_hold == 1361
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 146
@@ -305,14 +305,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].source_not_found == 60
     assert summary.priority_group_counts["p3"].total == 342
-    assert summary.priority_group_counts["p3"].verified_in_code == 1
+    assert summary.priority_group_counts["p3"].verified_in_code == 4
     assert summary.priority_group_counts["p3"].pending == 0
-    assert summary.priority_group_counts["p3"].no_recent_data == 277
+    assert summary.priority_group_counts["p3"].no_recent_data == 280
     assert summary.priority_group_counts["p3"].pdf_vision_hold == 8
-    assert summary.priority_group_counts["p3"].adapter_hold == 56
+    assert summary.priority_group_counts["p3"].adapter_hold == 50
     assert summary.priority_group_counts["p4"].total == 1312
+    assert summary.priority_group_counts["p4"].verified_in_code == 1
     assert summary.priority_group_counts["p4"].pending == 0
-    assert summary.priority_group_counts["p4"].adapter_hold == 1312
+    assert summary.priority_group_counts["p4"].no_recent_data == 2
+    assert summary.priority_group_counts["p4"].adapter_hold == 1309
 
     non_capital_entries = [
         entry
@@ -455,6 +457,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         entry for entry in non_capital_entries if entry.short_name == "강원특별자치도의회"
     )
     assert gangwon_city.verification_status == "legal_hold"
+    assert gangwon_city.list_url == (
+        "https://state.gwd.go.kr/portal/administration/opendata/propulsionCost/governor"
+    )
+    assert gangwon_city.copyright_url == "https://state.gwd.go.kr/portal/services/copyright"
+    assert gangwon_city.public_works_policy_url == (
+        "https://state.gwd.go.kr/portal/services/copyright"
+    )
+    assert gangwon_city.commercial_use_status == "not_confirmed_without_kogl_type1"
+    assert gangwon_city.derivative_use_status == "not_confirmed_without_kogl_type1"
     assert "도지사·부지사 업무추진비 목록" in gangwon_city.evidence_note
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
     assert gangwon_council.verification_status == "legal_hold"
@@ -481,16 +492,50 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert donghae_city.verification_status == "legal_hold"
     assert "koglUseAt=N" in donghae_city.evidence_note
     assert taebaek_council.verification_status == "legal_hold"
+    assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
+    assert taebaek_council.detail_url == (
+        "https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112"
+    )
+    assert taebaek_council.attachment_url == (
+        "https://council.taebaek.go.kr/Mboard/download.html?"
+        "table=board_official&column=userfile&uid=112"
+    )
+    assert taebaek_council.copyright_url == "https://www.taebaek.go.kr/www/sub.do?key=590"
+    assert taebaek_council.public_works_policy_url == (
+        "https://www.taebaek.go.kr/www/sub.do?key=590"
+    )
+    assert taebaek_council.commercial_use_status == "not_confirmed_without_kogl_mark"
+    assert taebaek_council.derivative_use_status == "not_confirmed_without_kogl_mark"
     assert "태백시의회 정보공개 업무추진비 현황 목록" in taebaek_council.evidence_note
     assert "공공누리가 부착되지 않은 자료" in taebaek_council.evidence_note
     assert gangneung_city.verification_status == "legal_hold"
+    assert gangneung_city.copyright_url == "https://www.gn.go.kr/www/sub.do?key=782"
+    assert gangneung_city.public_works_policy_url == (
+        "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20"
+    )
+    assert gangneung_city.commercial_use_status == "prohibited_kogl_type4_noncommercial"
+    assert gangneung_city.derivative_use_status == "prohibited_kogl_type4_no_derivatives"
     assert "공공누리 제4유형" in gangneung_city.evidence_note
     assert hoengseong_council.verification_status == "legal_hold"
+    assert hoengseong_council.detail_url == (
+        "https://www.hsg.go.kr/council/selectBbsNttView.do?"
+        "key=1464&bbsNo=41&nttNo=421094&pageUnit=10&searchCnd=all"
+    )
+    assert hoengseong_council.attachment_url == (
+        "https://www.hsg.go.kr/council/downloadBbsFile.do?atchmnflNo=547678"
+    )
+    assert hoengseong_council.copyright_url == "https://www.hsg.go.kr/www/contents.do?key=906"
+    assert hoengseong_council.public_works_policy_url == (
+        "https://www.hsg.go.kr/www/contents.do?key=906"
+    )
     assert "횡성군의회 공식 경로가 횡성군 통합 도메인" in hoengseong_council.evidence_note
     assert "공공누리가 부착되지 않은 자료" in hoengseong_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
     assert yanggu_council.verification_status == "no_recent_data"
+    assert yanggu_council.list_url == "http://www.ygcl.go.kr/portal/F50000/F50700/boardList"
+    assert yanggu_council.commercial_use_status == "not_applicable_no_recent_data"
+    assert yanggu_council.derivative_use_status == "not_applicable_no_recent_data"
     assert "총 0개의 글" in yanggu_council.evidence_note
     assert "2020년 이후 확장 검색" in yanggu_council.evidence_note
     assert goseong_city.verification_status == "legal_hold"
@@ -1212,11 +1257,12 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 1
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 5
     assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 60
-    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 277
+    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 282
     assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 8
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1368
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1359
+    assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
 
@@ -1243,7 +1289,19 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert grac.verification_status == "verified_in_code"
     assert grac.adapter == "alio_item_disclosure"
     assert grac.source_file_kinds == ["xlsx"]
-    assert "사용처(장소)" in grac.evidence_note
+    assert "사용처/장소" in grac.evidence_note
+
+    knoc = next(entry for entry in entries if entry.short_name == "한국석유공사")
+    gh = next(entry for entry in entries if entry.short_name == "경기주택도시공사")
+    seoul_facility = next(entry for entry in entries if entry.short_name == "서울시설공단")
+    assert knoc.verification_status == "verified_in_code"
+    assert knoc.adapter == "alio_item_disclosure"
+    assert gh.verification_status == "verified_in_code"
+    assert gh.adapter == "cleaneye_owner_work_cost"
+    assert gh.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert "FileDownload.do" in gh.evidence_note
+    assert seoul_facility.verification_status == "no_recent_data"
+    assert "place-level" in seoul_facility.evidence_note
 
     local_public = next(entry for entry in entries if entry.priority_group == "p4")
     assert local_public.priority_group_label == "P4 지방공공기관"

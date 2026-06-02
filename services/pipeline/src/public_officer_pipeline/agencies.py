@@ -28,16 +28,20 @@ ALIO_WORKCOST_LIST_API_URL = "https://www.alio.go.kr/item/itemOrganListJung.json
 ALIO_COPYRIGHT_URL = "https://www.alio.go.kr/notice/copyright.do"
 CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL = "https://www.cleaneye.go.kr/user/headOrgWorkCostStat.do"
 CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/itemGongsi.do"
+CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
 CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/iptItemGongsi.do"
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
 
-P3_ALIO_PLACE_LEVEL_CANDIDATES = {"게임물관리위원회"}
-P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH = {
+P3_ALIO_PLACE_LEVEL_CANDIDATES = {
+    "게임물관리위원회",
     "(재)우체국금융개발원",
-    "농림수산식품교육문화정보원",
-    "인천국제공항공사",
     "한국남부발전(주)",
     "한국석유공사",
+}
+P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH: set[str] = set()
+P3_ALIO_RECENT_AGGREGATE_ONLY = {
+    "농림수산식품교육문화정보원",
+    "인천국제공항공사",
     "한국수산자원공단",
 }
 P3_ALIO_PDF_VISION_HOLD = {
@@ -105,6 +109,25 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "한국항로표지기술원",
     "한국해양교통안전공단",
     "한국해양조사협회",
+}
+P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
+    "경기주택도시공사": {
+        "entId": "2007100239",
+        "entKind": "006002",
+        "entName": "경기주택도시공사",
+    }
+}
+P4_CLEANEYE_RECENT_AGGREGATE_ONLY = {
+    "서울시설공단": {
+        "entId": "2007100264",
+        "entKind": "011001",
+        "entName": "서울시설공단",
+    },
+    "서울농수산식품공사": {
+        "entId": "2007100247",
+        "entKind": "006003",
+        "entName": "서울특별시농수산식품공사",
+    },
 }
 
 SEOUL_GU_NAMES = [
@@ -3774,6 +3797,147 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     },
 }
 
+GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
+    "강원특별자치도청": {
+        "copyrightUrl": "https://state.gwd.go.kr/portal/services/copyright",
+        "publicWorksPolicyUrl": "https://state.gwd.go.kr/portal/services/copyright",
+    },
+    "춘천시청": {
+        "copyrightUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
+        "publicWorksPolicyUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
+    },
+    "원주시청": {
+        "copyrightUrl": "https://www.wonju.go.kr/www/sub.do?key=251",
+        "publicWorksPolicyUrl": "https://www.wonju.go.kr/www/contents.do?key=5855",
+    },
+    "원주시의회": {
+        "copyrightUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
+        "publicWorksPolicyUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
+    },
+    "강릉시청": {
+        "copyrightUrl": "https://www.gn.go.kr/www/sub.do?key=782",
+        "publicWorksPolicyUrl": "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20",
+        "commercialUseStatus": "prohibited_kogl_type4_noncommercial",
+        "derivativeUseStatus": "prohibited_kogl_type4_no_derivatives",
+    },
+    "태백시청": {
+        "detailUrl": (
+            "https://www.taebaek.go.kr/www/selectBbsNttView.do?"
+            "key=1552&bbsNo=132&nttNo=180820&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1&integrDeptCode="
+        ),
+        "attachmentUrl": "https://www.taebaek.go.kr/www/downloadBbsFile.do?key=1552&atchmnflNo=123047",
+        "copyrightUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "publicWorksPolicyUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+    },
+    "속초시청": {
+        "copyrightUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
+        "publicWorksPolicyUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
+    },
+    "삼척시청": {
+        "publicWorksPolicyUrl": "https://www.samcheok.go.kr/opendata/03211.web",
+    },
+    "홍천군청": {
+        "detailUrl": (
+            "https://www.hongcheon.go.kr/www/selectBbsNttView.do?"
+            "key=175&bbsNo=61&nttNo=140628&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1"
+        ),
+        "attachmentUrl": (
+            "https://www.hongcheon.go.kr/www/downloadBbsFile.do?"
+            "key=175&bbsNo=61&atchmnflNo=97792"
+        ),
+        "copyrightUrl": "https://www.hongcheon.go.kr/www/sub.do?key=672",
+        "publicWorksPolicyUrl": "https://www.hongcheon.go.kr/www/sub.do?key=672",
+    },
+    "홍천군의회": {
+        "detailUrl": (
+            "https://www.hccouncil.go.kr/council/kr/costBBSview.do?"
+            "uid=CFEC26ED8CDDAD46D410197401A70BC2&schwrd=&flag=all&th_sch=&page=1&list_style="
+        ),
+        "attachmentUrl": (
+            "https://www.hccouncil.go.kr/council/kr/bbs/download.do?"
+            "bbs_id=cost&uid=5DF9FCDC94C6A9B6319E659613B027F7"
+        ),
+    },
+    "횡성군청": {
+        "detailUrl": (
+            "https://www.hsg.go.kr/www/selectBbsNttView.do?"
+            "key=909&bbsNo=79&nttNo=421637&pageUnit=10&searchCnd=all"
+        ),
+        "attachmentUrl": "https://www.hsg.go.kr/www/downloadBbsFile.do?atchmnflNo=548220",
+        "copyrightUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "publicWorksPolicyUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+    },
+    "영월군의회": {
+        "detailUrl": (
+            "https://council.yw.go.kr/content/news/info.html?"
+            "gtid=info&pg=vv&sid=1000&page=1&fidx=25270&opt=&sword="
+        ),
+        "attachmentUrl": "https://council.yw.go.kr/gtb_download.php?gtid=info&fid=17971",
+    },
+    "평창군청": {
+        "detailUrl": "https://www.pc.go.kr/portal/info/info-finance/info-finance-history?articleSeq=328009",
+        "attachmentUrl": "https://www.pc.go.kr/egf/bp/board/article/download?fileSeq=159201",
+        "copyrightUrl": "https://www.pc.go.kr/portal/useguide/useguide-copyright",
+        "publicWorksPolicyUrl": "https://www.pc.go.kr/portal/useguide/useguide-copyright",
+    },
+    "평창군의회": {
+        "detailUrl": (
+            "https://cl.happy700.or.kr/kr/activity/bbsCost.do?"
+            "reform=view&key=090d7521a4b64a7bd650a3f37386f025e07a6662c9a6b29a3b7b57ab0df5132f42259a6e23507164"
+            "&pageNum=1&flag=&keyword="
+        ),
+        "attachmentUrl": (
+            "https://cl.happy700.or.kr/bbsAttachDownload.do?"
+            "key=765f146ec1965723e003072875c1736357893cac6ca8670263b309a7e64e038d4122277cd4078fd4"
+        ),
+    },
+    "정선군청": {
+        "detailUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense?articleSeq=306517",
+        "attachmentUrl": (
+            "https://www.jeongseon.go.kr/egf/bp/board/article/download?"
+            "fileSeq=166458"
+        ),
+    },
+    "정선군의회": {
+        "detailUrl": (
+            "https://assembly.jeongseon.go.kr/source/kr/info/info3.html?"
+            "mode=view&number=A82C8AD6935C68032FC70270EF288FC8&table=board_business&page=1&flag=&key="
+        ),
+        "attachmentUrl": (
+            "https://assembly.jeongseon.go.kr/Mboard/download.html?"
+            "table=board_business&column=userfile&uid=A82C8AD6935C68032FC70270EF288FC8"
+        ),
+    },
+    "철원군청": {
+        "copyrightUrl": "https://www.cwg.go.kr/www/contents.do?key=463",
+        "publicWorksPolicyUrl": "https://www.cwg.go.kr/www/contents.do?key=190",
+    },
+    "철원군의회": {
+        "copyrightUrl": "https://www.cwg.go.kr/www/contents.do?key=463",
+        "publicWorksPolicyUrl": "https://www.cwg.go.kr/www/contents.do?key=190",
+    },
+    "화천군청": {
+        "copyrightUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
+        "publicWorksPolicyUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
+    },
+    "양구군청": {
+        "copyrightUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
+        "publicWorksPolicyUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
+    },
+    "인제군청": {
+        "copyrightUrl": "https://www.inje.go.kr/portal/optional/copyright",
+        "publicWorksPolicyUrl": "https://www.inje.go.kr/portal/optional/copyright",
+    },
+    "고성군청": {
+        "copyrightUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
+        "publicWorksPolicyUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
+    },
+    "양양군청": {
+        "copyrightUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
+        "publicWorksPolicyUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
+    },
+}
+
 NON_CAPITAL_BASIC_REGION_GROUPS = [
     (
         "busan",
@@ -4755,6 +4919,26 @@ def _apply_legal_hold(
     source_pattern.update({"holdStatus": "legal_hold", "blocker": blocker})
 
 
+def _apply_gangwon_legal_evidence(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region != "강원특별자치도":
+        return
+    hold_status = source_pattern.get("holdStatus")
+    if hold_status not in {"legal_hold", "no_recent_data"}:
+        return
+    for key, value in GANGWON_LEGAL_EVIDENCE_OVERRIDES.get(short_name, {}).items():
+        source_pattern.setdefault(key, value)
+    if hold_status == "no_recent_data":
+        source_pattern.setdefault("commercialUseStatus", "not_applicable_no_recent_data")
+        source_pattern.setdefault("derivativeUseStatus", "not_applicable_no_recent_data")
+        return
+    source_pattern.setdefault("commercialUseStatus", "not_confirmed_without_kogl_type1")
+    source_pattern.setdefault("derivativeUseStatus", "not_confirmed_without_kogl_type1")
+
+
 def _apply_gyeongsang_source_not_found(
     source_pattern: dict[str, object],
     parent_region: str,
@@ -4972,6 +5156,9 @@ def non_capital_agencies() -> list[Agency]:
         if not office_board:
             office_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(office_short_name)
             _apply_legal_hold(office_source_pattern, office_blocker)
+            _apply_gangwon_legal_evidence(
+                office_source_pattern, parent_region, office_short_name
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
@@ -5020,6 +5207,9 @@ def non_capital_agencies() -> list[Agency]:
         if not council_board:
             council_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(council_short_name)
             _apply_legal_hold(council_source_pattern, council_blocker)
+            _apply_gangwon_legal_evidence(
+                council_source_pattern, parent_region, council_short_name
+            )
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
                 council_source_pattern,
@@ -5170,8 +5360,14 @@ def non_capital_agencies() -> list[Agency]:
             )
             if office_blocker:
                 office_source_pattern.update({"holdStatus": "legal_hold", **office_blocker})
+            _apply_gangwon_legal_evidence(
+                office_source_pattern, parent_region, office_short_name
+            )
             if council_blocker and not council_board:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
+            _apply_gangwon_legal_evidence(
+                council_source_pattern, parent_region, council_short_name
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
@@ -5344,9 +5540,8 @@ def _public_institution_source_pattern(
             "fileKinds": ["xlsx"],
             "evidenceNote": (
                 "ALIO 경영공시 항목 20701(기관장 업무추진비)에서 2025년 XLSX 첨부를 확인했고, "
-                "샘플 원문은 '사용일자/집행내역(목적)/사용처(장소)/집행금액(원)' place-level "
-                "행을 포함합니다. ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 "
-                "정규화합니다."
+                "샘플 원문은 사용일자·사용처/장소·집행금액 place-level 행을 포함합니다. "
+                "ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 정규화합니다."
             ),
         }
     hold_status = "no_recent_data"
@@ -5357,7 +5552,13 @@ def _public_institution_source_pattern(
         "2025-06-01 이후 place-level 식당/장소 행이 검출되지 않았습니다. 최근 12개월 "
         "적재 대상 0건으로 보류합니다."
     )
-    if name in P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH:
+    if name in P3_ALIO_RECENT_AGGREGATE_ONLY:
+        blocker = (
+            "ALIO 20701 첨부와 최근 12개월 원문은 확인했지만, 재검증한 XLSX 원문이 "
+            "월/유형/건수/금액 집계표이며 사용처·장소·상호 place-level 열을 포함하지 "
+            "않습니다. 공무원맵 적재 대상 place-level 최근 12개월 데이터 0건으로 보류합니다."
+        )
+    elif name in P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH:
         hold_status = "adapter_hold"
         blocker = (
             "ALIO 20701 첨부에서 최근 12개월 place-level 후보가 보이나 금액 헤더가 천원 "
@@ -5444,6 +5645,69 @@ def _local_public_institution_source_pattern(
         if is_public_enterprise
         else [CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL]
     )
+    if name in P4_CLEANEYE_PLACE_LEVEL_CANDIDATES:
+        cleaneye = P4_CLEANEYE_PLACE_LEVEL_CANDIDATES[name]
+        return {
+            "adapter": "cleaneye_owner_work_cost",
+            "searchKeyword": f"{name} 업무추진비",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "itemId": "ownerWorkCost",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "officialCommonPortal": True,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 2차 CleanEye entId/file download dry-run 후보 검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "evidenceNote": (
+                "CleanEye 기관별공시에서 entId/itemId=ownerWorkCost 상세 페이지와 "
+                "fn_FileDown(/file/fileExists.do -> /file/FileDownload.do) XLSX 첨부를 "
+                "확인했습니다. 2025년 2분기 원문은 사용일자·집행목적·장소·대상인원·"
+                "지출금액(원) place-level 행을 포함합니다."
+            ),
+        }
+    if name in P4_CLEANEYE_RECENT_AGGREGATE_ONLY:
+        cleaneye = P4_CLEANEYE_RECENT_AGGREGATE_ONLY[name]
+        return {
+            "adapter": "local_public_institution_required",
+            "searchKeyword": f"{name} 업무추진비",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 2차 CleanEye 첨부 구조 재검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [CLEANEYE_COPYRIGHT_URL],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "blocker": (
+                "CleanEye 기관별공시에서 최근 12개월 XLSX 첨부는 확인했지만, 원문이 "
+                "유형별/월별 건수·금액 집계표이며 사용처·장소·상호 place-level 열을 "
+                "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
+                "0건으로 보류합니다."
+            ),
+        }
     return {
         "adapter": "local_public_institution_required",
         "searchKeyword": f"{name} 업무추진비",

@@ -333,10 +333,15 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         if agency.source_pattern.get("status") == "adapter_required"
     ]
     assert {agency.short_name for agency in verified_public_institutions} == {
-        "게임물관리위원회"
+        "(재)우체국금융개발원",
+        "게임물관리위원회",
+        "한국남부발전(주)",
+        "한국석유공사",
     }
-    assert len(adapter_required_public_institutions) == 341
-    game_rating_board = verified_public_institutions[0]
+    assert len(adapter_required_public_institutions) == 338
+    game_rating_board = next(
+        agency for agency in verified_public_institutions if agency.short_name == "게임물관리위원회"
+    )
     assert game_rating_board.source_pattern["adapter"] == "alio_item_disclosure"
     assert game_rating_board.source_pattern["sourceUrl"] == (
         "https://www.alio.go.kr/item/itemOrganList.do?reportFormRootNo=20701"
@@ -351,11 +356,23 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         for agency in adapter_required_public_institutions
     )
 
+    verified_local_public_institutions = [
+        agency
+        for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
+        if agency.source_pattern.get("status") != "adapter_required"
+    ]
+    adapter_required_local_public_institutions = [
+        agency
+        for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
+        if agency.source_pattern.get("status") == "adapter_required"
+    ]
+    assert {agency.short_name for agency in verified_local_public_institutions} == {"경기주택도시공사"}
+    assert len(adapter_required_local_public_institutions) == 1311
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://www.cleaneye.go.kr/")
         and "2026.3.31 기준" in agency.source_pattern["baselineEvidence"]
-        for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
+        for agency in adapter_required_local_public_institutions
     )
 
 

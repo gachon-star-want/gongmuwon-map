@@ -88,6 +88,32 @@ class AlioItemDisclosurePattern(SourcePattern):
         return normalized
 
 
+class CleanEyeOwnerWorkCostPattern(SourcePattern):
+    adapter: Literal["cleaneye_owner_work_cost"]
+    entId: str
+    entKind: str
+    entName: str
+    itemId: str = "ownerWorkCost"
+    sourceUrl: str = "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    fileExistsUrl: str = "https://www.cleaneye.go.kr/file/fileExists.do"
+    downloadUrl: str = "https://www.cleaneye.go.kr/file/FileDownload.do"
+    fileKinds: list[FileKind] = Field(default_factory=lambda: ["xlsx"])
+    fixedYear: int = 2025
+    officialCommonPortal: bool = True
+
+    @field_validator("fileKinds", mode="before")
+    @classmethod
+    def _normalize_file_kinds(cls, value: Any) -> list[str]:
+        if value is None:
+            return ["xlsx"]
+        if not isinstance(value, list):
+            raise ValueError("fileKinds must be a list")
+        normalized = [str(item).lower().strip() for item in value]
+        if not normalized:
+            raise ValueError("fileKinds must be a non-empty list")
+        return normalized
+
+
 class AdapterRequiredPattern(SourcePattern):
     status: Literal["adapter_required"]
 
@@ -98,6 +124,7 @@ ParsedSourcePattern = (
     | EstimateListPattern
     | InlineExpenseTablePattern
     | AlioItemDisclosurePattern
+    | CleanEyeOwnerWorkCostPattern
     | AdapterRequiredPattern
 )
 
@@ -126,6 +153,8 @@ def parse_source_pattern(agency: Agency) -> ParsedSourcePattern:
             return InlineExpenseTablePattern(**raw)
         if adapter == "alio_item_disclosure":
             return AlioItemDisclosurePattern(**raw)
+        if adapter == "cleaneye_owner_work_cost":
+            return CleanEyeOwnerWorkCostPattern(**raw)
     except ValidationError as exc:
         raise SourcePatternError(str(exc)) from exc
 
