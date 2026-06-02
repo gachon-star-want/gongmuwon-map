@@ -4110,6 +4110,69 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    ("전라남도", "신안군청"): {
+        "sourceUrl": "https://www.shinan.go.kr/home/www/gov30/gov30_08/gov30_09_01_05",
+        "detailUrl": (
+            "https://www.shinan.go.kr/home/www/gov30/gov30_08/"
+            "gov30_09_01_05/show/3609"
+        ),
+        "attachmentUrl": (
+            "https://www.shinan.go.kr/file/wsboard/data/business_money/"
+            "1780301628.xlsx/2026%EB%85%84+1%EB%B6%84%EA%B8%B0+"
+            "%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84+"
+            "%EC%82%AC%EC%9A%A9%EB%82%B4%EC%97%AD%28%ED%9A%8C%EA%B3%84%EA%B3%BC%29.xlsx"
+            "?idx=122058"
+        ),
+        "copyrightUrl": "https://www.shinan.go.kr/home/www/dept_info/dept_info_15/support_17/page.wscms",
+        "publicWorksPolicyUrl": "https://www.shinan.go.kr/home/www/dept_info/dept_info_15/support_17/page.wscms",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 신안군청 행정정보공개 업무추진비 목록에서 2026년 1분기 회계과·"
+            "동부정원관리사업소·군수권한대행 부군수 등 최근 게시물과 상세 XLSX "
+            "첨부 구조를 확인했습니다. 다만 업무추진비 목록/상세 화면에 공공누리 "
+            "제1유형 또는 명확한 자유이용 표시가 확인되지 않고, 신안군 저작권정책은 "
+            "공공누리가 부착되지 않은 자료를 이용하려면 공공저작물 관리책임관 및 "
+            "실무담당자와 사전 협의하라고 안내하므로 제1유형 확인 전까지 수집하지 "
+            "않습니다."
+        ),
+    },
+    ("전라남도", "신안군의회"): {
+        "sourceUrl": "https://www.shinan.go.kr/home/council/function/function_18/page.wscms",
+        "detailUrl": (
+            "https://www.shinan.go.kr/home/council/function/function_18/"
+            "show/140499?page=1&search=&keyword="
+        ),
+        "attachmentUrl": (
+            "https://www.shinan.go.kr/file/wsboard/data/council_biz_cost/"
+            "1775105786.pdf/%EC%8B%A0%EC%95%88%EA%B5%B0%EC%9D%98%ED%9A%8C+"
+            "%EC%9D%98%EC%9E%A5%EB%8B%A8+%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84+"
+            "%EC%82%AC%EC%9A%A9%EB%82%B4%EC%97%AD%282026%EB%85%84+2%EC%9B%94%29.pdf"
+            "?idx=120676"
+        ),
+        "copyrightUrl": "https://www.shinan.go.kr/home/www/dept_info/dept_info_15/support_17/page.wscms",
+        "publicWorksPolicyUrl": "https://www.shinan.go.kr/home/www/dept_info/dept_info_15/support_17/page.wscms",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 신안군의회 의정활동 업무추진비 목록에서 2026년 1~2월, 2025년 "
+            "4~12월 의장단 업무추진비 최근 게시물과 상세 PDF 첨부 구조를 확인했습니다. "
+            "다만 업무추진비 목록/상세 화면에 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않고, 신안군 저작권정책은 공공누리가 부착되지 않은 자료를 "
+            "이용하려면 공공저작물 관리책임관 및 실무담당자와 사전 협의하라고 안내하므로 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("전북특별자치도", "전주시청"): {
         "sourceUrl": (
             "https://www.jeonju.go.kr/planweb/board/list.9is?"
