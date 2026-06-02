@@ -2378,6 +2378,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
+    ("광주광역시", "동구청"): {
+        "sourceUrl": "https://www.donggu.kr/board.es?mid=a10301080400&bid=0270",
+        "fileKinds": ["xlsx"],
+        "pageParam": "nPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 부서장 업무추진비 목록에서 2026년 1분기·2025년 3~4분기 최근 게시물과 "
+            "상세·XLSX 다운로드 구조는 확인했습니다. 다만 상세 화면이 공공누리 제4유형"
+            "(출처표시+상업적 이용금지+변경금지)으로 표시되어 제1유형 원칙을 바꾸는 "
+            "ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
     ("광주광역시", "동구의회"): {
         "sourceUrl": "https://gjdc.donggu.kr/board.es?mid=a10801040000&bid=0020",
         "fileKinds": ["xlsx"],
@@ -2389,6 +2403,34 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 의정활동 정보공개 업무추진비 현황 목록과 XLSX 첨부 다운로드 구조는 "
             "확인했습니다. 다만 목록 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
             "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("광주광역시", "서구청"): {
+        "sourceUrl": "https://www.seogu.gwangju.kr/menu.es?mid=a10518030200",
+        "fileKinds": ["xlsx"],
+        "pageParam": "inline",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 국장급이상 업무추진비 공개 화면에서 2026년 1분기와 2025년 2~4분기 "
+            "최근 자료 및 XLSX 다운로드 구조는 확인했습니다. 다만 업무추진비 화면에서 "
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 푸터가 All "
+            "Rights Reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("광주광역시", "서구의회"): {
+        "holdStatus": "no_recent_data",
+        "sourceUrl": "https://www.seogu.gwangju.kr/menu.es?mid=a10518030300",
+        "fileKinds": ["xlsx"],
+        "pageParam": "inline",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 지방의회 의원 업무추진비 사용내역 화면과 XLSX 다운로드 구조는 확인했습니다. "
+            "다만 목록의 최신 등록일이 2023-08-29이고 실제 분기별 자료는 2021년 4분기 "
+            "이전으로 확인되어 최근 12개월 적재 대상 데이터가 없습니다."
         ),
     },
     ("전북특별자치도", "전주시청"): {
