@@ -8179,11 +8179,6 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
         "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
-    ("대구광역시", "달성군청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "대구 달성군청 목록/상세 parser 보강이 필요합니다.",
-    ),
     ("울산광역시", "중구의회"): (
         "pdf_vision_hold",
         "경상도권 4차 dry-run에서 posts_seen=5, posts_fetched=1 이후 scanned PDF vision "
