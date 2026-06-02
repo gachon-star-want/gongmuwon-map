@@ -10,6 +10,7 @@ from public_officer_pipeline.source_pattern import (
     AlioItemDisclosurePattern,
     AdapterRequiredPattern,
     AttachmentBoardPattern,
+    CleanEyeOwnerWorkCostPattern,
     EstimateListPattern,
     InlineExpenseTablePattern,
     SeoulOpenGovPattern,
@@ -331,11 +332,12 @@ def _source_url(
     | AttachmentBoardPattern
     | EstimateListPattern
     | InlineExpenseTablePattern
-    | AlioItemDisclosurePattern,
+    | AlioItemDisclosurePattern
+    | CleanEyeOwnerWorkCostPattern,
 ) -> str:
     if isinstance(pattern, SeoulOpenGovPattern):
         return "https://opengov.seoul.go.kr/expense/list"
-    if isinstance(pattern, AlioItemDisclosurePattern):
+    if isinstance(pattern, AlioItemDisclosurePattern | CleanEyeOwnerWorkCostPattern):
         return pattern.sourceUrl
     return pattern.listUrl
 
@@ -407,16 +409,16 @@ def _source_verification_error(
         return None
     if not verified_at or not verified_by:
         return "신규 권역의 검증 완료 출처 패턴에는 verifiedAt/verifiedBy 근거 필드가 필요합니다."
-    if not agency.homepage:
-        return "신규 권역의 검증 완료 출처 패턴에는 공식 홈페이지가 필요합니다."
     source_parts = urlsplit(source_url)
-    homepage_parts = urlsplit(agency.homepage)
     if source_parts.scheme not in {"http", "https"} or not source_parts.netloc:
         return "출처 URL은 절대 경로의 공식 URL이어야 합니다."
-    if homepage_parts.scheme not in {"http", "https"} or not homepage_parts.netloc:
-        return "홈페이지는 절대 경로의 공식 URL이어야 합니다."
     if isinstance(raw, dict) and raw.get("officialCommonPortal") is True:
         return None
+    if not agency.homepage:
+        return "신규 권역의 검증 완료 출처 패턴에는 공식 홈페이지가 필요합니다."
+    homepage_parts = urlsplit(agency.homepage)
+    if homepage_parts.scheme not in {"http", "https"} or not homepage_parts.netloc:
+        return "홈페이지는 절대 경로의 공식 URL이어야 합니다."
     source_host = source_parts.netloc.lower()
     homepage_host = homepage_parts.netloc.lower()
     if source_host != homepage_host and not source_host.endswith(f".{homepage_host}"):

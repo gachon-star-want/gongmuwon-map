@@ -28,16 +28,20 @@ ALIO_WORKCOST_LIST_API_URL = "https://www.alio.go.kr/item/itemOrganListJung.json
 ALIO_COPYRIGHT_URL = "https://www.alio.go.kr/notice/copyright.do"
 CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL = "https://www.cleaneye.go.kr/user/headOrgWorkCostStat.do"
 CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/itemGongsi.do"
+CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
 CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/iptItemGongsi.do"
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
 
-P3_ALIO_PLACE_LEVEL_CANDIDATES = {"게임물관리위원회"}
-P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH = {
+P3_ALIO_PLACE_LEVEL_CANDIDATES = {
+    "게임물관리위원회",
     "(재)우체국금융개발원",
-    "농림수산식품교육문화정보원",
-    "인천국제공항공사",
     "한국남부발전(주)",
     "한국석유공사",
+}
+P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH: set[str] = set()
+P3_ALIO_RECENT_AGGREGATE_ONLY = {
+    "농림수산식품교육문화정보원",
+    "인천국제공항공사",
     "한국수산자원공단",
 }
 P3_ALIO_PDF_VISION_HOLD = {
@@ -105,6 +109,25 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "한국항로표지기술원",
     "한국해양교통안전공단",
     "한국해양조사협회",
+}
+P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
+    "경기주택도시공사": {
+        "entId": "2007100239",
+        "entKind": "006002",
+        "entName": "경기주택도시공사",
+    }
+}
+P4_CLEANEYE_RECENT_AGGREGATE_ONLY = {
+    "서울시설공단": {
+        "entId": "2007100264",
+        "entKind": "011001",
+        "entName": "서울시설공단",
+    },
+    "서울농수산식품공사": {
+        "entId": "2007100247",
+        "entKind": "006003",
+        "entName": "서울특별시농수산식품공사",
+    },
 }
 
 SEOUL_GU_NAMES = [
@@ -5253,9 +5276,8 @@ def _public_institution_source_pattern(
             "fileKinds": ["xlsx"],
             "evidenceNote": (
                 "ALIO 경영공시 항목 20701(기관장 업무추진비)에서 2025년 XLSX 첨부를 확인했고, "
-                "샘플 원문은 '사용일자/집행내역(목적)/사용처(장소)/집행금액(원)' place-level "
-                "행을 포함합니다. ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 "
-                "정규화합니다."
+                "샘플 원문은 사용일자·사용처/장소·집행금액 place-level 행을 포함합니다. "
+                "ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 정규화합니다."
             ),
         }
     hold_status = "no_recent_data"
@@ -5266,7 +5288,13 @@ def _public_institution_source_pattern(
         "2025-06-01 이후 place-level 식당/장소 행이 검출되지 않았습니다. 최근 12개월 "
         "적재 대상 0건으로 보류합니다."
     )
-    if name in P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH:
+    if name in P3_ALIO_RECENT_AGGREGATE_ONLY:
+        blocker = (
+            "ALIO 20701 첨부와 최근 12개월 원문은 확인했지만, 재검증한 XLSX 원문이 "
+            "월/유형/건수/금액 집계표이며 사용처·장소·상호 place-level 열을 포함하지 "
+            "않습니다. 공무원맵 적재 대상 place-level 최근 12개월 데이터 0건으로 보류합니다."
+        )
+    elif name in P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH:
         hold_status = "adapter_hold"
         blocker = (
             "ALIO 20701 첨부에서 최근 12개월 place-level 후보가 보이나 금액 헤더가 천원 "
@@ -5353,6 +5381,69 @@ def _local_public_institution_source_pattern(
         if is_public_enterprise
         else [CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL]
     )
+    if name in P4_CLEANEYE_PLACE_LEVEL_CANDIDATES:
+        cleaneye = P4_CLEANEYE_PLACE_LEVEL_CANDIDATES[name]
+        return {
+            "adapter": "cleaneye_owner_work_cost",
+            "searchKeyword": f"{name} 업무추진비",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "itemId": "ownerWorkCost",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "officialCommonPortal": True,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 2차 CleanEye entId/file download dry-run 후보 검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "evidenceNote": (
+                "CleanEye 기관별공시에서 entId/itemId=ownerWorkCost 상세 페이지와 "
+                "fn_FileDown(/file/fileExists.do -> /file/FileDownload.do) XLSX 첨부를 "
+                "확인했습니다. 2025년 2분기 원문은 사용일자·집행목적·장소·대상인원·"
+                "지출금액(원) place-level 행을 포함합니다."
+            ),
+        }
+    if name in P4_CLEANEYE_RECENT_AGGREGATE_ONLY:
+        cleaneye = P4_CLEANEYE_RECENT_AGGREGATE_ONLY[name]
+        return {
+            "adapter": "local_public_institution_required",
+            "searchKeyword": f"{name} 업무추진비",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 2차 CleanEye 첨부 구조 재검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [CLEANEYE_COPYRIGHT_URL],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "blocker": (
+                "CleanEye 기관별공시에서 최근 12개월 XLSX 첨부는 확인했지만, 원문이 "
+                "유형별/월별 건수·금액 집계표이며 사용처·장소·상호 place-level 열을 "
+                "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
+                "0건으로 보류합니다."
+            ),
+        }
     return {
         "adapter": "local_public_institution_required",
         "searchKeyword": f"{name} 업무추진비",

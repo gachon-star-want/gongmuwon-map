@@ -93,6 +93,10 @@ HEADER_ALIASES = {
 
 DEPARTMENT_RE = re.compile(r"부서명\s*[:：]\s*(?P<department>.+)")
 SHEET_MONTH_RE = re.compile(r"(?P<year>20\d{2})\s*(?:년|[./-])\s*(?P<month>\d{1,2})\s*월?")
+THOUSAND_UNIT_RE = re.compile(
+    r"단위\s*[:：]?\s*천\s*원|금액\s*[（(]\s*천\s*원\s*[)）]|"
+    r"집행금액\s*[（(]\s*천\s*원\s*[)）]|지출금액\s*[（(]\s*천\s*원\s*[)）]"
+)
 
 
 def extract_spreadsheet_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
@@ -111,8 +115,15 @@ def extract_grid_rows(
         header_index, mapped_headers = _find_header(sheet_rows)
         if header_index is None:
             continue
+        amount_is_thousands = _sheet_amount_is_thousands(sheet_rows, header_index, mapped_headers)
         for raw_row in sheet_rows[header_index + 1 :]:
-            parsed = _parse_row(raw_row, mapped_headers, department, sheet_month=sheet_month)
+            parsed = _parse_row(
+                raw_row,
+                mapped_headers,
+                department,
+                sheet_month=sheet_month,
+                amount_is_thousands=amount_is_thousands,
+            )
             if parsed:
                 rows.append(parsed)
     return rows
@@ -457,6 +468,7 @@ def _parse_row(
     department: str,
     *,
     sheet_month: tuple[int, int] | None = None,
+    amount_is_thousands: bool = False,
 ) -> ParsedExpenseRow | None:
     item = {
         mapped_headers[index]: _clean(value)
@@ -480,6 +492,7 @@ def _parse_row(
             address=item.get("address_hint"),
             purpose=item.get("purpose") or None,
             amount=amount_text,
+            amount_is_thousands=_should_scale_amount_as_thousands(amount_text, amount_is_thousands),
             party_size=item.get("party_size"),
             user_text=user_text,
             payment_method=item.get("payment_method") or None,
@@ -489,6 +502,32 @@ def _parse_row(
         fallback_department=department,
         address_separator=" (",
     )
+
+
+def _sheet_amount_is_thousands(
+    rows: list[list[str]],
+    header_index: int,
+    mapped_headers: list[str | None],
+) -> bool:
+    header_row = rows[header_index] if header_index < len(rows) else []
+    for index, mapped in enumerate(mapped_headers):
+        if mapped == "amount" and index < len(header_row):
+            if THOUSAND_UNIT_RE.search(re.sub(r"\s+", "", header_row[index])):
+                return True
+    for row in rows[: max(header_index + 1, 10)]:
+        text = re.sub(r"\s+", "", " ".join(cell for cell in row if cell))
+        if THOUSAND_UNIT_RE.search(text):
+            return True
+    return False
+
+
+def _should_scale_amount_as_thousands(value: str | None, amount_is_thousands: bool) -> bool:
+    if not amount_is_thousands or value is None:
+        return False
+    numeric = re.sub(r"[^\d]", "", str(value))
+    if not numeric:
+        return False
+    return int(numeric) < 10_000
 
 
 def _row_date_text(
