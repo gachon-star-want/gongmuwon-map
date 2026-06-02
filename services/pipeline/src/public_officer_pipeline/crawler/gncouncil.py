@@ -32,6 +32,7 @@ DOWNLOAD_HREF_PARTS = (
     "/board/news/download.do",
     "/bbs/download.do",
     "/bbs/download?",
+    "/bbs/download.php",
     "bbsMsgFileDown.do",
     "bbsMsgFileDownCompress.do",
     "/bbsAttachDownload.do",
@@ -604,6 +605,21 @@ class CouncilAttachmentCrawler:
                 query["bbsSn"] = info_bbs_view.group("bbs_sn")
                 detail_path = re.sub(r"List\.php$", "View.php", parts.path)
                 href = urlunsplit(("", "", detail_path, urlencode(query), ""))
+            data_opt = anchor.attributes.get("data-opt", "") if anchor else ""
+            if data_opt and "." in data_opt:
+                checksum, post_id = data_opt.split(".", 1)
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query.setdefault("page", "1")
+                query.update({"sp": "2", "wr_id": post_id, "chk": checksum})
+                href = urlunsplit(("", "", parts.path, urlencode(query), ""))
+            go_bbs_view = re.search(r"goBbsViewPage\(['\"](?P<bbs_sn>[^'\"]+)['\"]\)", row_trigger)
+            if go_bbs_view:
+                parts = urlsplit(self.list_url)
+                query = _hidden_form_query(tree, "bbsViewPageFrm")
+                query["schBbsSn"] = go_bbs_view.group("bbs_sn")
+                detail_path = re.sub(r"List\.do$", "View.do", parts.path)
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
             inline_post_idx = anchor.attributes.get("data-req-get-p-idx", "") if anchor else ""
             if inline_post_idx:
                 parts = urlsplit(self.list_url)
@@ -774,7 +790,30 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
             f"?flSn={php_file_down_load.group('file_id')}"
             f"&flCd={php_file_down_load.group('file_cd')}"
         )
+    bbs_file_download = re.search(
+        r"goBbsFileDownload\(['\"](?P<file_id>[^'\"]+)['\"]\s*,\s*['\"](?P<bbs_cd>[^'\"]+)['\"]\)",
+        trigger,
+    )
+    if bbs_file_download:
+        return "/bbs/FileDownLoadProc.do?" + urlencode(
+            {
+                "schFlSn": bbs_file_download.group("file_id"),
+                "bbsCd": bbs_file_download.group("bbs_cd"),
+            }
+        )
     return href
+
+
+def _hidden_form_query(tree: HTMLParser, form_id: str) -> dict[str, str]:
+    form = tree.css_first(f"form#{form_id}") or tree.css_first(f"form[name='{form_id}']")
+    if not form:
+        return {}
+    query: dict[str, str] = {}
+    for item in form.css("input[name]"):
+        name = item.attributes.get("name", "")
+        if name:
+            query[name] = item.attributes.get("value", "")
+    return query
 
 
 def _egov_download_path_from_html(html: str) -> str:

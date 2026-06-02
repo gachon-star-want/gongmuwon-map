@@ -53,6 +53,8 @@ HEADER_ALIASES = {
     "상호": "place_text",
     "상호명": "place_text",
     "업소명": "place_text",
+    "지급처": "place_text",
+    "지급처명": "place_text",
     "주소": "address_hint",
     "집행처주소": "address_hint",
     "가맹점주소": "address_hint",
@@ -74,6 +76,7 @@ HEADER_ALIASES = {
     "금액": "amount",
     "집행금액": "amount",
     "집행액": "amount",
+    "지급액": "amount",
     "사용금액": "amount",
     "승인금액": "amount",
     "지출액": "amount",
@@ -459,6 +462,9 @@ def _disambiguate_headers(raw_headers: list[str], mapped_headers: list[str | Non
         mapped[execution_type_indexes[-1]] = "payment_method"
     elif len(execution_type_indexes) == 1:
         mapped[execution_type_indexes[0]] = "purpose"
+    if "지급처1" in compact and "지급처2" in compact:
+        mapped[compact.index("지급처1")] = "address_hint"
+        mapped[compact.index("지급처2")] = "place_text"
     return mapped
 
 
