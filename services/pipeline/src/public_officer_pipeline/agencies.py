@@ -198,8 +198,16 @@ P3_ALIO_XLS_PLACE_LEVEL_CANDIDATES = {
 }
 P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH: set[str] = set()
 P3_ALIO_RECENT_AGGREGATE_ONLY = {
+    "경제인문사회연구회",
+    "국제방송교류재단",
     "농림수산식품교육문화정보원",
+    "무역안보관리원",
+    "울산항만공사",
     "인천국제공항공사",
+    "태권도진흥재단",
+    "한국농촌경제연구원",
+    "한국해양교통안전공단",
+    "한국해양조사협회",
     "한국수산자원공단",
 }
 P3_ALIO_PDF_VISION_HOLD = {
@@ -235,26 +243,20 @@ P3_ALIO_DOWNLOAD_HOLD = {
 P3_ALIO_XLS_PARSER_HOLD = {
     "(재)한국통계진흥원",
     "건강보험심사평가원",
-    "경제인문사회연구회",
     "공간정보품질관리원",
     "국립낙동강생물자원관",
     "국립중앙의료원",
     "국민건강보험공단",
-    "국제방송교류재단",
     "농림식품기술기획평가원",
     "농업정책보험금융원",
-    "무역안보관리원",
     "예술의전당",
-    "울산항만공사",
     "전남대학교병원",
     "중소기업은행",
     "창업진흥원",
     "축산물품질평가원",
-    "태권도진흥재단",
     "통일연구원",
     "한국건강가정진흥원",
     "한국국토정보공사",
-    "한국농촌경제연구원",
     "한국법무보호복지공단",
     "한국보건산업진흥원",
     "한국부동산원",
@@ -263,8 +265,6 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "한국제품안전관리원",
     "한국토지주택공사",
     "한국항로표지기술원",
-    "한국해양교통안전공단",
-    "한국해양조사협회",
 }
 P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
     "경기주택도시공사": {
@@ -480,6 +480,12 @@ P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
         "entId": "2021000001",
         "entKind": "011001",
         "entName": "서울물재생시설공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "창녕군시설관리공단": {
+        "entId": "2007100261",
+        "entKind": "011001",
+        "entName": "창녕군시설관리공단",
         "fileKinds": ["xls", "xlsx"],
     },
 }
@@ -797,6 +803,18 @@ P4_CLEANEYE_LONGRUN_PLACE_LEVEL_CANDIDATES = {
         "fileKinds": ["xls", "xlsx"],
     }
     for name, ent_id, ent_kind, ent_name in P4_CLEANEYE_LONGRUN_PLACE_LEVEL_CANDIDATE_ROWS
+}
+P4_CLEANEYE_RECENT_NO_PLACE_LEVEL = {
+    "부산광역시 남구 시설관리공단": {
+        "entId": "2022000003",
+        "entKind": "011001",
+        "entName": "부산광역시남구시설관리공단",
+    },
+    "창원레포츠파크": {
+        "entId": "2007100325",
+        "entKind": "011002",
+        "entName": "창원레포츠파크",
+    },
 }
 P4_CLEANEYE_RECENT_AGGREGATE_ONLY = {
     "서울시설공단": {
@@ -8320,6 +8338,40 @@ def _local_public_institution_source_pattern(
                 "fn_FileDown(/file/fileExists.do -> /file/FileDownload.do) XLS/XLSX 첨부를 "
                 "확인했습니다. 최근 12개월 원문은 사용일자·사용처/장소·집행금액 "
                 "place-level 행을 포함합니다."
+            ),
+        }
+    if name in P4_CLEANEYE_RECENT_NO_PLACE_LEVEL:
+        cleaneye = P4_CLEANEYE_RECENT_NO_PLACE_LEVEL[name]
+        return {
+            "adapter": "local_public_institution_required",
+            "searchKeyword": f"{name} 업무추진비",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "itemId": "ownerWorkCost",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xls", "xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 longrun2 CleanEye dry-run 재검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "blocker": (
+                "CleanEye ownerWorkCost 최근 12개월 XLS/XLSX 첨부를 dry-run으로 재검증했습니다. "
+                "원문 행은 기관장 업무추진비 공개자료이나 사용처/장소 열이 없거나 목적 문구만 "
+                "장소 위치에 들어가 deterministic normalizer 기준 normalized visit 0건입니다. "
+                "공무원맵 production 적재 대상 place-level 데이터 0건으로 보류합니다."
             ),
         }
     if name in P4_CLEANEYE_RECENT_AGGREGATE_ONLY:

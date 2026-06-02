@@ -15,7 +15,11 @@ from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 
 SEOUL_DISTRICT_HINT_RE = re.compile(r"(?P<district>[가-힣]+구)(?:청|의회)?")
 NON_PLACE_EXPENSE_RE = re.compile(r"경조사|축의금|조의금|부의금|부조금|화환|격려금")
-SUMMARY_PLACE_RE = re.compile(r"^\s*(?:합계|총계|\d+\s*건|-)\s*$")
+SUMMARY_PLACE_RE = re.compile(r"^\s*(?:합계|총계|\d+(?:\s*건)?|-)\s*$")
+PURPOSE_ONLY_PLACE_RE = re.compile(
+    r"간담회|정례회|대응|결혼\s*축하|축하금|임직원\s*소통|업무협의|정책협의|"
+    r"주요정책추진|회의|행사|유관(?:\s*기관|\(관련\)\s*기관)"
+)
 
 
 def deterministic_normalize_rows(
@@ -69,6 +73,10 @@ def deterministic_normalize_rows(
 
 
 def _is_non_place_expense(row: ParsedExpenseRow) -> bool:
+    place = re.sub(r"\s+", "", row.place_text or "")
+    purpose = re.sub(r"\s+", "", row.purpose or "")
+    if place and purpose and place == purpose and PURPOSE_ONLY_PLACE_RE.search(row.place_text):
+        return True
     joined = " ".join(
         value
         for value in (
