@@ -35,6 +35,21 @@ CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
 
 P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
+    "행정안전부": {
+        "sourceUrl": "https://mois.go.kr/frt/sub/a02/openBusinessPromotion/screen.do",
+        "dataName": "사전정보공개 업무추진비 공개",
+        "fileKinds": ["html", "xlsx", "pdf"],
+    },
+    "식품의약품안전처": {
+        "sourceUrl": "https://mfds.go.kr/brd/m_19/list.do",
+        "dataName": "정보공개 목록 업무추진비 정보",
+        "fileKinds": ["xlsx", "hwp"],
+    },
+    "공정거래위원회": {
+        "sourceUrl": "https://www.ftc.go.kr/www/contents.do?key=267",
+        "dataName": "사전정보공표 위원장·부위원장 업무추진비 진행내역",
+        "fileKinds": ["html", "xlsx", "pdf"],
+    },
     "재정경제부": {
         "sourceUrl": "https://mofe.go.kr/com/bbs/ComtnbbsList.do?bbsId=MOSFBBS_000000000012&menuNo=3020200",
         "dataName": "주요공표목록 업무추진비",
@@ -274,10 +289,28 @@ P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
         "entName": "양평군상수도",
         "fileKinds": ["xls", "xlsx"],
     },
+    "군포시상수도": {
+        "entId": "2007100024",
+        "entKind": "005001",
+        "entName": "군포시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "가평군상수도": {
+        "entId": "2007100038",
+        "entKind": "005001",
+        "entName": "가평군상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
     "남원시상수도": {
         "entId": "2007100071",
         "entKind": "005001",
         "entName": "남원시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "포항시상수도": {
+        "entId": "2007100081",
+        "entKind": "005001",
+        "entName": "포항시상수도",
         "fileKinds": ["xls", "xlsx"],
     },
     "경산시상수도": {
@@ -308,6 +341,138 @@ P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
         "entId": "2007100118",
         "entKind": "005002",
         "entName": "부천시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "시흥시하수도": {
+        "entId": "2007100123",
+        "entKind": "005002",
+        "entName": "시흥시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "김포시하수도": {
+        "entId": "2007100135",
+        "entKind": "005002",
+        "entName": "김포시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "경주시하수도": {
+        "entId": "2007100152",
+        "entKind": "005002",
+        "entName": "경주시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "경산시하수도": {
+        "entId": "2007100156",
+        "entKind": "005002",
+        "entName": "경산시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "화성시하수도": {
+        "entId": "2008000008",
+        "entKind": "005002",
+        "entName": "화성시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "이천시하수도": {
+        "entId": "2011000001",
+        "entKind": "005002",
+        "entName": "이천시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "서울특별시하수도": {
+        "entId": "2018000001",
+        "entKind": "005002",
+        "entName": "서울특별시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "서울주택도시공사": {
+        "entId": "2007100233",
+        "entKind": "006002",
+        "entName": "서울주택도시개발공사",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "광주광역시관광공사": {
+        "entId": "2007100250",
+        "entKind": "006003",
+        "entName": "광주광역시 관광공사",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "당진도시공사": {
+        "entId": "2010000009",
+        "entKind": "006003",
+        "entName": "당진도시공사",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "강릉관광개발공사": {
+        "entId": "2010000011",
+        "entKind": "006003",
+        "entName": "강릉관광개발공사",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "구리도시공사": {
+        "entId": "2012000015",
+        "entKind": "006003",
+        "entName": "구리도시공사",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "강남구도시관리공단(시설)": {
+        "entId": "2007100265",
+        "entKind": "011001",
+        "entName": "강남구도시관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "인천광역시남동구도시관리공단(시설)": {
+        "entId": "2007100289",
+        "entKind": "011001",
+        "entName": "남동구도시관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "인천광역시계양구시설관리공단": {
+        "entId": "2007100291",
+        "entKind": "011001",
+        "entName": "인천광역시계양구시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "정선군시설관리공단": {
+        "entId": "2007100315",
+        "entKind": "011001",
+        "entName": "정선군시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "전주시시설관리공단": {
+        "entId": "2008000010",
+        "entKind": "011001",
+        "entName": "전주시시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "울주군시설관리공단": {
+        "entId": "2009000003",
+        "entKind": "011001",
+        "entName": "울주군시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "여수시도시관리공단": {
+        "entId": "2010000001",
+        "entKind": "011001",
+        "entName": "여수시도시관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "영월군시설관리공단": {
+        "entId": "2011000021",
+        "entKind": "011001",
+        "entName": "영월군시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "원주시시설관리공단": {
+        "entId": "2020000005",
+        "entKind": "011001",
+        "entName": "원주시시설관리공단",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "서울물재생시설공단": {
+        "entId": "2021000001",
+        "entKind": "011001",
+        "entName": "서울물재생시설공단",
         "fileKinds": ["xls", "xlsx"],
     },
 }

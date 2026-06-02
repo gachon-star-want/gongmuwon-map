@@ -285,13 +285,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 182
+    assert summary.verified_in_code == 207
     assert summary.pending == 47
     assert summary.legal_hold == 161
-    assert summary.source_not_found == 127
+    assert summary.source_not_found == 124
     assert summary.no_recent_data == 295
     assert summary.pdf_vision_hold == 17
-    assert summary.adapter_hold == 1373
+    assert summary.adapter_hold == 1351
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 165
@@ -303,8 +303,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p1"].adapter_hold == 13
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
-    assert summary.priority_group_counts["p2"].source_not_found == 35
-    assert summary.priority_group_counts["p2"].adapter_hold == 25
+    assert summary.priority_group_counts["p2"].source_not_found == 32
+    assert summary.priority_group_counts["p2"].adapter_hold == 28
     assert summary.priority_group_counts["p3"].total == 342
     assert summary.priority_group_counts["p3"].verified_in_code == 6
     assert summary.priority_group_counts["p3"].pending == 0
@@ -312,10 +312,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p3"].pdf_vision_hold == 8
     assert summary.priority_group_counts["p3"].adapter_hold == 48
     assert summary.priority_group_counts["p4"].total == 1312
-    assert summary.priority_group_counts["p4"].verified_in_code == 11
+    assert summary.priority_group_counts["p4"].verified_in_code == 36
     assert summary.priority_group_counts["p4"].pending == 0
     assert summary.priority_group_counts["p4"].no_recent_data == 14
-    assert summary.priority_group_counts["p4"].adapter_hold == 1287
+    assert summary.priority_group_counts["p4"].adapter_hold == 1262
 
     non_capital_entries = [
         entry
@@ -1495,26 +1495,29 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 17
-    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 35
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 42
+    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 32
     assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 294
     assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 8
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1360
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1338
     assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
 
+    science = next(entry for entry in entries if entry.short_name == "과학기술정보통신부")
     haeng = next(entry for entry in entries if entry.short_name == "행정안전부")
     audit = next(entry for entry in entries if entry.short_name == "감사원")
     court = next(entry for entry in entries if entry.short_name == "헌법재판소")
     nps = next(entry for entry in entries if entry.short_name == "국민연금공단")
     grac = next(entry for entry in entries if entry.short_name == "게임물관리위원회")
 
-    assert haeng.priority_group_label == "P2 중앙행정기관·독립기관"
-    assert haeng.jurisdiction_type_label == "중앙행정기관"
-    assert haeng.verification_status == "source_not_found"
-    assert "정부조직관리정보시스템" in haeng.evidence_note
-    assert "source URL 미발견" in haeng.evidence_note
+    assert science.priority_group_label == "P2 중앙행정기관·독립기관"
+    assert science.jurisdiction_type_label == "중앙행정기관"
+    assert science.verification_status == "source_not_found"
+    assert "정부조직관리정보시스템" in science.evidence_note
+    assert "source URL 미발견" in science.evidence_note
+    assert haeng.verification_status == "adapter_hold"
+    assert haeng.source_url == "https://mois.go.kr/frt/sub/a02/openBusinessPromotion/screen.do"
     assert audit.jurisdiction_type_label == "독립국가기관"
     assert court.gov_tier_label == "헌법기관"
     assert court.branch_label == "헌법기관"

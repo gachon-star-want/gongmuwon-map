@@ -17,6 +17,7 @@ _FULL_YEAR_DATE_RE = re.compile(
 )
 _VALID_TIME_RE = re.compile(r"\b(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\b")
 _TIME_LIKE_RE = re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b")
+_BARE_DAY_RE = re.compile(r"^\d{1,2}$")
 
 
 class RawExpenseFields(BaseModel):
@@ -132,6 +133,8 @@ def parse_used_at(date_text: str | None, time_text: str | None) -> datetime | No
     else:
         date_value = str(date_text)
     if not date_value:
+        return None
+    if _BARE_DAY_RE.fullmatch(date_value):
         return None
 
     numeric_date = _parse_numeric_datetime(date_value, time_text)
