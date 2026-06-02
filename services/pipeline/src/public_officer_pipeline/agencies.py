@@ -4412,6 +4412,25 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "필요해 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("광주광역시", "북구의회"): {
+        "sourceUrl": "https://council.bukgu.gwangju.kr/index.do?PID=094",
+        "detailUrl": "https://council.bukgu.gwangju.kr/index.do?PID=094&bbsSn=28777",
+        "attachmentUrl": "https://council.bukgu.gwangju.kr/download.do?attSeq=83251&bbsSn=28777",
+        "fileKinds": ["xlsx"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 광주광역시 북구의회 의정활동 정보공개 의회운영 분야 업무추진비 현황 "
+            "목록에서 2026년 4월·3월·2월·1월 및 2025년 4분기·3분기·2분기 "
+            "최근 게시물과 상세 XLSX 첨부 구조를 확인했습니다. 다만 목록/상세 화면에 "
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("광주광역시", "광산구청"): {
         "sourceUrl": "https://gwangsan.go.kr/contentsView.do?pageId=www159",
         "fileKinds": ["pdf", "xlsx"],

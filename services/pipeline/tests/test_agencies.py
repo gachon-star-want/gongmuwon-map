@@ -466,7 +466,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         agency for agency in pending_agencies if agency.short_name == "충청남도청"
     )
     chungnam_council = next(
-        agency for agency in pending_agencies if agency.short_name == "충청남도의회"
+        agency for agency in NON_CAPITAL_AGENCIES if agency.short_name == "충청남도의회"
     )
     assert chungnam_city.source_pattern["holdStatus"] == "legal_hold"
     assert chungnam_city.source_pattern["fileKinds"] == ["hwp", "pdf"]
@@ -479,22 +479,22 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
 
     cheonan_city = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "천안시청"
     )
     cheonan_council = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "천안시의회"
     )
     gongju_city = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "공주시청"
     )
     gongju_council = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "공주시의회"
     )
     seosan_city = next(
@@ -509,12 +509,12 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     nonsan_city = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "논산시청"
     )
     nonsan_council = next(
         agency
-        for agency in pending_agencies
+        for agency in NON_CAPITAL_AGENCIES
         if agency.parent_region == "충청남도" and agency.short_name == "논산시의회"
     )
     buyeo_city = next(
@@ -573,6 +573,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "https://www.nonsancl.go.kr/kr/activity/bbs?bbs_id=expense"
     )
     assert nonsan_council.source_pattern["fileKinds"] == ["xlsx"]
+    assert "facts-only" in nonsan_council.source_pattern["verifiedBy"]
     assert buyeo_city.source_pattern["holdStatus"] == "legal_hold"
     assert buyeo_city.source_pattern["sourceUrl"] == (
         "https://www.buyeo.go.kr/_prog/_board/?code=service_010211&site_dvs_cd=kr&menu_dvs_cd=010211"
@@ -615,12 +616,24 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert gwangju_council.source_pattern["pageParam"] == "pageNo"
     assert "제1유형 확인 전까지 수집하지 않습니다" in gwangju_council.source_pattern["blocker"]
+    gwangju_bukgu_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "광주광역시" and agency.short_name == "북구의회"
+    )
+    assert gwangju_bukgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert gwangju_bukgu_council.source_pattern["sourceUrl"] == (
+        "https://council.bukgu.gwangju.kr/index.do?PID=094"
+    )
+    assert gwangju_bukgu_council.source_pattern["fileKinds"] == ["xlsx"]
+    assert "업무추진비 현황" in gwangju_bukgu_council.source_pattern["blocker"]
+    assert "ALL RIGHTS RESERVED" in gwangju_bukgu_council.source_pattern["blocker"]
 
     chungbuk_city = next(
-        agency for agency in pending_agencies if agency.short_name == "충청북도청"
+        agency for agency in NON_CAPITAL_AGENCIES if agency.short_name == "충청북도청"
     )
     chungbuk_council = next(
-        agency for agency in pending_agencies if agency.short_name == "충청북도의회"
+        agency for agency in NON_CAPITAL_AGENCIES if agency.short_name == "충청북도의회"
     )
     assert "holdStatus" not in chungbuk_city.source_pattern
     assert chungbuk_city.source_pattern["fileKinds"] == ["xlsx", "xls"]
@@ -998,7 +1011,8 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in NON_CAPITAL_AGENCIES
         if agency.source_pattern.get("status") != "adapter_required"
     ]
-    assert {agency.short_name for agency in verified_non_capital} == {
+    verified_non_capital_names = {agency.short_name for agency in verified_non_capital}
+    assert verified_non_capital_names == {
         "계룡시의회",
         "계룡시청",
         "대전시청",
@@ -1184,7 +1198,9 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert "제1유형 확인 전까지 수집하지 않습니다" in jeonnam_council.source_pattern["blocker"]
 
     sejong_city = next(agency for agency in pending_agencies if agency.short_name == "세종시청")
-    sejong_council = next(agency for agency in pending_agencies if agency.short_name == "세종시의회")
+    sejong_council = next(
+        agency for agency in NON_CAPITAL_AGENCIES if agency.short_name == "세종시의회"
+    )
     assert sejong_city.source_pattern["holdStatus"] == "legal_hold"
     assert sejong_city.source_pattern["sourceUrl"] == "https://www.sejong.go.kr/bbs/R0091/list.do"
     assert sejong_city.source_pattern["fileKinds"] == ["xlsx"]
