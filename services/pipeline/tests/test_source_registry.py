@@ -278,20 +278,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2200
-    assert summary.verified_in_code == 144
-    assert summary.pending == 1828
-    assert summary.legal_hold == 104
-    assert summary.source_not_found == 122
-    assert summary.no_recent_data == 1
+    assert summary.verified_in_code == 145
+    assert summary.pending == 1813
+    assert summary.legal_hold == 115
+    assert summary.source_not_found == 124
+    assert summary.no_recent_data == 2
     assert summary.pdf_vision_hold == 0
     assert summary.adapter_hold == 1
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
-    assert summary.priority_group_counts["p1"].verified_in_code == 144
-    assert summary.priority_group_counts["p1"].pending == 114
-    assert summary.priority_group_counts["p1"].legal_hold == 104
-    assert summary.priority_group_counts["p1"].source_not_found == 122
-    assert summary.priority_group_counts["p1"].no_recent_data == 1
+    assert summary.priority_group_counts["p1"].verified_in_code == 145
+    assert summary.priority_group_counts["p1"].pending == 99
+    assert summary.priority_group_counts["p1"].legal_hold == 115
+    assert summary.priority_group_counts["p1"].source_not_found == 124
+    assert summary.priority_group_counts["p1"].no_recent_data == 2
     assert summary.priority_group_counts["p1"].adapter_hold == 1
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 60
@@ -307,13 +307,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 13
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 114
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 97
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 14
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 99
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 108
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
-        == 122
+        == 124
     )
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 1
     assert all(
@@ -441,17 +441,39 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
     assert gangwon_council.verification_status == "legal_hold"
     assert "PDF/XLS 다운로드 구조" in gangwon_council.evidence_note
+    yeongwol_city = next(entry for entry in non_capital_entries if entry.short_name == "영월군청")
     chuncheon_city = next(entry for entry in non_capital_entries if entry.short_name == "춘천시청")
+    wonju_council = next(entry for entry in non_capital_entries if entry.short_name == "원주시의회")
+    donghae_city = next(entry for entry in non_capital_entries if entry.short_name == "동해시청")
+    taebaek_council = next(entry for entry in non_capital_entries if entry.short_name == "태백시의회")
     gangneung_city = next(entry for entry in non_capital_entries if entry.short_name == "강릉시청")
+    hoengseong_council = next(entry for entry in non_capital_entries if entry.short_name == "횡성군의회")
     hwacheon_city = next(entry for entry in non_capital_entries if entry.short_name == "화천군청")
+    yanggu_council = next(entry for entry in non_capital_entries if entry.short_name == "양구군의회")
+    goseong_city = next(entry for entry in non_capital_entries if entry.short_name == "고성군청")
     goseong_council = next(entry for entry in non_capital_entries if entry.short_name == "고성군의회")
     yangyang_council = next(entry for entry in non_capital_entries if entry.short_name == "양양군의회")
+    assert yeongwol_city.verification_status == "verified_in_code"
+    assert yeongwol_city.source_url == "https://www.yw.go.kr/www/selectBbsNttList.do?bbsNo=7&key=196"
+    assert yeongwol_city.source_file_kinds == ["xlsx"]
     assert chuncheon_city.verification_status == "legal_hold"
     assert "춘천시청 업무추진비 집행내역 목록" in chuncheon_city.evidence_note
+    assert wonju_council.verification_status == "legal_hold"
+    assert "원주시의회 업무추진비 현황 목록" in wonju_council.evidence_note
+    assert donghae_city.verification_status == "legal_hold"
+    assert "koglUseAt=N" in donghae_city.evidence_note
+    assert taebaek_council.verification_status == "source_not_found"
+    assert "업무추진비 공개 게시판" in taebaek_council.evidence_note
     assert gangneung_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in gangneung_city.evidence_note
+    assert hoengseong_council.verification_status == "source_not_found"
+    assert "DNS 응답이 없고" in hoengseong_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
+    assert yanggu_council.verification_status == "no_recent_data"
+    assert "총 0개의 글" in yanggu_council.evidence_note
+    assert goseong_city.verification_status == "legal_hold"
+    assert "공공누리 유형 영역이 비어" in goseong_city.evidence_note
     assert goseong_council.verification_status == "legal_hold"
     assert "ALL RIGHT RESERVED" in goseong_council.evidence_note
     assert yangyang_council.verification_status == "legal_hold"
