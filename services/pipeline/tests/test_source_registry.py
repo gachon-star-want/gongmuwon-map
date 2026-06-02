@@ -279,8 +279,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
 
     assert summary.total == 2200
     assert summary.verified_in_code == 146
-    assert summary.pending == 99
-    assert summary.legal_hold == 115
+    assert summary.pending == 96
+    assert summary.legal_hold == 118
     assert summary.source_not_found == 184
     assert summary.no_recent_data == 279
     assert summary.pdf_vision_hold == 8
@@ -288,8 +288,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
     assert summary.priority_group_counts["p1"].verified_in_code == 145
-    assert summary.priority_group_counts["p1"].pending == 99
-    assert summary.priority_group_counts["p1"].legal_hold == 115
+    assert summary.priority_group_counts["p1"].pending == 96
+    assert summary.priority_group_counts["p1"].legal_hold == 118
     assert summary.priority_group_counts["p1"].source_not_found == 124
     assert summary.priority_group_counts["p1"].no_recent_data == 2
     assert summary.priority_group_counts["p1"].adapter_hold == 1
@@ -314,8 +314,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 14
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 99
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 108
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 96
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 111
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
@@ -814,6 +814,21 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "광주광역시" and entry.short_name == "서구의회"
     )
+    gwangju_namgu_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "광주광역시" and entry.short_name == "남구청"
+    )
+    gwangju_bukgu_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "광주광역시" and entry.short_name == "북구청"
+    )
+    gwangju_gwangsan_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "광주광역시" and entry.short_name == "광산구청"
+    )
     assert gwangju_donggu_city.verification_status == "legal_hold"
     assert "부서장 업무추진비 목록" in gwangju_donggu_city.evidence_note
     assert "공공누리 제4유형" in gwangju_donggu_city.evidence_note
@@ -826,6 +841,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert gwangju_seogu_council.verification_status == "no_recent_data"
     assert "2023-08-29" in gwangju_seogu_council.evidence_note
     assert "최근 12개월 적재 대상 데이터가 없습니다" in gwangju_seogu_council.evidence_note
+    assert gwangju_namgu_city.verification_status == "legal_hold"
+    assert "업무추진비 공개 목록" in gwangju_namgu_city.evidence_note
+    assert "공공누리 제4유형" in gwangju_namgu_city.evidence_note
+    assert gwangju_bukgu_city.verification_status == "legal_hold"
+    assert "업무추진비공개 목록" in gwangju_bukgu_city.evidence_note
+    assert "사전 협의" in gwangju_bukgu_city.evidence_note
+    assert gwangju_gwangsan_city.verification_status == "legal_hold"
+    assert "getInfoOpenList.do/getInfoOpenData.do" in gwangju_gwangsan_city.evidence_note
+    assert "2026-05-29" in gwangju_gwangsan_city.evidence_note
+    assert "공공누리 제4유형" in gwangju_gwangsan_city.evidence_note
 
     jeonju_city = next(
         entry
