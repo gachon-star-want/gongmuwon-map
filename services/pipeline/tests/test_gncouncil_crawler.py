@@ -1643,6 +1643,7 @@ def test_attachment_crawler_ignores_synap_and_convert_previews() -> None:
     assert gncouncil._is_download_href(
         "/cwsboard/board.do?mode=download&bid=179&cid=1451405704&filename=145140.xlsx"
     )
+    assert gncouncil._is_download_href("/boardFileDown.ac?file_id=70a1ca97f9f94e8281ebf0bcb436f609")
     assert not gncouncil._is_download_href(
         "/common/program/synap.jsp?fileName=%2FDATA%2Fbbs%2F715%2Fpreview.xlsx"
     )
