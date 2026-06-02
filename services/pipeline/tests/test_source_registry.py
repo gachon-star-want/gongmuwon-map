@@ -286,8 +286,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
 
     assert summary.total == 2202
     assert summary.verified_in_code == 163
-    assert summary.pending == 49
-    assert summary.legal_hold == 186
+    assert summary.pending == 47
+    assert summary.legal_hold == 188
     assert summary.source_not_found == 138
     assert summary.no_recent_data == 295
     assert summary.pdf_vision_hold == 9
@@ -295,8 +295,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 146
-    assert summary.priority_group_counts["p1"].pending == 49
-    assert summary.priority_group_counts["p1"].legal_hold == 186
+    assert summary.priority_group_counts["p1"].pending == 47
+    assert summary.priority_group_counts["p1"].legal_hold == 188
     assert summary.priority_group_counts["p1"].source_not_found == 103
     assert summary.priority_group_counts["p1"].no_recent_data == 1
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 1
@@ -325,8 +325,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 15
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 49
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 179
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 47
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 181
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 1
     assert (
@@ -417,6 +417,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     jindo_city = next(entry for entry in non_capital_entries if entry.short_name == "진도군청")
     jangseong_city = next(entry for entry in non_capital_entries if entry.short_name == "장성군청")
     jangseong_council = next(entry for entry in non_capital_entries if entry.short_name == "장성군의회")
+    shinan_city = next(entry for entry in non_capital_entries if entry.short_name == "신안군청")
+    shinan_council = next(entry for entry in non_capital_entries if entry.short_name == "신안군의회")
     assert jeonnam_city.verification_status == "adapter_hold"
     assert jeonnam_city.source_url == (
         "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100"
@@ -456,6 +458,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert jangseong_council.source_file_kinds == ["pdf"]
     assert "공공누리 미부착 자료 이용 시 사전 협의" in jangseong_council.evidence_note
+    assert shinan_city.verification_status == "legal_hold"
+    assert shinan_city.source_url == (
+        "https://www.shinan.go.kr/home/www/gov30/gov30_08/gov30_09_01_05"
+    )
+    assert shinan_city.source_file_kinds == ["xlsx"]
+    assert "신안군청 행정정보공개 업무추진비 목록" in shinan_city.evidence_note
+    assert "공공누리가 부착되지 않은 자료" in shinan_city.evidence_note
+    assert shinan_council.verification_status == "legal_hold"
+    assert shinan_council.source_url == (
+        "https://www.shinan.go.kr/home/council/function/function_18/page.wscms"
+    )
+    assert shinan_council.source_file_kinds == ["pdf"]
+    assert "신안군의회 의정활동 업무추진비 목록" in shinan_council.evidence_note
+    assert "사전 협의" in shinan_council.evidence_note
     assert jeonnam_council.verification_status == "legal_hold"
     assert jeonnam_council.source_url == "https://www.jnassembly.go.kr/jnassem/board/412"
     assert "의정활동 정보공개 업무추진비 목록" in jeonnam_council.evidence_note
