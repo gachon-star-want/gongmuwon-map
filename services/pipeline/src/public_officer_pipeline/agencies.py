@@ -2627,6 +2627,49 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "이전으로 확인되어 최근 12개월 적재 대상 데이터가 없습니다."
         ),
     },
+    ("광주광역시", "남구청"): {
+        "sourceUrl": "https://www.namgu.gwangju.kr/board.es?mid=a10304100000&bid=0007",
+        "fileKinds": ["xlsx"],
+        "pageParam": "nPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록에서 2026년 1분기·2025년 4분기 최근 게시물과 "
+            "상세·XLSX 다운로드 구조는 확인했습니다. 다만 상세 화면이 공공누리 제4유형"
+            "(출처표시+상업적 이용금지+변경금지)으로 표시되어 제1유형 원칙을 바꾸는 "
+            "ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
+    ("광주광역시", "북구청"): {
+        "sourceUrl": "http://bukgu.gwangju.kr/board.es?mid=a10502050000&bid=0004",
+        "fileKinds": ["xlsx"],
+        "pageParam": "nPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록에서 2026년 1~2분기 최근 게시물과 상세·XLSX "
+            "다운로드 구조는 확인했습니다. 다만 상세 화면에 개별 공공누리 유형 표시가 "
+            "확인되지 않고 저작권 보호정책상 공공누리 표시가 없는 자료는 사전 협의가 "
+            "필요해 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("광주광역시", "광산구청"): {
+        "sourceUrl": "https://gwangsan.go.kr/contentsView.do?pageId=www159",
+        "fileKinds": ["pdf", "xlsx"],
+        "pageParam": "movePage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 사전정보공표 화면과 getInfoOpenList.do/getInfoOpenData.do "
+            "내장 API, 최근 2026-05-29·2026-05-08 자료 및 PDF/XLSX 다운로드 구조는 "
+            "확인했습니다. 다만 화면 하단이 공공누리 제4유형(출처표시+상업적 이용금지+"
+            "변경금지)으로 표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("전북특별자치도", "전주시청"): {
         "sourceUrl": (
             "https://www.jeonju.go.kr/planweb/board/list.9is?"
