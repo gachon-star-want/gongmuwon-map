@@ -81,6 +81,8 @@ async def _extract_pdf_rows_with_vision(
         plain_text_rows = rows_from_pdf_text(plain_text, fallback_department=fallback_department)
         if plain_text_rows or "총 0건" in plain_text:
             return plain_text_rows
+    if _expense_text_is_aggregate_only(text) or _expense_text_is_aggregate_only(plain_text):
+        return []
     if _expense_text_lacks_place_column(text) or _expense_text_lacks_place_column(plain_text):
         return []
     if not anthropic_key and not gemini_key and not os.getenv("OPENAI_API_KEY"):
@@ -315,6 +317,33 @@ def _expense_text_lacks_place_column(text: str) -> bool:
         keyword in compact for keyword in ("집행장소", "사용장소", "가맹점", "상호", "집행처", "장소")
     )
     return has_expense_columns and not has_place_column
+
+
+def _expense_text_is_aggregate_only(text: str) -> bool:
+    if not text:
+        return False
+    compact = re.sub(r"\s+", "", text)
+    has_place_column = any(
+        keyword in compact for keyword in ("집행장소", "사용장소", "가맹점", "상호", "집행처", "장소")
+    )
+    if has_place_column:
+        return False
+    has_amount = "금액" in compact or "집행액" in compact or "사용액" in compact
+    has_aggregate_axis = any(
+        keyword in compact
+        for keyword in (
+            "월별",
+            "구분별",
+            "유형별",
+            "분기별",
+            "건수",
+            "합계",
+            "총계",
+            "집행내역",
+        )
+    )
+    has_workcost_context = "업무추진비" in compact or "기관장" in compact or "이사장" in compact
+    return has_workcost_context and has_amount and has_aggregate_axis
 
 
 async def _extract_page_with_vision(

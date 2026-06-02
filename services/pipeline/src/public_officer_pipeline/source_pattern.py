@@ -78,6 +78,7 @@ class AlioItemDisclosurePattern(SourcePattern):
     listUrl: str = "https://www.alio.go.kr/item/itemOrganListJung.json"
     downloadUrl: str = "https://www.alio.go.kr/download/file.json"
     fileKinds: list[FileKind] = Field(default_factory=lambda: ["xlsx"])
+    directFiles: list[dict[str, str]] = Field(default_factory=list)
     officialCommonPortal: bool = True
 
     @field_validator("fileKinds", mode="before")

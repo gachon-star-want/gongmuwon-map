@@ -35,6 +35,16 @@ CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
 
 P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
+    "교육부": {
+        "sourceUrl": "https://www.moe.go.kr/boardCnts/listRenew.do?boardID=10150&m=041209&page=1&s=moe&type=default",
+        "dataName": "업무추진비 사용내역",
+        "fileKinds": ["pdf", "xlsx", "hwp"],
+    },
+    "국가데이터처": {
+        "sourceUrl": "https://www.kostat.go.kr/board.es?act=view&bid=11837&list_no=431045&mid=a10104010100&ref_bid=11835%2C11836%2C11837&tag=",
+        "dataName": "업무추진비 상세/첨부",
+        "fileKinds": ["hwp", "pdf"],
+    },
     "행정안전부": {
         "sourceUrl": "https://mois.go.kr/frt/sub/a02/openBusinessPromotion/screen.do",
         "dataName": "사전정보공개 업무추진비 공개",
@@ -44,6 +54,16 @@ P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
         "sourceUrl": "https://mfds.go.kr/brd/m_19/list.do",
         "dataName": "정보공개 목록 업무추진비 정보",
         "fileKinds": ["xlsx", "hwp"],
+    },
+    "국가유산청": {
+        "sourceUrl": "https://www.khs.go.kr/html/HtmlPage.do?mn=NS_04_01_02&pg=%2Fopen%2Fopen_0102.jsp",
+        "dataName": "정보공개 업무추진비 공개",
+        "fileKinds": ["pdf", "xlsx", "hwp"],
+    },
+    "농촌진흥청": {
+        "sourceUrl": "https://www.rda.go.kr/board/board.do?mode=list&prgId=pps_bizdrvopenEntry",
+        "dataName": "청·차장 업무추진비 공개",
+        "fileKinds": ["pdf", "xlsx", "hwp"],
     },
     "공정거래위원회": {
         "sourceUrl": "https://www.ftc.go.kr/www/contents.do?key=267",
@@ -140,6 +160,11 @@ P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
         "dataName": "기관장업무추진비",
         "fileKinds": ["pdf"],
     },
+    "병무청": {
+        "sourceUrl": "https://open.mma.go.kr/caisGGGS/board/boardList.do?gesipan_id=35&menu_id=mma0000087&pageIndex=1&pageUnit=10",
+        "dataName": "공개/개방 업무추진비",
+        "fileKinds": ["pdf", "xlsx", "hwp"],
+    },
     "기상청": {
         "sourceUrl": "https://amo.kma.go.kr/data/open/public/public-info4.do?bid=bizcost&field=&mode=view",
         "dataName": "업무추진비",
@@ -178,10 +203,20 @@ P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
 }
 P2_CENTRAL_STATE_PLACE_LEVEL_CANDIDATES = {
     "국가보훈부",
+    "중소벤처기업부",
+}
+P2_CENTRAL_STATE_DRYRUN_NO_RECENT = {
+    "농림축산식품부",
+    "인사혁신처",
 }
 P2_CENTRAL_STATE_PDF_VISION_HOLD = {
+    "보건복지부",
     "경찰청",
     "통일부",
+}
+P2_CENTRAL_STATE_DOWNLOAD_ADAPTER_HOLD = {
+    "해양수산부",
+    "질병관리청",
 }
 
 P3_ALIO_PLACE_LEVEL_CANDIDATES = {
@@ -220,9 +255,16 @@ P3_ALIO_PDF_VISION_HOLD = {
     "한국국제협력단",
     "한국형사·법무정책연구원",
 }
+P3_ALIO_TEXT_PDF_AGGREGATE_ONLY = P3_ALIO_PDF_VISION_HOLD
 P3_ALIO_HWP_PARSER_HOLD = {
     "대한법률구조공단",
     "정부법무공단",
+}
+P3_ALIO_NO_RECENT_FILE_DATA = {
+    "대한장애인체육회",
+    "대한체육회",
+    "스포츠윤리센터",
+    "재단법인 한국에너지재단",
 }
 P3_ALIO_DOWNLOAD_HOLD = {
     "대한장애인체육회",
@@ -266,6 +308,9 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "한국토지주택공사",
     "한국항로표지기술원",
 }
+P3_ALIO_DRYRUN_ZERO_NORMALIZED = P3_ALIO_XLS_PARSER_HOLD | (
+    P3_ALIO_DOWNLOAD_HOLD - P3_ALIO_NO_RECENT_FILE_DATA
+)
 P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
     "경기주택도시공사": {
         "entId": "2007100239",
@@ -889,6 +934,100 @@ P4_CLEANEYE_IPT_RECENT_AGGREGATE_ONLY = {
         "entKind": "012002",
         "entName": "서울의료원",
     },
+}
+P4_CLEANEYE_OWNER_WORKCOST_RETRY_OUTCOME_ROWS = (
+    ("고성군상수도", "강원특별자치도", "2007100052", "005001", "고성군상수도", "no_posts", 0, 0, 0, 0),
+    ("경기도고덕국제화계획지구", "경기도", "2010000003", "005003", "경기도고덕국제화계획지구조성사업", "no_recent", 2, 0, 0, 0),
+    ("시흥시공영개발", "경기도", "2007100183", "005003", "시흥시공영개발", "recent_aggregate_or_no_place", 2, 0, 0, 0),
+    ("시흥시상수도", "경기도", "2007100023", "005001", "시흥시상수도", "recent_aggregate_or_no_place", 1, 0, 0, 0),
+    ("여주도시공사(시설)", "경기도", "2023000005", "006003", "여주도시공사", "no_recent", 2, 0, 0, 0),
+    ("거제시하수도", "경상남도", "2008000004", "005002", "거제시하수도", "no_posts", 0, 0, 0, 0),
+    ("거제해양관광개발공사", "경상남도", "2012000001", "006003", "거제해양관광개발공사", "no_posts", 0, 0, 0, 0),
+    ("거창골프장사업소", "경상남도", "2025000001", "005003", "거창골프장사업소", "no_posts", 0, 0, 0, 0),
+    ("거창군하수도", "경상남도", "2007100165", "005002", "거창군하수도", "no_posts", 0, 0, 0, 0),
+    ("경상남도개발공사", "경상남도", "2007100245", "006002", "경남개발공사", "recent_aggregate_or_no_place", 2, 10, 1, 0),
+    ("고성군상수도", "경상남도", "2019000001", "005001", "고성군상수도", "no_posts", 0, 0, 0, 0),
+    ("고성군하수도", "경상남도", "2019000002", "005002", "고성군하수도", "no_posts", 0, 0, 0, 0),
+    ("김해시도시개발공사", "경상남도", "2014000004", "006003", "김해시도시개발공사", "no_recent", 2, 0, 0, 0),
+    ("김해시하수도", "경상남도", "2007100162", "005002", "김해시하수도", "no_recent", 2, 0, 0, 0),
+    ("밀양시시설관리공단", "경상남도", "2016000009", "011001", "밀양시시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("밀양시하수도", "경상남도", "2007100167", "005002", "밀양시하수도", "no_recent", 1, 0, 0, 0),
+    ("사천시 시설관리공단", "경상남도", "2018000004", "011001", "사천시시설관리공단", "no_posts", 0, 0, 0, 0),
+    ("사천시상수도", "경상남도", "2007100098", "005001", "사천시상수도", "no_recent", 2, 0, 0, 0),
+    ("사천시하수도", "경상남도", "2007100164", "005002", "사천시하수도", "no_posts", 0, 0, 0, 0),
+    ("양산시상수도", "경상남도", "2007100102", "005001", "양산시상수도", "no_recent", 2, 16, 0, 0),
+    ("양산시시설관리공단", "경상남도", "2009000017", "011001", "양산시시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("의령친환경골프장관리사업소", "경상남도", "2010000004", "005003", "의령친환경골프장관리사업소", "no_posts", 0, 0, 0, 0),
+    ("진주시 시설관리공단", "경상남도", "2024000002", "011001", "진주시시설관리공단", "no_posts", 0, 0, 0, 0),
+    ("진주시공영개발", "경상남도", "2007100207", "005003", "진주시공영개발", "no_posts", 0, 0, 0, 0),
+    ("진주시하수도", "경상남도", "2007100160", "005002", "진주시하수도", "no_recent", 2, 0, 0, 0),
+    ("창녕군상수도", "경상남도", "2007100103", "005001", "창녕군상수도", "no_posts", 0, 0, 0, 0),
+    ("창녕군하수도", "경상남도", "2007100169", "005002", "창녕군하수도", "no_posts", 0, 0, 0, 0),
+    ("창원시상수도", "경상남도", "2007100093", "005001", "창원시상수도", "no_recent", 2, 0, 0, 0),
+    ("창원시설공단", "경상남도", "2007100318", "011001", "창원시설공단", "no_recent", 2, 0, 0, 0),
+    ("창원시주택건설", "경상남도", "2007100205", "005003", "창원시주택건설사업", "no_posts", 0, 0, 0, 0),
+    ("창원시하수도", "경상남도", "2007100159", "005002", "창원시하수도", "verified_place_level", 2, 61, 8, 3),
+    ("통영관광개발공사", "경상남도", "2007100376", "006003", "통영관광개발공사", "no_recent", 2, 0, 0, 0),
+    ("통영시상수도", "경상남도", "2007100097", "005001", "통영시상수도", "no_posts", 0, 0, 0, 0),
+    ("통영시하수도", "경상남도", "2007100166", "005002", "통영시하수도", "no_posts", 0, 0, 0, 0),
+    ("함안군상수도", "경상남도", "2007100378", "005001", "함안군상수도", "no_posts", 0, 0, 0, 0),
+    ("함안지방공사", "경상남도", "2009000013", "006003", "함안지방공사", "no_recent", 2, 0, 0, 0),
+    ("합천군 시설관리공단", "경상남도", "2022000001", "011001", "합천군시설관리공단", "no_recent", 1, 0, 0, 0),
+    ("합천군상수도", "경상남도", "2014000003", "005001", "합천군상수도", "no_posts", 0, 0, 0, 0),
+    ("경상북도관광공사", "경상북도", "2012000013", "006003", "경상북도문화관광공사", "no_recent", 2, 0, 0, 0),
+    ("영덕군하수도", "경상북도", "2015000004", "005002", "영덕군하수도", "no_posts", 0, 0, 0, 0),
+    ("예천군상수도", "경상북도", "2019000003", "005001", "예천군상수도", "no_posts", 0, 0, 0, 0),
+    ("예천군하수도", "경상북도", "2019000004", "005002", "예천군하수도", "no_posts", 0, 0, 0, 0),
+    ("울진군상수도", "경상북도", "2007100088", "005001", "울진군상수도", "no_recent", 2, 0, 0, 0),
+    ("청도공영사업공사", "경상북도", "2007100260", "006003", "청도공영사업공사", "no_recent", 2, 0, 0, 0),
+    ("칠곡군상수도", "경상북도", "2007100089", "005001", "칠곡군상수도", "no_posts", 0, 0, 0, 0),
+    ("칠곡군하수도", "경상북도", "2010000005", "005002", "칠곡군하수도", "no_posts", 0, 0, 0, 0),
+    ("포항시설관리공단", "경상북도", "2011000003", "011001", "포항시시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("광주광산구시설관리공단", "광주광역시", "2014000006", "011001", "광주광역시광산구시설관리공단", "no_posts", 0, 0, 0, 0),
+    ("대구달성군시설관리공단", "대구광역시", "2014000005", "011001", "대구광역시달성군시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("대전시시설관리공단", "대전광역시", "2007100293", "011001", "대전광역시시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("기장군도시관리공단(시설)", "부산광역시", "2009000014", "011001", "부산광역시기장군도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("강동구도시관리공단(시설)", "서울특별시", "2007100266", "011001", "강동구도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("강북구도시관리공단(시설)", "서울특별시", "2007100267", "011001", "강북구도시관리공단", "no_posts", 0, 0, 0, 0),
+    ("노원구시설관리공단(시설)", "서울특별시", "2008000002", "011001", "노원구시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("서대문구도시관리공단(시설)", "서울특별시", "2007100276", "011001", "서대문구도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("성동구도시관리공단(시설)", "서울특별시", "2007100277", "011001", "성동구도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("성북구도시관리공단(시설)", "서울특별시", "2007100278", "011001", "성북구도시관리공단", "recent_aggregate_or_no_place", 2, 83, 5, 0),
+    ("울산광역시남구도시관리공단(시설)", "울산광역시", "2008000007", "011001", "울산광역시남구도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("울산광역시중구도시관리공단(시설)", "울산광역시", "2013000002", "011001", "울산광역시중구도시관리공단", "no_recent", 2, 0, 0, 0),
+    ("울산도시공사", "울산광역시", "2007100370", "006002", "울산광역시도시공사", "no_recent", 2, 0, 0, 0),
+    ("인천경제자유구역사업", "인천광역시", "2008000005", "005003", "인천경제자유구역청", "no_posts", 0, 0, 0, 0),
+    ("인천광역시 미추홀구시설관리공단", "인천광역시", "2007100288", "011001", "인천광역시미추홀구시설관리공단", "no_recent", 2, 0, 0, 0),
+    ("인천광역시강화군시설관리공단", "인천광역시", "2008000012", "011001", "강화군시설관리공단", "no_recent", 1, 0, 0, 0),
+    ("제주관광공사", "제주특별자치도", "2009000004", "006003", "제주관광공사", "no_recent", 2, 0, 0, 0),
+    ("제주에너지공사", "제주특별자치도", "2012000012", "006003", "제주에너지공사", "no_recent", 2, 0, 0, 0),
+    ("제주특별자치도공영버스", "제주특별자치도", "2018000003", "005005", "제주특별자치도공영버스", "no_posts", 0, 0, 0, 0),
+    ("제주특별자치도상수도", "제주특별자치도", "2007100105", "005001", "제주특별자치도상수도", "no_recent", 2, 0, 0, 0),
+    ("제주특별자치도하수도", "제주특별자치도", "2007100170", "005002", "제주특별자치도하수도", "no_recent", 1, 0, 0, 0),
+)
+P4_CLEANEYE_OWNER_WORKCOST_RETRY_OUTCOMES = {
+    (name, parent_region): {
+        "entId": ent_id,
+        "entKind": ent_kind,
+        "entName": ent_name,
+        "status": status,
+        "refs": refs,
+        "parsedRows": parsed_rows,
+        "recentRows": recent_rows,
+        "placeRows": place_rows,
+    }
+    for (
+        name,
+        parent_region,
+        ent_id,
+        ent_kind,
+        ent_name,
+        status,
+        refs,
+        parsed_rows,
+        recent_rows,
+        place_rows,
+    ) in P4_CLEANEYE_OWNER_WORKCOST_RETRY_OUTCOME_ROWS
 }
 
 SEOUL_GU_NAMES = [
@@ -8209,16 +8348,60 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
     }
     if candidate:
         is_place_level_candidate = name in P2_CENTRAL_STATE_PLACE_LEVEL_CANDIDATES
+        is_no_recent = name in P2_CENTRAL_STATE_DRYRUN_NO_RECENT
         is_pdf_vision_hold = name in P2_CENTRAL_STATE_PDF_VISION_HOLD
+        is_download_hold = name in P2_CENTRAL_STATE_DOWNLOAD_ADAPTER_HOLD
+        hold_status = (
+            None
+            if is_place_level_candidate
+            else "no_recent_data"
+            if is_no_recent
+            else "pdf_vision_hold"
+            if is_pdf_vision_hold
+            else "adapter_hold"
+        )
+        if is_place_level_candidate:
+            evidence = (
+                f"{name} 공식 업무추진비 게시판에서 central_state_attachment_board "
+                "목록->상세->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 최근 "
+                "12개월 원문은 사용일자·사용처/장소·집행금액 place-level 행을 "
+                "포함하며, 원문 파일 자체를 재배포하지 않고 사실 데이터만 "
+                "마스킹·정규화합니다."
+            )
+        elif is_no_recent:
+            evidence = (
+                f"{name} 공식 업무추진비 게시판을 central_state_attachment_board로 "
+                "dry-run 재검증했습니다. posts_seen=5, posts_fetched=5였지만 "
+                "raw_parsed_rows=0, normalized_visits=0으로 최근 12개월 "
+                "production 적재 대상 place-level 데이터가 없습니다."
+            )
+        elif is_pdf_vision_hold:
+            evidence = (
+                f"{name}은 공식 업무추진비 게시판에서 최근 게시물과 PDF 첨부를 "
+                "central_state_attachment_board dry-run으로 확인했지만, 첨부가 "
+                "scanned PDF vision 경로로 넘어가 현재 실행 환경의 vision/LLM 키 "
+                "부재로 row 추출이 중단됐습니다. text PDF 우회 또는 vision fallback "
+                "검증 전까지 production 적재하지 않습니다."
+            )
+        elif is_download_hold:
+            evidence = (
+                f"{name} 공식 후보 URL을 central_state_attachment_board로 재시도했지만 "
+                "게시판 상세/첨부 다운로드 링크가 JavaScript 또는 기관별 보안 파라미터를 "
+                "거쳐 현재 crawler가 404 응답을 받았습니다. 기관별 detail/download "
+                "adapter 패치 전까지 production 적재하지 않습니다."
+            )
+        else:
+            evidence = (
+                f"{name} 공식 후보 URL을 central_state_attachment_board로 dry-run "
+                "재검증했습니다. 현재 crawler 기준 posts_seen=0 또는 "
+                "raw_parsed_rows=0으로, 기관별 검색 파라미터·상세 링크·첨부 다운로드 "
+                "패턴 보강 전까지 production 적재하지 않습니다."
+            )
         return {
             **common,
             "adapter": "central_state_attachment_board",
             "status": None,
-            **(
-                {}
-                if is_place_level_candidate
-                else {"holdStatus": "pdf_vision_hold" if is_pdf_vision_hold else "adapter_hold"}
-            ),
+            **({} if hold_status is None else {"holdStatus": hold_status}),
             "listUrl": candidate["sourceUrl"],
             "dataName": candidate["dataName"],
             "fileKinds": candidate["fileKinds"],
@@ -8226,34 +8409,9 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
             "pageParam": "page",
             "licenseUrl": "https://www.kogl.or.kr",
             **(
-                {
-                    "evidenceNote": (
-                        f"{name} 공식 업무추진비 게시판에서 central_state_attachment_board "
-                        "목록->상세->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 최근 "
-                        "12개월 원문은 사용일자·사용처/장소·집행금액 place-level 행을 "
-                        "포함하며, 원문 파일 자체를 재배포하지 않고 사실 데이터만 "
-                        "마스킹·정규화합니다."
-                    )
-                }
+                {"evidenceNote": evidence}
                 if is_place_level_candidate
-                else {
-                    "blocker": (
-                        (
-                            f"{name}은 공식 업무추진비 게시판에서 최근 게시물과 PDF 첨부를 "
-                            "central_state_attachment_board dry-run으로 확인했지만, 첨부가 "
-                            "scanned PDF vision 경로로 넘어가 현재 실행 환경의 vision/LLM 키 "
-                            "부재로 row 추출이 중단됐습니다. text PDF 우회 또는 vision fallback "
-                            "검증 전까지 production 적재하지 않습니다."
-                        )
-                        if is_pdf_vision_hold
-                        else (
-                            f"{name}은 공식 후보 URL에서 업무추진비성 공개 경로를 확인했습니다. "
-                            "central_state_attachment_board를 기존 attachment-board crawler에 연결했지만, "
-                            "기관별 게시판·검색·첨부 다운로드 패턴과 PDF/HWP/XLS 혼재 원문에 대해 "
-                            "dry-run 검증 전까지 production 적재하지 않습니다."
-                        )
-                    )
-                }
+                else {"blocker": evidence}
             ),
         }
     return {
@@ -8337,6 +8495,77 @@ def _public_institution_source_pattern(
                 "ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 정규화합니다."
             ),
         }
+    if name in P3_ALIO_TEXT_PDF_AGGREGATE_ONLY:
+        return {
+            **common,
+            "adapter": "alio_item_disclosure",
+            "holdStatus": "no_recent_data",
+            "alioAgencyName": name,
+            "fileKinds": ["pdf"],
+            "blocker": (
+                "ALIO 경영공시 항목 20701(기관장 업무추진비)의 2025년 PDF 첨부를 "
+                "text PDF로 재검증했습니다. 원문은 월별/유형별 집계표이고 사용처·장소·상호 "
+                "place-level 열을 포함하지 않으므로 공무원맵 적재 대상 최근 12개월 데이터 "
+                "0건으로 보류합니다."
+            ),
+        }
+    if name in P3_ALIO_NO_RECENT_FILE_DATA:
+        return {
+            **common,
+            "adapter": "public_institution_required",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "fileKinds": ["xlsx"],
+            "blocker": (
+                "ALIO 20701 공식 목록 row를 재조회했습니다. 2026-06-02 기준 files 필드가 "
+                "비어 있거나 2025년 첨부가 없어 최근 12개월 place-level 업무추진비 "
+                "적재 대상 데이터 0건으로 보류합니다."
+            ),
+        }
+    if name in P3_ALIO_DRYRUN_ZERO_NORMALIZED:
+        return {
+            **common,
+            "adapter": "alio_item_disclosure",
+            "holdStatus": "no_recent_data",
+            "alioAgencyName": name,
+            "fileKinds": ["xls", "xlsx"],
+            "blocker": (
+                "ALIO 20701 공식 목록의 2025년 XLS/XLSX 첨부를 dry-run으로 재검증했습니다. "
+                "posts_seen=1, posts_fetched=1로 원문 접근은 성공했지만 "
+                "2025-06-01 이후 normalized visit이 0건입니다. 첨부는 최근자료 없음, "
+                "기관장 업무추진비 aggregate-only, 또는 사용처/장소 place-level 열이 없는 "
+                "구조이므로 공무원맵 production 적재 대상 최근 12개월 데이터 0건으로 "
+                "보류합니다."
+            ),
+        }
+    if name in P3_ALIO_HWP_PARSER_HOLD:
+        return {
+            **common,
+            "adapter": "alio_item_disclosure",
+            "holdStatus": "adapter_hold",
+            "alioAgencyName": name,
+            "fileKinds": ["hwp"],
+            "blocker": (
+                "ALIO 20701의 2025년 HWP 첨부 URL은 확인했습니다. 현재 CLI extractor는 "
+                "HWP 원문을 안전하게 table/text로 변환하는 경로가 없어 dry-run에서 "
+                "raw row를 보장할 수 없습니다. HWP extractor/변환 adapter 패치 전까지 "
+                "production 적재하지 않습니다."
+            ),
+        }
+    if name in P3_ALIO_XLS_PARSER_HOLD or name in P3_ALIO_DOWNLOAD_HOLD:
+        return {
+            **common,
+            "adapter": "alio_item_disclosure",
+            "holdStatus": "adapter_hold",
+            "alioAgencyName": name,
+            "fileKinds": ["xls", "xlsx"],
+            "blocker": (
+                "ALIO 20701 공식 목록과 2025년 XLS/XLSX 첨부 후보를 재조회했습니다. "
+                "alio_item_disclosure adapter로 dry-run 가능하도록 연결했으며, 기관별 "
+                "시트/header/첨부 구조를 dry-run으로 판정한 뒤 place-level 행이 있으면 "
+                "production 적재하고, 없으면 no_recent_data로 전환합니다."
+            ),
+        }
     hold_status = "no_recent_data"
     file_kinds = ["xlsx"]
     blocker = (
@@ -8413,6 +8642,7 @@ def local_public_institution_agencies() -> list[Agency]:
                 homepage=None,
                 source_pattern=_local_public_institution_source_pattern(
                     name=row.name,
+                    parent_region=row.parent_region,
                     institution_type=row.institution_type,
                     institution_subtype=row.institution_subtype,
                 ),
@@ -8424,6 +8654,7 @@ def local_public_institution_agencies() -> list[Agency]:
 def _local_public_institution_source_pattern(
     *,
     name: str,
+    parent_region: str,
     institution_type: str,
     institution_subtype: str,
 ) -> dict[str, object]:
@@ -8573,6 +8804,88 @@ def _local_public_institution_source_pattern(
                 "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
                 "0건으로 보류합니다."
             ),
+        }
+    cleaneye_retry = P4_CLEANEYE_OWNER_WORKCOST_RETRY_OUTCOMES.get((name, parent_region))
+    if cleaneye_retry:
+        retry_common = {
+            "searchKeyword": f"{name} 업무추진비",
+            "sourceUrl": CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL],
+            "entId": cleaneye_retry["entId"],
+            "entKind": cleaneye_retry["entKind"],
+            "entName": cleaneye_retry["entName"],
+            "itemId": "ownerWorkCost",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["xls", "xlsx"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "officialCommonPortal": True,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 residual CleanEye ownerWorkCost entId 재검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+        }
+        if cleaneye_retry["status"] == "verified_place_level":
+            return {
+                **retry_common,
+                "adapter": "cleaneye_owner_work_cost",
+                "evidenceNote": (
+                    "CleanEye ownerWorkCost entId/itemId와 최근 XLS/XLSX 첨부를 확인했고, "
+                    f"dry-run에서 refs={cleaneye_retry['refs']}건, "
+                    f"raw_parsed_rows={cleaneye_retry['parsedRows']}건, "
+                    f"parsed_rows={cleaneye_retry['recentRows']}건, "
+                    f"normalized_visits={cleaneye_retry['placeRows']}건을 검증했습니다. "
+                    "공식 원문의 place-level factual row만 정규화하며 원본 첨부파일은 "
+                    "재배포하지 않습니다."
+                ),
+            }
+        if cleaneye_retry["status"] == "parser_retry":
+            return {
+                **retry_common,
+                "adapter": "cleaneye_owner_work_cost",
+                "holdStatus": "adapter_hold",
+                "blocker": (
+                    "CleanEye ownerWorkCost entId/itemId와 최근 XLS/XLSX 첨부를 확인했습니다. "
+                    f"refs={cleaneye_retry['refs']}건이 있으나 이전 재검증에서 XLS 선언 컬럼 또는 "
+                    "XLSX worksheet XML 크기 guard로 파싱이 중단됐습니다. spreadsheet parser "
+                    "guard 보강 후 dry-run으로 place-level 여부를 재판정합니다."
+                ),
+            }
+        if cleaneye_retry["status"] == "recent_aggregate_or_no_place":
+            blocker = (
+                "CleanEye ownerWorkCost 최근 12개월 첨부를 재검증했습니다. "
+                f"refs={cleaneye_retry['refs']}건, parsed_rows={cleaneye_retry['parsedRows']}건, "
+                f"recent_rows={cleaneye_retry['recentRows']}건이지만 place_rows=0건입니다. "
+                "원문은 기관장 업무추진비 공개자료이나 사용처/장소 열이 없거나 목적 문구만 "
+                "장소 위치에 들어가 공무원맵 적재 대상 place-level 최근 12개월 데이터 0건으로 "
+                "보류합니다."
+            )
+        elif cleaneye_retry["status"] == "no_posts":
+            blocker = (
+                "CleanEye ownerWorkCost entId/itemId 상세 경로를 재검증했지만 최근 12개월 "
+                "첨부 게시물이 없습니다. "
+                f"refs={cleaneye_retry['refs']}건으로 공무원맵 적재 대상 place-level 데이터 "
+                "0건입니다."
+            )
+        else:
+            blocker = (
+                "CleanEye ownerWorkCost entId/itemId 상세 경로와 첨부 목록을 재검증했습니다. "
+                f"refs={cleaneye_retry['refs']}건, parsed_rows={cleaneye_retry['parsedRows']}건, "
+                f"recent_rows={cleaneye_retry['recentRows']}건, place_rows=0건으로 최근 "
+                "12개월 적재 대상 place-level 데이터가 없습니다."
+            )
+        return {
+            **retry_common,
+            "adapter": "local_public_institution_required",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "blocker": blocker,
         }
     if not is_public_enterprise:
         return {

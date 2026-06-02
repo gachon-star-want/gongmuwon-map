@@ -1701,7 +1701,7 @@ def test_attachment_crawler_extracts_yangcheon_javascript_detail_links() -> None
     assert len(details) == 1
     assert (
         details[0].url
-        == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210"
+        == "https://www.yangcheon.go.kr/site/yangcheon/ex/bbs/View.do?cbIdx=397&bcIdx=310210&nttNo=310210"
     )
     assert details[0].title == "2026년 4월 업무추진비 집행내역 공개"
 
