@@ -26,6 +26,7 @@ HEADER_ALIASES = {
     "승인일시": "used_date",
     "사용일시": "used_date",
     "집행일시": "used_date",
+    "결의일자": "used_date",
     "일시": "used_date",
     "일자": "used_date",
     "일": "used_date",
@@ -90,6 +91,7 @@ HEADER_ALIASES = {
     "비목": "expense_category",
     "세목": "expense_category",
     "업무추진비종류": "expense_category",
+    "재원": "expense_category",
     "제목": "expense_category",
     "사용액": "amount",
 }
