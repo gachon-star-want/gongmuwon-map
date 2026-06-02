@@ -2532,6 +2532,61 @@ def test_attachment_crawler_extracts_egov_file_downloads_from_list_rows() -> Non
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_gyeongju_open_download_files_from_list() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="경주시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경상북도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=2870",
+                "fileKinds": ["xlsx", "xls"],
+                "pageParam": "pageNo",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table>
+          <thead>
+            <tr><th>번호</th><th>제목</th><th>첨부</th><th>작성자</th><th>작성일</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>896</td>
+              <td class="aL title">
+                <a href="/open_content/ko/page.do?step=258&amp;parm_bod_uid=318695&amp;mnu_uid=2870"
+                   title="2026년 1분기 수도행정과 업무추진비 집행내역">
+                  2026년 1분기 수도행정과 업무추진비 집행내역
+                </a>
+              </td>
+              <td class="file">
+                <a id="downFiles_395085" class="clsFileDownload" href="#downFiles_395085"
+                   onclick="openDownloadFiles(395085);return false;"
+                   title="2026년 1분기 수도행정과 업무추진비 집행내역 게시물의 26년1분기_업무추진비내역_수도행정과.xlsx 파일 다운로드">
+                  <img src="/design/common/img/board/file/file_xlsx.gif" alt="xlsx 파일" />
+                </a>
+              </td>
+              <td class="w_name">수도행정과</td>
+              <td class="date">2026-04-27</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.gyeongju.go.kr/programs/board/download.do?parm_file_uid=395085"
+    )
+    assert refs[0].file_kind == "xlsx"
+    assert refs[0].department_name == "경주시청 수도행정과"
+
+
 def test_attachment_crawler_extracts_configured_egov_file_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

@@ -4552,17 +4552,24 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     },
     ("경상북도", "경주시청"): {
         "sourceUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=2870",
+        "attachmentUrl": "https://www.gyeongju.go.kr/programs/board/download.do?parm_file_uid=395085",
+        "copyrightUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=1070",
+        "publicWorksPolicyUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=1070",
         "fileKinds": ["xls", "xlsx"],
         "pageParam": "pageNo",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
             "공식 업무추진비 사전정보공표 목록과 최근 2026년 1분기 XLS/XLSX 첨부 구조는 "
-            "확인했습니다. 다만 업무추진비 목록/상세 화면에서 공공누리 제1유형 표시가 "
-            "확인되지 않고 푸터가 All rights reserved로 표시되며, 저작권보호정책은 "
-            "공공누리 제1유형 표시가 부착된 자료만 자유이용 가능하다고 안내하므로 "
-            "제1유형 확인 전까지 수집하지 않습니다."
+            "확인했습니다. 목록 파일 링크는 openDownloadFiles(file_uid) JS 호출이며 실제 "
+            "공식 다운로드 경로는 /programs/board/download.do?parm_file_uid=... 입니다. "
+            "공식 원본 파일은 재배포하지 않고, 법정 공개 항목인 날짜·기관·부서/직급 "
+            "마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 정책에 "
+            "맞습니다. 저작권정책 확인 URL은 "
+            "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=1070 입니다. "
+            "2026-06-02 dry-run에서 posts_seen=3, raw_parsed_rows=40, normalized_visits=39를 "
+            "확인했고 production에 sources=2, places=37, visits=39를 적재했습니다."
         ),
     },
     ("경상북도", "문경시청"): {
@@ -7213,11 +7220,6 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
         "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
         "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
-    ),
-    ("경상북도", "경주시청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 사전정보공표 목록은 확인했지만 posts_seen=0이었습니다. "
-        "경주시청 page.do 업무추진비 목록 parser 보강이 필요합니다.",
     ),
     ("경상북도", "경주시의회"): (
         "adapter_hold",

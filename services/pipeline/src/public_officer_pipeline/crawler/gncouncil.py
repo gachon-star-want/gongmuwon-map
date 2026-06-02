@@ -57,6 +57,7 @@ DOWNLOAD_HREF_PARTS = (
     "/board/download.",
     "/boardFileDown.ac",
     "/board_download.do",
+    "/programs/board/download.do",
     "/common/download.php",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
@@ -804,6 +805,11 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
                 "schFlSn": bbs_file_download.group("file_id"),
                 "bbsCd": bbs_file_download.group("bbs_cd"),
             }
+        )
+    open_download_files = re.search(r"openDownloadFiles\((?P<file_uid>\d+)\)", trigger)
+    if open_download_files:
+        return "/programs/board/download.do?" + urlencode(
+            {"parm_file_uid": open_download_files.group("file_uid")}
         )
     return href
 
