@@ -273,13 +273,13 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 521
+    assert output["summary"]["verified_in_code"] == 524
     assert output["summary"]["pending"] == 43
     assert output["summary"]["legal_hold"] == 150
     assert output["summary"]["source_not_found"] == 120
-    assert output["summary"]["no_recent_data"] == 295
+    assert output["summary"]["no_recent_data"] == 1182
     assert output["summary"]["pdf_vision_hold"] == 21
-    assert output["summary"]["adapter_hold"] == 1052
+    assert output["summary"]["adapter_hold"] == 162
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 178
@@ -294,9 +294,9 @@ def test_print_source_registry_reports_nationwide_verification_state(
     assert output["summary"]["priority_group_counts"]["p3"]["pdf_vision_hold"] == 8
     assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 48
     assert output["summary"]["priority_group_counts"]["p4"]["total"] == 1312
-    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 337
-    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 14
-    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 961
+    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 340
+    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 901
+    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 71
 
 
 def test_print_source_registry_summary_only_omits_entries(
@@ -309,7 +309,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 521
+    assert output["summary"]["verified_in_code"] == 524
     assert "entries" not in output
 
 

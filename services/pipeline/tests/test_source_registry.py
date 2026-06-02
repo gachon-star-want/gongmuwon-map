@@ -285,13 +285,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 521
+    assert summary.verified_in_code == 524
     assert summary.pending == 43
     assert summary.legal_hold == 150
     assert summary.source_not_found == 120
-    assert summary.no_recent_data == 295
+    assert summary.no_recent_data == 1182
     assert summary.pdf_vision_hold == 21
-    assert summary.adapter_hold == 1052
+    assert summary.adapter_hold == 162
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 178
@@ -312,10 +312,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p3"].pdf_vision_hold == 8
     assert summary.priority_group_counts["p3"].adapter_hold == 48
     assert summary.priority_group_counts["p4"].total == 1312
-    assert summary.priority_group_counts["p4"].verified_in_code == 337
+    assert summary.priority_group_counts["p4"].verified_in_code == 340
     assert summary.priority_group_counts["p4"].pending == 0
-    assert summary.priority_group_counts["p4"].no_recent_data == 14
-    assert summary.priority_group_counts["p4"].adapter_hold == 961
+    assert summary.priority_group_counts["p4"].no_recent_data == 901
+    assert summary.priority_group_counts["p4"].adapter_hold == 71
 
     non_capital_entries = [
         entry
@@ -1637,11 +1637,11 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 343
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 346
     assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 32
-    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 294
+    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 1181
     assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 8
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1037
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 147
     assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
@@ -1695,6 +1695,20 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert local_public.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
     assert local_public.source_file_kinds == ["xls", "xlsx"]
     assert "FileDownload.do" in local_public.evidence_note
+
+    dongducheon_facility = next(
+        entry for entry in entries if entry.short_name == "동두천시 시설관리공단"
+    )
+    assert dongducheon_facility.verification_status == "verified_in_code"
+    assert dongducheon_facility.adapter == "cleaneye_owner_work_cost"
+    assert dongducheon_facility.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert dongducheon_facility.source_file_kinds == ["xls", "xlsx"]
+
+    nowon_jobs = next(entry for entry in entries if entry.short_name == "노원어르신행복주식회사")
+    assert nowon_jobs.verification_status == "no_recent_data"
+    assert nowon_jobs.source_url == "https://www.cleaneye.go.kr/user/iptBuOwnerWorkCost.do"
+    assert "iptBuOwnerWorkCost" in nowon_jobs.evidence_note
+    assert "place-level 데이터 0건" in nowon_jobs.evidence_note
 
     siheung_water = next(entry for entry in entries if entry.short_name == "시흥시상수도")
     siheung_development = next(entry for entry in entries if entry.short_name == "시흥시공영개발")
