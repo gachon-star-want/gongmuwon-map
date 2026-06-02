@@ -3691,6 +3691,23 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "이용이 가능하지 않으므로 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "수영구의회"): {
+        "sourceUrl": (
+            "https://www.suyeong.go.kr/board/list.suyeong?"
+            "boardId=BBS_0000261&menuCd=DOM_000001403008000000&"
+            "contentsSid=2405&cpath=%2Fcouncil"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 의회운영업무추진비·의정운영공통경비 XLSX 첨부 "
+            "구조는 확인했습니다. 다만 최근 상세 화면이 공공누리 제3유형(출처표시+변경금지)으로 "
+            "표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "사상구청"): {
         "sourceUrl": (
             "https://www.sasang.go.kr/board/list.sasang?"
@@ -3715,6 +3732,26 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "사상구의회"): {
+        "sourceUrl": (
+            "https://www.sasang.go.kr/council/board/list.sasang?"
+            "boardId=BBS_0000239&menuCd=DOM_000000233001004000&"
+            "contentsSid=2603&cpath=%2Fcouncil"
+        ),
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 현황 목록과 최근 의회운영업무추진비·의정운영공통경비·의회사무국 "
+            "업무추진비 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 "
+            "제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되며, 저작권정책은 공공누리 부착 저작물만 "
+            "이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "중구청"): {
         "sourceUrl": "https://www.bsjunggu.go.kr/index.junggu?menuCd=DOM_000000103003008000",
         "fileKinds": ["html"],
@@ -3726,6 +3763,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 공개 목록과 최근 2026년 부서별 게시물 구조는 확인했습니다. "
             "다만 업무추진비 화면의 공공누리 영역이 비어 있고 푸터가 All rights reserved로 "
             "표시되어 제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "연제구의회"): {
+        "sourceUrl": "https://www.yeonje.go.kr/council/bbs/list.do?ptIdx=198&mId=0408000000",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 의회사무국 업무추진비·의회운영업무추진비 "
+            "XLS 첨부 표시 구조는 확인했습니다. 다만 화면의 공공누리 문구가 비영리목적·"
+            "저작물 변경금지 조건이고 푸터가 All rights reserved로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
         ),
     },
     ("부산광역시", "동래구청"): {
@@ -4470,6 +4521,21 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("경상북도", "경주시청"): {
+        "sourceUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=2870",
+        "fileKinds": ["xls", "xlsx"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 사전정보공표 목록과 최근 2026년 1분기 XLS/XLSX 첨부 구조는 "
+            "확인했습니다. 다만 업무추진비 목록/상세 화면에서 공공누리 제1유형 표시가 "
+            "확인되지 않고 푸터가 All rights reserved로 표시되며, 저작권보호정책은 "
+            "공공누리 제1유형 표시가 부착된 자료만 자유이용 가능하다고 안내하므로 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("경상북도", "문경시청"): {
         "sourceUrl": "https://www.gbmg.go.kr/portal/contents.do?mId=0201070000",
         "fileKinds": ["pdf", "xls", "xlsx"],
@@ -4524,6 +4590,70 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 목록과 XLSX 첨부 구조는 확인했습니다. 다만 최근 상세 화면이 "
             "공공누리 자유이용 불가로 표시되거나 일부 게시물이 제4유형으로 표시되어 "
             "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "영주시청"): {
+        "sourceUrl": "https://www.yeongju.go.kr/open_content/main/page.do?mnu_uid=11132",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장 업무추진비 목록과 최근 분기별 PDF 첨부 구조는 확인했습니다. 다만 "
+            "업무추진비 목록/상세 화면에서 공공누리 제1유형 표시가 확인되지 않고 푸터가 "
+            "All Rights Reserved로 표시되며, 저작권정책은 공공누리 제1유형 표시가 "
+            "부착된 자료만 자유이용 가능하다고 안내하므로 제1유형 확인 전까지 수집하지 "
+            "않습니다."
+        ),
+    },
+    ("경상북도", "의성군청"): {
+        "sourceUrl": "https://www.usc.go.kr/ko/page.do?mnu_uid=322",
+        "fileKinds": [],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비공개 목록은 확인했습니다. 다만 정적 목록 화면에서 첨부 "
+            "확장자를 확정할 수 없고 업무추진비 화면에서 해당 게시물의 공공누리 제1유형 "
+            "표시가 확인되지 않으며 푸터가 All Rights Reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "봉화군청"): {
+        "sourceUrl": (
+            "https://www.bonghwa.go.kr/portal/board/post/list.do?"
+            "bcIdx=528&mid=0301050000"
+        ),
+        "fileKinds": [],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 자치단체장·부단체장 게시물 구조는 확인했습니다. "
+            "다만 정적 목록 화면에서 첨부 확장자를 확정할 수 없고, 저작권정책은 공공누리 "
+            "제1유형 표시가 부착된 자료만 자유이용 가능하며 공공누리 미부착 자료는 사전 "
+            "협의가 필요하다고 안내하므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "울진군청"): {
+        "sourceUrl": (
+            "https://www.uljin.go.kr/board/list.uljin?"
+            "boardId=BBS_0000141&menuCd=DOM_000000103004011000&"
+            "orderBy=REGISTER_DATE+DESC&paging=ok&startPage=1"
+        ),
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 "
+            "화면에서 공공누리 제1유형 표시가 확인되지 않고 저작권정책 자체가 공공누리 "
+            "제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 상업적 이용이 "
+            "가능하지 않으므로 수집하지 않습니다."
         ),
     },
     ("경상남도", "진주시청"): {
@@ -4583,6 +4713,52 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 현황 목록과 최근 12개월 게시물·XLSX 첨부 구조는 확인했습니다. "
             "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
             "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "거제시청"): {
+        "sourceUrl": (
+            "https://www.geoje.go.kr/gbg/board/list.geoje?"
+            "boardId=BBS_0000042&menuCd=DOM_000008904002001000&"
+            "contentsSid=10113&cpath=%2Fgbg"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장 업무추진비 공개 목록과 최근 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "업무추진비 목록/상세 화면에서 해당 게시물의 공공누리 제1유형 표시가 확인되지 "
+            "않고 푸터가 All Rights Reserved로 표시되며, 저작권정책은 공공누리 부착 "
+            "저작물만 이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "양산시청"): {
+        "sourceUrl": "https://yangsan.go.kr/portal/board/post/list.do?bcIdx=113&mid=0401050100",
+        "fileKinds": [],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장·부시장 업무추진비 공개 목록과 최근 2026년 게시물 구조는 확인했습니다. "
+            "다만 정적 목록 화면에서 첨부 확장자를 확정할 수 없고, 업무추진비 화면에서 "
+            "해당 게시물의 공공누리 제1유형 표시가 확인되지 않으며 저작권정책은 공공누리 "
+            "미부착 자료의 사전 협의를 요구하므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "의령군청"): {
+        "sourceUrl": "https://uiryeong.go.kr/index.uiryeong?menuCd=DOM_000000202001005000",
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 최근 "
+            "상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 "
+            "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
         ),
     },
     ("경상남도", "산청군청"): {
@@ -6749,6 +6925,268 @@ def _apply_gyeongsang_source_not_found(
     )
 
 
+def _apply_gyeongsang_facts_only_release(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    *,
+    is_council: bool,
+) -> None:
+    if parent_region not in GYEONGSANG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus") != "legal_hold":
+        return
+
+    blocker = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    if _gyeongsang_has_strong_reuse_limit(blocker):
+        return
+
+    source_url = str(source_pattern.get("sourceUrl") or "").strip()
+    if not source_url:
+        return
+
+    raw_file_kinds = [str(value).lower().strip() for value in source_pattern.get("fileKinds", [])]
+    file_kinds = [
+        kind
+        for kind in raw_file_kinds
+        if kind in SUPPORTED_ATTACHMENT_FILE_KINDS
+    ]
+    if raw_file_kinds and not file_kinds:
+        source_pattern.update(
+            {
+                "holdStatus": "adapter_hold",
+                "blocker": (
+                    "공식 업무추진비 공개 URL은 확인했지만 현재 pipeline이 지원하지 않는 "
+                    f"첨부 형식({', '.join(raw_file_kinds)})만 확인되었습니다. 해당 첨부 "
+                    "다운로드/압축 해제/parser adapter 보강 후 dry-run 재검증이 필요합니다."
+                ),
+            }
+        )
+        return
+    if not file_kinds:
+        file_kinds = ["xlsx", "xls", "pdf"]
+
+    page_param = str(source_pattern.get("pageParam") or "page")
+    follow_detail = bool(source_pattern.get("followDetail", True))
+    extra_list_urls = [
+        str(value)
+        for value in source_pattern.get("extraListUrls", [])
+        if str(value).strip()
+    ]
+    optional_fields = {
+        key: source_pattern[key]
+        for key in (
+            "detailUrl",
+            "attachmentUrl",
+            "copyrightUrl",
+            "publicWorksPolicyUrl",
+            "jsDownloadPath",
+            "userAgent",
+        )
+        if source_pattern.get(key)
+    }
+    evidence_note = (
+        "공식 업무추진비 공개자료의 원본 파일은 재배포하지 않고, 법령상 공개된 날짜·기관·"
+        "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 "
+        "정책 기준으로 적재 후보입니다. 공공누리 제1유형 미표시 또는 All Rights Reserved "
+        "표기만으로는 보류하지 않으며, 현재 확인 근거에서는 명시적 상업적 이용금지·"
+        "변경금지·무단 이용금지·사전협의 필요 문구를 확인하지 못했습니다."
+    )
+    if blocker:
+        evidence_note = f"{evidence_note} 이전 출처 확인 메모: {blocker}"
+
+    source_pattern.clear()
+    source_pattern.update(
+        {
+            "adapter": "council_attachment_board" if is_council else "attachment_board",
+            "listUrl": source_url,
+            "fileKinds": file_kinds,
+            "followDetail": follow_detail,
+            "pageParam": page_param,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+            "commercialUseStatus": "facts_only_official_disclosure_candidate",
+            "derivativeUseStatus": "facts_only_official_disclosure_candidate",
+            "evidenceNote": evidence_note,
+            **optional_fields,
+        }
+    )
+    if extra_list_urls:
+        source_pattern["extraListUrls"] = extra_list_urls
+
+
+def _gyeongsang_has_strong_reuse_limit(blocker: str) -> bool:
+    strong_markers = (
+        "공공누리 제2유형",
+        "공공누리 제3유형",
+        "공공누리 제4유형",
+        "상업적이용금지",
+        "상업적 이용금지",
+        "상업적 이용 금지",
+        "상업적 목적 사용 불가",
+        "비영리목적",
+        "비영리 목적",
+        "변경금지",
+        "변경 금지",
+        "사전 협의",
+        "사전협의",
+        "무단 이용 금지",
+        "무단이용 금지",
+        "무단사용",
+        "무단복제",
+        "자유이용 불가",
+        "자유이용을 불가",
+    )
+    return any(marker in blocker for marker in strong_markers)
+
+
+GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("울산광역시", "울산시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 HTML 업무추진비 URL은 확인했지만 generic "
+        "attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py 또는 별도 "
+        "울산시 HTML table adapter 보강 후 재검증이 필요합니다.",
+    ),
+    ("부산광역시", "중구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 중구청의 HTML 업무추진비 목록/상세 구조를 처리하는 adapter 보강이 필요합니다.",
+    ),
+    ("부산광역시", "남구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 남구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "남구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 남구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "부산진구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산진구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "사하구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 사하구청 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "사하구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 의회운영업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 사하구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "강서구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 강서구청 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "강서구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 의회 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 강서구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "남구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 남구청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "남구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 남구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "수성구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 2026년 업무추진비 공개 URL은 확인했지만 "
+        "posts_seen=0이었습니다. 대구 수성구청 연도별 업무추진비 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "달서구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1이었지만 "
+        "raw_parsed_rows=0이었습니다. 대구 달서구의회 XLSX 첨부 추출/다운로드 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "달성군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 달성군청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "포항시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "포항시청 업무추진비 contents.do 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "포항시의회"): (
+        "pdf_vision_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("경상남도", "경상남도의회"): (
+        "pdf_vision_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("경상북도", "경주시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 사전정보공표 목록은 확인했지만 posts_seen=0이었습니다. "
+        "경주시청 page.do 업무추진비 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "경주시의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "경주시의회 costBBS 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "김해시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 시장·부시장/실국장/과장급 업무추진비 목록은 확인했지만 "
+        "posts_seen=0이었습니다. 김해시청 web 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "김해시의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 현황 목록은 확인했지만 posts_seen=0이었습니다. "
+        "김해시의회 boardList.php 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "거제시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 시장 업무추진비 공개 목록은 확인했지만 posts_seen=0이었습니다. "
+        "거제시청 board/list.geoje 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "산청군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비공개 URL 접근 중 curl request failed가 5회 반복되었습니다. "
+        "산청군청 다운로드/차단 처리 adapter 보강 후 재검증이 필요합니다.",
+    ),
+    ("경상남도", "거창군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 공개 목록은 확인했지만 posts_seen=0이었습니다. "
+        "거창군청 web 목록 parser 보강이 필요합니다.",
+    ),
+}
+
+
+def _apply_gyeongsang_dry_run_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in GYEONGSANG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus"):
+        return
+
+    hold = GYEONGSANG_DRY_RUN_HOLDS.get((parent_region, short_name))
+    if not hold:
+        return
+
+    hold_status, blocker = hold
+    source_pattern.update({"holdStatus": hold_status, "blocker": blocker})
+
+
 CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
     ("대전광역시", "서구의회"): [
         "site:council.seogu.go.kr 업무추진비",
@@ -7178,6 +7616,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_gyeongsang_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_gyeongsang_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
@@ -7246,6 +7694,16 @@ def non_capital_agencies() -> list[Agency]:
                 is_council=True,
             )
             _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_gyeongsang_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_gyeongsang_dry_run_hold(
                 council_source_pattern,
                 parent_region,
                 council_short_name,
@@ -7432,6 +7890,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_gyeongsang_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_gyeongsang_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             if council_blocker and not council_board:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
             _apply_gangwon_legal_evidence(
@@ -7444,6 +7912,16 @@ def non_capital_agencies() -> list[Agency]:
                 is_council=True,
             )
             _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_gyeongsang_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_gyeongsang_dry_run_hold(
                 council_source_pattern,
                 parent_region,
                 council_short_name,
