@@ -43,6 +43,7 @@ class AttachmentBoardPattern(SourcePattern):
     jsDownloadPath: str | None = None
     userAgent: str | None = None
     referer: str | None = None
+    httpBackend: Literal["auto", "httpx", "curl"] | None = None
 
     @field_validator("fileKinds", mode="before")
     @classmethod

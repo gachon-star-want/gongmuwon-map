@@ -171,6 +171,12 @@ def _masked_department(
     if rank_label in elected_ranks:
         return _strip_institutional_elected_rank_department(cleaned_department, rank_label, agency)
     if "직원" in user_text or rank_label == "5급 이하":
+        for elected_rank in elected_ranks:
+            cleaned_department = _strip_institutional_elected_rank_department(
+                cleaned_department,
+                elected_rank,
+                agency,
+            )
         return cleaned_department if "외" in cleaned_department else f"{cleaned_department} 외"
     return cleaned_department
 
