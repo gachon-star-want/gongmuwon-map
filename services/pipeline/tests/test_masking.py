@@ -62,6 +62,28 @@ def test_elected_rank_without_name_keeps_rank_only() -> None:
     assert result["party_size"] == 12
 
 
+def test_institutional_elected_rank_subject_is_not_representative() -> None:
+    agency = Agency(
+        name="경상남도 거제시청",
+        short_name="거제시청",
+        gov_tier=GovTier.BASIC,
+        branch=GovBranch.ADMIN,
+        jurisdiction_type=JurisdictionType.SI,
+        parent_region="경상남도",
+        sub_region="거제시",
+    )
+    result = mask_user_text(
+        "거제시청 시장 5명",
+        fallback_department="거제시청 시장",
+        agency=agency,
+    )
+
+    assert result["representative"] is None
+    assert result["rank_label"] == "시장"
+    assert result["department_name"] == "거제시청"
+    assert result["party_size"] == 5
+
+
 def test_deterministic_normalizer_adds_seoul_district_hint_for_gu_department() -> None:
     visits = deterministic_normalize_rows(
         agency_id=agency_uuid("성동구:office"),

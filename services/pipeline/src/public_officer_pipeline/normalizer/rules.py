@@ -119,7 +119,7 @@ def mask_user_text(
     elected_re = _person_re_for_ranks(elected_ranks)
 
     elected = elected_re.search(value)
-    if elected:
+    if elected and not _looks_like_institutional_elected_subject(elected.group(1), agency):
         representative = elected.group(1)
         rank_label = elected.group(2)
     else:
@@ -139,7 +139,7 @@ def mask_user_text(
         rank_label = "5급 이하"
 
     party_size = _parse_party_size(value)
-    department_name = _masked_department(value, fallback_department, rank_label, elected_ranks)
+    department_name = _masked_department(value, fallback_department, rank_label, elected_ranks, agency)
     return {
         "party_size": party_size,
         "department_name": department_name,
@@ -165,13 +165,44 @@ def _masked_department(
     fallback_department: str,
     rank_label: str,
     elected_ranks: tuple[str, ...],
+    agency: Agency | None = None,
 ) -> str:
     cleaned_department = fallback_department.strip() or "서울시본청"
     if rank_label in elected_ranks:
-        return cleaned_department
+        return _strip_institutional_elected_rank_department(cleaned_department, rank_label, agency)
     if "직원" in user_text or rank_label == "5급 이하":
         return cleaned_department if "외" in cleaned_department else f"{cleaned_department} 외"
     return cleaned_department
+
+
+def _strip_institutional_elected_rank_department(
+    department: str,
+    rank_label: str,
+    agency: Agency | None,
+) -> str:
+    match = re.match(rf"^(?P<prefix>.+)\s+{re.escape(rank_label)}$", department)
+    if not match:
+        return department
+    prefix = match.group("prefix").strip()
+    if _looks_like_institutional_elected_subject(prefix, agency):
+        return prefix
+    return department
+
+
+def _looks_like_institutional_elected_subject(value: str, agency: Agency | None) -> bool:
+    compact = re.sub(r"\s+", "", value)
+    if compact.endswith(("시청", "군청", "구청", "도청", "의회")):
+        return True
+    if agency is None:
+        return False
+    candidates = {
+        agency.name,
+        agency.short_name,
+        agency.parent_region,
+        agency.sub_region or "",
+    }
+    normalized_candidates = {re.sub(r"\s+", "", candidate) for candidate in candidates if candidate}
+    return compact in normalized_candidates
 
 
 def _person_re_for_ranks(ranks: tuple[str, ...]) -> re.Pattern[str]:
