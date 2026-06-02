@@ -3023,6 +3023,46 @@ def test_attachment_crawler_extracts_configured_php_file_downloads() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_zip_download_refs() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="홍성군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="충청남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
+                "fileKinds": ["zip"],
+                "defaultFileKind": "zip",
+                "followDetail": False,
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>9</td>
+            <td><a href="/bbs/BBSMSTR_000000000811/view.do?nttId=1">2026년 1분기 업무추진비 집행내역</a></td>
+            <td>홍성군청</td>
+            <td>2026-04-01</td>
+            <td><a href="#download" onclick="fn_zipDownload('FILE_000000000139686')">파일이 여러개 있음</a></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].file_kind == "zip"
+    assert refs[0].url == (
+        "https://www.hongseong.go.kr/cmm/fms/zipDownload.do?"
+        "atchFileIdStr=FILE_000000000139686&zipFileName=zipDownload.zip"
+    )
+
+
 def test_attachment_crawler_extracts_miryang_board_detail_and_file_web_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
@@ -3066,7 +3106,7 @@ def test_attachment_crawler_extracts_miryang_board_detail_and_file_web_downloads
 
     assert len(details) == 1
     assert details[0].url == (
-        "https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do;jsessionid=ABC.was1"
+        "https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do"
         "?mnNo=3040000&owd=sammun&bbsId=BBSMSTR_000000085910&nttId=191938&pageIndex=1"
     )
 

@@ -285,22 +285,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 603
+    assert summary.verified_in_code == 608
     assert summary.pending == 0
     assert summary.legal_hold == 101
-    assert summary.source_not_found == 86
+    assert summary.source_not_found == 85
     assert summary.no_recent_data == 1311
     assert summary.pdf_vision_hold == 35
-    assert summary.adapter_hold == 66
+    assert summary.adapter_hold == 62
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 250
+    assert summary.priority_group_counts["p1"].verified_in_code == 255
     assert summary.priority_group_counts["p1"].pending == 0
     assert summary.priority_group_counts["p1"].legal_hold == 101
-    assert summary.priority_group_counts["p1"].source_not_found == 68
+    assert summary.priority_group_counts["p1"].source_not_found == 67
     assert summary.priority_group_counts["p1"].no_recent_data == 5
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 35
-    assert summary.priority_group_counts["p1"].adapter_hold == 29
+    assert summary.priority_group_counts["p1"].adapter_hold == 25
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].verified_in_code == 5
@@ -327,16 +327,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 119
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 124
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 0
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 94
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 5
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 35
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
-        == 68
+        == 67
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 29
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 25
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -801,7 +801,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert nonsan_council.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in nonsan_council.verified_by
     assert buyeo_city.verification_status == "adapter_hold"
-    assert "HWP extractor/변환 adapter" in buyeo_city.evidence_note
+    assert "LibreOffice HWP conversion produced no HTML output" in buyeo_city.evidence_note
     assert buyeo_council.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in buyeo_council.verified_by
 
