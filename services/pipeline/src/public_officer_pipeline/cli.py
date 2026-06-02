@@ -509,6 +509,15 @@ async def _run_supported_agency_result(
     args: argparse.Namespace,
     agency: Agency,
 ) -> tuple[int, dict[str, object]]:
+    hold_failure_reason = _source_pattern_hold_failure_reason(agency)
+    if hold_failure_reason:
+        return 2, {
+            "error": "adapter_required",
+            "agency": agency.short_name,
+            "adapter": agency.source_pattern.get("adapter"),
+            "failure_reason": hold_failure_reason,
+        }
+
     try:
         pattern = parse_source_pattern(agency)
     except SourcePatternError as exc:
@@ -646,6 +655,24 @@ async def _run_agencies(args: argparse.Namespace) -> int:
 
     async def run_one(agency: Agency) -> None:
         async with semaphore:
+            hold_failure_reason = _source_pattern_hold_failure_reason(agency)
+            if hold_failure_reason:
+                results.append(
+                    {
+                        "agency_id": str(agency.id),
+                        "short_name": agency.short_name,
+                        "parent_region": agency.parent_region,
+                        "adapter": agency.source_pattern.get("adapter"),
+                        "status_code": 2,
+                        "result": "adapter_required",
+                        "failure_reason": hold_failure_reason,
+                        "attempt_count": 0,
+                        "max_attempts": args.max_attempts,
+                        "attempts": [],
+                    }
+                )
+                return
+
             try:
                 pattern = parse_source_pattern(agency)
                 adapter = pattern.adapter
@@ -1042,6 +1069,13 @@ def _adapter_required_failure_reason(agency: Agency) -> str:
         if hold_status == "adapter_hold":
             return "parser_missing"
     return "source_not_found"
+
+
+def _source_pattern_hold_failure_reason(agency: Agency) -> str | None:
+    raw = agency.source_pattern
+    if isinstance(raw, dict) and raw.get("holdStatus"):
+        return _adapter_required_failure_reason(agency)
+    return None
 
 
 _RETRYABLE_FAILURE_REASONS = {

@@ -116,6 +116,42 @@ async def test_curl_client_decodes_text_when_non_ascii_headers_are_present(
 
 
 @pytest.mark.asyncio
+async def test_curl_client_ignores_content_encoding_after_compressed_download(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_subprocess_exec(*args: object, **_kwargs: object):
+        _write_curl_files(
+            args,
+            header_bytes=(
+                b"HTTP/1.1 200 OK\r\n"
+                b"Content-Type: text/html; charset=utf-8\r\n"
+                b"Content-encoding: gzip\r\n"
+                b"\r\n"
+            ),
+            body_bytes=b"already decoded",
+        )
+
+        class DummyProcess:
+            returncode = 0
+
+            async def communicate(self) -> tuple[bytes, bytes]:
+                return b"", b""
+
+        return DummyProcess()
+
+    monkeypatch.setattr(
+        "public_officer_pipeline.http_client.asyncio.create_subprocess_exec",
+        fake_subprocess_exec,
+    )
+
+    client = _CurlClient(timeout=1.0, headers={}, follow_redirects=False)
+    response = await client.get("https://example.com/list")
+
+    assert response.text == "already decoded"
+    assert response.headers["Content-encoding"] == "gzip"
+
+
+@pytest.mark.asyncio
 async def test_create_http_client_from_env_setting(monkeypatch: pytest.MonkeyPatch) -> None:
     timeout = httpx.Timeout(3.0, connect=2.0)
 

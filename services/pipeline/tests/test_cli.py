@@ -180,6 +180,40 @@ async def test_run_supported_agency_blocks_adapter_required_before_network(
 
 
 @pytest.mark.asyncio
+async def test_run_supported_agency_blocks_hold_status_before_network(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    called = {"flag": False}
+
+    def explode(*args, **kwargs):  # pragma: no cover
+        called["flag"] = True
+        raise AssertionError("Crawler constructors must not be called for holdStatus")
+
+    monkeypatch.setattr(cli, "CouncilAttachmentCrawler", explode)
+
+    result = await cli._run_supported_agency(
+        _sample_args(),
+        Agency(
+            short_name="테스트의회",
+            name="테스트의회",
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://example.com/cost",
+                "fileKinds": ["pdf"],
+                "holdStatus": "pdf_vision_hold",
+            },
+        ),
+    )
+    output = json.loads(capsys.readouterr().err.strip())
+
+    assert result == 2
+    assert output["error"] == "adapter_required"
+    assert output["failure_reason"] == "pdf_vision_hold"
+    assert not called["flag"]
+
+
+@pytest.mark.asyncio
 async def test_run_supported_agency_blocks_unknown_adapter_before_network(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -273,17 +307,18 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 573
-    assert output["summary"]["pending"] == 43
-    assert output["summary"]["legal_hold"] == 108
-    assert output["summary"]["source_not_found"] == 92
-    assert output["summary"]["no_recent_data"] == 1308
-    assert output["summary"]["pdf_vision_hold"] == 19
-    assert output["summary"]["adapter_hold"] == 59
+    assert output["summary"]["verified_in_code"] == 592
+    assert output["summary"]["pending"] == 0
+    assert output["summary"]["legal_hold"] == 101
+    assert output["summary"]["source_not_found"] == 95
+    assert output["summary"]["no_recent_data"] == 1311
+    assert output["summary"]["pdf_vision_hold"] == 43
+    assert output["summary"]["adapter_hold"] == 60
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 223
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 108
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 242
+    assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 0
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 101
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 2
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 27
@@ -312,7 +347,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 573
+    assert output["summary"]["verified_in_code"] == 592
     assert "entries" not in output
 
 

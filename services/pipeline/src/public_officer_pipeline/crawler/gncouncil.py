@@ -30,6 +30,13 @@ DOWNLOAD_HREF_PARTS = (
     "/site/main/file/download/",
     "/bbs/FileDownLoadProc.do",
     "/board/news/download.do",
+    "/board/download.",
+    "/download/",
+    "/download.do",
+    "/education/fileDownload",
+    "/boardDownload.es",
+    "/board_down.php",
+    "/openInfoDataFileDownload.es",
     "/bbs/download.do",
     "/bbs/download?",
     "/bbs/download.php",
@@ -104,6 +111,9 @@ class CouncilAttachmentCrawler:
         self.js_download_path = pattern.jsDownloadPath or ""
         self.file_kinds = set(pattern.fileKinds)
         self.default_file_kind = pattern.defaultFileKind
+        self.fallback_file_kind = pattern.defaultFileKind or (
+            next(iter(self.file_kinds)) if len(self.file_kinds) == 1 else ""
+        )
         self.user_agent = pattern.userAgent or DEFAULT_USER_AGENT
         self.referer = pattern.referer or pattern.listUrl
         headers = {"User-Agent": self.user_agent}
@@ -152,7 +162,10 @@ class CouncilAttachmentCrawler:
                         for detail in self._parse_detail_links(_response_text(response)):
                             if detail.published_at and detail.published_at < since:
                                 continue
-                            detail_response = await self._client.get(detail.url)
+                            detail_response = await self._client.get(
+                                detail.url,
+                                headers={"Referer": self.list_url},
+                            )
                             detail_response.raise_for_status()
                             for ref in self._parse_detail_downloads(_response_text(detail_response), detail):
                                 refs[ref.url] = ref
@@ -183,7 +196,7 @@ class CouncilAttachmentCrawler:
             for download in row.css("a[href]"):
                 filename = _filename_from_download_link(download)
                 href = _download_href_from_anchor(download, js_download_path)
-                file_kind = _file_kind_from_download(download, filename)
+                file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                 if (
                     not href
                     or not _is_download_href(href)
@@ -235,7 +248,7 @@ class CouncilAttachmentCrawler:
                 re.sub(r"\s+", "", _normalize_spaces(header.text(separator=" ", strip=True)))
                 for header in header_row.css("th")
             ]
-            title_index = _column_index(headers, "제목", "업무명")
+            title_index = _column_index(headers, "제목", "업무명", "공개일자")
             file_index = _column_index(headers, "파일", "첨부")
             if title_index is None or file_index is None:
                 continue
@@ -265,7 +278,7 @@ class CouncilAttachmentCrawler:
                 for download in row_links:
                     filename = _filename_from_download_link(download)
                     href = _download_href_from_anchor(download, self.js_download_path)
-                    file_kind = _file_kind_from_download(download, filename)
+                    file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                     if (
                         not href
                         or not _is_download_href(href)
@@ -327,7 +340,11 @@ class CouncilAttachmentCrawler:
                     if not href or not _is_download_href(href):
                         continue
                     filename = _filename_from_download_link(download)
-                    file_kind = _file_kind_from_download(download, filename) or _file_kind(href)
+                    file_kind = (
+                        _file_kind_from_download(download, filename)
+                        or _file_kind(href)
+                        or self.fallback_file_kind
+                    )
                     if file_kind not in self.file_kinds:
                         continue
                     filename_kind = _file_kind(filename)
@@ -394,7 +411,11 @@ class CouncilAttachmentCrawler:
                 if not href or not _is_download_href(href):
                     continue
                 filename = _filename_from_download_link(download)
-                file_kind = _file_kind_from_download(download, filename) or _file_kind(href)
+                file_kind = (
+                    _file_kind_from_download(download, filename)
+                    or _file_kind(href)
+                    or self.fallback_file_kind
+                )
                 if file_kind not in self.file_kinds:
                     continue
                 display_filename = (
@@ -497,7 +518,7 @@ class CouncilAttachmentCrawler:
                 if not href or not _is_download_href(href):
                     continue
                 filename = _filename_from_download_link(download)
-                file_kind = _file_kind_from_download(download, filename) or self.default_file_kind or ""
+                file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                 if file_kind not in self.file_kinds:
                     continue
                 url = urljoin(self.list_url, href)
@@ -589,7 +610,10 @@ class CouncilAttachmentCrawler:
                 continue
             anchor = title_cell.css_first("a[href]")
             row_onclick = row.attributes.get("onclick", "")
-            if not anchor and not any(marker in row_onclick for marker in ("fnActDetail", "boardViewRenewal")):
+            if not anchor and not any(
+                marker in row_onclick
+                for marker in ("fnActDetail", "boardViewRenewal", "BoardDetailView")
+            ):
                 continue
             script_title = re.search(r"wdigm_title\('(?P<title>[^']+)'\)", title)
             if script_title:
@@ -631,6 +655,15 @@ class CouncilAttachmentCrawler:
                     f"&bIdx={board_view.group('b_idx')}"
                     f"&ptIdx={board_view.group('pt_idx')}"
                 )
+            hwasun_board_detail = re.search(
+                r"BoardDetailView\(['\"](?P<bbs_sn>[^'\"]+)['\"]\)",
+                row_trigger,
+            )
+            if hwasun_board_detail:
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["bbsSn"] = hwasun_board_detail.group("bbs_sn")
+                href = urlunsplit(("", "", parts.path, urlencode(query), ""))
             bbs_view = re.search(r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'", onclick)
             if bbs_view:
                 href = (
@@ -803,8 +836,7 @@ class CouncilAttachmentCrawler:
                 _file_kind(filename)
                 or _file_kind(href)
                 or _file_kind_from_download(download, filename)
-                or self.default_file_kind
-                or ""
+                or self.fallback_file_kind
             )
             if (
                 file_kind not in self.file_kinds
@@ -997,8 +1029,14 @@ def _filename_from_download_link(download) -> str:
             normalized = normalized.replace("파일 내려받기", "")
         normalized_candidates.append(normalized.strip(" '\""))
     if normalized_candidates and all(_looks_like_uninformative_file_label(item) for item in normalized_candidates):
-        if download.parent:
-            normalized_candidates.append(_normalize_spaces(download.parent.text(separator=" ", strip=True)).strip(" '\""))
+        parent = download.parent
+        for _ in range(3):
+            if not parent:
+                break
+            parent_text = _normalize_spaces(parent.text(separator=" ", strip=True)).strip(" '\"")
+            if parent_text and len(parent_text) <= 500:
+                normalized_candidates.append(parent_text)
+            parent = parent.parent
     for candidate in normalized_candidates:
         if _file_kind(candidate) or _looks_like_expense(candidate):
             return candidate
@@ -1106,8 +1144,8 @@ def _find_date(cells) -> date | None:
     return None
 
 
-def _file_kind(filename: str) -> str:
-    lowered = filename.lower()
+def _file_kind(filename: str | None) -> str:
+    lowered = (filename or "").lower()
     for file_kind in SUPPORTED_FILE_KINDS:
         if (
             re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered)
@@ -1179,6 +1217,7 @@ def _is_detail_href(href: str) -> bool:
         or "cmd=2" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
+        or re.search(r"/read/\d+(?:$|[?#/])", lowered) is not None
         or re.search(r"(?:^|/)view(?:\?|$)", lowered) is not None
     )
 

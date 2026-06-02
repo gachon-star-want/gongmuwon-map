@@ -9,7 +9,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import httpx
 
@@ -37,6 +37,14 @@ def _build_url_with_params(url: str, params: dict[str, Any] | None) -> str:
             continue
         query[str(key)] = str(value)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _curl_safe_url(url: str) -> str:
+    parts = urlsplit(url)
+    path = quote(parts.path, safe="/%:@")
+    query = quote(parts.query, safe="=&%/:;+,@?()-_.~")
+    fragment = quote(parts.fragment, safe="%/:;+,@?()-_.~")
+    return urlunsplit((parts.scheme, parts.netloc, path, query, fragment))
 
 
 def _parse_status_from_headers(header_text: str) -> int:
@@ -268,6 +276,7 @@ class _CurlClient(AsyncHttpClient):
             command = [
                 "curl",
                 "-sS",
+                "--http1.1",
                 "-D",
                 str(header_path),
                 "-o",
@@ -288,7 +297,7 @@ class _CurlClient(AsyncHttpClient):
                 command.append("-L")
             for key, value in _merge_headers(self._headers, headers).items():
                 command.extend(["-H", f"{key}: {value}"])
-            command.append(request_url)
+            command.append(_curl_safe_url(request_url))
 
             process = await asyncio.create_subprocess_exec(
                 *command,
@@ -325,7 +334,14 @@ class _CurlClient(AsyncHttpClient):
                 subject="downloaded document body",
             )
             body_bytes = body_path.read_bytes() if body_path.exists() else b""
-            text = _decode_response_text(body_bytes, headers)
+            decode_headers = dict(headers)
+            if self._compressed:
+                decode_headers = {
+                    key: value
+                    for key, value in decode_headers.items()
+                    if key.lower() != "content-encoding"
+                }
+            text = _decode_response_text(body_bytes, decode_headers)
 
         return SimpleHttpResponse(
             status_code=status_code,

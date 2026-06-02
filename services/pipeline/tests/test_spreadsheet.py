@@ -42,6 +42,44 @@ def _workbook_bytes_without_normal_style_name(workbook: Workbook) -> bytes:
     return output.getvalue()
 
 
+def _workbook_bytes_with_unnamed_custom_property(workbook: Workbook) -> bytes:
+    original = _workbook_bytes(workbook)
+    custom_xml = b"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"
+ xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2">
+    <vt:lpwstr>invalid but ignorable</vt:lpwstr>
+  </property>
+</Properties>
+"""
+    output = BytesIO()
+    with zipfile.ZipFile(BytesIO(original)) as source, zipfile.ZipFile(output, "w") as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == "[Content_Types].xml":
+                data = data.replace(
+                    b"</Types>",
+                    (
+                        b'<Override PartName="/docProps/custom.xml" '
+                        b'ContentType="application/vnd.openxmlformats-officedocument.custom-properties+xml"/>'
+                        b"</Types>"
+                    ),
+                )
+            elif item.filename == "_rels/.rels":
+                data = data.replace(
+                    b"</Relationships>",
+                    (
+                        b'<Relationship Id="rIdCustomProps" '
+                        b'Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+                        b'relationships/custom-properties" Target="docProps/custom.xml"/>'
+                        b"</Relationships>"
+                    ),
+                )
+            target.writestr(item, data)
+        target.writestr("docProps/custom.xml", custom_xml)
+    return output.getvalue()
+
+
 def test_extracts_gangnam_xlsx_rows() -> None:
     workbook = Workbook()
     worksheet = workbook.active
@@ -708,6 +746,23 @@ def test_extracts_xlsx_with_missing_builtin_cell_style_name() -> None:
     assert rows[0].department_name == "남양주시의회"
     assert rows[0].place_text == "남양주식당"
     assert rows[0].amount == 33000
+
+
+def test_extracts_xlsx_with_missing_custom_property_name() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-02-01", "순창식당", 12000])
+
+    rows = extract_spreadsheet_rows(
+        _workbook_bytes_with_unnamed_custom_property(workbook),
+        fallback_department="순창군청",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "순창군청"
+    assert rows[0].place_text == "순창식당"
+    assert rows[0].amount == 12000
 
 
 def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
