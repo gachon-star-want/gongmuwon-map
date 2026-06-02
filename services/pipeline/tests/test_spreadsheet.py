@@ -191,6 +191,27 @@ def test_extracts_council_cost_xlsx_approval_amount_header() -> None:
     assert rows[0].user_text == "정대근 6명"
 
 
+def test_extracts_yangju_council_approval_card_usage_headers() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "의장"
+    worksheet.append(["2026년 1분기 의장 업무추진비 사용내역"])
+    worksheet.append([])
+    worksheet.append(["연번", "부서명", "승인일자", "승인시간", "승인금액", "가맹점명", "카드사용내역", "인원"])
+    worksheet.append([1, "의회사무과", "2026-01-05", "13:09", 46800, "이디야커피 양주장흥점", "장흥면 이장협의회 후 현안사항 간담회", 14])
+    content = BytesIO()
+    workbook.save(content)
+
+    rows = extract_spreadsheet_rows(content.getvalue(), fallback_department="양주시의회")
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "의회사무과"
+    assert rows[0].place_text == "이디야커피 양주장흥점"
+    assert rows[0].purpose == "장흥면 이장협의회 후 현안사항 간담회"
+    assert rows[0].amount == 46800
+    assert rows[0].user_text == "의회사무과 14명"
+
+
 def test_extracts_council_cost_xlsx_expense_amount_header() -> None:
     workbook = Workbook()
     worksheet = workbook.active

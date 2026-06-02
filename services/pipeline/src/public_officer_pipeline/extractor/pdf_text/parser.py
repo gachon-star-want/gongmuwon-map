@@ -35,6 +35,8 @@ LINE_GRAMMAR_ORDER: tuple[str, ...] = (
     "user_amount_place_address_purpose",
     "council_user_place",
     "user_place_purpose_amount",
+    "user_place_purpose_category",
+    "compact_date_purpose_place",
     "user_amount_purpose",
     "user_no_address",
     "purpose_first",

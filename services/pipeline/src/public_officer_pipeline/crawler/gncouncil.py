@@ -98,7 +98,12 @@ class CouncilAttachmentCrawler:
         if self._owns_client:
             await self._client.aclose()
 
-    async def list_posts(self, since: date, limit_pages: int = 3) -> list[PostRef]:
+    async def list_posts(
+        self,
+        since: date,
+        limit_pages: int = 3,
+        max_posts: int | None = None,
+    ) -> list[PostRef]:
         refs: dict[str, PostRef] = {}
         original_list_url = self.list_url
         try:
@@ -119,6 +124,8 @@ class CouncilAttachmentCrawler:
                         if ref.published_at and ref.published_at < since:
                             continue
                         refs[ref.url] = ref
+                        if max_posts is not None and len(refs) >= max_posts:
+                            return list(refs.values())
                     if self.follow_detail:
                         for detail in self._parse_detail_links(_response_text(response)):
                             if detail.published_at and detail.published_at < since:
@@ -127,6 +134,8 @@ class CouncilAttachmentCrawler:
                             detail_response.raise_for_status()
                             for ref in self._parse_detail_downloads(_response_text(detail_response), detail):
                                 refs[ref.url] = ref
+                                if max_posts is not None and len(refs) >= max_posts:
+                                    return list(refs.values())
         finally:
             self.list_url = original_list_url
         return list(refs.values())
@@ -529,6 +538,20 @@ class CouncilAttachmentCrawler:
                     f"{detail_path}?mid={board_view.group('mid')}"
                     f"&bcIdx={board_view.group('bc_idx')}"
                     f"&idx={board_view.group('idx')}"
+                )
+            board_view = re.search(
+                r"\bboardView\(\s*['\"](?P<site>[^'\"]+)['\"]\s*,\s*['\"][^'\"]+['\"]\s*,"
+                r"\s*['\"][^'\"]*['\"]\s*,\s*['\"][^'\"]*['\"]\s*,"
+                r"\s*['\"](?P<b_idx>[^'\"]+)['\"]\s*,\s*['\"](?P<pt_idx>[^'\"]+)['\"]\s*,"
+                r"\s*['\"](?P<mid>[^'\"]+)['\"]",
+                row_trigger,
+            )
+            if board_view:
+                href = (
+                    f"/{board_view.group('site')}/bbs/view.do"
+                    f"?mId={board_view.group('mid')}"
+                    f"&bIdx={board_view.group('b_idx')}"
+                    f"&ptIdx={board_view.group('pt_idx')}"
                 )
             bbs_view = re.search(r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'", onclick)
             if bbs_view:
@@ -998,7 +1021,9 @@ def _looks_like_uninformative_file_label(filename: str) -> bool:
         "다운로드",
         "내려받기",
         "첨부파일",
+        "첨부파일 다운로드",
         "파일",
+        "파일 다운로드",
         "공개내역 파일",
         "바로보기",
     } or _looks_like_generic_file_label(filename)

@@ -110,10 +110,13 @@ class PipelineRunner:
         try:
             try:
                 _mark_stage(stats, "list_posts")
-                posts = await crawler.list_posts(
-                    since=self.config.since,
-                    limit_pages=self.config.limit_pages,
-                )
+                list_post_kwargs: dict[str, object] = {
+                    "since": self.config.since,
+                    "limit_pages": self.config.limit_pages,
+                }
+                if "max_posts" in inspect.signature(crawler.list_posts).parameters:
+                    list_post_kwargs["max_posts"] = self.config.skip_posts + self.config.max_posts
+                posts = await crawler.list_posts(**list_post_kwargs)
                 stats.posts_seen = len(posts)
 
                 for post in posts[self.config.skip_posts : self.config.skip_posts + self.config.max_posts]:

@@ -449,6 +449,47 @@ def test_rows_from_pdf_text_parses_user_place_purpose_amount_pdf_table_rows() ->
     assert rows[2].place_text == "마로니에카페"
 
 
+def test_rows_from_pdf_text_parses_user_place_purpose_category_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+수행비서     2026-01-01 09:09      푸주옥     당면업무추진 직원격려 오찬경비 지급                    1,110,000   74   카드   기관
+수행비서     2026-01-04 19:15   암파스타레 광명소하 당면업무추진 직원격려 석찬경비 지급                     157,000    6    카드   기관
+의장    2026-04-01 20:37      고기창고      의회 소속직원 노고 격려에 따른 식사제공      8     278,960   신용카드   의회
+        """,
+        fallback_department="광명시청",
+    )
+
+    assert len(rows) == 3
+    assert rows[0].place_text == "푸주옥"
+    assert rows[0].purpose == "당면업무추진 직원격려 오찬경비 지급"
+    assert rows[0].amount == 1110000
+    assert rows[0].user_text == "수행비서 74명"
+    assert rows[0].expense_category == "기관"
+    assert rows[1].place_text == "암파스타레 광명소하"
+    assert rows[2].place_text == "고기창고"
+    assert rows[2].user_text == "의장 8명"
+
+
+def test_rows_from_pdf_text_parses_compact_date_purpose_place_pdf_table_rows() -> None:
+    rows = rows_from_pdf_text(
+        """
+ 시장          20260402   (3.31.)수행 직원 격려 급식비 지출                              3    야들야들한보약족발             82,000   신용카드
+ 시장          20260407   (4.6.)경조사비 지급(시장)                                   3      ○○○ 외 2            150,000   계좌이체
+부시장          20260408   (4.6.)자치행정과 직원 격려 간식비 지출                           24    피자마루 오산운암점           152,700   신용카드
+        """,
+        fallback_department="오산시청",
+    )
+
+    assert len(rows) == 2
+    assert rows[0].used_at.isoformat() == "2026-04-02T00:00:00"
+    assert rows[0].place_text == "야들야들한보약족발"
+    assert rows[0].purpose == "(3.31.)수행 직원 격려 급식비 지출"
+    assert rows[0].amount == 82000
+    assert rows[0].user_text == "시장 3명"
+    assert rows[1].place_text == "피자마루 오산운암점"
+    assert rows[1].user_text == "부시장 24명"
+
+
 def test_rows_from_pdf_text_parses_purpose_place_amount_pdf_table_rows() -> None:
     rows = rows_from_pdf_text(
         """

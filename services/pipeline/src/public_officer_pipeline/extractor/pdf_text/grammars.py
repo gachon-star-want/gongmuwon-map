@@ -59,6 +59,14 @@ def _build_default_line_grammars() -> list[PdfTextGrammar]:
         ),
         LineGrammar("council_user_place", _to_parse_fn(text_parser._parse_pdf_text_council_user_place_line)),
         LineGrammar("user_place_purpose_amount", _to_parse_fn(text_parser._parse_pdf_text_user_place_purpose_amount_line)),
+        LineGrammar(
+            "user_place_purpose_category",
+            _to_parse_fn(text_parser._parse_pdf_text_user_place_purpose_category_line),
+        ),
+        LineGrammar(
+            "compact_date_purpose_place",
+            _to_parse_fn(text_parser._parse_pdf_text_compact_date_purpose_place_line),
+        ),
         LineGrammar("user_amount_purpose", _to_parse_fn(text_parser._parse_pdf_text_user_amount_purpose_line)),
         LineGrammar("user_no_address", _to_parse_fn(text_parser._parse_pdf_text_user_no_address_line)),
         LineGrammar("purpose_first", _to_parse_fn(text_parser._parse_pdf_text_purpose_first_line)),
