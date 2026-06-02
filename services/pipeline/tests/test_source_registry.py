@@ -287,8 +287,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.total == 2202
     assert summary.verified_in_code == 151
     assert summary.pending == 49
-    assert summary.legal_hold == 179
-    assert summary.source_not_found == 170
+    assert summary.legal_hold == 186
+    assert summary.source_not_found == 163
     assert summary.no_recent_data == 283
     assert summary.pdf_vision_hold == 9
     assert summary.adapter_hold == 1361
@@ -296,8 +296,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 146
     assert summary.priority_group_counts["p1"].pending == 49
-    assert summary.priority_group_counts["p1"].legal_hold == 179
-    assert summary.priority_group_counts["p1"].source_not_found == 110
+    assert summary.priority_group_counts["p1"].legal_hold == 186
+    assert summary.priority_group_counts["p1"].source_not_found == 103
     assert summary.priority_group_counts["p1"].no_recent_data == 1
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 1
     assert summary.priority_group_counts["p1"].adapter_hold == 2
@@ -325,12 +325,12 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 15
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 49
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 172
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 179
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 1
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
-        == 110
+        == 103
     )
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 2
     assert all(
@@ -812,15 +812,50 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "대구광역시" and entry.short_name == "서구청"
     )
+    daegu_junggu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "중구의회"
+    )
+    daegu_donggu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "동구의회"
+    )
+    daegu_seogu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "서구의회"
+    )
+    daegu_bukgu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "북구의회"
+    )
+    daegu_suseong_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "수성구의회"
+    )
     daegu_dalseo = next(
         entry
         for entry in non_capital_entries
         if entry.parent_region == "대구광역시" and entry.short_name == "달서구청"
     )
+    daegu_dalseo_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "달서구의회"
+    )
     daegu_dalseong = next(
         entry
         for entry in non_capital_entries
         if entry.parent_region == "대구광역시" and entry.short_name == "달성군청"
+    )
+    daegu_dalseong_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "대구광역시" and entry.short_name == "달성군의회"
     )
     daegu_gunwi = next(
         entry
@@ -835,10 +870,28 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "공공누리 영역이 비어" in daegu_suseong.evidence_note
     assert daegu_seogu.verification_status == "legal_hold"
     assert "사전정보공표 업무추진비 공개" in daegu_seogu.evidence_note
+    assert daegu_junggu_council.verification_status == "legal_hold"
+    assert "의회운영업무추진비 XLS 첨부 구조" in daegu_junggu_council.evidence_note
+    assert daegu_donggu_council.verification_status == "legal_hold"
+    assert "업무추진비·공통경비 PDF 첨부 구조" in daegu_donggu_council.evidence_note
+    assert daegu_seogu_council.verification_status == "legal_hold"
+    assert daegu_seogu_council.source_url == "https://dgscouncil.go.kr/kr/bbs?bbs_id=cost"
+    assert "XLSX 첨부 구조" in daegu_seogu_council.evidence_note
+    assert "All Rights Reserved" in daegu_seogu_council.evidence_note
+    assert daegu_bukgu_council.verification_status == "legal_hold"
+    assert daegu_bukgu_council.source_url == "https://www.bukgucouncil.daegu.kr/kr/costBBS.do"
+    assert "의정운영공통경비 PDF 첨부 구조" in daegu_bukgu_council.evidence_note
+    assert "All Rights Reserved" in daegu_bukgu_council.evidence_note
+    assert daegu_suseong_council.verification_status == "legal_hold"
+    assert "업무추진비 XLS 첨부 구조" in daegu_suseong_council.evidence_note
     assert daegu_dalseo.verification_status == "legal_hold"
     assert "공공누리 영역이 비어" in daegu_dalseo.evidence_note
+    assert daegu_dalseo_council.verification_status == "legal_hold"
+    assert "의정공통경비 XLSX 첨부 구조" in daegu_dalseo_council.evidence_note
     assert daegu_dalseong.verification_status == "legal_hold"
     assert "XLS/XLSX 첨부 구조" in daegu_dalseong.evidence_note
+    assert daegu_dalseong_council.verification_status == "legal_hold"
+    assert "업무추진비 XLS 첨부 구조" in daegu_dalseong_council.evidence_note
     assert daegu_gunwi.verification_status == "pdf_vision_hold"
     assert daegu_gunwi.source_url == "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160"
     assert "scanned PDF vision extraction" in daegu_gunwi.evidence_note

@@ -3212,6 +3212,76 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "있어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("대구광역시", "중구의회"): {
+        "sourceUrl": "https://www.junggucouncil.daegu.kr/council/content/data/businessExpenses.html",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 2026년 의회운영업무추진비 XLS 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 All rights reserved로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "동구의회"): {
+        "sourceUrl": "https://www.donggucl.daegu.kr/content/data/business.html",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2026년 업무추진비·공통경비 PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 단순 Copyright로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "서구의회"): {
+        "sourceUrl": "https://dgscouncil.go.kr/kr/bbs?bbs_id=cost",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 2026년 5월 서구의회 업무추진비 집행내역 "
+            "XLSX 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 "
+            "또는 명확한 상업적 자유이용 표시가 확인되지 않고 푸터가 All Rights Reserved로 "
+            "표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "북구의회"): {
+        "sourceUrl": "https://www.bukgucouncil.daegu.kr/kr/costBBS.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2026년 업무추진비·의정운영공통경비 PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터와 사이트 설정이 All Rights Reserved로 "
+            "표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "수성구의회"): {
+        "sourceUrl": "https://suseongcouncil.suseong.kr/ss_council/operatingExpense?me_code=6080",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2026년 수성구의회 의장 등 업무추진비 XLS 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 All rights reserved로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("대구광역시", "달서구청"): {
         "sourceUrl": "https://www.dalseo.daegu.kr/index.do?menu_id=10000202",
         "fileKinds": ["html"],
@@ -3226,6 +3296,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "전까지 수집하지 않습니다."
         ),
     },
+    ("대구광역시", "달서구의회"): {
+        "sourceUrl": "https://www.dalseocouncil.daegu.kr/content/dataroom/operatingExpense.html",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2026년 업무추진비·의정공통경비 XLSX 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 단순 Copyright로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("대구광역시", "달성군청"): {
         "sourceUrl": "https://www.dalseong.daegu.kr/index.do?menu_id=00001704",
         "fileKinds": ["xlsx", "xls"],
@@ -3238,6 +3322,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "다만 업무추진비 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 "
             "표시가 확인되지 않고 푸터가 All rights reserved로 표시되며 저작권정책 링크가 "
             "비활성 주석으로만 남아 있어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "달성군의회"): {
+        "sourceUrl": "https://council.dalseong.go.kr/content/data/operatingExpense.html",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 2026년 달성군의회 업무추진비 XLS 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 단순 Copyright로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
         ),
     },
     ("대구광역시", "군위군청"): {
