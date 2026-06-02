@@ -1709,17 +1709,31 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("강원특별자치도", "태백시의회"): {
-        "holdStatus": "source_not_found",
-        "sourceUrl": "https://council.taebaek.go.kr/source/kr/main/main.html",
-        "fileKinds": [],
+        "holdStatus": "legal_hold",
+        "sourceUrl": "https://council.taebaek.go.kr/source/kr/news/info2.html",
+        "detailUrl": "https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112",
+        "attachmentUrl": (
+            "https://council.taebaek.go.kr/Mboard/download.html?"
+            "table=board_official&column=userfile&uid=112"
+        ),
+        "copyrightUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "publicWorksPolicyUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "fileKinds": ["xlsx"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
         "blocker": (
-            "공식 태백시의회 홈/사이트맵을 확인했지만 업무추진비 공개 게시판이나 최근 "
-            "첨부 목록을 찾지 못했습니다. 확인 가능한 푸터도 ALL RIGHTS RESERVED라 "
-            "공식 출처 확인 전까지 수집하지 않습니다."
+            "공식 태백시의회 정보공개 업무추진비 현황 목록"
+            "(https://council.taebaek.go.kr/source/kr/news/info2.html), 2026년 4월 상세"
+            "(https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112), "
+            "XLSX 첨부 다운로드 구조는 확인했습니다. 다만 목록/상세 화면에 공공누리 "
+            "제1유형 또는 명확한 상업적 자유이용 표시가 없고, 태백시 저작권정책"
+            "(https://www.taebaek.go.kr/www/sub.do?key=590)은 공공누리가 부착되지 않은 "
+            "자료는 자료관리부서 사전 협의 후 이용하라고 안내하며 의회 푸터도 ALL RIGHTS "
+            "RESERVED로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "속초시청"): {
@@ -1814,16 +1828,32 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("강원특별자치도", "횡성군의회"): {
-        "holdStatus": "source_not_found",
-        "sourceUrl": "https://council.hsg.go.kr",
-        "fileKinds": [],
-        "pageParam": "page",
+        "holdStatus": "legal_hold",
+        "sourceUrl": "https://www.hsg.go.kr/council/selectBbsNttList.do?bbsNo=41&key=1464&",
+        "detailUrl": (
+            "https://www.hsg.go.kr/council/selectBbsNttView.do?"
+            "key=1464&bbsNo=41&nttNo=421094&pageUnit=10&searchCnd=all"
+        ),
+        "attachmentUrl": "https://www.hsg.go.kr/council/downloadBbsFile.do?atchmnflNo=547678",
+        "copyrightUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "publicWorksPolicyUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
         "blocker": (
-            "횡성군의회 공식 호스트(council.hsg.go.kr)는 DNS 응답이 없고, 공식 업무추진비 "
-            "게시판 URL도 원격 검색에서 확인되지 않았습니다. 추정 URL로 수집하지 않습니다."
+            "횡성군의회 공식 경로가 횡성군 통합 도메인"
+            "(https://www.hsg.go.kr/council/index.do)으로 확인되었고, 통합검색의 "
+            "업무추진비 집행 현황 메뉴"
+            "(https://www.hsg.go.kr/council/selectBbsNttList.do?bbsNo=41&key=1464&)와 "
+            "2026년 4월 상세, PDF 첨부 다운로드 구조를 확인했습니다. 다만 목록/상세 화면의 "
+            "공공누리 영역이 비어 있고, 횡성군 공공저작물 자유이용 정책"
+            "(https://www.hsg.go.kr/www/contents.do?key=906)은 공공누리가 부착되지 않은 "
+            "자료는 담당자 사전 협의 후 이용하라고 안내하며 푸터가 All rights reserved로 "
+            "표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "영월군의회"): {
@@ -1967,7 +1997,10 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "verifiedBy": "공식 사이트 원격 확인",
         "blocker": (
             "공식 양구군의회 업무추진비 집행 현황 목록은 확인했지만 원문 기준 총 0개의 글로 "
-            "최근 12개월 집행내역 게시글이 없습니다. 데이터가 공개될 때까지 수집하지 않습니다."
+            "최근 12개월 집행내역 게시글이 없습니다. 2020년 이후 확장 검색에서도 현행 "
+            "업무추진비 메뉴는 동일한 빈 목록이며, 확인된 F80000/F80200/F80208 메뉴는 "
+            "업무추진비가 아니라 의원별 회의 출석율 현황으로 확인되어 데이터가 공개될 때까지 "
+            "수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "인제군청"): {
