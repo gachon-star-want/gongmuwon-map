@@ -6925,6 +6925,268 @@ def _apply_gyeongsang_source_not_found(
     )
 
 
+def _apply_gyeongsang_facts_only_release(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    *,
+    is_council: bool,
+) -> None:
+    if parent_region not in GYEONGSANG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus") != "legal_hold":
+        return
+
+    blocker = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    if _gyeongsang_has_strong_reuse_limit(blocker):
+        return
+
+    source_url = str(source_pattern.get("sourceUrl") or "").strip()
+    if not source_url:
+        return
+
+    raw_file_kinds = [str(value).lower().strip() for value in source_pattern.get("fileKinds", [])]
+    file_kinds = [
+        kind
+        for kind in raw_file_kinds
+        if kind in SUPPORTED_ATTACHMENT_FILE_KINDS
+    ]
+    if raw_file_kinds and not file_kinds:
+        source_pattern.update(
+            {
+                "holdStatus": "adapter_hold",
+                "blocker": (
+                    "공식 업무추진비 공개 URL은 확인했지만 현재 pipeline이 지원하지 않는 "
+                    f"첨부 형식({', '.join(raw_file_kinds)})만 확인되었습니다. 해당 첨부 "
+                    "다운로드/압축 해제/parser adapter 보강 후 dry-run 재검증이 필요합니다."
+                ),
+            }
+        )
+        return
+    if not file_kinds:
+        file_kinds = ["xlsx", "xls", "pdf"]
+
+    page_param = str(source_pattern.get("pageParam") or "page")
+    follow_detail = bool(source_pattern.get("followDetail", True))
+    extra_list_urls = [
+        str(value)
+        for value in source_pattern.get("extraListUrls", [])
+        if str(value).strip()
+    ]
+    optional_fields = {
+        key: source_pattern[key]
+        for key in (
+            "detailUrl",
+            "attachmentUrl",
+            "copyrightUrl",
+            "publicWorksPolicyUrl",
+            "jsDownloadPath",
+            "userAgent",
+        )
+        if source_pattern.get(key)
+    }
+    evidence_note = (
+        "공식 업무추진비 공개자료의 원본 파일은 재배포하지 않고, 법령상 공개된 날짜·기관·"
+        "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 "
+        "정책 기준으로 적재 후보입니다. 공공누리 제1유형 미표시 또는 All Rights Reserved "
+        "표기만으로는 보류하지 않으며, 현재 확인 근거에서는 명시적 상업적 이용금지·"
+        "변경금지·무단 이용금지·사전협의 필요 문구를 확인하지 못했습니다."
+    )
+    if blocker:
+        evidence_note = f"{evidence_note} 이전 출처 확인 메모: {blocker}"
+
+    source_pattern.clear()
+    source_pattern.update(
+        {
+            "adapter": "council_attachment_board" if is_council else "attachment_board",
+            "listUrl": source_url,
+            "fileKinds": file_kinds,
+            "followDetail": follow_detail,
+            "pageParam": page_param,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+            "commercialUseStatus": "facts_only_official_disclosure_candidate",
+            "derivativeUseStatus": "facts_only_official_disclosure_candidate",
+            "evidenceNote": evidence_note,
+            **optional_fields,
+        }
+    )
+    if extra_list_urls:
+        source_pattern["extraListUrls"] = extra_list_urls
+
+
+def _gyeongsang_has_strong_reuse_limit(blocker: str) -> bool:
+    strong_markers = (
+        "공공누리 제2유형",
+        "공공누리 제3유형",
+        "공공누리 제4유형",
+        "상업적이용금지",
+        "상업적 이용금지",
+        "상업적 이용 금지",
+        "상업적 목적 사용 불가",
+        "비영리목적",
+        "비영리 목적",
+        "변경금지",
+        "변경 금지",
+        "사전 협의",
+        "사전협의",
+        "무단 이용 금지",
+        "무단이용 금지",
+        "무단사용",
+        "무단복제",
+        "자유이용 불가",
+        "자유이용을 불가",
+    )
+    return any(marker in blocker for marker in strong_markers)
+
+
+GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("울산광역시", "울산시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 HTML 업무추진비 URL은 확인했지만 generic "
+        "attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py 또는 별도 "
+        "울산시 HTML table adapter 보강 후 재검증이 필요합니다.",
+    ),
+    ("부산광역시", "중구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 중구청의 HTML 업무추진비 목록/상세 구조를 처리하는 adapter 보강이 필요합니다.",
+    ),
+    ("부산광역시", "남구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 남구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "남구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 남구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "부산진구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산진구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "사하구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 사하구청 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "사하구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 의회운영업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 사하구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "강서구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 강서구청 게시판 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "강서구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 의회 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 강서구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "남구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 남구청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "남구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 남구의회 의회 게시판 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "수성구청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 2026년 업무추진비 공개 URL은 확인했지만 "
+        "posts_seen=0이었습니다. 대구 수성구청 연도별 업무추진비 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "달서구의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1이었지만 "
+        "raw_parsed_rows=0이었습니다. 대구 달서구의회 XLSX 첨부 추출/다운로드 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "달성군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 달성군청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "포항시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "포항시청 업무추진비 contents.do 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "포항시의회"): (
+        "pdf_vision_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("경상남도", "경상남도의회"): (
+        "pdf_vision_hold",
+        "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("경상북도", "경주시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 사전정보공표 목록은 확인했지만 posts_seen=0이었습니다. "
+        "경주시청 page.do 업무추진비 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상북도", "경주시의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "경주시의회 costBBS 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "김해시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 시장·부시장/실국장/과장급 업무추진비 목록은 확인했지만 "
+        "posts_seen=0이었습니다. 김해시청 web 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "김해시의회"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 현황 목록은 확인했지만 posts_seen=0이었습니다. "
+        "김해시의회 boardList.php 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "거제시청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 시장 업무추진비 공개 목록은 확인했지만 posts_seen=0이었습니다. "
+        "거제시청 board/list.geoje 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "산청군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비공개 URL 접근 중 curl request failed가 5회 반복되었습니다. "
+        "산청군청 다운로드/차단 처리 adapter 보강 후 재검증이 필요합니다.",
+    ),
+    ("경상남도", "거창군청"): (
+        "adapter_hold",
+        "경상도권 3차 dry-run에서 공식 업무추진비 공개 목록은 확인했지만 posts_seen=0이었습니다. "
+        "거창군청 web 목록 parser 보강이 필요합니다.",
+    ),
+}
+
+
+def _apply_gyeongsang_dry_run_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in GYEONGSANG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus"):
+        return
+
+    hold = GYEONGSANG_DRY_RUN_HOLDS.get((parent_region, short_name))
+    if not hold:
+        return
+
+    hold_status, blocker = hold
+    source_pattern.update({"holdStatus": hold_status, "blocker": blocker})
+
+
 CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
     ("대전광역시", "서구의회"): [
         "site:council.seogu.go.kr 업무추진비",
@@ -7354,6 +7616,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_gyeongsang_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_gyeongsang_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
@@ -7422,6 +7694,16 @@ def non_capital_agencies() -> list[Agency]:
                 is_council=True,
             )
             _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_gyeongsang_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_gyeongsang_dry_run_hold(
                 council_source_pattern,
                 parent_region,
                 council_short_name,
@@ -7608,6 +7890,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_gyeongsang_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_gyeongsang_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             if council_blocker and not council_board:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
             _apply_gangwon_legal_evidence(
@@ -7620,6 +7912,16 @@ def non_capital_agencies() -> list[Agency]:
                 is_council=True,
             )
             _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
+            _apply_gyeongsang_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_gyeongsang_dry_run_hold(
                 council_source_pattern,
                 parent_region,
                 council_short_name,

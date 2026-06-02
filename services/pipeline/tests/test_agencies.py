@@ -308,11 +308,60 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
     assert central_counts[JurisdictionType.CENTRAL_ADMINISTRATIVE_AGENCY] == 49
     assert central_counts[JurisdictionType.CONSTITUTIONAL_INSTITUTION] == 4
     assert central_counts[JurisdictionType.INDEPENDENT_STATE_AGENCY] == 7
+    central_candidates = [
+        agency
+        for agency in CENTRAL_STATE_AGENCIES
+        if agency.source_pattern.get("status") != "adapter_required"
+    ]
+    adapter_required_central_agencies = [
+        agency
+        for agency in CENTRAL_STATE_AGENCIES
+        if agency.source_pattern.get("status") == "adapter_required"
+    ]
+    assert {agency.short_name for agency in central_candidates} == {
+        "재정경제부",
+        "문화체육관광부",
+        "농림축산식품부",
+        "산업통상부",
+        "보건복지부",
+        "기후에너지환경부",
+        "고용노동부",
+        "성평등가족부",
+        "국토교통부",
+        "해양수산부",
+        "중소벤처기업부",
+        "외교부",
+        "통일부",
+        "법무부",
+        "행정안전부",
+        "국가보훈부",
+        "인사혁신처",
+        "식품의약품안전처",
+        "산림청",
+        "질병관리청",
+        "기상청",
+        "행정중심복합도시건설청",
+        "새만금개발청",
+        "경찰청",
+        "소방청",
+        "해양경찰청",
+        "우주항공청",
+        "공정거래위원회",
+    }
+    assert len(adapter_required_central_agencies) == 32
     assert all(
-        agency.source_pattern["status"] == "adapter_required"
-        and agency.source_pattern["baselineSourceUrl"].startswith("https://www.org.go.kr/")
+        agency.source_pattern["baselineSourceUrl"].startswith("https://www.org.go.kr/")
         and "정부조직관리정보시스템" in agency.source_pattern["baselineEvidence"]
         for agency in CENTRAL_STATE_AGENCIES
+    )
+    assert all(
+        agency.source_pattern["status"] == "adapter_required"
+        for agency in adapter_required_central_agencies
+    )
+    assert all(
+        agency.source_pattern["adapter"] == "central_state_attachment_board"
+        and agency.source_pattern["listUrl"].startswith("https://")
+        for agency in central_candidates
     )
 
     public_counts = Counter(agency.sub_region for agency in PUBLIC_INSTITUTION_AGENCIES)
@@ -409,8 +458,8 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         "화성시상수도",
         "화성시하수도",
     }.issubset(verified_local_short_names)
-    assert len(verified_local_public_institutions) == 337
-    assert len(adapter_required_local_public_institutions) == 975
+    assert len(verified_local_public_institutions) == 340
+    assert len(adapter_required_local_public_institutions) == 972
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://www.cleaneye.go.kr/")
@@ -427,7 +476,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     ]
     pending_agencies = NON_CAPITAL_AGENCIES
 
-    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 73
+    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 126
     assert all(agency.homepage is None for agency in baseline_pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in baseline_pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in baseline_pending_agencies)
@@ -628,16 +677,16 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "부산광역시" and agency.short_name == "연제구의회"
     )
-    assert busan_yeongdo_council.source_pattern["holdStatus"] == "legal_hold"
-    assert busan_yeongdo_council.source_pattern["sourceUrl"] == (
+    assert "holdStatus" not in busan_yeongdo_council.source_pattern
+    assert busan_yeongdo_council.source_pattern["listUrl"] == (
         "https://www.yeongdo.go.kr/council/01221/04617/01236.web"
     )
-    assert "업무추진비 집행 현황 경로" in busan_yeongdo_council.source_pattern["blocker"]
-    assert busan_haeundae_council.source_pattern["holdStatus"] == "legal_hold"
-    assert busan_haeundae_council.source_pattern["sourceUrl"].startswith(
+    assert "업무추진비 집행 현황 경로" in busan_yeongdo_council.source_pattern["evidenceNote"]
+    assert "holdStatus" not in busan_haeundae_council.source_pattern
+    assert busan_haeundae_council.source_pattern["listUrl"].startswith(
         "https://council.haeundae.go.kr/board/list.do"
     )
-    assert "업무추진비 집행 현황 목록" in busan_haeundae_council.source_pattern["blocker"]
+    assert "업무추진비 집행 현황 목록" in busan_haeundae_council.source_pattern["evidenceNote"]
     assert busan_geumjeong_council.source_pattern["holdStatus"] == "legal_hold"
     assert busan_geumjeong_council.source_pattern["sourceUrl"].startswith(
         "https://www.geumjeong.go.kr/board/list.geumj"
@@ -646,9 +695,9 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert busan_suyeong_council.source_pattern["holdStatus"] == "legal_hold"
     assert busan_suyeong_council.source_pattern["fileKinds"] == ["xlsx"]
     assert "공공누리 제3유형" in busan_suyeong_council.source_pattern["blocker"]
-    assert busan_sasang_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in busan_sasang_council.source_pattern
     assert busan_sasang_council.source_pattern["fileKinds"] == ["pdf"]
-    assert "ALL RIGHTS RESERVED" in busan_sasang_council.source_pattern["blocker"]
+    assert "ALL RIGHTS RESERVED" in busan_sasang_council.source_pattern["evidenceNote"]
     assert busan_yeonje_council.source_pattern["holdStatus"] == "legal_hold"
     assert busan_yeonje_council.source_pattern["fileKinds"] == ["xls"]
     assert "비영리목적" in busan_yeonje_council.source_pattern["blocker"]
@@ -716,10 +765,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert gyeongbuk_city.source_pattern["fileKinds"] == ["xlsx", "xls", "pdf"]
     assert gyeongbuk_city.source_pattern["pageParam"] == "Start"
     assert "공공누리 제3유형" in gyeongbuk_city.source_pattern["blocker"]
-    assert gyeongbuk_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in gyeongbuk_council.source_pattern
     assert gyeongbuk_council.source_pattern["fileKinds"] == ["xlsx"]
     assert gyeongbuk_council.source_pattern["pageParam"] == "page"
-    assert "XLSX 다운로드 구조" in gyeongbuk_council.source_pattern["blocker"]
+    assert "XLSX 다운로드 구조" in gyeongbuk_council.source_pattern["evidenceNote"]
 
     gyeongnam_city = next(
         agency for agency in pending_agencies if agency.short_name == "경상남도청"
@@ -731,10 +780,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert gyeongnam_city.source_pattern["fileKinds"] == ["xlsx"]
     assert gyeongnam_city.source_pattern["pageParam"] == "pageNo"
     assert "자유이용을 불가" in gyeongnam_city.source_pattern["blocker"]
-    assert gyeongnam_council.source_pattern["holdStatus"] == "legal_hold"
+    assert gyeongnam_council.source_pattern["holdStatus"] == "pdf_vision_hold"
     assert gyeongnam_council.source_pattern["fileKinds"] == ["pdf"]
     assert gyeongnam_council.source_pattern["pageParam"] == "pageNum"
-    assert "PDF 다운로드 구조" in gyeongnam_council.source_pattern["blocker"]
+    assert "scanned PDF vision" in gyeongnam_council.source_pattern["blocker"]
 
     ulsan_city = next(
         agency
@@ -786,31 +835,31 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "울산광역시" and agency.short_name == "울주군의회"
     )
-    assert ulsan_city.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_city.source_pattern["holdStatus"] == "adapter_hold"
     assert ulsan_city.source_pattern["fileKinds"] == ["html"]
-    assert ulsan_city.source_pattern["pageParam"] == "curPage"
-    assert "HTML 상세 표 구조" in ulsan_city.source_pattern["blocker"]
-    assert ulsan_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "posts_seen=0" in ulsan_city.source_pattern["blocker"]
+    assert "holdStatus" not in ulsan_council.source_pattern
     assert ulsan_council.source_pattern["fileKinds"] == ["xlsx"]
-    assert ulsan_junggu.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_junggu.source_pattern["holdStatus"] == "adapter_hold"
     assert ulsan_junggu.source_pattern["fileKinds"] == ["zip"]
-    assert ulsan_junggu_council.source_pattern["holdStatus"] == "legal_hold"
-    assert ulsan_junggu_council.source_pattern["sourceUrl"] == (
+    assert "첨부 형식(zip)" in ulsan_junggu.source_pattern["blocker"]
+    assert "holdStatus" not in ulsan_junggu_council.source_pattern
+    assert ulsan_junggu_council.source_pattern["listUrl"] == (
         "https://council.junggu.ulsan.kr/content/public/expenses.html"
     )
-    assert ulsan_namgu.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in ulsan_namgu.source_pattern
     assert ulsan_namgu.source_pattern["fileKinds"] == ["pdf"]
-    assert "구청장·부구청장·국장·부서장·동장·보건소" in ulsan_namgu.source_pattern["blocker"]
-    assert ulsan_namgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "구청장·부구청장·국장·부서장·동장·보건소" in ulsan_namgu.source_pattern["evidenceNote"]
+    assert "holdStatus" not in ulsan_namgu_council.source_pattern
     assert ulsan_namgu_council.source_pattern["fileKinds"] == ["pdf"]
     assert ulsan_bukgu.source_pattern["holdStatus"] == "legal_hold"
     assert ulsan_bukgu.source_pattern["pageParam"] == "cpage"
-    assert ulsan_bukgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in ulsan_bukgu_council.source_pattern
     assert ulsan_bukgu_council.source_pattern["fileKinds"] == ["pdf"]
-    assert ulju_office.source_pattern["holdStatus"] == "legal_hold"
-    assert "부군수·국장·부서장 탭" in ulju_office.source_pattern["blocker"]
-    assert ulju_council.source_pattern["holdStatus"] == "legal_hold"
-    assert ulju_council.source_pattern["sourceUrl"] == (
+    assert "holdStatus" not in ulju_office.source_pattern
+    assert "부군수·국장·부서장 탭" in ulju_office.source_pattern["evidenceNote"]
+    assert "holdStatus" not in ulju_council.source_pattern
+    assert ulju_council.source_pattern["listUrl"] == (
         "https://assembly.ulju.ulsan.kr/kr/bbs?bbs_id=business"
     )
 
@@ -981,10 +1030,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert busan_seogu.source_pattern["holdStatus"] == "adapter_hold"
     assert busan_seogu.source_pattern["fileKinds"] == ["hwp"]
     assert "HWP extractor" in busan_seogu.source_pattern["blocker"]
-    assert busan_namgu.source_pattern["holdStatus"] == "legal_hold"
-    assert "국장급 이상 업무추진비" in busan_namgu.source_pattern["blocker"]
-    assert busan_junggu.source_pattern["holdStatus"] == "legal_hold"
-    assert "공공누리 영역이 비어" in busan_junggu.source_pattern["blocker"]
+    assert busan_namgu.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in busan_namgu.source_pattern["blocker"]
+    assert busan_junggu.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in busan_junggu.source_pattern["blocker"]
 
     pohang_city = next(
         agency
@@ -1001,15 +1050,13 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "경상북도" and agency.short_name == "경주시청"
     )
-    assert pohang_city.source_pattern["holdStatus"] == "legal_hold"
-    assert pohang_city.source_pattern["fileKinds"] == ["xlsx", "xls", "pdf"]
-    assert "XLSX 다운로드 구조" in pohang_city.source_pattern["blocker"]
-    assert pohang_council.source_pattern["holdStatus"] == "legal_hold"
+    assert pohang_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in pohang_city.source_pattern["blocker"]
+    assert pohang_council.source_pattern["holdStatus"] == "pdf_vision_hold"
     assert pohang_council.source_pattern["fileKinds"] == ["pdf"]
-    assert "PDF 다운로드 구조" in pohang_council.source_pattern["blocker"]
-    assert gyeongju_city.source_pattern["holdStatus"] == "legal_hold"
-    assert gyeongju_city.source_pattern["fileKinds"] == ["xls", "xlsx"]
-    assert "공공누리 제1유형 표시가 부착된 자료만" in gyeongju_city.source_pattern["blocker"]
+    assert "scanned PDF vision" in pohang_council.source_pattern["blocker"]
+    assert gyeongju_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in gyeongju_city.source_pattern["blocker"]
     mungyeong_city = next(
         agency
         for agency in pending_agencies
@@ -1037,11 +1084,11 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "경상북도" and agency.short_name == "울진군청"
     )
-    assert yeongju_city.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in yeongju_city.source_pattern
     assert yeongju_city.source_pattern["fileKinds"] == ["pdf"]
-    assert "분기별 PDF 첨부 구조" in yeongju_city.source_pattern["blocker"]
-    assert uiseong_city.source_pattern["holdStatus"] == "legal_hold"
-    assert "첨부 확장자를 확정할 수 없고" in uiseong_city.source_pattern["blocker"]
+    assert "분기별 PDF 첨부 구조" in yeongju_city.source_pattern["evidenceNote"]
+    assert "holdStatus" not in uiseong_city.source_pattern
+    assert "첨부 확장자를 확정할 수 없고" in uiseong_city.source_pattern["evidenceNote"]
     assert bonghwa_city.source_pattern["holdStatus"] == "legal_hold"
     assert "공공누리 미부착 자료는 사전 협의" in bonghwa_city.source_pattern["blocker"]
     assert uljin_city.source_pattern["holdStatus"] == "legal_hold"
@@ -1075,10 +1122,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert changwon_city.source_pattern["fileKinds"] == ["xlsx", "pdf"]
     assert changwon_city.source_pattern["pageParam"] == "cpage"
-    assert changwon_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "holdStatus" not in changwon_council.source_pattern
     assert changwon_council.source_pattern["fileKinds"] == ["pdf"]
     assert changwon_council.source_pattern["pageParam"] == "pageNo"
-    assert "PDF 다운로드 구조" in changwon_council.source_pattern["blocker"]
+    assert "PDF 다운로드 구조" in changwon_council.source_pattern["evidenceNote"]
     gimhae_city = next(
         agency
         for agency in pending_agencies
@@ -1109,13 +1156,12 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "경상남도" and agency.short_name == "하동군의회"
     )
-    assert gimhae_city.source_pattern["holdStatus"] == "legal_hold"
-    assert "All Rights Reserved" in gimhae_city.source_pattern["blocker"]
-    assert geochang_city.source_pattern["holdStatus"] == "legal_hold"
-    assert geochang_city.source_pattern["fileKinds"] == ["xlsx", "xls"]
-    assert geoje_city.source_pattern["holdStatus"] == "legal_hold"
-    assert geoje_city.source_pattern["fileKinds"] == ["xlsx"]
-    assert "공공누리 부착 저작물" in geoje_city.source_pattern["blocker"]
+    assert gimhae_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in gimhae_city.source_pattern["blocker"]
+    assert geochang_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in geochang_city.source_pattern["blocker"]
+    assert geoje_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "posts_seen=0" in geoje_city.source_pattern["blocker"]
     assert yangsan_city.source_pattern["holdStatus"] == "legal_hold"
     assert "첨부 확장자를 확정할 수 없고" in yangsan_city.source_pattern["blocker"]
     assert uiryeong_city.source_pattern["holdStatus"] == "legal_hold"
@@ -1131,9 +1177,9 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert daegu_city.source_pattern["holdStatus"] == "legal_hold"
     assert daegu_council.source_pattern["holdStatus"] == "legal_hold"
-    assert daegu_namgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert daegu_namgu_council.source_pattern["holdStatus"] == "adapter_hold"
     assert daegu_namgu_council.source_pattern["fileKinds"] == ["xlsx"]
-    assert "All rights reserved" in daegu_namgu_council.source_pattern["blocker"]
+    assert "posts_seen=0" in daegu_namgu_council.source_pattern["blocker"]
     assert "제1유형 확인 전까지 수집하지 않습니다" in daegu_city.source_pattern["blocker"]
 
     verified_non_capital = [
@@ -1203,7 +1249,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "태안군의회",
         "홍성군의회",
     }.issubset(verified_non_capital_names)
-    assert len(verified_non_capital_names) == 73
+    assert len(verified_non_capital_names) == 117
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
