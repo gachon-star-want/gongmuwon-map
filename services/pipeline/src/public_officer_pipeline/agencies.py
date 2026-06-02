@@ -778,6 +778,9 @@ P4_CLEANEYE_LONGRUN_PLACE_LEVEL_CANDIDATE_ROWS = (
     ("거창군상수도", "2007100104", "005001", "거창군상수도"),
     ("김해시상수도", "2007100099", "005001", "김해시상수도"),
     ("밀양시상수도", "2007100100", "005001", "밀양시상수도"),
+    ("동두천시 시설관리공단", "2024000001", "011001", "동두천시시설관리공단"),
+    ("양산시하수도", "2007100168", "005002", "양산시하수도"),
+    ("진주시상수도", "2007100095", "005001", "진주시상수도"),
 )
 P4_CLEANEYE_LONGRUN_PLACE_LEVEL_CANDIDATES = {
     name: {
@@ -7865,6 +7868,44 @@ def _local_public_institution_source_pattern(
                 "filename/saveFileName/filePath 첨부 키와 사용처·장소 place-level 열을 "
                 "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
                 "0건으로 보류합니다."
+            ),
+        }
+    if not is_public_enterprise:
+        return {
+            "adapter": "local_public_institution_required",
+            "searchKeyword": f"{name} 업무추진비",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "sourceUrl": CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL],
+            "itemId": "iptBuOwnerWorkCost",
+            "dtFlagQuarter": "500140",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["html"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 longrun2 CleanEye iptBuOwnerWorkCost 881기관 대량 검증",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL,
+                CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "blocker": (
+                "CleanEye 지방출자출연 기관별공시 selectIptItemEntList.do -> "
+                "selectIptItemGongsi.do(topItem=20) -> selectIptItemIdCheck.do(item=20_40) "
+                "흐름으로 itemId=iptBuOwnerWorkCost를 확인했고, 881개 매핑 기관의 "
+                "iptBuOwnerWorkCost.do 상세 응답을 대량 조회했습니다. jsonListQ 행은 "
+                "accyear/quarterYear/officecost/status/manageDept 등 분기별 기관장 "
+                "업무추진비 집계 필드만 제공하며 filename/saveFileName/filePath 첨부 키와 "
+                "사용처·장소·상호 place-level 열을 포함하지 않습니다. 340개 표본 재검증에서도 "
+                "recent aggregate 206개, 최근자료 없음 113개, 무행 21개였고 place-level "
+                "XLS/XLSX 다운로드 후보는 0건이므로 공무원맵 적재 대상 최근 12개월 "
+                "place-level 데이터 0건으로 보류합니다."
             ),
         }
     return {
