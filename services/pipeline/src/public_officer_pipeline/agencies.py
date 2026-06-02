@@ -7070,6 +7070,11 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산 중구청의 HTML 업무추진비 목록/상세 구조를 처리하는 adapter 보강이 필요합니다.",
     ),
+    ("부산광역시", "영도구의회"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 의회 업무추진비 HTML 경로는 확인했지만 posts_seen=0이었습니다. "
+        "부산 영도구의회 HTML 업무추진비 목록/상세 parser 보강이 필요합니다.",
+    ),
     ("부산광역시", "남구청"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
@@ -7084,6 +7089,16 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산진구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "해운대구청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 해운대구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("부산광역시", "해운대구의회"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 해운대구의회 게시판 목록/상세 parser 보강이 필요합니다.",
     ),
     ("부산광역시", "사하구청"): (
         "adapter_hold",
@@ -7105,6 +7120,11 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 3차 dry-run에서 공식 의회 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산 강서구의회 의회 게시판 parser 보강이 필요합니다.",
     ),
+    ("부산광역시", "사상구청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "부산 사상구청 게시판 목록/상세 parser 보강이 필요합니다.",
+    ),
     ("대구광역시", "남구청"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
@@ -7120,15 +7140,64 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 3차 dry-run에서 공식 2026년 업무추진비 공개 URL은 확인했지만 "
         "posts_seen=0이었습니다. 대구 수성구청 연도별 업무추진비 parser 보강이 필요합니다.",
     ),
+    ("대구광역시", "서구청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
+        "대구 서구청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "중구의회"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 posts_seen=5, posts_fetched=1 이후 XLS 첨부가 "
+        "spreadsheet sheet row limit(65511 rows > 5000)에 걸려 raw_parsed_rows=0으로 실패했습니다. "
+        "대구 중구의회 workbook used-range 정리 또는 spreadsheet extractor 보강 후 재검증이 필요합니다.",
+    ),
     ("대구광역시", "달서구의회"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 posts_seen=1, posts_fetched=1이었지만 "
         "raw_parsed_rows=0이었습니다. 대구 달서구의회 XLSX 첨부 추출/다운로드 parser 보강이 필요합니다.",
     ),
+    ("대구광역시", "달서구청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 HTML 업무추진비 URL은 확인했지만 posts_seen=0이었습니다. "
+        "대구 달서구청 HTML 업무추진비 parser 보강이 필요합니다.",
+    ),
+    ("대구광역시", "북구의회"): (
+        "pdf_vision_hold",
+        "경상도권 4차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
     ("대구광역시", "달성군청"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "대구 달성군청 목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("울산광역시", "중구의회"): (
+        "pdf_vision_hold",
+        "경상도권 4차 dry-run에서 posts_seen=5, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("울산광역시", "남구청"): (
+        "pdf_vision_hold",
+        "경상도권 4차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("울산광역시", "남구의회"): (
+        "pdf_vision_hold",
+        "경상도권 4차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("울산광역시", "울주군청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 PDF 업무추진비 경로는 확인했지만 posts_seen=0이었습니다. "
+        "울산 울주군청 게시판 목록/상세 parser 보강이 필요합니다.",
     ),
     ("경상북도", "포항시청"): (
         "adapter_hold",
@@ -7159,6 +7228,11 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "경주시의회 costBBS 목록 parser 보강이 필요합니다.",
     ),
+    ("경상북도", "영주시청"): (
+        "adapter_hold",
+        "경상도권 4차 dry-run에서 공식 분기별 PDF 업무추진비 경로는 확인했지만 posts_seen=0이었습니다. "
+        "영주시청 page.do 업무추진비 목록 parser 보강이 필요합니다.",
+    ),
     ("경상남도", "김해시청"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 시장·부시장/실국장/과장급 업무추진비 목록은 확인했지만 "
@@ -7168,6 +7242,13 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 현황 목록은 확인했지만 posts_seen=0이었습니다. "
         "김해시의회 boardList.php 목록 parser 보강이 필요합니다.",
+    ),
+    ("경상남도", "창원시의회"): (
+        "pdf_vision_hold",
+        "경상도권 4차 dry-run에서 posts_seen=1, posts_fetched=1 이후 scanned PDF vision "
+        "extraction이 필요했지만 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
     ("경상남도", "거제시청"): (
         "adapter_hold",
