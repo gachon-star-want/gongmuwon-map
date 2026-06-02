@@ -4832,6 +4832,24 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "copyrightUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
         "publicWorksPolicyUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
     },
+    "영월군청": {
+        "detailUrl": (
+            "https://www.yw.go.kr/www/selectBbsNttView.do?"
+            "key=196&bbsNo=7&nttNo=154331&searchCtgry=&searchCnd=all&searchKrwd="
+            "&pageIndex=1&integrDeptCode=&pageUnit=10"
+        ),
+        "attachmentUrl": "https://www.yw.go.kr/www/downloadBbsFile.do?bbsNo=7&atchmnflNo=131573",
+        "copyrightUrl": "https://www.yw.go.kr/www/contents.do?key=528",
+        "publicWorksPolicyUrl": "https://www.yw.go.kr/www/contents.do?key=528",
+        "commercialUseStatus": "allowed_kogl_type1_commercial",
+        "derivativeUseStatus": "allowed_kogl_type1_derivatives",
+        "evidenceNote": (
+            "공식 영월군청 업무추진비 목록과 2026-06-02 등록된 2026년 5월 전략산업과 "
+            "상세·XLSX 첨부 구조를 확인했습니다. 목록/상세 화면 하단의 공공누리 영역이 "
+            "kogl_box type1로 표시되어 제1유형 근거가 확인된 기관이며 production 적재가 "
+            "완료되어 있습니다."
+        ),
+    },
     "영월군의회": {
         "detailUrl": (
             "https://council.yw.go.kr/content/news/info.html?"
@@ -5983,11 +6001,11 @@ def _apply_gangwon_legal_evidence(
 ) -> None:
     if parent_region != "강원특별자치도":
         return
+    for key, value in GANGWON_LEGAL_EVIDENCE_OVERRIDES.get(short_name, {}).items():
+        source_pattern.setdefault(key, value)
     hold_status = source_pattern.get("holdStatus")
     if hold_status not in {"legal_hold", "no_recent_data"}:
         return
-    for key, value in GANGWON_LEGAL_EVIDENCE_OVERRIDES.get(short_name, {}).items():
-        source_pattern.setdefault(key, value)
     if hold_status == "no_recent_data":
         source_pattern.setdefault("commercialUseStatus", "not_applicable_no_recent_data")
         source_pattern.setdefault("derivativeUseStatus", "not_applicable_no_recent_data")
