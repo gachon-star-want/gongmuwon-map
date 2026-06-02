@@ -1055,8 +1055,11 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert pohang_council.source_pattern["holdStatus"] == "pdf_vision_hold"
     assert pohang_council.source_pattern["fileKinds"] == ["pdf"]
     assert "scanned PDF vision" in pohang_council.source_pattern["blocker"]
-    assert gyeongju_city.source_pattern["holdStatus"] == "adapter_hold"
-    assert "posts_seen=0" in gyeongju_city.source_pattern["blocker"]
+    assert "holdStatus" not in gyeongju_city.source_pattern
+    assert gyeongju_city.source_pattern["attachmentUrl"] == (
+        "https://www.gyeongju.go.kr/programs/board/download.do?parm_file_uid=395085"
+    )
+    assert "normalized_visits=39" in gyeongju_city.source_pattern["evidenceNote"]
     mungyeong_city = next(
         agency
         for agency in pending_agencies
