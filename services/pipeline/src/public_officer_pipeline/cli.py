@@ -20,6 +20,7 @@ from public_officer_pipeline.agencies import (
 )
 from public_officer_pipeline.crawler import (
     AlioItemDisclosureCrawler,
+    CleanEyeOwnerWorkCostCrawler,
     CouncilAttachmentCrawler,
     EstimateListCrawler,
     GangnamExpenseCrawler,
@@ -30,6 +31,7 @@ from public_officer_pipeline.source_pattern import (
     AlioItemDisclosurePattern,
     AdapterRequiredPattern,
     AttachmentBoardPattern,
+    CleanEyeOwnerWorkCostPattern,
     EstimateListPattern,
     InlineExpenseTablePattern,
     SeoulOpenGovPattern,
@@ -555,6 +557,13 @@ async def _run_supported_agency_result(
             args,
             agency,
             AlioItemDisclosureCrawler(agency=agency, source_pattern=pattern),
+            _extract_detail_rows,
+        )
+    if isinstance(pattern, CleanEyeOwnerWorkCostPattern):
+        return await _run_crawler_result(
+            args,
+            agency,
+            CleanEyeOwnerWorkCostCrawler(agency=agency, source_pattern=pattern),
             _extract_detail_rows,
         )
     return 2, {
