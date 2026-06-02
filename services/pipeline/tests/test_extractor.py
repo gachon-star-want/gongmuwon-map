@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 from public_officer_pipeline.agencies import SEOUL_AGENCIES
@@ -115,6 +116,36 @@ def test_extracts_seodaemun_key_value_table_with_thousand_amounts() -> None:
     assert rows[0].amount == 84000
     assert rows[0].user_text == "행정자치국 직원 4명"
     assert rows[0].expense_category == "식사"
+
+
+def test_extracts_ulsan_daily_detail_table_with_fallback_date() -> None:
+    rows = extract_expense_rows(
+        """
+        <table class="tbl_bd_list txt_c valg_m">
+          <thead>
+            <tr>
+              <th>번호</th><th>결제내용</th><th>결제방법</th><th>인원(수량)</th>
+              <th>금액(천원)</th><th>참석대상</th><th>장소</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td><td>재난대응과 부서운영업무추진비 집행(서울주소방서)</td>
+              <td>카드</td><td>12</td><td>316</td><td>재난대응과 직원 12</td><td>농도</td>
+            </tr>
+          </tbody>
+        </table>
+        """,
+        fallback_date=date(2026, 6, 1),
+    )
+
+    assert len(rows) == 1
+    assert rows[0].used_at.isoformat() == "2026-06-01T00:00:00"
+    assert rows[0].place_text == "농도"
+    assert rows[0].purpose == "재난대응과 부서운영업무추진비 집행(서울주소방서)"
+    assert rows[0].amount == 316000
+    assert rows[0].user_text == "재난대응과 직원 12 12명"
+    assert rows[0].payment_method == "카드"
 
 
 def test_opengov_crawler_uses_agency_title_filter() -> None:

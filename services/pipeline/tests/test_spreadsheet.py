@@ -852,6 +852,52 @@ def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:
     assert rows[0].amount == 10000
 
 
+def test_extracts_xls_with_large_blank_formatted_range(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_ROWS_PER_SHEET", 2)
+
+    values = {
+        (0, 0): "집행일자",
+        (0, 1): "장소",
+        (0, 2): "금액",
+        (1, 0): "2026-04-01",
+        (1, 1): "식당",
+        (1, 2): 10000,
+    }
+
+    class FakeSheet:
+        name = "legacy"
+        nrows = 10
+        ncols = 3
+
+        def cell(self, row_index: int, column_index: int):
+            class FakeCell:
+                ctype = 1
+                value = values.get((row_index, column_index), "")
+
+            return FakeCell()
+
+    class FakeWorkbook:
+        datemode = 0
+
+        def sheets(self) -> list[FakeSheet]:
+            return [FakeSheet()]
+
+    monkeypatch.setattr(
+        spreadsheet_module.xlrd,
+        "open_workbook",
+        lambda *, file_contents: FakeWorkbook(),
+    )
+
+    rows = extract_spreadsheet_rows(
+        b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1legacy",
+        fallback_department="중구의회",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "식당"
+    assert rows[0].amount == 10000
+
+
 def test_rejects_xlsx_with_too_many_columns(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(guards, "MAX_SPREADSHEET_COLUMNS_PER_SHEET", 2)
     workbook = Workbook()

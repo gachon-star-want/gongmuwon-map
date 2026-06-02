@@ -897,9 +897,14 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "울산광역시" and agency.short_name == "울주군의회"
     )
-    assert ulsan_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert "holdStatus" not in ulsan_city.source_pattern
+    assert ulsan_city.source_pattern["adapter"] == "attachment_board"
+    assert ulsan_city.source_pattern["listUrl"] == (
+        "https://www.ulsan.go.kr/u/rep/transfer/chief/list.ulsan?mId=001003002005000000"
+    )
     assert ulsan_city.source_pattern["fileKinds"] == ["html"]
-    assert "posts_seen=0" in ulsan_city.source_pattern["blocker"]
+    assert ulsan_city.source_pattern["pageParam"] == "curPage"
+    assert "facts-only 적재 정책" in ulsan_city.source_pattern["verifiedBy"]
     assert "holdStatus" not in ulsan_council.source_pattern
     assert ulsan_council.source_pattern["fileKinds"] == ["xlsx"]
     assert ulsan_junggu.source_pattern["holdStatus"] == "adapter_hold"

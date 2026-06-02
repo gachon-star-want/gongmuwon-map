@@ -1226,7 +1226,7 @@ def _loader_for_write_target(args: argparse.Namespace) -> PostgresLoader:
 
 async def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
     if detail.file_kind == "html":
-        return extract_expense_rows(detail.html)
+        return extract_expense_rows(detail.html, fallback_date=detail.published_at)
     if detail.file_kind in {"xls", "xlsx"} and detail.content_bytes:
         return extract_spreadsheet_rows(
             detail.content_bytes,
