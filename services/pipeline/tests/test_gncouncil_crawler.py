@@ -132,6 +132,116 @@ def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_current_detail_download_page() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="춘천시의회",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="강원특별자치도",
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://council.chuncheon.go.kr/basic/view.do?n=682&b=50&k=8571",
+                "fileKinds": ["pdf"],
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <h1 class="board-post-title-text">2025년 7월분 춘천시의회 의회운영업무추진비 집행내역</h1>
+        <span class="board-post-meta-text">2025-08-06</span>
+        <a href="./bbscttDownload.do?n=682&amp;no=1529" class="board-attachment-download">
+          <span class="board-attachment-name">2025년 7월분 의회운영업무추진비 집행내역.pdf</span>
+        </a>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://council.chuncheon.go.kr/basic/bbscttDownload.do?n=682&no=1529"
+    )
+    assert refs[0].published_at == date(2025, 8, 6)
+    assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_egf_direct_download_rows() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="속초시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="강원특별자치도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.sokcho.go.kr/sc/portal/adminfo/disclosure/expense/mayor",
+                "fileKinds": ["xlsx"],
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>114</td>
+            <td class="skinTb-sbj"><a href="#nolink">2026년 4월 시장 및 부시장 업무추진비 집행내역</a></td>
+            <td>자치행정과</td>
+            <td>2026-05-04</td>
+            <td>
+              <a href="/sc/egf/bp/common/front/447461/download">(2026. 4월) 시장 업무추진비 집행내역.xlsx</a>
+            </td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == "https://www.sokcho.go.kr/sc/egf/bp/common/front/447461/download"
+    assert refs[0].department_name == "속초시청 시장"
+    assert refs[0].file_kind == "xlsx"
+
+
+def test_attachment_crawler_extracts_article_seq_detail_links() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="정선군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="강원특별자치도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense",
+                "fileKinds": ["xlsx"],
+            },
+        )
+    )
+
+    refs = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>799</td>
+            <td><a href="javascript:goPage2('306517');">2026년 1분기 업무추진비 집행내역(군수·부군수)</a></td>
+            <td>총무행정관</td>
+            <td>2026-04-29</td>
+            <td>22</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense?articleSeq=306517"
+    )
+    assert refs[0].published_at == date(2026, 4, 29)
+    assert refs[0].file_kind == "html"
+
+
 def test_council_attachment_crawler_extracts_incheon_file_list_items() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

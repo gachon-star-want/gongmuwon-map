@@ -635,14 +635,14 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert buyeo_city.source_pattern["fileKinds"] == ["hwp"]
     assert buyeo_city.source_pattern["pageParam"] == "GotoPage"
-    assert "HWP extractor" in buyeo_city.source_pattern["blocker"]
+    assert "HWP extractor/변환 adapter" in buyeo_city.source_pattern["blocker"]
     assert "holdStatus" not in buyeo_council.source_pattern
     assert buyeo_council.source_pattern["listUrl"] == (
         "https://council.buyeo.go.kr/kr/open/bbsBusiness.do"
     )
     assert buyeo_council.source_pattern["fileKinds"] == ["pdf"]
     assert buyeo_council.source_pattern["pageParam"] == "pageNum"
-    assert "facts-only" in buyeo_council.source_pattern["verifiedBy"]
+    assert "facts-only 적재 정책" in buyeo_council.source_pattern["verifiedBy"]
 
     busan_council = next(agency for agency in pending_agencies if agency.short_name == "부산시의회")
     assert busan_council.source_pattern["holdStatus"] == "legal_hold"
@@ -1249,6 +1249,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "충청북도청",
         "동해시의회",
         "속초시청",
+        "춘천시의회",
+        "평창군청",
+        "정선군청",
+        "인제군의회",
         "홍천군의회",
         "양구군의회",
         "고성군의회",
