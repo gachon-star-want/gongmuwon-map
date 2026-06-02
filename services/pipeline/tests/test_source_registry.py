@@ -285,13 +285,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 555
+    assert summary.verified_in_code == 557
     assert summary.pending == 43
     assert summary.legal_hold == 102
-    assert summary.source_not_found == 107
-    assert summary.no_recent_data == 1193
-    assert summary.pdf_vision_hold == 32
-    assert summary.adapter_hold == 170
+    assert summary.source_not_found == 102
+    assert summary.no_recent_data == 1308
+    assert summary.pdf_vision_hold == 25
+    assert summary.adapter_hold == 65
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 207
@@ -303,21 +303,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p1"].adapter_hold == 37
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
-    assert summary.priority_group_counts["p2"].verified_in_code == 1
-    assert summary.priority_group_counts["p2"].source_not_found == 32
-    assert summary.priority_group_counts["p2"].pdf_vision_hold == 2
-    assert summary.priority_group_counts["p2"].adapter_hold == 25
+    assert summary.priority_group_counts["p2"].verified_in_code == 2
+    assert summary.priority_group_counts["p2"].source_not_found == 27
+    assert summary.priority_group_counts["p2"].no_recent_data == 2
+    assert summary.priority_group_counts["p2"].pdf_vision_hold == 3
+    assert summary.priority_group_counts["p2"].adapter_hold == 26
     assert summary.priority_group_counts["p3"].total == 342
     assert summary.priority_group_counts["p3"].verified_in_code == 6
     assert summary.priority_group_counts["p3"].pending == 0
-    assert summary.priority_group_counts["p3"].no_recent_data == 288
-    assert summary.priority_group_counts["p3"].pdf_vision_hold == 8
-    assert summary.priority_group_counts["p3"].adapter_hold == 40
+    assert summary.priority_group_counts["p3"].no_recent_data == 334
+    assert summary.priority_group_counts["p3"].pdf_vision_hold == 0
+    assert summary.priority_group_counts["p3"].adapter_hold == 2
     assert summary.priority_group_counts["p4"].total == 1312
-    assert summary.priority_group_counts["p4"].verified_in_code == 341
+    assert summary.priority_group_counts["p4"].verified_in_code == 342
     assert summary.priority_group_counts["p4"].pending == 0
-    assert summary.priority_group_counts["p4"].no_recent_data == 903
-    assert summary.priority_group_counts["p4"].adapter_hold == 68
+    assert summary.priority_group_counts["p4"].no_recent_data == 970
+    assert summary.priority_group_counts["p4"].adapter_hold == 0
 
     non_capital_entries = [
         entry
@@ -1728,11 +1729,11 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 348
-    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 32
-    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 1191
-    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 10
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 133
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 350
+    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 27
+    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 1306
+    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 3
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 28
     assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
@@ -1828,11 +1829,14 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
 
     siheung_water = next(entry for entry in entries if entry.short_name == "시흥시상수도")
     siheung_development = next(entry for entry in entries if entry.short_name == "시흥시공영개발")
-    assert siheung_water.verification_status == "adapter_hold"
-    assert siheung_development.verification_status == "adapter_hold"
-    assert siheung_water.source_url == "https://www.cleaneye.go.kr/user/headOrgWorkCostStat.do"
+    changwon_sewer = next(entry for entry in entries if entry.short_name == "창원시하수도")
+    assert siheung_water.verification_status == "no_recent_data"
+    assert siheung_development.verification_status == "no_recent_data"
+    assert siheung_water.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert changwon_sewer.verification_status == "verified_in_code"
+    assert changwon_sewer.adapter == "cleaneye_owner_work_cost"
     assert "CleanEye" in local_public.evidence_note
-    assert "클린아이" in siheung_water.evidence_note
+    assert "CleanEye" in siheung_water.evidence_note
 
 
 def test_source_registry_keeps_incheon_name_collisions_disambiguated() -> None:

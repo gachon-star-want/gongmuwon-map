@@ -50,6 +50,8 @@ class AlioItemDisclosureCrawler:
 
     async def list_posts(self, since: date, limit_pages: int = 3) -> list[PostRef]:
         _ = limit_pages
+        if self.pattern.directFiles:
+            return self._direct_file_refs(since=since)
         row = await self._agency_disclosure_row()
         if row is None:
             return []
@@ -67,6 +69,37 @@ class AlioItemDisclosureCrawler:
             file_year = _file_year(filename)
             if file_year is not None and file_year < since.year:
                 continue
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=str(
+                        httpx.URL(self.pattern.downloadUrl).copy_merge_params(
+                            {"f": file_no, "d": disclosure_no}
+                        )
+                    ),
+                    title=f"ALIO 기관장 업무추진비 - {self.agency.short_name} - {filename}",
+                    published_at=published_at,
+                    department_name=self.agency.short_name,
+                    file_kind=file_kind,
+                )
+            )
+        return refs
+
+    def _direct_file_refs(self, *, since: date) -> list[PostRef]:
+        refs: list[PostRef] = []
+        for item in self.pattern.directFiles:
+            file_no = str(item.get("fileNo") or "").strip()
+            disclosure_no = str(item.get("disclosureNo") or "").strip()
+            filename = str(item.get("filename") or "").strip()
+            if not file_no or not disclosure_no or not filename:
+                continue
+            file_kind = _file_kind(filename)
+            if file_kind not in self.file_kinds:
+                continue
+            file_year = _file_year(filename)
+            if file_year is not None and file_year < since.year:
+                continue
+            published_at = _date_from_direct_file(item) or _date_from_disclosure_no(disclosure_no)
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -146,6 +179,16 @@ def _date_from_disclosure_no(disclosure_no: str) -> date | None:
         return None
     try:
         return date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    except ValueError:
+        return None
+
+
+def _date_from_direct_file(item: dict[str, str]) -> date | None:
+    raw = str(item.get("publishedAt") or "").strip()
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(raw)
     except ValueError:
         return None
 

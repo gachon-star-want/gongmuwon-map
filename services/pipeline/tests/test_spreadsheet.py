@@ -842,6 +842,13 @@ def test_rejects_xls_declared_column_budget(monkeypatch: pytest.MonkeyPatch) -> 
         nrows = 1
         ncols = 3
 
+        def cell(self, _row_index: int, column_index: int):
+            class FakeCell:
+                ctype = 1
+                value = f"value-{column_index}"
+
+            return FakeCell()
+
     class FakeWorkbook:
         nsheets = 1
         datemode = 0

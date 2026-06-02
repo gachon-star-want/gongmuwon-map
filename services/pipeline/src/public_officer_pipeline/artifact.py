@@ -35,13 +35,19 @@ def artifact_from_response(
     fallback_file_kind: str | None = None,
 ) -> SourceArtifact:
     file_kind = fallback_file_kind or ref.file_kind
+    content_type = str(response.headers.get("content-type", "")).lower()
+    content = response.content
+    if file_kind != "html" and (
+        "text/html" in content_type or content.lstrip().lower().startswith((b"<!doctype", b"<html"))
+    ):
+        file_kind = "html"
     if file_kind == "html":
         html = response.text
         content_bytes = None
         text_for_hash = html.encode("utf-8")
     else:
         html = ""
-        content_bytes = response.content
+        content_bytes = content
         text_for_hash = content_bytes
 
     return SourceArtifact(

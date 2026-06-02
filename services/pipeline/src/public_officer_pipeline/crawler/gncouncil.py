@@ -63,6 +63,11 @@ DOWNLOAD_HREF_PARTS = (
     "/cmm/fms/FileWebDown.do",
     "/egf/bp/common/front/",
     "/egf/bp/board/article/download",
+    "/cmmn/file/fileDown.do",
+    "/jfile/readDownloadFile.do",
+    "/file/readDownloadFile.do",
+    "boardDownload.es",
+    "download.es",
     "/cms/download.cs",
     "/cmsfile/download.do",
     "/FileDownLoad.php",
@@ -625,6 +630,37 @@ class CouncilAttachmentCrawler:
                     "/site/yangcheon/ex/bbs/View.do"
                     f"?cbIdx={bbs_view.group('cb_idx')}&bcIdx={bbs_view.group('bc_idx')}"
                 )
+            bbs_view_four_args = re.search(
+                r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'\s*,"
+                r"\s*'(?P<menu>[^']*)'\s*,\s*'(?P<ntt>[^']+)'",
+                onclick,
+            )
+            if bbs_view_four_args:
+                parts = urlsplit(self.list_url)
+                href = (
+                    f"{parts.path.replace('List.do', 'View.do')}"
+                    f"?cbIdx={bbs_view_four_args.group('cb_idx')}"
+                    f"&bcIdx={bbs_view_four_args.group('bc_idx')}"
+                    f"&nttNo={bbs_view_four_args.group('ntt')}"
+                )
+            data_view_jsp = re.search(r"dataView\.jsp\?(?P<query>[^'\" ]+)", trigger)
+            if data_view_jsp:
+                parts = urlsplit(self.list_url)
+                href = f"{parts.path.rsplit('/', 1)[0]}/dataView.jsp?{data_view_jsp.group('query')}"
+            fn_view = re.search(r"fnView\(\s*['\"]?(?P<id>[^,'\")]+)['\"]?", trigger)
+            if fn_view and (not href or _is_placeholder_href(href) or href.lower().startswith("javascript")):
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["nttId"] = fn_view.group("id")
+                detail_path = re.sub(r"(?:list|List)\.do$", "view.do", parts.path)
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
+            fn_select_doc = re.search(r"fn_selectDoc\(\s*['\"]?(?P<id>[^,'\")]+)['\"]?", trigger)
+            if fn_select_doc:
+                parts = urlsplit(self.list_url)
+                detail_path = re.sub(r"selectDocList\.do$", "selectDocView.do", parts.path)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["docSeq"] = fn_select_doc.group("id")
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
             bd_board_view = re.search(
                 r"jsView\(\s*['\"](?P<bbs_cd>[^'\"]+)['\"]\s*,\s*['\"](?P<seq>[^'\"]+)['\"]",
                 trigger,
@@ -1115,6 +1151,8 @@ def _is_detail_href(href: str) -> bool:
     return (
         "view.do" in lowered
         or "selectboarddetail.do" in lowered
+        or "dataview.jsp" in lowered
+        or "act=view" in lowered
         or "mode=view" in lowered
         or "mode=v" in lowered
         or "amode=view" in lowered

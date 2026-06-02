@@ -187,10 +187,18 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
 
 def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
     last_non_empty = -1
+    non_empty_count = 0
     for index, value in enumerate(row_values):
         if value:
             last_non_empty = index
-    return row_values[: last_non_empty + 1]
+            non_empty_count += 1
+    trimmed = row_values[: last_non_empty + 1]
+    if (
+        len(trimmed) > guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET
+        and non_empty_count <= guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET
+    ):
+        return trimmed[: guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET]
+    return trimmed
 
 
 def _load_xlsx_workbook(content: bytes):
@@ -269,20 +277,32 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
     worksheets: list[list[list[str]]] = []
     total_cells = 0
     for worksheet in workbook.sheets()[: guards.MAX_SPREADSHEET_SHEETS]:
-        total_cells = _ensure_declared_sheet_bounds(
-            sheet_name=worksheet.name,
-            rows=worksheet.nrows,
-            columns=worksheet.ncols,
-            current_total_cells=total_cells,
-        )
+        if worksheet.nrows > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+            raise guards.DocumentProcessingLimitError(
+                f"spreadsheet sheet {worksheet.name!r} has {worksheet.nrows} rows, "
+                f"exceeding limit of {guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+            )
         rows: list[list[str]] = []
+        non_empty_row_count = 0
         for row_index in range(worksheet.nrows):
-            rows.append(
+            row_values = _trim_trailing_empty_cells(
                 [
-                    _stringify(_xls_cell_value(worksheet.cell(row_index, column_index), workbook.datemode))
+                    _stringify(
+                        _xls_cell_value(worksheet.cell(row_index, column_index), workbook.datemode)
+                    )
                     for column_index in range(worksheet.ncols)
                 ]
             )
+            if not any(row_values):
+                continue
+            non_empty_row_count += 1
+            total_cells += _checked_row_width(
+                sheet_name=worksheet.name,
+                row_index=non_empty_row_count,
+                width=len(row_values),
+                current_total_cells=total_cells,
+            )
+            rows.append(row_values)
         worksheets.append(rows)
     return worksheets
 
