@@ -368,11 +368,18 @@ def _pending_evidence_note(raw: object) -> str:
     if isinstance(raw, dict):
         blocker = _optional_str(raw.get("blocker"))
         if blocker:
-            return blocker
+            return _append_attachment_legal_audit_note(blocker, raw)
         baseline_evidence = _optional_str(raw.get("baselineEvidence"))
         if baseline_evidence:
-            return baseline_evidence
+            return _append_attachment_legal_audit_note(baseline_evidence, raw)
     return "공식 업무추진비 출처 URL 검증 전입니다. adapter_required 상태로 유지합니다."
+
+
+def _append_attachment_legal_audit_note(evidence_note: str, raw: dict[str, object]) -> str:
+    audit_note = _optional_str(raw.get("attachmentLegalAuditNote"))
+    if not audit_note or audit_note in evidence_note:
+        return evidence_note
+    return f"{evidence_note} {audit_note}"
 
 
 def _verified_evidence_note(raw: object) -> str:
