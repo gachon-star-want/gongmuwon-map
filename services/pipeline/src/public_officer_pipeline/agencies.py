@@ -35,10 +35,55 @@ CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
 
 P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
+    "국방부": {
+        "sourceUrl": "https://www.mnd.go.kr/mbshome/mbs/mnd/subview.jsp?id=mnd_051300000000",
+        "dataName": "업무추진비",
+        "fileKinds": ["pdf", "hwp", "hwpx", "xlsx"],
+    },
     "교육부": {
         "sourceUrl": "https://www.moe.go.kr/boardCnts/listRenew.do?boardID=10150&m=041209&page=1&s=moe&type=default",
         "dataName": "업무추진비 사용내역",
         "fileKinds": ["pdf", "xlsx", "hwp"],
+    },
+    "법제처": {
+        "sourceUrl": "https://www.moleg.go.kr/board.es?bid=0004&mid=a10704060000&nPage=1&pageCntBySelf=40&srch_data02=230001",
+        "dataName": "업무추진비 공개",
+        "fileKinds": ["hwpx", "hwp", "xlsx", "pdf"],
+    },
+    "국세청": {
+        "sourceUrl": "https://www.nts.go.kr/nts/ad/od/openDataList.do?mi=6679",
+        "dataName": "사전정보공표 국세청 차장 업무추진비 집행내역",
+        "fileKinds": ["html", "xlsx", "pdf"],
+    },
+    "조달청": {
+        "sourceUrl": "https://www.pps.go.kr/kor/bbs/list.do?key=00095",
+        "dataName": "사전정보공표 업무추진비",
+        "fileKinds": ["xlsx", "pdf", "hwp"],
+    },
+    "관세청": {
+        "sourceUrl": "https://www.customs.go.kr/kcs/na/ntt/selectNttList.do?aditCol4=001001&aditCol5=001&bbsId=1877&mi=11000",
+        "dataName": "관세청 청장·차장 업무추진비",
+        "fileKinds": ["pdf", "xlsx", "hwp"],
+    },
+    "방위사업청": {
+        "sourceUrl": "https://www.dapa.go.kr/dapa/index.do?menuSeq=3106",
+        "dataName": "업무추진비 정보 청차장",
+        "fileKinds": ["pdf", "hwp", "xlsx"],
+    },
+    "금융위원회": {
+        "sourceUrl": "https://www.fsc.go.kr/in050801",
+        "dataName": "위원장 업무추진비",
+        "fileKinds": ["xlsx"],
+    },
+    "개인정보보호위원회": {
+        "sourceUrl": "https://m.pipc.go.kr/np/cop/bbs/selectBoardList.do?bbsId=BS201&mCode=A030020000",
+        "dataName": "업무추진비 사용내역",
+        "fileKinds": ["xlsx", "pdf", "hwp"],
+    },
+    "선거관리위원회": {
+        "sourceUrl": "https://open.nec.go.kr/TaskPromotionFeePublicationList",
+        "dataName": "중앙선거관리위원회 업무추진비 집행내역",
+        "fileKinds": ["xlsx", "pdf", "hwp"],
     },
     "국가데이터처": {
         "sourceUrl": "https://www.kostat.go.kr/board.es?act=view&bid=11837&list_no=431045&mid=a10104010100&ref_bid=11835%2C11836%2C11837&tag=",
@@ -203,17 +248,16 @@ P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
 }
 P2_CENTRAL_STATE_PLACE_LEVEL_CANDIDATES = {
     "국가보훈부",
+    "경찰청",
     "중소벤처기업부",
+    "통일부",
+    "보건복지부",
 }
 P2_CENTRAL_STATE_DRYRUN_NO_RECENT = {
     "농림축산식품부",
     "인사혁신처",
 }
-P2_CENTRAL_STATE_PDF_VISION_HOLD = {
-    "보건복지부",
-    "경찰청",
-    "통일부",
-}
+P2_CENTRAL_STATE_PDF_VISION_HOLD: set[str] = set()
 P2_CENTRAL_STATE_DOWNLOAD_ADAPTER_HOLD = {
     "해양수산부",
     "질병관리청",
@@ -9922,13 +9966,40 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
             else "adapter_hold"
         )
         if is_place_level_candidate:
-            evidence = (
-                f"{name} 공식 업무추진비 게시판에서 central_state_attachment_board "
-                "목록->상세->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 최근 "
-                "12개월 원문은 사용일자·사용처/장소·집행금액 place-level 행을 "
-                "포함하며, 원문 파일 자체를 재배포하지 않고 사실 데이터만 "
-                "마스킹·정규화합니다."
-            )
+            if name == "경찰청":
+                evidence = (
+                    "경찰청 공식 업무추진비 게시판에서 central_state_attachment_board "
+                    "목록->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 2026년 4월 "
+                    "경무인사기획관·차장·대변인 text PDF 3건은 raw/normalized 34행, "
+                    "범죄예방대응국장 text PDF 1건은 raw/normalized 10행으로 검증했고 "
+                    "production에 적재했습니다. 같은 목록의 치안정보국장 PDF는 "
+                    "pdftotext 결과가 1 byte 수준인 scanned PDF라 vision/OCR 없이 "
+                    "row를 보장할 수 없어 첨부 URL과 오류를 증거로 남기고 적재에서 "
+                    "제외했습니다."
+                )
+            elif name == "통일부":
+                evidence = (
+                    "통일부 공식 장차관 업무추진비 게시판의 2026년 3~4월 text PDF "
+                    "5건을 central_state_attachment_board dry-run으로 검증했습니다. "
+                    "원문은 사용일자·사용장소·사용금액·대상인원 place-level 행을 "
+                    "포함했고 raw/normalized 96행을 production에 적재했습니다."
+                )
+            elif name == "보건복지부":
+                evidence = (
+                    "보건복지부 공식 업무추진비 게시판의 2026년 장차관 및 실국장급 "
+                    "text PDF 5건을 central_state_attachment_board dry-run으로 "
+                    "검증했습니다. 원문은 사용일자·사용장소·사용내역·사용금액 "
+                    "place-level 행을 포함했고 raw/normalized 1,241행을 production에 "
+                    "적재했습니다."
+                )
+            else:
+                evidence = (
+                    f"{name} 공식 업무추진비 게시판에서 central_state_attachment_board "
+                    "목록->상세->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 최근 "
+                    "12개월 원문은 사용일자·사용처/장소·집행금액 place-level 행을 "
+                    "포함하며, 원문 파일 자체를 재배포하지 않고 사실 데이터만 "
+                    "마스킹·정규화합니다."
+                )
         elif is_no_recent:
             evidence = (
                 f"{name} 공식 업무추진비 게시판을 central_state_attachment_board로 "
@@ -9969,6 +10040,18 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
             "followDetail": True,
             "pageParam": "page",
             "licenseUrl": "https://www.kogl.or.kr",
+            **(
+                {
+                    "blockedAttachments": [
+                        {
+                            "url": "https://www.police.go.kr/component/file/ND_fileDownload.do?q_fileSn=159835&q_fileId=38fd553b-a67f-4d62-b2cf-1576dda2ff4c",
+                            "reason": "pdftotext extracted only a form-feed byte; scanned PDF requires vision/OCR fallback.",
+                        }
+                    ]
+                }
+                if name == "경찰청"
+                else {}
+            ),
             **(
                 {"evidenceNote": evidence}
                 if is_place_level_candidate

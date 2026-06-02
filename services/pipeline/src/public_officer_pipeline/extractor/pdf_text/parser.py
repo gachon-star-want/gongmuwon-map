@@ -44,6 +44,10 @@ LINE_GRAMMAR_ORDER: tuple[str, ...] = (
     "user_date_place_purpose_amount_party",
     "purpose_amount_party_place_date_user",
     "datetime_purpose_amount_method_place",
+    "central_state_purpose_place_amount",
+    "central_state_amount_place_purpose",
+    "central_state_place_purpose_amount",
+    "central_state_user_place_purpose_amount",
     "generic_text_row",
 )
 

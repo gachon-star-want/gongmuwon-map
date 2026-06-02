@@ -87,6 +87,22 @@ def _build_default_line_grammars() -> list[PdfTextGrammar]:
             _to_parse_fn(text_parser._parse_pdf_text_datetime_purpose_amount_method_place_line),
         ),
         LineGrammar(
+            "central_state_purpose_place_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_purpose_place_amount_line),
+        ),
+        LineGrammar(
+            "central_state_amount_place_purpose",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_amount_place_purpose_line),
+        ),
+        LineGrammar(
+            "central_state_place_purpose_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_place_purpose_amount_line),
+        ),
+        LineGrammar(
+            "central_state_user_place_purpose_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_user_place_purpose_amount_line),
+        ),
+        LineGrammar(
             "generic_text_row",
             _to_parse_fn(text_parser._parse_pdf_text_generic_row),
         ),

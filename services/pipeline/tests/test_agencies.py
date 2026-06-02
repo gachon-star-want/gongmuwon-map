@@ -320,6 +320,7 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
     ]
     assert {agency.short_name for agency in central_candidates} == {
         "재정경제부",
+        "국방부",
         "교육부",
         "문화체육관광부",
         "농림축산식품부",
@@ -337,6 +338,7 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         "교육부",
         "법무부",
         "행정안전부",
+        "법제처",
         "국가데이터처",
         "국가보훈부",
         "국가데이터처",
@@ -349,6 +351,9 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         "질병관리청",
         "병무청",
         "국가유산청",
+        "국세청",
+        "관세청",
+        "조달청",
         "기상청",
         "행정중심복합도시건설청",
         "새만금개발청",
@@ -356,9 +361,13 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         "소방청",
         "해양경찰청",
         "우주항공청",
+        "방위사업청",
         "공정거래위원회",
+        "금융위원회",
+        "개인정보보호위원회",
+        "선거관리위원회",
     }
-    assert len(adapter_required_central_agencies) == 27
+    assert len(adapter_required_central_agencies) == 18
     assert all(
         agency.source_pattern["baselineSourceUrl"].startswith("https://www.org.go.kr/")
         and "정부조직관리정보시스템" in agency.source_pattern["baselineEvidence"]

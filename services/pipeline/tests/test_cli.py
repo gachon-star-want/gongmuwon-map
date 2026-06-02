@@ -156,6 +156,49 @@ class _FakeResolver:
 
 
 @pytest.mark.asyncio
+async def test_extract_detail_rows_dispatches_hwp(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured = {}
+
+    def fake_extract_hwp_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
+        captured["content"] = content
+        captured["fallback_department"] = fallback_department
+        return _fake_row_extractor(
+            PostDetail(
+                agency_id=Agency().id,
+                url="https://example.com",
+                title="테스트",
+                published_at=date(2026, 5, 1),
+                department_name=fallback_department,
+                file_kind="hwp",
+                html="",
+                content_bytes=content,
+                fetched_at=datetime(2026, 5, 1, 12),
+                hash_sha256="hash",
+            )
+        )
+
+    monkeypatch.setattr(cli, "extract_hwp_rows", fake_extract_hwp_rows)
+
+    rows = await cli._extract_detail_rows(
+        PostDetail(
+            agency_id=Agency().id,
+            url="https://example.com/hwp",
+            title="HWP",
+            published_at=date(2026, 5, 1),
+            department_name="정부법무공단",
+            file_kind="hwp",
+            html="",
+            content_bytes=b"hwp",
+            fetched_at=datetime(2026, 5, 1, 12),
+            hash_sha256="hash",
+        )
+    )
+
+    assert len(rows) == 1
+    assert captured == {"content": b"hwp", "fallback_department": "정부법무공단"}
+
+
+@pytest.mark.asyncio
 async def test_run_supported_agency_blocks_adapter_required_before_network(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -307,24 +350,24 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 595
+    assert output["summary"]["verified_in_code"] == 598
     assert output["summary"]["pending"] == 0
     assert output["summary"]["legal_hold"] == 101
-    assert output["summary"]["source_not_found"] == 95
+    assert output["summary"]["source_not_found"] == 86
     assert output["summary"]["no_recent_data"] == 1311
-    assert output["summary"]["pdf_vision_hold"] == 43
-    assert output["summary"]["adapter_hold"] == 57
+    assert output["summary"]["pdf_vision_hold"] == 40
+    assert output["summary"]["adapter_hold"] == 66
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 245
     assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 101
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
-    assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 2
-    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 27
+    assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 5
+    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 18
     assert output["summary"]["priority_group_counts"]["p2"]["no_recent_data"] == 2
-    assert output["summary"]["priority_group_counts"]["p2"]["pdf_vision_hold"] == 3
-    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 26
+    assert output["summary"]["priority_group_counts"]["p2"]["pdf_vision_hold"] == 0
+    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 35
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
     assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 6
     assert output["summary"]["priority_group_counts"]["p3"]["pending"] == 0
@@ -347,7 +390,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 595
+    assert output["summary"]["verified_in_code"] == 598
     assert "entries" not in output
 
 

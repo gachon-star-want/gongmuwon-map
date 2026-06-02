@@ -53,6 +53,54 @@ def test_pdf_text_parser_uses_earlier_grammar_when_multiple_patterns_match() -> 
     assert result.rows[0].place_text == "김삼보"
 
 
+def test_pdf_text_parser_selects_central_state_grammars() -> None:
+    line_grammars, whole_text_grammars = build_default_grammars()
+    samples = [
+        (
+            "central_state_purpose_place_amount",
+            "경찰청 범죄예방대응국장",
+            "2026-04-06 성매매광고차단시스템 개선 사전검토     커피빈코리아 순화점      46,000       6명     카드",
+            "커피빈코리아 순화점",
+            46000,
+        ),
+        (
+            "central_state_amount_place_purpose",
+            "통일부",
+            "2026-04-02   12:44    178,000        해초가           간담회 개최     4",
+            "해초가",
+            178000,
+        ),
+        (
+            "central_state_place_purpose_amount",
+            "보건복지부",
+            "2026-03-03           도마              업무홍보 관련 협의      400,000     14",
+            "도마",
+            400000,
+        ),
+        (
+            "central_state_user_place_purpose_amount",
+            "보건복지부",
+            "대변인 2026-01-06 11:35 한화커넥트 (주)     출입기자단 간담회     71,000 4 카드",
+            "한화커넥트 (주)",
+            71000,
+        ),
+    ]
+
+    for expected_grammar, department, text, place_text, amount in samples:
+        result = parse_pdf_text_with_diagnostics(
+            text,
+            fallback_department=department,
+            line_grammars=line_grammars,
+            whole_text_grammars=whole_text_grammars,
+        )
+
+        winners = {diag.grammar_name for diag in result.diagnostics if diag.row_count > 0}
+        assert winners == {expected_grammar}
+        assert len(result.rows) == 1
+        assert result.rows[0].place_text == place_text
+        assert result.rows[0].amount == amount
+
+
 def test_pdf_text_parser_uses_whole_text_fallback_only_when_line_parsing_fails() -> None:
     line_grammars, whole_text_grammars = build_default_grammars()
     layout_text = """
