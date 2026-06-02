@@ -93,6 +93,13 @@ class SourceRegistryEntry(BaseModel):
     verification_status: VerificationStatus
     verification_status_label: str
     source_url: str | None
+    list_url: str | None = None
+    detail_url: str | None = None
+    attachment_url: str | None = None
+    copyright_url: str | None = None
+    public_works_policy_url: str | None = None
+    commercial_use_status: str | None = None
+    derivative_use_status: str | None = None
     source_file_kinds: list[str]
     baseline_source_url: str | None
     homepage: str | None
@@ -293,6 +300,7 @@ def _entry(
     verified_by: str | None,
     evidence_note: str,
 ) -> SourceRegistryEntry:
+    raw = agency.source_pattern if isinstance(agency.source_pattern, dict) else {}
     return SourceRegistryEntry(
         agency_id=str(agency.id),
         name=agency.name,
@@ -317,6 +325,13 @@ def _entry(
         verification_status=verification_status,
         verification_status_label=VERIFICATION_STATUS_LABELS[verification_status],
         source_url=source_url,
+        list_url=_optional_str(raw.get("sourceUrl") or raw.get("listUrl")),
+        detail_url=_optional_str(raw.get("detailUrl")),
+        attachment_url=_optional_str(raw.get("attachmentUrl")),
+        copyright_url=_optional_str(raw.get("copyrightUrl")),
+        public_works_policy_url=_optional_str(raw.get("publicWorksPolicyUrl")),
+        commercial_use_status=_optional_str(raw.get("commercialUseStatus")),
+        derivative_use_status=_optional_str(raw.get("derivativeUseStatus")),
         source_file_kinds=source_file_kinds,
         baseline_source_url=baseline_source_url,
         homepage=agency.homepage,

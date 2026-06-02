@@ -445,6 +445,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         entry for entry in non_capital_entries if entry.short_name == "강원특별자치도의회"
     )
     assert gangwon_city.verification_status == "legal_hold"
+    assert gangwon_city.list_url == (
+        "https://state.gwd.go.kr/portal/administration/opendata/propulsionCost/governor"
+    )
+    assert gangwon_city.copyright_url == "https://state.gwd.go.kr/portal/services/copyright"
+    assert gangwon_city.public_works_policy_url == (
+        "https://state.gwd.go.kr/portal/services/copyright"
+    )
+    assert gangwon_city.commercial_use_status == "not_confirmed_without_kogl_type1"
+    assert gangwon_city.derivative_use_status == "not_confirmed_without_kogl_type1"
     assert "도지사·부지사 업무추진비 목록" in gangwon_city.evidence_note
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
     assert gangwon_council.verification_status == "legal_hold"
@@ -471,16 +480,50 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert donghae_city.verification_status == "legal_hold"
     assert "koglUseAt=N" in donghae_city.evidence_note
     assert taebaek_council.verification_status == "legal_hold"
+    assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
+    assert taebaek_council.detail_url == (
+        "https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112"
+    )
+    assert taebaek_council.attachment_url == (
+        "https://council.taebaek.go.kr/Mboard/download.html?"
+        "table=board_official&column=userfile&uid=112"
+    )
+    assert taebaek_council.copyright_url == "https://www.taebaek.go.kr/www/sub.do?key=590"
+    assert taebaek_council.public_works_policy_url == (
+        "https://www.taebaek.go.kr/www/sub.do?key=590"
+    )
+    assert taebaek_council.commercial_use_status == "not_confirmed_without_kogl_mark"
+    assert taebaek_council.derivative_use_status == "not_confirmed_without_kogl_mark"
     assert "태백시의회 정보공개 업무추진비 현황 목록" in taebaek_council.evidence_note
     assert "공공누리가 부착되지 않은 자료" in taebaek_council.evidence_note
     assert gangneung_city.verification_status == "legal_hold"
+    assert gangneung_city.copyright_url == "https://www.gn.go.kr/www/sub.do?key=782"
+    assert gangneung_city.public_works_policy_url == (
+        "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20"
+    )
+    assert gangneung_city.commercial_use_status == "prohibited_kogl_type4_noncommercial"
+    assert gangneung_city.derivative_use_status == "prohibited_kogl_type4_no_derivatives"
     assert "공공누리 제4유형" in gangneung_city.evidence_note
     assert hoengseong_council.verification_status == "legal_hold"
+    assert hoengseong_council.detail_url == (
+        "https://www.hsg.go.kr/council/selectBbsNttView.do?"
+        "key=1464&bbsNo=41&nttNo=421094&pageUnit=10&searchCnd=all"
+    )
+    assert hoengseong_council.attachment_url == (
+        "https://www.hsg.go.kr/council/downloadBbsFile.do?atchmnflNo=547678"
+    )
+    assert hoengseong_council.copyright_url == "https://www.hsg.go.kr/www/contents.do?key=906"
+    assert hoengseong_council.public_works_policy_url == (
+        "https://www.hsg.go.kr/www/contents.do?key=906"
+    )
     assert "횡성군의회 공식 경로가 횡성군 통합 도메인" in hoengseong_council.evidence_note
     assert "공공누리가 부착되지 않은 자료" in hoengseong_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
     assert yanggu_council.verification_status == "no_recent_data"
+    assert yanggu_council.list_url == "http://www.ygcl.go.kr/portal/F50000/F50700/boardList"
+    assert yanggu_council.commercial_use_status == "not_applicable_no_recent_data"
+    assert yanggu_council.derivative_use_status == "not_applicable_no_recent_data"
     assert "총 0개의 글" in yanggu_council.evidence_note
     assert "2020년 이후 확장 검색" in yanggu_council.evidence_note
     assert goseong_city.verification_status == "legal_hold"

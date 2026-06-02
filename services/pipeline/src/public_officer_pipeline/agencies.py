@@ -3207,6 +3207,147 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     },
 }
 
+GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
+    "강원특별자치도청": {
+        "copyrightUrl": "https://state.gwd.go.kr/portal/services/copyright",
+        "publicWorksPolicyUrl": "https://state.gwd.go.kr/portal/services/copyright",
+    },
+    "춘천시청": {
+        "copyrightUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
+        "publicWorksPolicyUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
+    },
+    "원주시청": {
+        "copyrightUrl": "https://www.wonju.go.kr/www/sub.do?key=251",
+        "publicWorksPolicyUrl": "https://www.wonju.go.kr/www/contents.do?key=5855",
+    },
+    "원주시의회": {
+        "copyrightUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
+        "publicWorksPolicyUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
+    },
+    "강릉시청": {
+        "copyrightUrl": "https://www.gn.go.kr/www/sub.do?key=782",
+        "publicWorksPolicyUrl": "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20",
+        "commercialUseStatus": "prohibited_kogl_type4_noncommercial",
+        "derivativeUseStatus": "prohibited_kogl_type4_no_derivatives",
+    },
+    "태백시청": {
+        "detailUrl": (
+            "https://www.taebaek.go.kr/www/selectBbsNttView.do?"
+            "key=1552&bbsNo=132&nttNo=180820&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1&integrDeptCode="
+        ),
+        "attachmentUrl": "https://www.taebaek.go.kr/www/downloadBbsFile.do?key=1552&atchmnflNo=123047",
+        "copyrightUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "publicWorksPolicyUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+    },
+    "속초시청": {
+        "copyrightUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
+        "publicWorksPolicyUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
+    },
+    "삼척시청": {
+        "publicWorksPolicyUrl": "https://www.samcheok.go.kr/opendata/03211.web",
+    },
+    "홍천군청": {
+        "detailUrl": (
+            "https://www.hongcheon.go.kr/www/selectBbsNttView.do?"
+            "key=175&bbsNo=61&nttNo=140628&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1"
+        ),
+        "attachmentUrl": (
+            "https://www.hongcheon.go.kr/www/downloadBbsFile.do?"
+            "key=175&bbsNo=61&atchmnflNo=97792"
+        ),
+        "copyrightUrl": "https://www.hongcheon.go.kr/www/sub.do?key=672",
+        "publicWorksPolicyUrl": "https://www.hongcheon.go.kr/www/sub.do?key=672",
+    },
+    "홍천군의회": {
+        "detailUrl": (
+            "https://www.hccouncil.go.kr/council/kr/costBBSview.do?"
+            "uid=CFEC26ED8CDDAD46D410197401A70BC2&schwrd=&flag=all&th_sch=&page=1&list_style="
+        ),
+        "attachmentUrl": (
+            "https://www.hccouncil.go.kr/council/kr/bbs/download.do?"
+            "bbs_id=cost&uid=5DF9FCDC94C6A9B6319E659613B027F7"
+        ),
+    },
+    "횡성군청": {
+        "detailUrl": (
+            "https://www.hsg.go.kr/www/selectBbsNttView.do?"
+            "key=909&bbsNo=79&nttNo=421637&pageUnit=10&searchCnd=all"
+        ),
+        "attachmentUrl": "https://www.hsg.go.kr/www/downloadBbsFile.do?atchmnflNo=548220",
+        "copyrightUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "publicWorksPolicyUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+    },
+    "영월군의회": {
+        "detailUrl": (
+            "https://council.yw.go.kr/content/news/info.html?"
+            "gtid=info&pg=vv&sid=1000&page=1&fidx=25270&opt=&sword="
+        ),
+        "attachmentUrl": "https://council.yw.go.kr/gtb_download.php?gtid=info&fid=17971",
+    },
+    "평창군청": {
+        "detailUrl": "https://www.pc.go.kr/portal/info/info-finance/info-finance-history?articleSeq=328009",
+        "attachmentUrl": "https://www.pc.go.kr/egf/bp/board/article/download?fileSeq=159201",
+        "copyrightUrl": "https://www.pc.go.kr/portal/useguide/useguide-copyright",
+        "publicWorksPolicyUrl": "https://www.pc.go.kr/portal/useguide/useguide-copyright",
+    },
+    "평창군의회": {
+        "detailUrl": (
+            "https://cl.happy700.or.kr/kr/activity/bbsCost.do?"
+            "reform=view&key=090d7521a4b64a7bd650a3f37386f025e07a6662c9a6b29a3b7b57ab0df5132f42259a6e23507164"
+            "&pageNum=1&flag=&keyword="
+        ),
+        "attachmentUrl": (
+            "https://cl.happy700.or.kr/bbsAttachDownload.do?"
+            "key=765f146ec1965723e003072875c1736357893cac6ca8670263b309a7e64e038d4122277cd4078fd4"
+        ),
+    },
+    "정선군청": {
+        "detailUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense?articleSeq=306517",
+        "attachmentUrl": (
+            "https://www.jeongseon.go.kr/egf/bp/board/article/download?"
+            "fileSeq=166458"
+        ),
+    },
+    "정선군의회": {
+        "detailUrl": (
+            "https://assembly.jeongseon.go.kr/source/kr/info/info3.html?"
+            "mode=view&number=A82C8AD6935C68032FC70270EF288FC8&table=board_business&page=1&flag=&key="
+        ),
+        "attachmentUrl": (
+            "https://assembly.jeongseon.go.kr/Mboard/download.html?"
+            "table=board_business&column=userfile&uid=A82C8AD6935C68032FC70270EF288FC8"
+        ),
+    },
+    "철원군청": {
+        "copyrightUrl": "https://www.cwg.go.kr/www/contents.do?key=463",
+        "publicWorksPolicyUrl": "https://www.cwg.go.kr/www/contents.do?key=190",
+    },
+    "철원군의회": {
+        "copyrightUrl": "https://www.cwg.go.kr/www/contents.do?key=463",
+        "publicWorksPolicyUrl": "https://www.cwg.go.kr/www/contents.do?key=190",
+    },
+    "화천군청": {
+        "copyrightUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
+        "publicWorksPolicyUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
+    },
+    "양구군청": {
+        "copyrightUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
+        "publicWorksPolicyUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
+    },
+    "인제군청": {
+        "copyrightUrl": "https://www.inje.go.kr/portal/optional/copyright",
+        "publicWorksPolicyUrl": "https://www.inje.go.kr/portal/optional/copyright",
+    },
+    "고성군청": {
+        "copyrightUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
+        "publicWorksPolicyUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
+    },
+    "양양군청": {
+        "copyrightUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
+        "publicWorksPolicyUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
+    },
+}
+
 NON_CAPITAL_BASIC_REGION_GROUPS = [
     (
         "busan",
@@ -4188,6 +4329,26 @@ def _apply_legal_hold(
     source_pattern.update({"holdStatus": "legal_hold", "blocker": blocker})
 
 
+def _apply_gangwon_legal_evidence(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region != "강원특별자치도":
+        return
+    hold_status = source_pattern.get("holdStatus")
+    if hold_status not in {"legal_hold", "no_recent_data"}:
+        return
+    for key, value in GANGWON_LEGAL_EVIDENCE_OVERRIDES.get(short_name, {}).items():
+        source_pattern.setdefault(key, value)
+    if hold_status == "no_recent_data":
+        source_pattern.setdefault("commercialUseStatus", "not_applicable_no_recent_data")
+        source_pattern.setdefault("derivativeUseStatus", "not_applicable_no_recent_data")
+        return
+    source_pattern.setdefault("commercialUseStatus", "not_confirmed_without_kogl_type1")
+    source_pattern.setdefault("derivativeUseStatus", "not_confirmed_without_kogl_type1")
+
+
 def _apply_gyeongsang_source_not_found(
     source_pattern: dict[str, object],
     parent_region: str,
@@ -4269,6 +4430,9 @@ def non_capital_agencies() -> list[Agency]:
         if not office_board:
             office_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(office_short_name)
             _apply_legal_hold(office_source_pattern, office_blocker)
+            _apply_gangwon_legal_evidence(
+                office_source_pattern, parent_region, office_short_name
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
 
         council_board = NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS.get(council_short_name)
@@ -4312,6 +4476,9 @@ def non_capital_agencies() -> list[Agency]:
         if not council_board:
             council_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(council_short_name)
             _apply_legal_hold(council_source_pattern, council_blocker)
+            _apply_gangwon_legal_evidence(
+                council_source_pattern, parent_region, council_short_name
+            )
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
 
         agencies.extend(
@@ -4457,8 +4624,14 @@ def non_capital_agencies() -> list[Agency]:
             )
             if office_blocker:
                 office_source_pattern.update({"holdStatus": "legal_hold", **office_blocker})
+            _apply_gangwon_legal_evidence(
+                office_source_pattern, parent_region, office_short_name
+            )
             if council_blocker and not council_board:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
+            _apply_gangwon_legal_evidence(
+                council_source_pattern, parent_region, council_short_name
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
             agencies.extend(
