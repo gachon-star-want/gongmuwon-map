@@ -242,6 +242,67 @@ def test_attachment_crawler_extracts_seongnam_data_view_and_hwpx_downloads() -> 
     assert download_refs[0].file_kind == "hwpx"
 
 
+def test_attachment_crawler_extracts_gunwi_page_detail_and_board_download() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="군위군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="대구광역시",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160",
+                "fileKinds": ["pdf"],
+                "followDetail": True,
+                "pageParam": "pageNo",
+            },
+        )
+    )
+
+    detail_refs = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>293</td>
+            <td class="subject">
+              <a href="?mnu_uid=160&amp;bod_uid=140070&amp;pageNo=1&amp;cmd=2">
+                <span class="bod_title">군위읍장 업무추진비 집행내역(2026년 1분기)</span>
+              </a>
+            </td>
+            <td>군위읍</td>
+            <td>2026-06-01</td>
+            <td><img src="/Manager/images/ico_file.gif" alt="첨부파일 1개" /></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(detail_refs) == 1
+    parsed_detail = urlsplit(detail_refs[0].url)
+    assert parsed_detail.path == "/ko/page.do"
+    assert parse_qs(parsed_detail.query)["cmd"] == ["258"]
+    assert parse_qs(parsed_detail.query)["bod_uid"] == ["140070"]
+
+    download_refs = crawler._parse_detail_downloads(
+        """
+        <p class="file">
+          <a title="업무추진비 집행내역(2026년 1분기).pdf 파일 다운로드"
+             href="/board_download.do;jsessionid=ABC?file_uid=175625">
+            업무추진비 집행내역(2026년 1분기).pdf
+          </a>
+        </p>
+        """,
+        detail_refs[0],
+    )
+
+    assert len(download_refs) == 1
+    parsed_download = urlsplit(download_refs[0].url)
+    assert parsed_download.path == "/board_download.do;jsessionid=ABC"
+    assert parse_qs(parsed_download.query) == {"file_uid": ["175625"]}
+    assert download_refs[0].file_kind == "pdf"
+
+
 def test_attachment_crawler_extracts_jindo_cms_downloads_from_detail_page() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
@@ -1399,6 +1460,59 @@ def test_attachment_crawler_extracts_egov_direct_downloads_from_list() -> None:
     assert refs[0].file_kind == "pdf"
 
 
+def test_attachment_crawler_extracts_egov_detail_downloads_with_generic_download_label() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="양주시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경기도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.yangju.go.kr/www/selectBbsNttList.do?bbsNo=30&key=234",
+                "fileKinds": ["xlsx"],
+                "followDetail": True,
+                "pageParam": "pageIndex",
+            },
+        )
+    )
+    detail = PostRef(
+        agency_id=crawler.agency.id,
+        url=(
+            "https://www.yangju.go.kr/www/selectBbsNttView.do"
+            "?key=234&bbsNo=30&nttNo=204968&pageIndex=1"
+        ),
+        title="시민안전과 업무추진비 집행내역(2026년 5월)",
+        department_name="양주시청 시민안전과",
+        file_kind="html",
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <li>
+          <div class="down_view">
+            <span><img src="/common/images/board/file/ico_xlsx.gif" alt="xlsx파일첨부" />
+              업무추진비 집행내역(시민안전과)_2026년 5월.xlsx
+            </span>
+            <a href="/www/downloadBbsFile.do?key=234&amp;bbsNo=30&amp;atchmnflNo=198345"
+               title="파일 다운로드" class="file_down">다운로드</a>
+            <a href="/www/previewUrl.do?key=234&amp;bbsNo=30&amp;atchmnflNo=198345"
+               class="file_view">미리보기</a>
+          </div>
+        </li>
+        """,
+        detail,
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.yangju.go.kr/www/downloadBbsFile.do?key=234&bbsNo=30&atchmnflNo=198345"
+    )
+    assert refs[0].file_kind == "xlsx"
+    assert refs[0].department_name == "양주시청 시민안전과"
+
+
 def test_attachment_crawler_extracts_gangbuk_office_direct_download_table() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
@@ -1529,6 +1643,7 @@ def test_attachment_crawler_ignores_synap_and_convert_previews() -> None:
     assert gncouncil._is_download_href(
         "/cwsboard/board.do?mode=download&bid=179&cid=1451405704&filename=145140.xlsx"
     )
+    assert gncouncil._is_download_href("/boardFileDown.ac?file_id=70a1ca97f9f94e8281ebf0bcb436f609")
     assert not gncouncil._is_download_href(
         "/common/program/synap.jsp?fileName=%2FDATA%2Fbbs%2F715%2Fpreview.xlsx"
     )
@@ -2083,6 +2198,51 @@ def test_attachment_crawler_extracts_board_view_renewal_detail_links() -> None:
     )
     assert details[0].department_name == "평택시청 반도체AI과"
     assert details[0].published_at and details[0].published_at.isoformat() == "2026-05-29"
+
+
+def test_attachment_crawler_extracts_uijeongbu_board_view_detail_links() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="의정부시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="경기도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.ui4u.go.kr/portal/bbs/list.do?mId=0114010300&ptIdx=25",
+                "fileKinds": ["xlsx", "pdf"],
+                "followDetail": True,
+                "pageParam": "pageIndex",
+            },
+        )
+    )
+
+    details = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>4578</td>
+            <td>
+              <a href="#" title="2026년 5월 업무추진비 사용내역 공개(도시재생과)"
+                 onclick="boardView('portal', 'listForm', 'EUNA7', 'Y', '363518', '25', '0114010300', '1'); return false;">
+                2026년 5월 업무추진비 사용내역 공개(도시재생과)
+              </a>
+            </td>
+            <td>첨부</td>
+            <td>2026.06.01</td>
+            <td>2</td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(details) == 1
+    assert details[0].url == (
+        "https://www.ui4u.go.kr/portal/bbs/view.do?mId=0114010300&bIdx=363518&ptIdx=25"
+    )
+    assert details[0].department_name == "의정부시청 도시재생과"
+    assert details[0].published_at and details[0].published_at.isoformat() == "2026-06-01"
 
 
 def test_attachment_crawler_extracts_inline_post_detail_links() -> None:

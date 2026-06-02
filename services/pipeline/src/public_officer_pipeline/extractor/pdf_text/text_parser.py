@@ -89,6 +89,25 @@ PDF_TEXT_USER_PLACE_PURPOSE_AMOUNT_ROW_RE = re.compile(
     r"(?P<party_size>\d+|-)\s+"
     r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
 )
+PDF_TEXT_USER_PLACE_PURPOSE_CATEGORY_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?:(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+(?P<party_size>\d+|-)|"
+    r"(?P<party_size_before>\d+|-)\s+(?P<amount_after>\d{1,3}(?:,\d{3})+|\d+))\s+"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<expense_category>\S+)\s*$"
+)
+PDF_TEXT_COMPACT_DATE_PURPOSE_PLACE_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{6})\s+"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_PURPOSE_PLACE_AMOUNT_ROW_RE = re.compile(
     r"^\s*\d+\s+"
     r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
@@ -183,6 +202,9 @@ PDF_TEXT_PURPOSE_STARTERS = (
     "의장 수행",
     "의장실",
     "의정활동",
+    "의정 주요",
+    "의회 소속직원",
+    "교섭단체",
     "생일",
     "주말",
     "노동절",
@@ -207,6 +229,17 @@ PDF_TEXT_PURPOSE_STARTERS = (
     "의원 역량강화",
     "의정활동 홍보지원",
     "정월대보름",
+    "당면업무추진",
+    "시정홍보",
+    "지방정부",
+    "문화예술",
+    "체육진흥",
+    "기후에너지",
+    "사회경제",
+    "자매도시",
+    "복지사각지대",
+    "광명시",
+    "보건위생",
 )
 PDF_TEXT_PURPOSE_STARTER_PATTERNS = (
     re.compile(r"제\d+회"),
@@ -305,6 +338,18 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     )
     if user_place_purpose_amount:
         return user_place_purpose_amount
+    user_place_purpose_category = _parse_pdf_text_user_place_purpose_category_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if user_place_purpose_category:
+        return user_place_purpose_category
+    compact_date_purpose_place = _parse_pdf_text_compact_date_purpose_place_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if compact_date_purpose_place:
+        return compact_date_purpose_place
     user_amount_purpose = _parse_pdf_text_user_amount_purpose_line(line, fallback_department=fallback_department)
     if user_amount_purpose:
         return user_amount_purpose
@@ -690,6 +735,89 @@ def _parse_pdf_text_user_place_purpose_amount_line(
     )
 
 
+def _parse_pdf_text_user_place_purpose_category_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_USER_PLACE_PURPOSE_CATEGORY_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place, purpose = _split_place_and_purpose_by_columns(row_match.group("body").strip())
+    if not place or not purpose:
+        return None
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size") or row_match.group("party_size_before")
+    amount = row_match.group("amount") or row_match.group("amount_after")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": amount,
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("user"),
+            row_match.group("date"),
+            row_match.group("time"),
+            place,
+            purpose,
+            amount,
+            party_size,
+            payment_method,
+            row_match.group("expense_category"),
+        ],
+    )
+
+
+def _parse_pdf_text_compact_date_purpose_place_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_COMPACT_DATE_PURPOSE_PLACE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": row_match.group("date"),
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("user"),
+            row_match.group("date"),
+            purpose,
+            party_size,
+            place,
+            row_match.group("amount"),
+            payment_method,
+        ],
+    )
+
+
 def _parse_pdf_text_user_amount_purpose_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:
     row_match = PDF_TEXT_USER_AMOUNT_PURPOSE_ROW_RE.match(line)
     if not row_match:
@@ -827,6 +955,16 @@ def _normalize_pdf_text_fragment(value: str) -> str:
 def _clean_pdf_place_fragment(value: str) -> str:
     normalized = _normalize_pdf_text_fragment(value)
     return re.sub(r"\s+(?:의원|담당자)$", "", normalized).strip()
+
+
+def _looks_like_non_place_expense(place: str, purpose: str, payment_method: str | None) -> bool:
+    compact_place = re.sub(r"\s+", "", place)
+    if "○" in compact_place:
+        return True
+    compact_purpose = re.sub(r"\s+", "", purpose)
+    if payment_method in {"현금", "계좌이체"} and any(token in compact_purpose for token in ("경조사", "축의금", "조의금")):
+        return True
+    return False
 
 
 def _parse_pdf_text_purpose_first_line(line: str, *, fallback_department: str) -> ParsedExpenseRow | None:

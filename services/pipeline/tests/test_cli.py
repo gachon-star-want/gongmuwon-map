@@ -240,9 +240,9 @@ def test_agencies_for_scope_returns_expected_registry_slices() -> None:
     assert len(cli._agencies_for_scope("jeolla")) == 88
     assert len(cli._agencies_for_scope("chungcheong")) == 70
     assert len(cli._agencies_for_scope("gangwon")) == 38
-    assert len(cli._agencies_for_scope("jeju")) == 2
-    assert len(cli._agencies_for_scope("non-capital")) == 348
-    assert len(cli._agencies_for_scope("nationwide")) == 2200
+    assert len(cli._agencies_for_scope("jeju")) == 4
+    assert len(cli._agencies_for_scope("non-capital")) == 350
+    assert len(cli._agencies_for_scope("nationwide")) == 2202
 
 
 def test_print_source_registry_reports_capital_area_verification_state(
@@ -272,18 +272,18 @@ def test_print_source_registry_reports_nationwide_verification_state(
     output = json.loads(capsys.readouterr().out)
 
     assert result == 0
-    assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 145
-    assert output["summary"]["pending"] == 90
-    assert output["summary"]["legal_hold"] == 124
-    assert output["summary"]["source_not_found"] == 184
+    assert output["summary"]["total"] == 2202
+    assert output["summary"]["verified_in_code"] == 147
+    assert output["summary"]["pending"] == 51
+    assert output["summary"]["legal_hold"] == 166
+    assert output["summary"]["source_not_found"] == 180
     assert output["summary"]["no_recent_data"] == 279
-    assert output["summary"]["pdf_vision_hold"] == 8
+    assert output["summary"]["pdf_vision_hold"] == 9
     assert output["summary"]["adapter_hold"] == 1370
     assert output["summary"]["invalid_source_pattern"] == 0
-    assert output["summary"]["priority_group_counts"]["p1"]["total"] == 486
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 144
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 124
+    assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 146
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 166
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
@@ -305,8 +305,8 @@ def test_print_source_registry_summary_only_omits_entries(
     output = json.loads(capsys.readouterr().out)
 
     assert result == 0
-    assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 145
+    assert output["summary"]["total"] == 2202
+    assert output["summary"]["verified_in_code"] == 147
     assert "entries" not in output
 
 

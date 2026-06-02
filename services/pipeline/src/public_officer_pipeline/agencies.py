@@ -1036,6 +1036,13 @@ GYEONGSANG_PARENT_REGIONS = {
     "경상남도",
 }
 
+CHUNGCHEONG_PARENT_REGIONS = {
+    "대전광역시",
+    "세종특별자치시",
+    "충청북도",
+    "충청남도",
+}
+
 NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
     "광주시청": {
         "sourceUrl": "https://www.gwangju.go.kr/boardList.do?boardId=BD_0000000252&pageId=www101",
@@ -1115,11 +1122,19 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
             "바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
-    "세종시의회": (
-        "공식 업무추진비 목록(https://council.sejong.go.kr/mnu/cap/businessExpenseList.do)과 "
-        "XLSX 첨부 구조는 확인했지만 목록/상세 페이지에서 공공누리 유형 표시가 확인되지 "
-        "않았습니다. 제1유형 또는 명확한 자유이용 표시 확인 전까지 수집하지 않습니다."
-    ),
+    "세종시의회": {
+        "sourceUrl": "https://council.sejong.go.kr/mnu/cap/businessExpenseList.do",
+        "fileKinds": ["xlsx"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-01",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 XLSX 첨부 구조는 확인했지만 목록/상세 페이지에서 "
+            "공공누리 유형 표시가 확인되지 않았습니다. 제1유형 또는 명확한 자유이용 표시 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
     "강원특별자치도청": {
         "sourceUrl": "https://state.gwd.go.kr/portal/administration/opendata/propulsionCost/governor",
         "extraListUrls": [
@@ -1404,6 +1419,57 @@ NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS = {
     },
 }
 
+JEJU_ADMINISTRATIVE_CITY_OFFICE_ATTACHMENT_BOARDS = {
+    "제주시청": {
+        "homepage": "https://www.jejusi.go.kr",
+        "listUrl": "https://www.jejusi.go.kr/information/status/sijang.do",
+        "extraListUrls": [
+            "https://www.jejusi.go.kr/information/status/part.do",
+        ],
+        "fileKinds": ["xls", "xlsx"],
+        "followDetail": True,
+        "pageParam": "currentPageNo",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "evidenceNote": (
+            "제주특별자치도 산하 행정시로 별도 지방의회는 없지만, 사용자 기준 제주 행정구역 "
+            "공개 업무추진비를 포함하기 위해 P1 행정기관으로 등록합니다. 공식 원문은 제주시 "
+            "정보공개 > 업무추진비 공개의 제주시장 업무추진비 공개 "
+            "(https://www.jejusi.go.kr/information/status/sijang.do)와 부서별 업무추진비 공개 "
+            "(https://www.jejusi.go.kr/information/status/part.do)입니다. 목록에서 "
+            "mode=detail&notice_id 상세, 상세에서 /boardFileDown.ac?file_id= XLS/XLSX 첨부 "
+            "구조를 확인했습니다. 부서별 업무추진비 공개 화면은 공개 근거를 "
+            "「제주특별자치도 업무추진비 집행기준 및 공개에 관한 조례(2022.1.12.)」로 "
+            "명시합니다. 제주시 저작권보호정책 "
+            "(https://www.jejusi.go.kr/guide/copyrights.do)은 저작권법 제24조의2 및 공공누리 "
+            "표시 공공저작물의 자유이용, 제1유형의 출처표시·상업적 이용 가능 조건을 안내합니다. "
+            "공무원맵은 출처표시 조건으로 법정 공개 사실 데이터만 정규화합니다."
+        ),
+    },
+    "서귀포시청": {
+        "homepage": "https://www.seogwipo.go.kr",
+        "listUrl": "https://www.seogwipo.go.kr/info/gov/open/expense.htm",
+        "fileKinds": ["xls", "xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "evidenceNote": (
+            "제주특별자치도 산하 행정시로 별도 지방의회는 없지만, 사용자 기준 제주 행정구역 "
+            "공개 업무추진비를 포함하기 위해 P1 행정기관으로 등록합니다. 공식 원문은 서귀포시 "
+            "시정공유 > 행정정보공개 > 사전정보공개 > 업무추진비공개 "
+            "(https://www.seogwipo.go.kr/info/gov/open/expense.htm)입니다. 목록·상세에서 "
+            "act=view 및 act=download&seq=&no= XLS/XLSX/PDF 첨부 구조를 확인했고, production "
+            "경로는 PDF vision 리스크를 피하기 위해 XLS/XLSX 첨부만 처리합니다. 해당 화면은 "
+            "공개 항목과 근거를 「제주특별자치도 업무추진비 집행기준 및 공개에 관한 조례」로 "
+            "명시합니다. 서귀포시 저작권보호정책 "
+            "(https://www.seogwipo.go.kr/help/copyright.htm)은 저작권법 제24조의2 및 공공누리 "
+            "표시 공공저작물의 자유이용, 제1유형의 출처표시·상업적 이용 가능 조건을 안내합니다. "
+            "공무원맵은 출처표시 조건으로 법정 공개 사실 데이터만 정규화합니다."
+        ),
+    },
+}
+
 NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
     ("강원특별자치도", "영월군청"): {
         "homepage": "https://www.yw.go.kr",
@@ -1471,6 +1537,15 @@ NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
         "followDetail": True,
         "pageParam": "cpage",
         "verifiedAt": "2026-06-01",
+        "verifiedBy": "공식 사이트 원격 확인",
+    },
+    ("대구광역시", "군위군청"): {
+        "homepage": "https://www.gunwi.go.kr",
+        "listUrl": "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "followDetail": True,
+        "pageParam": "pageNo",
+        "verifiedAt": "2026-06-02",
         "verifiedBy": "공식 사이트 원격 확인",
     },
     ("전라남도", "곡성군청"): {
@@ -1696,17 +1771,31 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("강원특별자치도", "태백시의회"): {
-        "holdStatus": "source_not_found",
-        "sourceUrl": "https://council.taebaek.go.kr/source/kr/main/main.html",
-        "fileKinds": [],
+        "holdStatus": "legal_hold",
+        "sourceUrl": "https://council.taebaek.go.kr/source/kr/news/info2.html",
+        "detailUrl": "https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112",
+        "attachmentUrl": (
+            "https://council.taebaek.go.kr/Mboard/download.html?"
+            "table=board_official&column=userfile&uid=112"
+        ),
+        "copyrightUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "publicWorksPolicyUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
+        "fileKinds": ["xlsx"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
         "blocker": (
-            "공식 태백시의회 홈/사이트맵을 확인했지만 업무추진비 공개 게시판이나 최근 "
-            "첨부 목록을 찾지 못했습니다. 확인 가능한 푸터도 ALL RIGHTS RESERVED라 "
-            "공식 출처 확인 전까지 수집하지 않습니다."
+            "공식 태백시의회 정보공개 업무추진비 현황 목록"
+            "(https://council.taebaek.go.kr/source/kr/news/info2.html), 2026년 4월 상세"
+            "(https://council.taebaek.go.kr/source/kr/news/info2.html?mode=view&number=112), "
+            "XLSX 첨부 다운로드 구조는 확인했습니다. 다만 목록/상세 화면에 공공누리 "
+            "제1유형 또는 명확한 상업적 자유이용 표시가 없고, 태백시 저작권정책"
+            "(https://www.taebaek.go.kr/www/sub.do?key=590)은 공공누리가 부착되지 않은 "
+            "자료는 자료관리부서 사전 협의 후 이용하라고 안내하며 의회 푸터도 ALL RIGHTS "
+            "RESERVED로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "속초시청"): {
@@ -1801,16 +1890,32 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("강원특별자치도", "횡성군의회"): {
-        "holdStatus": "source_not_found",
-        "sourceUrl": "https://council.hsg.go.kr",
-        "fileKinds": [],
-        "pageParam": "page",
+        "holdStatus": "legal_hold",
+        "sourceUrl": "https://www.hsg.go.kr/council/selectBbsNttList.do?bbsNo=41&key=1464&",
+        "detailUrl": (
+            "https://www.hsg.go.kr/council/selectBbsNttView.do?"
+            "key=1464&bbsNo=41&nttNo=421094&pageUnit=10&searchCnd=all"
+        ),
+        "attachmentUrl": "https://www.hsg.go.kr/council/downloadBbsFile.do?atchmnflNo=547678",
+        "copyrightUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "publicWorksPolicyUrl": "https://www.hsg.go.kr/www/contents.do?key=906",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
         "blocker": (
-            "횡성군의회 공식 호스트(council.hsg.go.kr)는 DNS 응답이 없고, 공식 업무추진비 "
-            "게시판 URL도 원격 검색에서 확인되지 않았습니다. 추정 URL로 수집하지 않습니다."
+            "횡성군의회 공식 경로가 횡성군 통합 도메인"
+            "(https://www.hsg.go.kr/council/index.do)으로 확인되었고, 통합검색의 "
+            "업무추진비 집행 현황 메뉴"
+            "(https://www.hsg.go.kr/council/selectBbsNttList.do?bbsNo=41&key=1464&)와 "
+            "2026년 4월 상세, PDF 첨부 다운로드 구조를 확인했습니다. 다만 목록/상세 화면의 "
+            "공공누리 영역이 비어 있고, 횡성군 공공저작물 자유이용 정책"
+            "(https://www.hsg.go.kr/www/contents.do?key=906)은 공공누리가 부착되지 않은 "
+            "자료는 담당자 사전 협의 후 이용하라고 안내하며 푸터가 All rights reserved로 "
+            "표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "영월군의회"): {
@@ -1954,7 +2059,10 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "verifiedBy": "공식 사이트 원격 확인",
         "blocker": (
             "공식 양구군의회 업무추진비 집행 현황 목록은 확인했지만 원문 기준 총 0개의 글로 "
-            "최근 12개월 집행내역 게시글이 없습니다. 데이터가 공개될 때까지 수집하지 않습니다."
+            "최근 12개월 집행내역 게시글이 없습니다. 2020년 이후 확장 검색에서도 현행 "
+            "업무추진비 메뉴는 동일한 빈 목록이며, 확인된 F80000/F80200/F80208 메뉴는 "
+            "업무추진비가 아니라 의원별 회의 출석율 현황으로 확인되어 데이터가 공개될 때까지 "
+            "수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "인제군청"): {
@@ -2268,6 +2376,180 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("충청남도", "보령시의회"): {
+        "sourceUrl": "https://www.brcouncil.go.kr/kr/costBBS.do",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 12개월 게시물·PDF/XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "아산시청"): {
+        "sourceUrl": "https://www.asan.go.kr/main/cms/?m_mode=list&no=335&tb_nm=dep_expense",
+        "fileKinds": ["xlsx", "hwpx", "pdf"],
+        "pageParam": "PageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 12개월 게시물·XLSX/HWPX/PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "계룡시청"): {
+        "sourceUrl": "https://gyeryong.go.kr/kr/html/sub02/020204.html?GotoPage=1&mode=L",
+        "fileKinds": ["xlsx", "pdf"],
+        "pageParam": "GotoPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 12개월 게시물·XLSX/PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "계룡시의회"): {
+        "sourceUrl": "https://gyeryong.go.kr/council/html/sub04/040401.html?GotoPage=0&mode=L",
+        "fileKinds": ["pdf"],
+        "pageParam": "GotoPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역 목록과 최근 12개월 게시물·PDF 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "당진시청"): {
+        "sourceUrl": "https://www.dangjin.go.kr/cop/bbs/BBSMSTR_000000000024/selectBoardList.do",
+        "fileKinds": ["xlsx", "pdf", "hwp", "hwpx"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 12개월 게시물·XLSX/PDF/HWP/HWPX 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "당진시의회"): {
+        "sourceUrl": "https://council.dangjin.go.kr/content/data/businessOperatingExpense.html",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역 목록과 최근 12개월 게시물·XLSX/PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 "
+            "표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "금산군의회"): {
+        "sourceUrl": "https://www.geumsancouncil.go.kr/content/info/expenses.html",
+        "extraListUrls": ["https://www.geumsancouncil.go.kr/content/council/chairmanMovements.html"],
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역과 의장 업무추진비 공개 경로, 최근 12개월 게시물·XLSX "
+            "첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "서천군청"): {
+        "sourceUrl": "https://seocheon.go.kr/cop/bbs/BBSMSTR_000000000102/selectBoardList.do",
+        "extraListUrls": [
+            "https://seocheon.go.kr/cop/bbs/BBSMSTR_000000000673/selectBoardList.do"
+        ],
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비와 부서장 업무추진비 공개 목록, 최근 12개월 게시물·PDF "
+            "첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "홍성군의회"): {
+        "sourceUrl": "https://council.hongseong.go.kr/kr/costBBS.do",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행현황 목록과 최근 12개월 게시물·XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "예산군청"): {
+        "sourceUrl": "https://www.yesan.go.kr/bbs/BBSMSTR_000000000033/list.do",
+        "extraListUrls": ["https://www.yesan.go.kr/bbs/BBSMSTR_000000000173/list.do"],
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역과 기관장 업무추진비 공개 목록, 최근 12개월 게시물·XLSX/PDF "
+            "첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "예산군의회"): {
+        "sourceUrl": "https://www.councilyesan.go.kr/kr/activity/bbs?bbs_id=work",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 게시판과 최근 12개월 게시물·XLS 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "태안군청"): {
+        "sourceUrl": "https://www.taean.go.kr/cop/bbs/BBSMSTR_000000000321/selectBoardList.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 게시판과 최근 12개월 게시물·PDF 첨부 구조는 확인했습니다. "
+            "다만 상세 화면이 공공누리 제4유형으로 표시되어 상업적 이용과 변경이 모두 "
+            "제한되므로 수집하지 않습니다."
+        ),
+    },
+    ("충청남도", "태안군의회"): {
+        "sourceUrl": "https://council.taean.go.kr/main/index.php?m_cd=20",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 12개월 게시물·PDF/XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "금정구청"): {
         "sourceUrl": (
             "https://www.geumjeong.go.kr/board/list.geumj?"
@@ -2335,6 +2617,162 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "명확한 자유이용 표시 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "동구청"): {
+        "sourceUrl": "https://www.bsdonggu.go.kr/index.donggu?menuCd=DOM_000000103005011000",
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 2026년 게시물·PDF 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면이 공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 "
+            "표시되어 상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "동구의회"): {
+        "sourceUrl": (
+            "https://www.bsdonggu.go.kr/council/board/list.donggu?"
+            "boardId=BBS_0000260&contentsSid=1247&cpath=%2Fcouncil&"
+            "menuCd=DOM_000000506004000000"
+        ),
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의장단 업무추진비 공개 목록과 최근 분기별 첨부 구조는 확인했습니다. "
+            "다만 목록 화면이 공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 "
+            "표시되어 상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "영도구청"): {
+        "sourceUrl": "https://www.yeongdo.go.kr/00000/00067/00333.web",
+        "extraListUrls": ["https://www.yeongdo.go.kr/00492/00493/00498.web"],
+        "fileKinds": ["xls", "xlsx"],
+        "pageParam": "cpage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 부서 업무추진비와 구청장 업무추진비 공개 목록, 최근 XLS/XLSX 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 All Rights Reserved로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "부산진구청"): {
+        "sourceUrl": (
+            "https://www.busanjin.go.kr/board/list.busanjin?"
+            "boardId=BBS_0000023&menuCd=DOM_000000109001003000&contentsSid=276"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 상세·XLSX 첨부 구조는 확인했습니다. 다만 목록/상세 "
+            "화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 "
+            "푸터가 All Rights Reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "동래구의회"): {
+        "sourceUrl": "https://council.dongnae.go.kr/source/kr/news/business.html",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 상세·XLS 첨부 구조는 확인했습니다. 다만 목록/상세 "
+            "화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 "
+            "푸터가 All Rights Reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "해운대구청"): {
+        "sourceUrl": "https://www.haeundae.go.kr/index.do?menuCd=DOM_000000104004003000",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년 게시물·첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 푸터가 All rights reserved로 표시되어 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "사하구청"): {
+        "sourceUrl": "https://www.saha.go.kr/portal/contents.do?mId=0302070000",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 게시물·첨부 구조는 확인했습니다. 다만 업무추진비 "
+            "목록/상세에는 공공누리 제1유형 표시가 확인되지 않고, 저작권정책은 공공누리 "
+            "부착 저작물만 이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "사하구의회"): {
+        "sourceUrl": "https://www.saha.go.kr/council/contents.do?mId=0507000000",
+        "fileKinds": ["xls", "xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의회운영업무추진비 공개 목록과 분기별 XLS 첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 저작권정책 링크만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "수영구청"): {
+        "sourceUrl": (
+            "https://www.suyeong.go.kr/welfare/board/list.suyeong?"
+            "boardId=BBS_0000116&categoryCode1=9901000000000&"
+            "menuCd=DOM_000000103004003000&paging=ok&startPage=1"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf", "html"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년 게시물 구조는 확인했습니다. 다만 목록 화면이 "
+            "공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 표시되어 상업적 "
+            "이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "사상구청"): {
+        "sourceUrl": (
+            "https://www.sasang.go.kr/board/list.sasang?"
+            "boardId=BBS_0000175&menuCd=DOM_000000101002007000&"
+            "orderBy=REGISTER_DATE+DESC&startPage=1"
+        ),
+        "extraListUrls": [
+            (
+                "https://www.sasang.go.kr/board/list.sasang?"
+                "boardId=BBS_0000084&menuCd=DOM_000000101002011000&startPage=1"
+            )
+        ],
+        "fileKinds": ["hwpx", "xlsx", "xls"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 부서 업무추진비와 구청장 업무추진비 공개 목록, 상세·HWPX 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 저작권 보호정책 링크만 확인되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
     ("충청북도", "청주시청"): {
         "sourceUrl": (
             "https://www.cheongju.go.kr/www/selectBbsNttList.do?"
@@ -2399,6 +2837,128 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("충청북도", "옥천군청"): {
+        "sourceUrl": "https://www.oc.go.kr/www/selectBbsNttList.do?bbsNo=16&key=124",
+        "extraListUrls": ["https://www.oc.go.kr/www/selectBbsNttList.do?bbsNo=17&key=125"],
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역과 군수 업무추진비 목록, 최근 12개월 게시물·XLSX/XLS "
+            "첨부 구조는 확인했습니다. 다만 상세 화면이 공공누리 제4유형으로 표시되어 "
+            "상업적 이용과 변경이 모두 제한되므로 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "영동군청"): {
+        "sourceUrl": "https://www.yd21.go.kr/kr/html/sub03/030504.html?GotoPage=1&mode=L",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "GotoPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 12개월 게시물·XLSX/PDF 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "증평군의회"): {
+        "sourceUrl": "https://council.jp.go.kr/source/korean/news/business.html",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 최근 12개월 게시물·XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "진천군의회"): {
+        "sourceUrl": "https://council.jincheon.go.kr/council/selectBbsNttList.do?bbsNo=67&key=114",
+        "fileKinds": ["xlsx"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 12개월 게시물·XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "괴산군청"): {
+        "sourceUrl": "https://goesan.go.kr/www/selectBbsNttList.do?bbsNo=202&integrDeptCode=&key=1731",
+        "extraListUrls": [
+            "https://www.goesan.go.kr/www/selectBbsNttList.do?bbsNo=351&integrDeptCode=&key=1729"
+        ],
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 기관운영 업무추진비와 시책추진 업무추진비 목록, 최근 12개월 게시물·XLSX/XLS "
+            "첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "괴산군의회"): {
+        "sourceUrl": "https://council.goesan.go.kr/kr/costBBS.do",
+        "fileKinds": ["xls", "xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 12개월 게시물·XLS/XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "음성군의회"): {
+        "sourceUrl": "https://www.escouncil.go.kr/kr/news/bbsBusiness.do",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageNum",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 12개월 게시물·XLSX/PDF 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "단양군청"): {
+        "sourceUrl": "https://www.danyang.go.kr/dy21/723?action=list&page_size=10",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 12개월 게시물·PDF/XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
+            "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "단양군의회"): {
+        "sourceUrl": "https://www.danyang.go.kr/dy21/723?action=list&page_size=10",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "단양군 공식 업무추진비 공개 목록에서 의회 관련 업무추진비 검색 경로와 최근 "
+            "12개월 게시물·PDF/XLSX 첨부 구조를 함께 확인했습니다. 다만 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("울산광역시", "남구청"): {
         "sourceUrl": "https://www.ulsannamgu.go.kr/cop/bbs/selectBoardList.do?bbsId=PrmtFee3",
         "extraListUrls": [
@@ -2431,6 +2991,92 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 집행 현황 목록과 상세·XLSX 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
             "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "동구청"): {
+        "sourceUrl": "https://dong.daegu.kr/portal/board/post/list.do?bcIdx=557&mid=0501040000",
+        "fileKinds": ["pdf", "xls", "xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 PDF/XLS 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 저작권정책 "
+            "링크만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "남구청"): {
+        "sourceUrl": "https://www.nam.daegu.kr/index.do?menu_id=00001247",
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 2026년 XLS/XLSX 첨부 구조는 확인했습니다. "
+            "다만 목록 화면의 공공누리 영역이 비어 있고 저작권정책 링크만 확인되어 "
+            "제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "북구청"): {
+        "sourceUrl": "https://www.buk.daegu.kr/index.do?menu_id=00002422",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 최근 2026년 XLSX/PDF 첨부 구조는 확인했습니다. "
+            "다만 목록 화면이 공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 "
+            "표시되어 상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "수성구청"): {
+        "sourceUrl": "https://www.suseong.kr/index.do?menu_id=00042650",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 2026년 업무추진비 공개 페이지와 구청장 월별 XLSX 다운로드 구조는 "
+            "확인했습니다. 다만 공공누리 영역이 비어 있고 푸터가 All Rights Reserved로 "
+            "표시되어 제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "군위군청"): {
+        "holdStatus": "pdf_vision_hold",
+        "sourceUrl": "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 상세·PDF 첨부 구조, 공공누리 제1유형 표시는 확인했습니다. "
+            "그러나 2026년 1분기 샘플 dry-run에서 posts_seen=10, posts_fetched=1 이후 "
+            "scanned PDF vision extraction이 필요했고 현재 실행 환경에서 LLM vision 키가 없어 "
+            "raw_parsed_rows=0으로 실패했습니다. PDF vision 처리 성공 전까지 production 적재하지 "
+            "않습니다."
+        ),
+    },
+    ("울산광역시", "동구청"): {
+        "sourceUrl": "https://www.donggu.ulsan.kr/cop/bbs/selectBoardList.do?bbsId=BBSMSTR_000000000354",
+        "extraListUrls": [
+            "https://www.donggu.ulsan.kr/mayor/expense/list.do",
+            "https://www.donggu.ulsan.kr/cop/bbs/selectBoardList.do?bbsId=BBSMSTR_000000000361",
+            "https://www.donggu.ulsan.kr/cop/bbs/selectBoardList.do?bbsId=BBSMSTR_000000000362",
+        ],
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 상세 화면이 "
+            "공공누리 제2유형(출처표시+상업적 이용금지)으로 표시되어 상업적 이용이 가능하지 "
+            "않으므로 수집하지 않습니다."
         ),
     },
     ("경상북도", "포항시청"): {
@@ -2469,6 +3115,49 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "blocker": (
             "공식 업무추진비 목록과 상세·PDF/XLS/XLSX 첨부 구조는 확인했습니다. 다만 "
             "상세 화면이 공공누리 제4유형(출처표시+상업용금지+변경금지)으로 표시되어 "
+            "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "경주시의회"): {
+        "sourceUrl": "https://council.gyeongju.go.kr/kr/costBBS.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 분기별 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 "
+            "화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 "
+            "푸터가 All Rights Reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "김천시청"): {
+        "sourceUrl": "https://www.gc.go.kr/portal/contents.do?mId=1515000000",
+        "fileKinds": ["xlsx", "xls", "html"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 XLS 첨부, 일부 상세 HTML 표 구조는 확인했습니다. 다만 "
+            "업무추진비 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 "
+            "표시가 확인되지 않고 푸터가 All Rights Reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "안동시청"): {
+        "sourceUrl": "https://www.andong.go.kr/portal/contents.do?mId=0503060300",
+        "extraListUrls": [
+            "https://www.andong.go.kr/portal/contents.do?mId=0503060200",
+        ],
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 XLSX 첨부 구조는 확인했습니다. 다만 최근 상세 화면이 "
+            "공공누리 자유이용 불가로 표시되거나 일부 게시물이 제4유형으로 표시되어 "
             "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
         ),
     },
@@ -3930,6 +4619,142 @@ def _apply_gyeongsang_source_not_found(
     )
 
 
+CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
+    ("대전광역시", "서구의회"): [
+        "site:council.seogu.go.kr 업무추진비",
+        "site:council.seogu.go.kr 의장 업무추진비",
+        "https://council.seogu.go.kr",
+        "대전 서구의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청북도", "충주시청"): [
+        "site:chungju.go.kr 업무추진비",
+        "site:chungju.go.kr 기관장 업무추진비",
+        "https://www.chungju.go.kr",
+        "충주시청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청북도", "제천시의회"): [
+        "site:council.jecheon.go.kr 업무추진비",
+        "site:council.jecheon.go.kr 의장 업무추진비",
+        "https://council.jecheon.go.kr",
+        "제천시의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청북도", "보은군청"): [
+        "site:boeun.go.kr 업무추진비",
+        "site:boeun.go.kr 군수 업무추진비",
+        "https://www.boeun.go.kr",
+        "보은군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청북도", "보은군의회"): [
+        "site:council.boeun.go.kr 업무추진비",
+        "site:council.boeun.go.kr 의장 업무추진비",
+        "https://council.boeun.go.kr",
+        "보은군의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청북도", "옥천군의회"): [
+        "site:council.oc.go.kr 업무추진비",
+        "site:council.oc.go.kr 의장 업무추진비",
+        "https://council.oc.go.kr",
+        "옥천군의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청북도", "영동군의회"): [
+        "site:council.yd21.go.kr 업무추진비",
+        "site:council.yd21.go.kr 의장 업무추진비",
+        "https://council.yd21.go.kr",
+        "영동군의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청북도", "증평군청"): [
+        "site:jp.go.kr 업무추진비",
+        "site:jp.go.kr 군수 업무추진비",
+        "https://www.jp.go.kr",
+        "증평군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청북도", "진천군청"): [
+        "site:jincheon.go.kr 업무추진비",
+        "site:jincheon.go.kr 군수 업무추진비",
+        "https://www.jincheon.go.kr",
+        "진천군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청북도", "음성군청"): [
+        "site:eumseong.go.kr 업무추진비",
+        "site:eumseong.go.kr 군수 업무추진비",
+        "https://www.eumseong.go.kr",
+        "음성군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청남도", "아산시의회"): [
+        "site:asancouncil.go.kr 업무추진비",
+        "site:asancouncil.go.kr 의장 업무추진비",
+        "https://www.asancouncil.go.kr",
+        "아산시의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청남도", "서산시의회"): [
+        "site:scc.go.kr 업무추진비",
+        "site:scc.go.kr 의장 업무추진비",
+        "https://www.scc.go.kr",
+        "서산시의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청남도", "금산군청"): [
+        "site:geumsan.go.kr 업무추진비",
+        "site:geumsan.go.kr 군수 업무추진비",
+        "https://www.geumsan.go.kr",
+        "금산군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청남도", "서천군의회"): [
+        "site:scouncil.go.kr 업무추진비",
+        "site:scouncil.go.kr 의장 업무추진비",
+        "https://www.scouncil.go.kr",
+        "서천군의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청남도", "청양군청"): [
+        "site:cheongyang.go.kr 업무추진비",
+        "site:cheongyang.go.kr 군수 업무추진비",
+        "https://www.cheongyang.go.kr",
+        "청양군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+    ("충청남도", "청양군의회"): [
+        "site:council.cheongyang.go.kr 업무추진비",
+        "site:council.cheongyang.go.kr 의장 업무추진비",
+        "https://council.cheongyang.go.kr",
+        "청양군의회 공식 홈페이지 정보공개·의정활동·공지사항 메뉴",
+    ],
+    ("충청남도", "홍성군청"): [
+        "site:hongseong.go.kr 업무추진비",
+        "site:hongseong.go.kr 군수 업무추진비",
+        "https://www.hongseong.go.kr",
+        "홍성군청 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+    ],
+}
+
+
+def _apply_chungcheong_source_not_found(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in CHUNGCHEONG_PARENT_REGIONS:
+        return
+    if source_pattern.get("status") != "adapter_required" or source_pattern.get("holdStatus"):
+        return
+
+    searched_paths = CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE.get((parent_region, short_name))
+    if not searched_paths:
+        return
+
+    keyword = str(source_pattern.get("searchKeyword") or "").strip()
+    source_pattern.update(
+        {
+            "holdStatus": "source_not_found",
+            "searchedPaths": searched_paths,
+            "blocker": (
+                "충청도권 2차 source discovery에서 source_registry 검색어 "
+                f"'{keyword}'와 기관 공식 홈페이지/의회 사이트의 정보공개·사전정보공표·"
+                "업무추진비 메뉴를 확인했지만, 공식 업무추진비 후보 URL을 확정하지 "
+                "못했습니다. 최근 12개월 자료 존재 여부도 공식 출처 미발견 상태에서는 "
+                "확정할 수 없어 dry-run 및 production 적재를 진행하지 않습니다."
+            ),
+        }
+    )
+
+
 def non_capital_agencies() -> list[Agency]:
     agencies: list[Agency] = []
     for (
@@ -3983,6 +4808,11 @@ def non_capital_agencies() -> list[Agency]:
             office_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(office_short_name)
             _apply_legal_hold(office_source_pattern, office_blocker)
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
+            _apply_chungcheong_source_not_found(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
 
         council_board = NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS.get(council_short_name)
         council_source_pattern = (
@@ -4026,6 +4856,11 @@ def non_capital_agencies() -> list[Agency]:
             council_blocker = NON_CAPITAL_LEGAL_HOLD_BLOCKERS.get(council_short_name)
             _apply_legal_hold(council_source_pattern, council_blocker)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
+            _apply_chungcheong_source_not_found(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
 
         agencies.extend(
             [
@@ -4054,6 +4889,38 @@ def non_capital_agencies() -> list[Agency]:
                     source_pattern=council_source_pattern,
                 ),
             ]
+        )
+
+    for local_name in ("제주시", "서귀포시"):
+        office_short_name = f"{local_name}청"
+        office_board = JEJU_ADMINISTRATIVE_CITY_OFFICE_ATTACHMENT_BOARDS[office_short_name]
+        agencies.append(
+            Agency(
+                id=agency_uuid(f"jeju:{local_name}:administrative-city:office"),
+                name=f"제주특별자치도 {office_short_name}",
+                short_name=office_short_name,
+                gov_tier=GovTier.BASIC,
+                branch=GovBranch.ADMIN,
+                jurisdiction_type=JurisdictionType.SI,
+                parent_region="제주특별자치도",
+                sub_region=local_name,
+                homepage=office_board["homepage"],
+                source_pattern={
+                    "adapter": "attachment_board",
+                    "listUrl": office_board["listUrl"],
+                    "fileKinds": office_board["fileKinds"],
+                    "followDetail": office_board["followDetail"],
+                    "pageParam": office_board["pageParam"],
+                    "verifiedAt": office_board["verifiedAt"],
+                    "verifiedBy": office_board["verifiedBy"],
+                    "evidenceNote": office_board["evidenceNote"],
+                    **(
+                        {"extraListUrls": office_board["extraListUrls"]}
+                        if "extraListUrls" in office_board
+                        else {}
+                    ),
+                },
+            )
         )
 
     for region_key, parent_region, local_governments in NON_CAPITAL_BASIC_REGION_GROUPS:
@@ -4142,6 +5009,16 @@ def non_capital_agencies() -> list[Agency]:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
+            _apply_chungcheong_source_not_found(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
+            _apply_chungcheong_source_not_found(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
             agencies.extend(
                 [
                     Agency(
@@ -4449,11 +5326,11 @@ NATIONWIDE_AGENCIES = (
 assert len(SEOUL_AGENCIES) == 52
 assert len(GYEONGGI_AGENCIES) == 64
 assert len(INCHEON_AGENCIES) == 22
-assert len(NON_CAPITAL_AGENCIES) == 348
-assert len(LOCAL_GOVERNMENT_AGENCIES) == 486
+assert len(NON_CAPITAL_AGENCIES) == 350
+assert len(LOCAL_GOVERNMENT_AGENCIES) == 488
 assert len(CENTRAL_STATE_AGENCIES) == 60
 assert len(PUBLIC_INSTITUTION_AGENCIES) == 342
 assert len(LOCAL_PUBLIC_INSTITUTION_AGENCIES) == 1312
-assert len(NATIONWIDE_AGENCIES) == 2200
+assert len(NATIONWIDE_AGENCIES) == 2202
 assert SEOUL_AGENCIES[0].id == SEOUL_CITY_HALL_AGENCY_ID
 assert len(CAPITAL_AREA_AGENCIES) == 138

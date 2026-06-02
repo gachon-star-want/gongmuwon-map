@@ -266,25 +266,28 @@ def test_capital_area_agency_counts() -> None:
     assert len(CAPITAL_AREA_AGENCIES) == 138
 
 
-def test_nationwide_agency_master_tracks_all_local_governments_without_jeju_admin_cities() -> None:
-    assert len(NON_CAPITAL_AGENCIES) == 348
-    assert len(LOCAL_GOVERNMENT_AGENCIES) == 486
-    assert len(NATIONWIDE_AGENCIES) == 2200
+def test_nationwide_agency_master_tracks_all_local_governments_with_jeju_admin_cities() -> None:
+    assert len(NON_CAPITAL_AGENCIES) == 350
+    assert len(LOCAL_GOVERNMENT_AGENCIES) == 488
+    assert len(NATIONWIDE_AGENCIES) == 2202
 
     regional = [
         agency for agency in LOCAL_GOVERNMENT_AGENCIES if agency.gov_tier == GovTier.REGIONAL
     ]
     basic = [agency for agency in LOCAL_GOVERNMENT_AGENCIES if agency.gov_tier == GovTier.BASIC]
     assert len(regional) == 34
-    assert len(basic) == 452
-    assert sum(1 for agency in LOCAL_GOVERNMENT_AGENCIES if agency.branch == GovBranch.ADMIN) == 243
+    assert len(basic) == 454
+    assert sum(1 for agency in LOCAL_GOVERNMENT_AGENCIES if agency.branch == GovBranch.ADMIN) == 245
     assert (
         sum(1 for agency in LOCAL_GOVERNMENT_AGENCIES if agency.branch == GovBranch.COUNCIL)
         == 243
     )
-    assert not any(
-        agency.sub_region in {"제주시", "서귀포시"} for agency in LOCAL_GOVERNMENT_AGENCIES
-    )
+    jeju_admin_cities = [
+        agency for agency in LOCAL_GOVERNMENT_AGENCIES if agency.sub_region in {"제주시", "서귀포시"}
+    ]
+    assert {agency.short_name for agency in jeju_admin_cities} == {"제주시청", "서귀포시청"}
+    assert all(agency.branch == GovBranch.ADMIN for agency in jeju_admin_cities)
+    assert all(agency.jurisdiction_type == JurisdictionType.SI for agency in jeju_admin_cities)
     assert all(agency.expansion_phase == ExpansionPhase.P1 for agency in LOCAL_GOVERNMENT_AGENCIES)
 
 
@@ -295,7 +298,7 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
 
     phase_counts = Counter(agency.expansion_phase for agency in NATIONWIDE_AGENCIES)
     assert phase_counts == {
-        ExpansionPhase.P1: 486,
+        ExpansionPhase.P1: 488,
         ExpansionPhase.P2: 60,
         ExpansionPhase.P3: 342,
         ExpansionPhase.P4: 1312,
@@ -329,8 +332,18 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         for agency in PUBLIC_INSTITUTION_AGENCIES
         if agency.source_pattern.get("status") == "adapter_required"
     ]
-    assert [agency.short_name for agency in verified_public_institutions] == ["게임물관리위원회"]
+    assert {agency.short_name for agency in verified_public_institutions} == {
+        "게임물관리위원회"
+    }
     assert len(adapter_required_public_institutions) == 341
+    game_rating_board = verified_public_institutions[0]
+    assert game_rating_board.source_pattern["adapter"] == "alio_item_disclosure"
+    assert game_rating_board.source_pattern["sourceUrl"] == (
+        "https://www.alio.go.kr/item/itemOrganList.do?reportFormRootNo=20701"
+    )
+    assert game_rating_board.source_pattern["licenseUrl"] == (
+        "https://www.alio.go.kr/notice/copyright.do"
+    )
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://job.alio.go.kr/")
@@ -353,7 +366,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         if agency.source_pattern.get("status") == "adapter_required"
     ]
 
-    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 13
+    assert len(pending_agencies) == len(NON_CAPITAL_AGENCIES) - 16
     assert all(agency.homepage is None for agency in pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in pending_agencies)
@@ -896,6 +909,9 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "진도군청",
         "제주특별자치도청",
         "제주특별자치도의회",
+        "제주시청",
+        "서귀포시청",
+        "군위군청",
     }
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
@@ -905,6 +921,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     jeju_city = next(agency for agency in verified_non_capital if agency.short_name == "제주특별자치도청")
     jeju_council = next(
         agency for agency in verified_non_capital if agency.short_name == "제주특별자치도의회"
+    )
+    jejusi_city = next(agency for agency in verified_non_capital if agency.short_name == "제주시청")
+    seogwipo_city = next(
+        agency for agency in verified_non_capital if agency.short_name == "서귀포시청"
     )
     gokseong_city = next(agency for agency in verified_non_capital if agency.short_name == "곡성군청")
     gokseong_council = next(
@@ -965,6 +985,29 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     ]
     assert jeju_council.source_pattern["fileKinds"] == ["xlsx", "xls"]
     assert "의회운영업무추진비" in jeju_council.source_pattern["evidenceNote"]
+    assert jejusi_city.homepage == "https://www.jejusi.go.kr"
+    assert jejusi_city.branch == GovBranch.ADMIN
+    assert jejusi_city.source_pattern["adapter"] == "attachment_board"
+    assert jejusi_city.source_pattern["listUrl"] == (
+        "https://www.jejusi.go.kr/information/status/sijang.do"
+    )
+    assert jejusi_city.source_pattern["extraListUrls"] == [
+        "https://www.jejusi.go.kr/information/status/part.do"
+    ]
+    assert jejusi_city.source_pattern["fileKinds"] == ["xls", "xlsx"]
+    assert jejusi_city.source_pattern["pageParam"] == "currentPageNo"
+    assert "산하 행정시" in jejusi_city.source_pattern["evidenceNote"]
+    assert "저작권보호정책" in jejusi_city.source_pattern["evidenceNote"]
+    assert seogwipo_city.homepage == "https://www.seogwipo.go.kr"
+    assert seogwipo_city.branch == GovBranch.ADMIN
+    assert seogwipo_city.source_pattern["adapter"] == "attachment_board"
+    assert seogwipo_city.source_pattern["listUrl"] == (
+        "https://www.seogwipo.go.kr/info/gov/open/expense.htm"
+    )
+    assert seogwipo_city.source_pattern["fileKinds"] == ["xls", "xlsx"]
+    assert seogwipo_city.source_pattern["pageParam"] == "page"
+    assert "산하 행정시" in seogwipo_city.source_pattern["evidenceNote"]
+    assert "저작권보호정책" in seogwipo_city.source_pattern["evidenceNote"]
     assert gokseong_city.homepage == "https://www.gokseong.go.kr"
     assert gokseong_city.source_pattern["adapter"] == "attachment_board"
     assert gokseong_city.source_pattern["listUrl"] == (
@@ -1435,8 +1478,8 @@ def test_nationwide_does_not_create_eup_myeon_dong_agencies() -> None:
 
 def test_capital_area_ids_are_region_prefixed_and_unique() -> None:
     assert len({a.id for a in CAPITAL_AREA_AGENCIES}) == 138
-    assert len({a.id for a in LOCAL_GOVERNMENT_AGENCIES}) == 486
-    assert len({a.id for a in NATIONWIDE_AGENCIES}) == 2200
+    assert len({a.id for a in LOCAL_GOVERNMENT_AGENCIES}) == 488
+    assert len({a.id for a in NATIONWIDE_AGENCIES}) == 2202
 
 
 def test_capital_area_jurisdiction_type_spot_checks() -> None:
