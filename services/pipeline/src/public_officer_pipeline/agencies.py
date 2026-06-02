@@ -2163,6 +2163,40 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
+    ("전북특별자치도", "김제시청"): {
+        "sourceUrl": (
+            "https://www.gimje.go.kr/board/list.gimje?"
+            "boardId=BBS_0000038&menuCd=DOM_000000102004000000"
+        ),
+        "detailUrl": (
+            "https://www.gimje.go.kr/board/view.gimje?"
+            "boardId=BBS_0000038&menuCd=DOM_000000102004000000&"
+            "orderBy=REGISTER_DATE+DESC&paging=ok&startPage=1&dataSid=335242"
+        ),
+        "attachmentUrl": (
+            "https://www.gimje.go.kr/board/download.gimje?"
+            "boardId=BBS_0000038&menuCd=DOM_000000102004000000&"
+            "orderBy=REGISTER_DATE%20DESC&paging=ok&startPage=1&"
+            "dataSid=335242&command=update&fileSid=201842"
+        ),
+        "publicWorksPolicyUrl": (
+            "https://www.gimje.go.kr/index.gimje?menuCd=DOM_000000102008000000"
+        ),
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 김제시청 정보공개 업무추진비 공개 목록에서 2026년 5월 만경읍, "
+            "농촌지원과, 민원지적과 등 최근 게시물과 상세 PDF 첨부 구조를 확인했습니다. "
+            "다만 목록/상세 화면에 공공누리 제1유형 또는 명확한 자유이용 표시가 "
+            "확인되지 않고 푸터가 All rights Reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
     ("전북특별자치도", "진안군의회"): {
         "sourceUrl": "https://council.jinan.go.kr/kr/tjobBBS.do",
         "fileKinds": ["pdf", "hwp", "xlsx", "xls"],
