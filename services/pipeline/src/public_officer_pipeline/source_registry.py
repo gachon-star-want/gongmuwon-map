@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from public_officer_pipeline.models import Agency
 from public_officer_pipeline.source_pattern import (
+    AlioItemDisclosurePattern,
     AdapterRequiredPattern,
     AttachmentBoardPattern,
     EstimateListPattern,
@@ -16,7 +17,16 @@ from public_officer_pipeline.source_pattern import (
     parse_source_pattern,
 )
 
-VerificationStatus = Literal["verified_in_code", "pending", "legal_hold", "invalid_source_pattern"]
+VerificationStatus = Literal[
+    "verified_in_code",
+    "pending",
+    "legal_hold",
+    "source_not_found",
+    "no_recent_data",
+    "pdf_vision_hold",
+    "adapter_hold",
+    "invalid_source_pattern",
+]
 
 GOV_TIER_LABELS = {
     "regional": "광역자치단체",
@@ -57,6 +67,10 @@ VERIFICATION_STATUS_LABELS: dict[VerificationStatus, str] = {
     "verified_in_code": "코드 검증 완료",
     "pending": "공식 출처 검증 대기",
     "legal_hold": "법적 검토 보류",
+    "source_not_found": "공식 출처 미발견",
+    "no_recent_data": "최근 12개월 데이터 없음",
+    "pdf_vision_hold": "PDF vision 보류",
+    "adapter_hold": "어댑터/파서 보류",
     "invalid_source_pattern": "출처 패턴 오류",
 }
 
@@ -92,6 +106,10 @@ class SourceRegistryPhaseSummary(BaseModel):
     verified_in_code: int
     pending: int
     legal_hold: int = 0
+    source_not_found: int = 0
+    no_recent_data: int = 0
+    pdf_vision_hold: int = 0
+    adapter_hold: int = 0
     invalid_source_pattern: int
 
 
@@ -100,6 +118,10 @@ class SourceRegistrySummary(BaseModel):
     verified_in_code: int
     pending: int
     legal_hold: int = 0
+    source_not_found: int = 0
+    no_recent_data: int = 0
+    pdf_vision_hold: int = 0
+    adapter_hold: int = 0
     invalid_source_pattern: int
     priority_group_counts: dict[str, SourceRegistryPhaseSummary]
 
@@ -128,6 +150,28 @@ def source_registry_summary(entries: list[SourceRegistryEntry]) -> SourceRegistr
                 for entry in entries
                 if entry.priority_group == priority_group and entry.verification_status == "legal_hold"
             ),
+            source_not_found=sum(
+                1
+                for entry in entries
+                if entry.priority_group == priority_group
+                and entry.verification_status == "source_not_found"
+            ),
+            no_recent_data=sum(
+                1
+                for entry in entries
+                if entry.priority_group == priority_group and entry.verification_status == "no_recent_data"
+            ),
+            pdf_vision_hold=sum(
+                1
+                for entry in entries
+                if entry.priority_group == priority_group
+                and entry.verification_status == "pdf_vision_hold"
+            ),
+            adapter_hold=sum(
+                1
+                for entry in entries
+                if entry.priority_group == priority_group and entry.verification_status == "adapter_hold"
+            ),
             invalid_source_pattern=sum(
                 1
                 for entry in entries
@@ -142,6 +186,10 @@ def source_registry_summary(entries: list[SourceRegistryEntry]) -> SourceRegistr
         verified_in_code=sum(1 for entry in entries if entry.verification_status == "verified_in_code"),
         pending=sum(1 for entry in entries if entry.verification_status == "pending"),
         legal_hold=sum(1 for entry in entries if entry.verification_status == "legal_hold"),
+        source_not_found=sum(1 for entry in entries if entry.verification_status == "source_not_found"),
+        no_recent_data=sum(1 for entry in entries if entry.verification_status == "no_recent_data"),
+        pdf_vision_hold=sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold"),
+        adapter_hold=sum(1 for entry in entries if entry.verification_status == "adapter_hold"),
         invalid_source_pattern=sum(
             1 for entry in entries if entry.verification_status == "invalid_source_pattern"
         ),
@@ -179,7 +227,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
             agency,
             adapter=pattern.adapter,
             verification_status=_adapter_required_status(raw),
-            source_url=None,
+            source_url=_adapter_required_source_url(agency, raw),
             source_file_kinds=source_file_kinds,
             baseline_source_url=baseline_source_url,
             verified_at=verified_at,
@@ -190,6 +238,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
     source_url = _source_url(pattern)
     source_error = _source_verification_error(
         agency,
+        raw=raw,
         source_url=source_url,
         verified_at=verified_at,
         verified_by=verified_by,
@@ -215,7 +264,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
         baseline_source_url=baseline_source_url,
         verified_at=verified_at,
         verified_by=verified_by,
-        evidence_note="코드에 검증된 공식 출처 패턴이 있습니다. 대기 기관의 URL은 추정하지 않습니다.",
+        evidence_note=_verified_evidence_note(raw),
     )
 
 
@@ -268,10 +317,13 @@ def _source_url(
     pattern: SeoulOpenGovPattern
     | AttachmentBoardPattern
     | EstimateListPattern
-    | InlineExpenseTablePattern,
+    | InlineExpenseTablePattern
+    | AlioItemDisclosurePattern,
 ) -> str:
     if isinstance(pattern, SeoulOpenGovPattern):
         return "https://opengov.seoul.go.kr/expense/list"
+    if isinstance(pattern, AlioItemDisclosurePattern):
+        return pattern.sourceUrl
     return pattern.listUrl
 
 
@@ -293,10 +345,34 @@ def _pending_evidence_note(raw: object) -> str:
     return "공식 업무추진비 출처 URL 검증 전입니다. adapter_required 상태로 유지합니다."
 
 
+def _verified_evidence_note(raw: object) -> str:
+    if isinstance(raw, dict):
+        evidence_note = _optional_str(raw.get("evidenceNote"))
+        if evidence_note:
+            return evidence_note
+    return "코드에 검증된 공식 출처 패턴이 있습니다. 대기 기관의 URL은 추정하지 않습니다."
+
+
 def _adapter_required_status(raw: object) -> VerificationStatus:
-    if isinstance(raw, dict) and raw.get("holdStatus") == "legal_hold":
-        return "legal_hold"
+    if isinstance(raw, dict):
+        status = raw.get("holdStatus")
+        if status in {
+            "legal_hold",
+            "source_not_found",
+            "no_recent_data",
+            "pdf_vision_hold",
+            "adapter_hold",
+        }:
+            return status
     return "pending"
+
+
+def _adapter_required_source_url(agency: Agency, raw: object) -> str | None:
+    if agency.expansion_phase.value not in {"p2", "p3", "p4"}:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return _optional_str(raw.get("sourceUrl"))
 
 
 def _source_file_kinds(raw: object) -> list[str]:
@@ -311,6 +387,7 @@ def _source_file_kinds(raw: object) -> list[str]:
 def _source_verification_error(
     agency: Agency,
     *,
+    raw: object,
     source_url: str,
     verified_at: str | None,
     verified_by: str | None,
@@ -327,6 +404,8 @@ def _source_verification_error(
         return "출처 URL은 절대 경로의 공식 URL이어야 합니다."
     if homepage_parts.scheme not in {"http", "https"} or not homepage_parts.netloc:
         return "홈페이지는 절대 경로의 공식 URL이어야 합니다."
+    if isinstance(raw, dict) and raw.get("officialCommonPortal") is True:
+        return None
     source_host = source_parts.netloc.lower()
     homepage_host = homepage_parts.netloc.lower()
     if source_host != homepage_host and not source_host.endswith(f".{homepage_host}"):
