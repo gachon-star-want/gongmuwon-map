@@ -90,6 +90,31 @@ def test_extracts_spreadsheet_amounts_marked_in_thousand_won() -> None:
     assert rows[0].amount == 160000
 
 
+def test_ignores_bare_day_without_sheet_month_context() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["기관장 업무추진비 집행내역"])
+    worksheet.append(["일자", "장소", "집행목적", "금액"])
+    worksheet.append(["4", "4건", "4건", 316400])
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="테스트기관")
+
+    assert rows == []
+
+
+def test_extracts_bare_day_when_sheet_month_context_exists() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["2025년 6월 기관장 업무추진비 집행내역"])
+    worksheet.append(["일자", "장소", "집행목적", "금액"])
+    worksheet.append(["10", "테스트식당", "업무협의", 70000])
+
+    rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="테스트기관")
+
+    assert len(rows) == 1
+    assert rows[0].used_at.date().isoformat() == "2025-06-10"
+
+
 def test_keeps_large_won_amounts_when_sheet_mentions_thousand_unit_summary() -> None:
     workbook = Workbook()
     worksheet = workbook.active

@@ -14,6 +14,8 @@ from public_officer_pipeline.models import Agency, NormalizedVisit, ParsedExpens
 from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 
 SEOUL_DISTRICT_HINT_RE = re.compile(r"(?P<district>[가-힣]+구)(?:청|의회)?")
+NON_PLACE_EXPENSE_RE = re.compile(r"경조사|축의금|조의금|부의금|부조금|화환|격려금")
+SUMMARY_PLACE_RE = re.compile(r"^\s*(?:합계|총계|\d+\s*건|-)\s*$")
 
 
 def deterministic_normalize_rows(
@@ -28,6 +30,8 @@ def deterministic_normalize_rows(
 ) -> list[NormalizedVisit]:
     visits: list[NormalizedVisit] = []
     for row in rows:
+        if _is_non_place_expense(row):
+            continue
         place_raw = parse_place_text(row.place_text)
         if not is_valid_place_name(place_raw.name):
             continue
@@ -62,6 +66,22 @@ def deterministic_normalize_rows(
             )
         )
     return visits
+
+
+def _is_non_place_expense(row: ParsedExpenseRow) -> bool:
+    joined = " ".join(
+        value
+        for value in (
+            row.place_text,
+            row.purpose or "",
+            row.expense_category or "",
+            row.raw_excerpt,
+        )
+        if value
+    )
+    if NON_PLACE_EXPENSE_RE.search(joined):
+        return True
+    return bool(SUMMARY_PLACE_RE.fullmatch(row.place_text))
 
 
 def parse_place_text(place_text: str) -> PlaceRaw:

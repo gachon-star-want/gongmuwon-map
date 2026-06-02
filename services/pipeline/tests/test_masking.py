@@ -121,6 +121,50 @@ def test_deterministic_normalizer_skips_placeholder_place_text() -> None:
     assert [visit.place_raw.name for visit in visits] == ["반가안동국시"]
 
 
+def test_deterministic_normalizer_skips_non_place_expense_rows() -> None:
+    visits = deterministic_normalize_rows(
+        agency_id=agency_uuid("p4:test"),
+        source_url="https://example.test/source.xlsx",
+        source_title="CleanEye 기관장 업무추진비",
+        source_published_at=None,
+        source_hash_sha256="hash",
+        rows=[
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 2, 12, 0),
+                place_text="홍길동",
+                purpose="축의금 전달",
+                amount=50000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="홍길동 | 축의금 전달",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 3, 12, 0),
+                place_text="합계",
+                purpose="합계",
+                amount=100000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="합계",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 4, 12, 0),
+                place_text="테스트식당",
+                purpose="업무협의 오찬",
+                amount=70000,
+                user_text="테스트기관 4명",
+                payment_method="카드",
+                raw_excerpt="테스트식당 | 업무협의 오찬",
+            ),
+        ],
+    )
+
+    assert [visit.place_raw.name for visit in visits] == ["테스트식당"]
+
+
 def _visit(**overrides: object) -> NormalizedVisit:
     data = {
         "agency_id": agency_uuid("성동구:office"),
