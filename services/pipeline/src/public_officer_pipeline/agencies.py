@@ -3159,13 +3159,16 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "fileKinds": ["pdf", "xlsx", "xls"],
         "pageParam": "pageIndex",
         "followDetail": True,
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "commercialUseStatus": "prohibited_kogl_type4_noncommercial",
+        "derivativeUseStatus": "prohibited_kogl_type4_no_derivatives",
         "blocker": (
             "공식 단체장 업무추진비 목록(https://www.daedeok.go.kr/dpt/dpt02/DPT02010401_cmmBoardList.do), "
             "부서장 업무추진비 목록(https://www.daedeok.go.kr/dpt/dpt02/DPT02010404_cmmBoardList.do), "
-            "PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 "
-            "자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+            "최근 PDF 첨부 구조는 확인했습니다. 다만 상세 화면이 공공누리 제4유형"
+            "(출처표시+상업적이용금지+변경금지)으로 표시되어 facts-only 정책에서도 "
+            "production 적재하지 않습니다."
         ),
     },
     ("대전광역시", "대덕구의회"): {
@@ -3421,16 +3424,16 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("충청남도", "예산군의회"): {
-        "sourceUrl": "https://www.councilyesan.go.kr/kr/activity/bbs?bbs_id=work",
-        "fileKinds": ["xls"],
+        "sourceUrl": "https://www.councilyesan.go.kr/council/kr/costBBS.do",
+        "fileKinds": ["xls", "xlsx"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 재확인",
         "blocker": (
-            "공식 업무추진비 게시판과 최근 12개월 게시물·XLS 첨부 구조는 확인했습니다. "
-            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
-            "않아 제1유형 확인 전까지 수집하지 않습니다."
+            "공식 업무추진비 게시판과 최근 12개월 게시물·XLS/XLSX 첨부 구조는 확인했습니다. "
+            "공공누리 제1유형 표시는 없지만 명시적 상업 제한·가공 제한·사전 조율 "
+            "요구는 확인되지 않아 facts-only 적재 후보로 재검증합니다."
         ),
     },
     ("충청남도", "태안군청"): {
@@ -7392,15 +7395,53 @@ CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
 }
 
 
+CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
+    ("대전광역시", "서구의회"): {
+        "adapter": "council_attachment_board",
+        "listUrl": "https://www.seogucouncil.daejeon.kr/svc/cdr/OperatingExpenseList.do",
+        "sourceUrl": "https://www.seogucouncil.daejeon.kr/svc/cdr/OperatingExpenseList.do",
+        "fileKinds": ["html"],
+        "pageParam": "schPageNo",
+        "followDetail": True,
+        "holdStatus": "no_recent_data",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "searchedPaths": [
+            "site:seogucouncil.daejeon.kr 업무추진비",
+            "https://www.seogucouncil.daejeon.kr/svc/cdr/OperatingExpenseList.do",
+            "대전 서구의회 의정자료실 > 업무추진비 공식 메뉴",
+        ],
+        "blocker": (
+            "대전 서구의회 공식 의정자료실 업무추진비 목록은 확인했지만 "
+            "2026-06-02 재확인 시 목록 form의 schTotalCnt=0으로 표시되어 최근 12개월 "
+            "place-level 업무추진비 적재 대상이 없습니다."
+        ),
+    },
+    ("충청남도", "청양군청"): {
+        "adapter": "attachment_board",
+        "listUrl": "https://www.cheongyang.go.kr/cop/bbs/BBSMSTR_000000000096/selectBoardList.do",
+        "sourceUrl": "https://www.cheongyang.go.kr/cop/bbs/BBSMSTR_000000000096/selectBoardList.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "searchedPaths": [
+            "site:cheongyang.go.kr 업무추진비",
+            "https://www.cheongyang.go.kr/cop/bbs/BBSMSTR_000000000096/selectBoardList.do",
+            "청양군청 정보공개 > 행정정보공개 > 업무추진비집행내역 공식 메뉴",
+        ],
+        "evidenceNote": (
+            "공식 업무추진비집행내역 목록과 최근 2026년 PDF 게시물을 확인했습니다. "
+            "원문 파일은 재배포하지 않고 factual row만 추출하는 정책 기준으로 dry-run "
+            "재검증 대상입니다."
+        ),
+    },
+}
+
+
 CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
     ("대전광역시", "유성구청"): (
-        "pdf_vision_hold",
-        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
-        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
-        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
-        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
-    ),
-    ("대전광역시", "대덕구청"): (
         "pdf_vision_hold",
         "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
         "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
@@ -7419,19 +7460,27 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "HTTP status 404로 실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py의 "
         "영동군청 상세/첨부 URL 조립 보강 후 재검증이 필요합니다.",
     ),
-    ("충청북도", "증평군의회"): (
+    ("충청북도", "제천시청"): (
         "adapter_hold",
-        "충청도권 3차 dry-run에서 공식 목록의 최근 2026년 XLSX 게시물은 확인했지만 "
-        "EUC-KR/상대경로 board 구조를 posts_seen=0으로 처리했습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 증평군의회 "
-        "목록/상세 parser 보강이 필요합니다.",
+        "충청도권 5차 facts-only dry-run에서 공식 목록 URL을 재검증했지만 HTTP 200 "
+        "Content-Length 0 응답으로 posts_seen=0, normalized_visits=0이었습니다. "
+        "제천시청 게시판의 실제 업무추진비 목록 endpoint 재발견 또는 empty-response "
+        "우회 adapter 보강 전까지 production 적재하지 않습니다.",
     ),
-    ("충청북도", "진천군의회"): (
-        "adapter_hold",
-        "충청도권 3차 dry-run에서 posts_seen=5, posts_fetched=5였지만 raw_parsed_rows=0이었습니다. "
-        "services/pipeline/src/public_officer_pipeline/extractor/spreadsheet.py 또는 "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에서 진천군의회 "
-        "첨부 파일 구조 보강 후 재검증이 필요합니다.",
+    ("충청북도", "제천시의회"): (
+        "pdf_vision_hold",
+        "충청도권 5차 facts-only dry-run에서 posts_seen=5, posts_fetched=1까지 "
+        "진행했지만 최신 업무추진비 PDF가 scanned PDF vision extraction을 요구했고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 종료되었습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청북도", "영동군의회"): (
+        "pdf_vision_hold",
+        "충청도권 5차 facts-only dry-run에서 posts_seen=1, posts_fetched=1까지 "
+        "진행했지만 최신 업무추진비 PDF가 scanned PDF vision extraction을 요구했고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 종료되었습니다. "
+        "PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 않습니다.",
     ),
     ("충청남도", "충청남도의회"): (
         "pdf_vision_hold",
@@ -7481,11 +7530,19 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
         "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
-    ("충청남도", "예산군의회"): (
+    ("충청남도", "부여군청"): (
         "adapter_hold",
-        "충청도권 3차 dry-run에서 공식 업무추진비 목록 다운로드 단계가 HTTP status 404로 "
-        "실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
-        "예산군의회 상세/첨부 URL 조립 보강 후 재검증이 필요합니다.",
+        "충청도권 5차 facts-only dry-run에서 공식 업무추진비 목록의 2026년 HWP "
+        "게시물은 확인했지만 현재 안전 수집 경로는 HWP 첨부를 production 품질로 "
+        "추출하지 못해 posts_seen=0, normalized_visits=0으로 종료되었습니다. "
+        "HWP extractor/변환 adapter 보강 후 재검증해야 합니다.",
+    ),
+    ("충청남도", "청양군청"): (
+        "pdf_vision_hold",
+        "충청도권 5차 facts-only 재검색에서 공식 업무추진비집행내역 목록과 최근 2026년 "
+        "PDF 게시물은 확인했지만 dry-run에서 scanned PDF vision extraction을 요구했고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 종료되었습니다. "
+        "PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 않습니다.",
     ),
     ("충청남도", "태안군의회"): (
         "pdf_vision_hold",
@@ -7497,6 +7554,20 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
 }
+
+
+def _apply_chungcheong_discovery_override(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in CHUNGCHEONG_PARENT_REGIONS:
+        return
+    override = CHUNGCHEONG_DISCOVERY_OVERRIDES.get((parent_region, short_name))
+    if not override:
+        return
+    source_pattern.clear()
+    source_pattern.update(override)
 
 
 def _apply_chungcheong_source_not_found(
@@ -7617,15 +7688,9 @@ def _chungcheong_has_strong_reuse_limit(blocker: str) -> bool:
         "변경금지",
         "변경 금지",
         "사전 협의",
+        "사전협의",
         "무단 이용",
         "무단이용",
-        "저작권 문구만",
-        "All Rights Reserved",
-        "All Right Reserved",
-        "All right reserved",
-        "all rights reserved",
-        "ALL RIGHTS RESERVED",
-        "COPYRIGHT",
     )
     return any(marker in blocker for marker in strong_markers)
 
@@ -7726,6 +7791,11 @@ def non_capital_agencies() -> list[Agency]:
                 office_short_name,
             )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
+            _apply_chungcheong_discovery_override(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
                 parent_region,
@@ -7808,6 +7878,11 @@ def non_capital_agencies() -> list[Agency]:
                 council_short_name,
             )
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
+            _apply_chungcheong_discovery_override(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
             _apply_chungcheong_source_not_found(
                 council_source_pattern,
                 parent_region,
@@ -8027,6 +8102,16 @@ def non_capital_agencies() -> list[Agency]:
             )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
+            _apply_chungcheong_discovery_override(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
+            _apply_chungcheong_discovery_override(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
                 parent_region,
