@@ -1115,6 +1115,21 @@ NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    "전라남도청": {
+        "holdStatus": "adapter_hold",
+        "sourceUrl": "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100",
+        "fileKinds": ["hwp"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 도지사 업무추진비 공개 목록과 상세 공공누리 제1유형 표시, /boardDown.do "
+            "HWP 첨부 구조는 확인했습니다. 다만 현재 pipeline은 HWP 본문 추출을 지원하지 "
+            "않고 HWPX/XLS/XLSX/PDF만 처리하므로 HWP extractor 또는 변환 adapter가 "
+            "구현되기 전까지 수집하지 않습니다."
+        ),
+    },
     "부산시청": (
         "공식 업무추진비 목록(https://www.busan.go.kr/ghopen12?curPage=1&schBizNo=46&schCommand=Expense)은 "
         "확인했지만 목록 페이지에서 공공누리 유형 표시가 확인되지 않았고, 현재 로컬 수집 환경은 "
@@ -1384,15 +1399,6 @@ NON_CAPITAL_REGIONAL_OFFICE_ATTACHMENT_BOARDS = {
         "pageParam": "subPageIndex",
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 화면 확인",
-    },
-    "전라남도청": {
-        "homepage": "https://www.jeonnam.go.kr",
-        "listUrl": "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100",
-        "fileKinds": ["hwp"],
-        "followDetail": True,
-        "pageParam": "pageIndex",
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
     },
     "제주특별자치도청": {
         "homepage": "https://www.jeju.go.kr",
@@ -1702,6 +1708,47 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 원주시의회 업무추진비 현황 목록과 분기별 첨부 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 "
             "않고 푸터가 All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "전주시의회"): {
+        "sourceUrl": "https://council.jeonju.go.kr/source/kr/news/business.html",
+        "fileKinds": ["pdf", "hwp", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의회소식 업무추진비 목록에서 2026년 1분기 및 2025년 4분기 전주시의회 "
+            "의장·부의장·상임위원장 업무추진비 최근 게시물과 첨부파일 표시는 확인했습니다. "
+            "다만 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "군산시청"): {
+        "sourceUrl": "https://www.gunsan.go.kr/main/m76/list?s_idx=3",
+        "fileKinds": ["xlsx", "xls", "html"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록에서 2026년 1분기·2025년 4분기 최근 게시물과 "
+            "eFileDownload 첨부 구조는 확인했습니다. 다만 목록/상세 화면이 공공누리 "
+            "제4유형(출처표시+상업적 이용금지+변경금지)으로 표시되어 제1유형 원칙을 "
+            "바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "진안군의회"): {
+        "sourceUrl": "https://council.jinan.go.kr/kr/tjobBBS.do",
+        "fileKinds": ["pdf", "hwp", "xlsx", "xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 진안군의회 정보공개 업무추진비 공개 메뉴는 확인했습니다. 다만 화면에서 "
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 사이트 하단이 "
+            "All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "강릉시청"): {
@@ -3532,6 +3579,36 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "ADR·법적 결정 전까지 수집하지 않습니다."
         ),
     },
+    ("전라남도", "강진군청"): {
+        "sourceUrl": "https://www.gangjin.go.kr/www/open_information/release_info/open_operational_cost",
+        "fileKinds": ["xlsx"],
+        "pageParam": "page",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정보공개 업무추진비 목록에서 2026년 1~4월 총무과, 2026년 1~3월 "
+            "부서장 등 최근 게시물과 /ybscript.io/common/file_download XLSX 다운로드 "
+            "구조는 확인했습니다. 다만 업무추진비 화면의 공공누리 모듈이 비어 있고 "
+            "푸터가 All Rights Reserved로 표시되며, 공공저작물 안내는 공공누리 표시가 "
+            "부착된 저작물만 자유이용 가능하다고 안내하므로 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
+    ("전라남도", "강진군의회"): {
+        "sourceUrl": "https://gangjincl.go.kr/index.do?PID=045",
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의정활동 정보공개 의회운영분야 업무추진비 현황 목록에서 2026-01-27 "
+            "등록된 2025년 4분기, 2025-10-31 등록된 2025년 3분기, 2025-07-24 등록된 "
+            "2025년 2분기 게시물과 첨부파일 표시는 확인했습니다. 다만 화면에서 "
+            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않고 푸터가 "
+            "All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("광주광역시", "동구청"): {
         "sourceUrl": "https://www.donggu.kr/board.es?mid=a10301080400&bid=0270",
         "fileKinds": ["xlsx"],
@@ -3702,6 +3779,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 군수 업무추진비 목록과 상세·PDF 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 "
             "표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전북특별자치도", "진안군청"): {
+        "sourceUrl": "https://www.jinan.go.kr/board/list.jinan?boardId=BBS_0000022&menuCd=DOM_000000106008002000",
+        "pageParam": "startPage",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정보공개 업무추진비 부군수·국장 목록에서 2026년 1~2월 부군수, "
+            "2025년 6~12월 부군수·읍면 업무추진비 등 최근 게시물과 다운받기/바로보기 "
+            "첨부 구조는 확인했습니다. 다만 목록 화면에서 개별 공공누리 제1유형 표시가 "
+            "확인되지 않고 저작권정책상 공공누리 표시가 부착된 저작물만 자유이용 "
+            "가능하므로 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
 }

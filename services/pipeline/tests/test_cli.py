@@ -273,17 +273,17 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 152
-    assert output["summary"]["pending"] == 57
-    assert output["summary"]["legal_hold"] == 170
+    assert output["summary"]["verified_in_code"] == 151
+    assert output["summary"]["pending"] == 51
+    assert output["summary"]["legal_hold"] == 176
     assert output["summary"]["source_not_found"] == 170
     assert output["summary"]["no_recent_data"] == 284
     assert output["summary"]["pdf_vision_hold"] == 9
-    assert output["summary"]["adapter_hold"] == 1360
+    assert output["summary"]["adapter_hold"] == 1361
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 147
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 170
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 146
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 176
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
@@ -308,7 +308,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 152
+    assert output["summary"]["verified_in_code"] == 151
     assert "entries" not in output
 
 
