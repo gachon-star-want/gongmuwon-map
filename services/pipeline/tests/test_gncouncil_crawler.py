@@ -242,6 +242,67 @@ def test_attachment_crawler_extracts_seongnam_data_view_and_hwpx_downloads() -> 
     assert download_refs[0].file_kind == "hwpx"
 
 
+def test_attachment_crawler_extracts_gunwi_page_detail_and_board_download() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="군위군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="대구광역시",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160",
+                "fileKinds": ["pdf"],
+                "followDetail": True,
+                "pageParam": "pageNo",
+            },
+        )
+    )
+
+    detail_refs = crawler._parse_detail_links(
+        """
+        <table><tbody>
+          <tr>
+            <td>293</td>
+            <td class="subject">
+              <a href="?mnu_uid=160&amp;bod_uid=140070&amp;pageNo=1&amp;cmd=2">
+                <span class="bod_title">군위읍장 업무추진비 집행내역(2026년 1분기)</span>
+              </a>
+            </td>
+            <td>군위읍</td>
+            <td>2026-06-01</td>
+            <td><img src="/Manager/images/ico_file.gif" alt="첨부파일 1개" /></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(detail_refs) == 1
+    parsed_detail = urlsplit(detail_refs[0].url)
+    assert parsed_detail.path == "/ko/page.do"
+    assert parse_qs(parsed_detail.query)["cmd"] == ["258"]
+    assert parse_qs(parsed_detail.query)["bod_uid"] == ["140070"]
+
+    download_refs = crawler._parse_detail_downloads(
+        """
+        <p class="file">
+          <a title="업무추진비 집행내역(2026년 1분기).pdf 파일 다운로드"
+             href="/board_download.do;jsessionid=ABC?file_uid=175625">
+            업무추진비 집행내역(2026년 1분기).pdf
+          </a>
+        </p>
+        """,
+        detail_refs[0],
+    )
+
+    assert len(download_refs) == 1
+    parsed_download = urlsplit(download_refs[0].url)
+    assert parsed_download.path == "/board_download.do;jsessionid=ABC"
+    assert parse_qs(parsed_download.query) == {"file_uid": ["175625"]}
+    assert download_refs[0].file_kind == "pdf"
+
+
 def test_attachment_crawler_extracts_jindo_cms_downloads_from_detail_page() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

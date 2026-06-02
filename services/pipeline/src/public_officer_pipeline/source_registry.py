@@ -255,6 +255,19 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
             verified_by=verified_by,
             evidence_note=source_error,
         )
+    hold_status = _adapter_required_status(raw)
+    if hold_status != "pending":
+        return _entry(
+            agency,
+            adapter=pattern.adapter,
+            verification_status=hold_status,
+            source_url=source_url,
+            source_file_kinds=source_file_kinds,
+            baseline_source_url=baseline_source_url,
+            verified_at=verified_at,
+            verified_by=verified_by,
+            evidence_note=_pending_evidence_note(raw),
+        )
     return _entry(
         agency,
         adapter=pattern.adapter,
