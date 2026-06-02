@@ -805,8 +805,8 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert "HWP extractor" in busan_seogu.source_pattern["blocker"]
     assert busan_namgu.source_pattern["holdStatus"] == "legal_hold"
     assert "국장급 이상 업무추진비" in busan_namgu.source_pattern["blocker"]
-    assert busan_junggu.source_pattern["holdStatus"] == "source_not_found"
-    assert "searchedPaths" in busan_junggu.source_pattern
+    assert busan_junggu.source_pattern["holdStatus"] == "legal_hold"
+    assert "공공누리 영역이 비어" in busan_junggu.source_pattern["blocker"]
 
     pohang_city = next(
         agency
