@@ -6840,37 +6840,7 @@ GANGWON_EXPLICIT_REUSE_LIMITS: dict[str, str] = {
     ),
 }
 
-GANGWON_DRY_RUN_HOLDS: dict[str, tuple[str, str]] = {
-    "강원특별자치도의회": (
-        "pdf_vision_hold",
-        "강원도권 facts-only dry-run에서 최근 PDF/XLS 후보 중 선택된 PDF가 scanned PDF로 "
-        "판정되었고 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
-        "실패했습니다. PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 "
-        "않습니다.",
-    ),
-    "원주시의회": (
-        "pdf_vision_hold",
-        "강원도권 facts-only dry-run에서 최근 분기 PDF 첨부가 scanned PDF로 판정되었고 "
-        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
-    ),
-    "강릉시의회": (
-        "pdf_vision_hold",
-        "강원도권 facts-only dry-run에서 최근 첨부가 scanned PDF로 판정되었고 현재 실행 "
-        "환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
-    ),
-    "화천군의회": (
-        "pdf_vision_hold",
-        "강원도권 재시도 dry-run에서 generic council_attachment_board가 최근 PDF 게시물을 "
-        "posts_seen=5로 찾는 것은 확인했지만, 첫 PDF 첨부가 scanned PDF로 판정되었고 "
-        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
-        "PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 않습니다.",
-    ),
-    "양양군의회": (
-        "pdf_vision_hold",
-        "강원도권 facts-only dry-run에서 최근 PDF 첨부가 scanned PDF로 판정되었고 현재 "
-        "실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
-    ),
-}
+GANGWON_DRY_RUN_HOLDS: dict[str, tuple[str, str]] = {}
 
 NON_CAPITAL_BASIC_REGION_GROUPS = [
     (
@@ -7934,6 +7904,14 @@ def _apply_gangwon_facts_only_release(
         if source_pattern.get(key)
     }
     previous_note = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    previous_note = previous_note.replace(
+        "제1유형 확인 전까지 수집하지 않습니다.",
+        "제1유형 미표시는 확인했으며, facts-only 적재 기준으로 보류 사유에서 제외했습니다.",
+    )
+    previous_note = previous_note.replace(
+        "제1유형 확인 전까지 production 적재하지 않습니다.",
+        "제1유형 미표시는 확인했으며, facts-only 적재 기준으로 보류 사유에서 제외했습니다.",
+    )
     evidence_note = (
         "공식 업무추진비 공개자료의 원본 파일은 재배포하지 않고, 법령상 공개된 날짜·기관·"
         "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 "

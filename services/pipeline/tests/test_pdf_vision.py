@@ -104,6 +104,32 @@ def test_extract_pdf_rows_with_vision_short_circuits_on_missing_place_column(mon
     assert rows == []
 
 
+def test_extract_pdf_rows_with_vision_uses_local_ocr_before_requiring_key(monkeypatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(pdf_vision_module, "_pdf_to_text", lambda _content, *, layout=True: "")
+    monkeypatch.setattr(
+        pdf_vision_module,
+        "_pdf_to_local_ocr_text",
+        lambda _content, *, max_pages: (
+            "1       의장       2026-01-05   곡성군의회          나루터"
+            "                           의정홍보 간담회 참석자 식비 지급"
+            "                      187,000      8      신용카드"
+        ),
+    )
+
+    rows = pdf_vision_module.extract_pdf_rows_with_vision(
+        b"%PDF-1.4",
+        fallback_department="곡성군의회",
+        source_title="업무추진비",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "나루터"
+    assert rows[0].amount == 187000
+
+
 def test_pdf_to_text_rejects_oversized_pdf_before_subprocess(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

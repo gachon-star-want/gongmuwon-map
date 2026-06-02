@@ -560,10 +560,11 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     gangwon_council = next(
         agency for agency in pending_agencies if agency.short_name == "강원특별자치도의회"
     )
-    assert gangwon_council.source_pattern["holdStatus"] == "pdf_vision_hold"
+    assert gangwon_council.source_pattern.get("holdStatus") is None
     assert gangwon_council.source_pattern["fileKinds"] == ["pdf", "xls", "xlsx"]
     assert gangwon_council.source_pattern["pageParam"] == "page"
-    assert "scanned PDF" in gangwon_council.source_pattern["blocker"]
+    assert "facts-only 적재 정책" in gangwon_council.source_pattern["verifiedBy"]
+    assert "factual row" in gangwon_council.source_pattern["evidenceNote"]
 
     jeonbuk_city = next(
         agency for agency in pending_agencies if agency.short_name == "전북특별자치도청"
