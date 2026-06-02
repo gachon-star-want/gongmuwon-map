@@ -335,10 +335,12 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
     assert {agency.short_name for agency in verified_public_institutions} == {
         "(재)우체국금융개발원",
         "게임물관리위원회",
+        "국제식물검역인증원",
         "한국남부발전(주)",
+        "한국에너지정보문화재단",
         "한국석유공사",
     }
-    assert len(adapter_required_public_institutions) == 338
+    assert len(adapter_required_public_institutions) == 336
     game_rating_board = next(
         agency for agency in verified_public_institutions if agency.short_name == "게임물관리위원회"
     )
@@ -366,8 +368,20 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
         if agency.source_pattern.get("status") == "adapter_required"
     ]
-    assert {agency.short_name for agency in verified_local_public_institutions} == {"경기주택도시공사"}
-    assert len(adapter_required_local_public_institutions) == 1311
+    assert {agency.short_name for agency in verified_local_public_institutions} == {
+        "경기주택도시공사",
+        "경산시상수도",
+        "광주광역시하수도",
+        "남원시상수도",
+        "대구광역시하수도",
+        "부천시하수도",
+        "양평군상수도",
+        "영광군상수도",
+        "의왕시상수도",
+        "포천시상수도",
+        "화성시상수도",
+    }
+    assert len(adapter_required_local_public_institutions) == 1301
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://www.cleaneye.go.kr/")
