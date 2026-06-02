@@ -63,6 +63,8 @@ class LegalVisibilityError(ValueError):
 
 
 def allowed_elected_ranks_for_agency(agency: Agency) -> tuple[str, ...]:
+    if agency.expansion_phase.value in {"p2", "p3", "p4"}:
+        return ()
     ranks = ELECTED_RANKS_BY_PARENT_REGION.get(agency.parent_region)
     if ranks is None:
         raise LegalVisibilityError(

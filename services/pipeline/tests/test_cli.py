@@ -273,19 +273,27 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 145
-    assert output["summary"]["pending"] == 1813
+    assert output["summary"]["verified_in_code"] == 146
+    assert output["summary"]["pending"] == 99
     assert output["summary"]["legal_hold"] == 115
-    assert output["summary"]["source_not_found"] == 124
-    assert output["summary"]["no_recent_data"] == 2
-    assert output["summary"]["adapter_hold"] == 1
+    assert output["summary"]["source_not_found"] == 184
+    assert output["summary"]["no_recent_data"] == 279
+    assert output["summary"]["pdf_vision_hold"] == 8
+    assert output["summary"]["adapter_hold"] == 1369
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 486
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 145
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 115
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
+    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
+    assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 1
+    assert output["summary"]["priority_group_counts"]["p3"]["pending"] == 0
+    assert output["summary"]["priority_group_counts"]["p3"]["no_recent_data"] == 277
+    assert output["summary"]["priority_group_counts"]["p3"]["pdf_vision_hold"] == 8
+    assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 56
     assert output["summary"]["priority_group_counts"]["p4"]["total"] == 1312
+    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 1312
 
 
 def test_print_source_registry_summary_only_omits_entries(
@@ -298,7 +306,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2200
-    assert output["summary"]["verified_in_code"] == 145
+    assert output["summary"]["verified_in_code"] == 146
     assert "entries" not in output
 
 

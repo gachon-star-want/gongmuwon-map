@@ -12,6 +12,9 @@ from public_officer_pipeline.legal.visibility import (
 )
 from public_officer_pipeline.models import (
     Agency,
+    ExpansionPhase,
+    GovBranch,
+    GovTier,
     JurisdictionType,
     NormalizedVisit,
     ParsedExpenseRow,
@@ -201,6 +204,25 @@ def test_legal_visibility_allows_non_capital_elected_ranks() -> None:
     assert allowed_elected_ranks_for_agency(jeju) == ("도지사", "도의원")
     visit = _visit(rank_label="도지사", representative="김철수", agency_id=agency_uuid("jeju:regional:office"))
     assert validate_normalized_visit(visit, agency=jeju).representative == "김철수"
+
+
+def test_legal_visibility_has_no_elected_allowlist_for_public_sector_expansion() -> None:
+    agency = Agency(
+        name="게임물관리위원회",
+        short_name="게임물관리위원회",
+        gov_tier=GovTier.PUBLIC,
+        branch=GovBranch.PUBLIC,
+        jurisdiction_type=JurisdictionType.PUBLIC_INSTITUTION,
+        expansion_phase=ExpansionPhase.P3,
+        parent_region="문화체육관광부",
+    )
+
+    assert allowed_elected_ranks_for_agency(agency) == ()
+
+    visit = _visit(rank_label="위원장", representative="홍길동", agency_id=agency.id)
+    validated = validate_normalized_visit(visit, agency=agency)
+
+    assert validated.representative is None
 
 
 def test_legal_visibility_masks_general_or_appointed_ranks_outside_elected_allowlist() -> None:

@@ -23,6 +23,89 @@ from public_officer_pipeline.public_sector_baselines import (
 
 
 AGENCY_NAMESPACE = UUID("01aa6c02-04a8-4f38-b69c-3b49f6a6f24d")
+ALIO_WORKCOST_SOURCE_URL = "https://www.alio.go.kr/item/itemOrganList.do?reportFormRootNo=20701"
+ALIO_WORKCOST_LIST_API_URL = "https://www.alio.go.kr/item/itemOrganListJung.json"
+ALIO_COPYRIGHT_URL = "https://www.alio.go.kr/notice/copyright.do"
+CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL = "https://www.cleaneye.go.kr/user/headOrgWorkCostStat.do"
+CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/itemGongsi.do"
+CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/iptItemGongsi.do"
+CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
+
+P3_ALIO_PLACE_LEVEL_CANDIDATES = {"게임물관리위원회"}
+P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH = {
+    "(재)우체국금융개발원",
+    "농림수산식품교육문화정보원",
+    "인천국제공항공사",
+    "한국남부발전(주)",
+    "한국석유공사",
+    "한국수산자원공단",
+}
+P3_ALIO_PDF_VISION_HOLD = {
+    "공간정보산업진흥원",
+    "민주화운동기념사업회",
+    "수도권매립지관리공사",
+    "주택관리공단(주)",
+    "학교법인한국폴리텍",
+    "한국교통연구원",
+    "한국국제협력단",
+    "한국형사·법무정책연구원",
+}
+P3_ALIO_HWP_PARSER_HOLD = {
+    "대한법률구조공단",
+    "정부법무공단",
+}
+P3_ALIO_DOWNLOAD_HOLD = {
+    "대한장애인체육회",
+    "대한체육회",
+    "스포츠윤리센터",
+    "아시아·태평양경제협력체 기후센터",
+    "재단법인 건설기술교육원",
+    "재단법인 대한건설기계안전관리원",
+    "재단법인 장애인기업종합지원센터",
+    "재단법인 한국공공조직은행",
+    "재단법인 한국에너지재단",
+    "재단법인 한국자활복지개발원",
+    "재단법인 한국장기조직기증원",
+    "주식회사 에스알",
+    "한국등산·트레킹지원센터",
+    "한국영유아보육·교육진흥원",
+}
+P3_ALIO_XLS_PARSER_HOLD = {
+    "(재)한국통계진흥원",
+    "건강보험심사평가원",
+    "경제인문사회연구회",
+    "공간정보품질관리원",
+    "국립낙동강생물자원관",
+    "국립중앙의료원",
+    "국민건강보험공단",
+    "국제방송교류재단",
+    "국제식물검역인증원",
+    "농림식품기술기획평가원",
+    "농업정책보험금융원",
+    "무역안보관리원",
+    "예술의전당",
+    "울산항만공사",
+    "전남대학교병원",
+    "중소기업은행",
+    "창업진흥원",
+    "축산물품질평가원",
+    "태권도진흥재단",
+    "통일연구원",
+    "한국건강가정진흥원",
+    "한국국토정보공사",
+    "한국농촌경제연구원",
+    "한국법무보호복지공단",
+    "한국보건산업진흥원",
+    "한국부동산원",
+    "한국에너지공단",
+    "한국에너지정보문화재단",
+    "한국전력거래소",
+    "한국제품안전관리원",
+    "한국토지주택공사",
+    "한국항로표지기술원",
+    "한국해양교통안전공단",
+    "한국해양조사협회",
+}
 
 SEOUL_GU_NAMES = [
     "강남구",
@@ -3984,21 +4067,45 @@ def central_state_agencies() -> list[Agency]:
                 parent_region="대한민국",
                 sub_region=row.institution_type,
                 homepage=None,
-                source_pattern={
-                    "adapter": "central_state_required",
-                    "searchKeyword": f"{row.name} 업무추진비",
-                    "status": "adapter_required",
-                    "baselineSourceUrl": CENTRAL_STATE_BASELINE_SOURCE_URL,
-                    "baselineAdditionalUrls": [CENTRAL_STATE_CHART_URL],
-                    "baselineEvidence": (
-                        "P2 공식 기준: 정부조직관리정보시스템 2026 정부기구도에서 "
-                        f"{row.institution_type} 기관명 확인. 기관별 업무추진비 원문 URL·"
-                        "공공누리 유형·수집 접근성은 아직 검증 전입니다."
-                    ),
-                },
+                source_pattern=_central_state_source_pattern(row.name, row.institution_type),
             )
         )
     return agencies
+
+
+def _central_state_source_pattern(name: str, institution_type: str) -> dict[str, object]:
+    keyword = f"{name} 업무추진비"
+    searched_paths = [
+        keyword,
+        f"{name} 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
+        f"{name} 기관장 업무추진비",
+        f"{name} 장차관 업무추진비",
+        "정보공개포털(open.go.kr) 업무추진비 검색",
+        "정부조직관리정보시스템 기준 기관명 대조",
+    ]
+    return {
+        "adapter": "central_state_required",
+        "searchKeyword": keyword,
+        "status": "adapter_required",
+        "holdStatus": "source_not_found",
+        "searchedPaths": searched_paths,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "P2-P4 공공부문 확장 조사",
+        "baselineSourceUrl": CENTRAL_STATE_BASELINE_SOURCE_URL,
+        "baselineAdditionalUrls": [CENTRAL_STATE_CHART_URL],
+        "baselineEvidence": (
+            "P2 공식 기준: 정부조직관리정보시스템 2026 정부기구도에서 "
+            f"{institution_type} 기관명 확인."
+        ),
+        "blocker": (
+            f"{name}은 정부조직관리정보시스템 2026 정부기구도에서 P2 {institution_type} "
+            "기준 기관으로 확인했지만, 이번 P2-P4 조사에서 기관별 공식 홈페이지 정보공개·"
+            "사전정보공표·업무추진비 메뉴, 기관장/장차관 업무추진비 키워드, 정보공개포털 "
+            "검색 경로를 확인 대상으로 두고도 공무원맵 place-level 적재에 필요한 공식 원문 "
+            "URL·공공누리 제1유형 또는 동등한 자유이용 근거·첨부 접근성을 확정하지 "
+            "못했습니다. source URL 미발견 상태로 보류합니다."
+        ),
+    }
 
 
 def public_institution_agencies() -> list[Agency]:
@@ -4016,22 +4123,107 @@ def public_institution_agencies() -> list[Agency]:
                 parent_region=row.supervising_ministry,
                 sub_region=row.public_institution_type,
                 homepage=row.homepage,
-                source_pattern={
-                    "adapter": "public_institution_required",
-                    "searchKeyword": f"{row.name} 업무추진비",
-                    "status": "adapter_required",
-                    "baselineSourceUrl": PUBLIC_INSTITUTION_BASELINE_SOURCE_URL,
-                    "baselineAdditionalUrls": [PUBLIC_INSTITUTION_MOEF_SOURCE_URL],
-                    "baselineEvidence": (
-                        "P3 공식 기준: 잡알리오 2026 공공기관 지정현황과 재정경제부 "
-                        f"2026년도 공공기관 지정 자료에서 {row.public_institution_type} "
-                        f"기관명·주무부처({row.supervising_ministry})·상세ID({row.alio_id}) 확인. "
-                        "기관별 업무추진비 원문 URL·공공누리 유형·수집 접근성은 아직 검증 전입니다."
-                    ),
-                },
+                source_pattern=_public_institution_source_pattern(
+                    name=row.name,
+                    public_institution_type=row.public_institution_type,
+                    supervising_ministry=row.supervising_ministry,
+                    alio_id=row.alio_id,
+                ),
             )
         )
     return agencies
+
+
+def _public_institution_source_pattern(
+    *,
+    name: str,
+    public_institution_type: str,
+    supervising_ministry: str,
+    alio_id: str,
+) -> dict[str, object]:
+    baseline_evidence = (
+        "P3 공식 기준: 잡알리오 2026 공공기관 지정현황과 재정경제부 "
+        f"2026년도 공공기관 지정 자료에서 {public_institution_type} "
+        f"기관명·주무부처({supervising_ministry})·상세ID({alio_id}) 확인."
+    )
+    common = {
+        "searchKeyword": f"{name} 업무추진비",
+        "sourceUrl": ALIO_WORKCOST_SOURCE_URL,
+        "listUrl": ALIO_WORKCOST_LIST_API_URL,
+        "reportFormRootNo": "20701",
+        "dataName": "기관장 업무추진비",
+        "licenseUrl": ALIO_COPYRIGHT_URL,
+        "officialCommonPortal": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "ALIO 20701 JSON/첨부 샘플 원격 확인",
+        "baselineSourceUrl": PUBLIC_INSTITUTION_BASELINE_SOURCE_URL,
+        "baselineAdditionalUrls": [PUBLIC_INSTITUTION_MOEF_SOURCE_URL, ALIO_COPYRIGHT_URL],
+        "baselineEvidence": baseline_evidence,
+    }
+    if name in P3_ALIO_PLACE_LEVEL_CANDIDATES:
+        return {
+            **common,
+            "adapter": "alio_item_disclosure",
+            "alioAgencyName": name,
+            "fileKinds": ["xlsx"],
+            "evidenceNote": (
+                "ALIO 경영공시 항목 20701(기관장 업무추진비)에서 2025년 XLSX 첨부를 확인했고, "
+                "샘플 원문은 '사용일자/집행내역(목적)/사용처(장소)/집행금액(원)' place-level "
+                "행을 포함합니다. ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 "
+                "정규화합니다."
+            ),
+        }
+    hold_status = "no_recent_data"
+    file_kinds = ["xlsx"]
+    blocker = (
+        "잡알리오 기준 지정 공공기관으로 확인했고, ALIO 경영공시 항목 20701(기관장 "
+        "업무추진비) 공식 목록과 2025년 첨부 후보를 확인했지만, 샘플 dry-run 분류에서 "
+        "2025-06-01 이후 place-level 식당/장소 행이 검출되지 않았습니다. 최근 12개월 "
+        "적재 대상 0건으로 보류합니다."
+    )
+    if name in P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH:
+        hold_status = "adapter_hold"
+        blocker = (
+            "ALIO 20701 첨부에서 최근 12개월 place-level 후보가 보이나 금액 헤더가 천원 "
+            "단위이거나 단위 판정이 필요한 구조입니다. 원 단위 보정 없는 production write는 "
+            "금액 오적재 위험이 있어 spreadsheet parser 단위 보정 패치 후 재검증해야 합니다."
+        )
+    elif name in P3_ALIO_PDF_VISION_HOLD:
+        hold_status = "pdf_vision_hold"
+        file_kinds = ["pdf"]
+        blocker = (
+            "ALIO 20701 첨부가 PDF입니다. text PDF와 scanned PDF를 분리하고 vision "
+            "429/timeout 정책을 적용하는 공공기관 PDF 검증 전까지 production 적재하지 않습니다."
+        )
+    elif name in P3_ALIO_HWP_PARSER_HOLD:
+        hold_status = "adapter_hold"
+        file_kinds = ["hwp"]
+        blocker = (
+            "ALIO 20701 첨부가 HWP입니다. 현재 안전 dry-run 경로는 HWP 원문 추출을 보장하지 "
+            "못하므로 HWP extractor/변환 adapter 패치 후 재검증해야 합니다."
+        )
+    elif name in P3_ALIO_DOWNLOAD_HOLD:
+        hold_status = "adapter_hold"
+        blocker = (
+            "ALIO 20701 목록에는 기관장 업무추진비 항목이 있으나 샘플 다운로드에서 fileNo 누락, "
+            "500 응답, 또는 파일 경로 매핑 실패가 확인됐습니다. ALIO 첨부 선택/다운로드 adapter "
+            "보강 후 재검증해야 합니다."
+        )
+    elif name in P3_ALIO_XLS_PARSER_HOLD:
+        hold_status = "adapter_hold"
+        file_kinds = ["xls"]
+        blocker = (
+            "ALIO 20701 첨부가 XLS 중심입니다. 일부 파일은 place-level 가능성이 있으나 기관별 "
+            "시트 구조와 최근 12개월 필터를 안정적으로 판정하는 XLS parser 보강 후 재검증해야 합니다."
+        )
+    return {
+        **common,
+        "adapter": "public_institution_required",
+        "status": "adapter_required",
+        "holdStatus": hold_status,
+        "fileKinds": file_kinds,
+        "blocker": blocker,
+    }
 
 
 def local_public_institution_agencies() -> list[Agency]:
@@ -4049,20 +4241,59 @@ def local_public_institution_agencies() -> list[Agency]:
                 parent_region=row.parent_region,
                 sub_region=row.sub_region,
                 homepage=None,
-                source_pattern={
-                    "adapter": "local_public_institution_required",
-                    "searchKeyword": f"{row.name} 업무추진비",
-                    "status": "adapter_required",
-                    "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
-                    "baselineEvidence": (
-                        "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
-                        f"{row.institution_type}/{row.institution_subtype} 기관명 확인. "
-                        "기관별 업무추진비 원문 URL·공공누리 유형·수집 접근성은 아직 검증 전입니다."
-                    ),
-                },
+                source_pattern=_local_public_institution_source_pattern(
+                    name=row.name,
+                    institution_type=row.institution_type,
+                    institution_subtype=row.institution_subtype,
+                ),
             )
         )
     return agencies
+
+
+def _local_public_institution_source_pattern(
+    *,
+    name: str,
+    institution_type: str,
+    institution_subtype: str,
+) -> dict[str, object]:
+    is_public_enterprise = institution_type == "지방공기업"
+    source_url = (
+        CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL
+        if is_public_enterprise
+        else CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL
+    )
+    extra_urls = (
+        [CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL]
+        if is_public_enterprise
+        else [CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL]
+    )
+    return {
+        "adapter": "local_public_institution_required",
+        "searchKeyword": f"{name} 업무추진비",
+        "status": "adapter_required",
+        "holdStatus": "adapter_hold",
+        "sourceUrl": source_url,
+        "extraListUrls": extra_urls,
+        "dataName": "기관장 업무추진비",
+        "fileKinds": ["xlsx", "hwpx", "pdf"],
+        "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "CleanEye 기관장 업무추진비 공통 포털 조사",
+        "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+        "baselineAdditionalUrls": [CLEANEYE_COPYRIGHT_URL],
+        "baselineEvidence": (
+            "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+            f"{institution_type}/{institution_subtype} 기관명 확인."
+        ),
+        "blocker": (
+            "클린아이에서 기관장 업무추진비 공시/통계 및 공공데이터 자유활용 정책은 확인했습니다. "
+            "다만 현 pipeline에는 CleanEye entId/itemId/itemNo 연계, 분기별 첨부 다운로드 "
+            "fn_FileDown(/file/FileDownload.do), 기관명 정규화 매핑, aggregate 통계와 place-level "
+            "세부내역 분리 로직이 없습니다. CleanEye adapter/parser 패치 후 dry-run 검증 전까지 "
+            "production 적재하지 않습니다."
+        ),
+    }
 
 
 SEOUL_AGENCIES = seoul_agencies()
