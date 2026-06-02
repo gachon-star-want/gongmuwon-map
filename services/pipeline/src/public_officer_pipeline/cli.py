@@ -1234,6 +1234,12 @@ async def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
         )
+    if detail.file_kind == "hwp" and detail.content_bytes:
+        return extract_hwp_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+            source_title=detail.title,
+        )
     if detail.file_kind == "hwpx" and detail.content_bytes:
         return extract_hwpx_rows(
             detail.content_bytes,

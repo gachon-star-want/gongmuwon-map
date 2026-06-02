@@ -2347,6 +2347,20 @@ NON_CAPITAL_REGIONAL_OFFICE_ATTACHMENT_BOARDS = {
         "verifiedAt": "2026-06-01",
         "verifiedBy": "공식 사이트 화면 확인",
     },
+    "전라남도청": {
+        "homepage": "https://www.jeonnam.go.kr",
+        "listUrl": "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100",
+        "fileKinds": ["hwp"],
+        "followDetail": True,
+        "pageParam": "pageIndex",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인 및 HWP parser dry-run 후보 전환",
+        "evidenceNote": (
+            "공식 도지사 업무추진비 공개 목록과 상세 공공누리 제1유형 표시, "
+            "/boardDown.do HWP 첨부 구조를 확인했습니다. 원본 HWP를 재배포하지 않고 "
+            "공개 사실 row만 추출·정규화·출처 저장합니다."
+        ),
+    },
     "제주특별자치도청": {
         "homepage": "https://www.jeju.go.kr",
         "listUrl": "https://www.jeju.go.kr/open/open/work/work2.htm?category=1409",
@@ -5786,18 +5800,21 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("전라남도", "나주시청"): {
-        "sourceUrl": "https://naju.go.kr/www/open_data/budget/expense",
-        "extraListUrls": ["https://naju.go.kr/www/support/sitemap"],
-        "fileKinds": ["html"],
+        "sourceUrl": "https://www.naju.go.kr/www/open_data/budget/expense/group_expense",
+        "detailUrl": "https://www.naju.go.kr/www/open_data/budget/expense/group_expense?idx=604998&mode=view",
+        "attachmentUrl": "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320",
+        "fileKinds": ["pdf"],
         "pageParam": "page",
         "followDetail": True,
-        "verifiedAt": "2026-06-01",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "httpBackend": "curl",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인 및 facts-only 적재 정책 재검토",
         "blocker": (
-            "공식 예산살림 업무추진비 메뉴와 단체장업무추진비사용내역 목록은 확인했습니다. "
-            "다만 현재 로컬 수집 환경에서는 본문이 0바이트로 내려오고, 목록/상세 화면의 "
-            "공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 제1유형과 수집 "
-            "접근성 확인 전까지 수집하지 않습니다."
+            "공식 예산살림 단체장업무추진비사용내역 목록과 상세의 "
+            "window.open('/ybscript.io/common/file_download/...') PDF 첨부 구조를 "
+            "재확인했습니다. 공공누리 제1유형 미표시만으로는 보류하지 않고, "
+            "명시적 강한 재이용 제한 문구는 확인하지 못했습니다. "
+            "dry-run에서 최근 12개월 place-level row가 나오면 적재 후보입니다."
         ),
     },
     ("전라남도", "광양시청"): {
@@ -8076,6 +8093,7 @@ def _apply_gyeongsang_facts_only_release(
             "publicWorksPolicyUrl",
             "jsDownloadPath",
             "userAgent",
+            "httpBackend",
         )
         if source_pattern.get(key)
     }
@@ -8943,16 +8961,7 @@ JEOLLA_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
     ],
 }
 
-JEOLLA_TECHNICAL_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
-    ("전라남도", "나주시청"): (
-        "adapter_hold",
-        "공식 예산살림 업무추진비 메뉴와 단체장업무추진비사용내역 목록은 확인했습니다. "
-        "개정 legal_hold 기준상 공공누리 제1유형 미표시만으로 보류하지 않습니다. 다만 "
-        "현재 수집 환경에서 목록 본문이 0바이트로 내려와 generic attachment_board가 "
-        "최근 게시물과 첨부를 안정적으로 파싱하지 못하므로, 나주시 목록 접근성/parser "
-        "보강 후 dry-run을 재검증해야 합니다.",
-    )
-}
+JEOLLA_TECHNICAL_HOLDS: dict[tuple[str, str], tuple[str, str]] = {}
 
 JEOLLA_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
     ("광주광역시", "남구의회"): (
@@ -9242,6 +9251,7 @@ def _apply_jeolla_facts_only_release_or_hold(
             "publicWorksPolicyUrl",
             "jsDownloadPath",
             "userAgent",
+            "httpBackend",
         )
         if source_pattern.get(key)
     }

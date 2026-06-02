@@ -539,7 +539,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     ]
     pending_agencies = NON_CAPITAL_AGENCIES
 
-    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 182
+    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 186
     assert all(agency.homepage is None for agency in baseline_pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in baseline_pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in baseline_pending_agencies)
@@ -705,7 +705,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert buyeo_city.source_pattern["fileKinds"] == ["hwp"]
     assert buyeo_city.source_pattern["pageParam"] == "GotoPage"
-    assert "HWP extractor/변환 adapter" in buyeo_city.source_pattern["blocker"]
+    assert "HWP 5.x extractor" in buyeo_city.source_pattern["blocker"]
     assert "holdStatus" not in buyeo_council.source_pattern
     assert buyeo_council.source_pattern["listUrl"] == (
         "https://council.buyeo.go.kr/kr/open/bbsBusiness.do"
@@ -1004,10 +1004,12 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "https://council.mokpo.go.kr/kr/bbs?bbs_id=expenses"
     )
     assert "scanned PDF" in mokpo_council.source_pattern["blocker"]
-    assert naju_city.source_pattern["holdStatus"] == "adapter_hold"
-    assert naju_city.source_pattern["sourceUrl"] == "https://naju.go.kr/www/open_data/budget/expense"
-    assert naju_city.source_pattern["fileKinds"] == ["html"]
-    assert "본문이 0바이트" in naju_city.source_pattern["blocker"]
+    assert naju_city.source_pattern["adapter"] == "attachment_board"
+    assert naju_city.source_pattern["listUrl"] == (
+        "https://www.naju.go.kr/www/open_data/budget/expense/group_expense"
+    )
+    assert naju_city.source_pattern["fileKinds"] == ["pdf"]
+    assert naju_city.source_pattern["httpBackend"] == "curl"
     assert gurye_city.source_pattern["holdStatus"] == "legal_hold"
     assert gurye_city.source_pattern["fileKinds"] == ["xlsx"]
     assert gurye_city.source_pattern["pageParam"] == "pageIndex"
@@ -1348,12 +1350,12 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "태안군의회",
         "홍성군의회",
     }.issubset(verified_non_capital_names)
-    assert len(verified_non_capital_names) == 168
+    assert len(verified_non_capital_names) == 172
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
     miryang_city = next(agency for agency in verified_non_capital if agency.short_name == "밀양시청")
-    jeonnam_city = next(agency for agency in pending_agencies if agency.short_name == "전라남도청")
+    jeonnam_city = next(agency for agency in verified_non_capital if agency.short_name == "전라남도청")
     jeju_city = next(agency for agency in verified_non_capital if agency.short_name == "제주특별자치도청")
     jeju_council = next(
         agency for agency in verified_non_capital if agency.short_name == "제주특별자치도의회"
@@ -1394,15 +1396,14 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert miryang_city.source_pattern["fileKinds"] == ["xlsx"]
     assert miryang_city.source_pattern["pageParam"] == "pageIndex"
     assert miryang_city.source_pattern["userAgent"].startswith("Mozilla/5.0 (Macintosh")
-    assert jeonnam_city.homepage is None
-    assert jeonnam_city.source_pattern["adapter"] == "nationwide_office_required"
-    assert jeonnam_city.source_pattern["holdStatus"] == "adapter_hold"
-    assert jeonnam_city.source_pattern["sourceUrl"] == (
+    assert jeonnam_city.homepage == "https://www.jeonnam.go.kr"
+    assert jeonnam_city.source_pattern["adapter"] == "attachment_board"
+    assert jeonnam_city.source_pattern["listUrl"] == (
         "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100"
     )
     assert jeonnam_city.source_pattern["fileKinds"] == ["hwp"]
     assert jeonnam_city.source_pattern["pageParam"] == "pageIndex"
-    assert "HWP 본문 추출" in jeonnam_city.source_pattern["blocker"]
+    assert "HWP 첨부 구조" in jeonnam_city.source_pattern["evidenceNote"]
     assert jeju_city.homepage == "https://www.jeju.go.kr"
     assert jeju_city.source_pattern["adapter"] == "attachment_board"
     assert jeju_city.source_pattern["listUrl"] == (

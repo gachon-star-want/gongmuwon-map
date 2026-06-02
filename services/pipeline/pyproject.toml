@@ -12,6 +12,7 @@ dependencies = [
   "python-dateutil>=2.9.0.post0",
   "selectolax>=0.4.4",
   "xlrd>=2.0.1",
+  "olefile>=0.47",
 ]
 
 [dependency-groups]
