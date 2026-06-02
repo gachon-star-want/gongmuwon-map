@@ -2721,7 +2721,7 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     },
     ("강원특별자치도", "홍천군의회"): {
         "sourceUrl": "https://www.hccouncil.go.kr/council/kr/costBBS.do",
-        "fileKinds": ["xls", "pdf"],
+        "fileKinds": ["xls"],
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
@@ -5460,6 +5460,121 @@ GANGWON_ATTACHMENT_LEGAL_AUDIT_NOTE = (
     "자유이용 근거를 찾지 못했습니다."
 )
 
+GANGWON_EXPLICIT_REUSE_LIMITS: dict[str, str] = {
+    "강원특별자치도청": (
+        "강원특별자치도 저작권정책은 공공누리가 부착되지 않은 자료를 사용하려면 담당자와 "
+        "사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "춘천시청": (
+        "춘천시 저작권정책은 공공누리가 부착되지 않은 자료는 공공저작물 관리책임관 및 "
+        "실무담당자와 사전에 협의해 이용하라고 명시합니다."
+    ),
+    "원주시청": (
+        "원주시 공공저작물 이용안내는 공공누리가 부착되지 않은 자료는 공공저작물 "
+        "관리책임관 및 실무담당자와 사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "동해시청": (
+        "동해시 저작권정책은 공공누리가 부착되지 않은 자료 이용에 담당자 사전 협의가 "
+        "필요하다고 안내합니다."
+    ),
+    "태백시청": (
+        "태백시 저작권정책은 공공누리가 부착되지 않은 자료를 이용하려면 자료관리부서 "
+        "담당자와 사전 협의 후 이용하라고 명시합니다."
+    ),
+    "삼척시청": (
+        "삼척시 저작권보호정책은 공공누리가 부착되지 않은 자료는 공공저작물 관리책임관 및 "
+        "실무담당자와 사전에 협의해 이용하라고 명시합니다."
+    ),
+    "홍천군청": (
+        "홍천군 저작권정책은 공공누리가 부착되지 않은 자료 이용 시 공공저작물 실무담당자와 "
+        "사전에 협의하라고 명시합니다."
+    ),
+    "횡성군청": (
+        "횡성군 공공저작물 자유이용 정책은 공공누리가 부착되지 않은 자료 사용 시 담당자와 "
+        "사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "철원군청": (
+        "철원군 저작권정책은 공공누리가 부착되지 않은 자료 이용 시 공공저작물 관리책임관 및 "
+        "관리담당자와 사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "철원군의회": (
+        "철원군 공공저작물 정책은 공공누리가 부착되지 않은 자료 이용 시 공공저작물 "
+        "관리책임관 및 관리담당자와 사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "화천군청": (
+        "화천군 저작권정책은 공공누리가 부착되지 않은 자료 사용 시 담당자와 사전에 협의한 "
+        "이후 이용하라고 명시합니다."
+    ),
+    "양구군청": (
+        "양구군 저작권정책은 무단사용·변조·상업적 용도 사용 방지 목적과 함께, 공공누리가 "
+        "부착되지 않은 자료는 담당자와 사전에 협의한 이후 이용하라고 명시합니다."
+    ),
+    "인제군청": (
+        "인제군 저작권정책은 공공누리가 부착되지 않은 자료 이용 시 공공저작물 실무담당자와 "
+        "사전에 협의해 이용하라고 명시합니다."
+    ),
+}
+
+GANGWON_DRY_RUN_HOLDS: dict[str, tuple[str, str]] = {
+    "강원특별자치도의회": (
+        "pdf_vision_hold",
+        "강원도권 facts-only dry-run에서 최근 PDF/XLS 후보 중 선택된 PDF가 scanned PDF로 "
+        "판정되었고 현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 "
+        "실패했습니다. PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 "
+        "않습니다.",
+    ),
+    "춘천시의회": (
+        "adapter_hold",
+        "강원도권 facts-only dry-run에서 공식 PDF 상세·첨부 구조는 있으나 generic "
+        "council_attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
+        "목록/상세 parser 보강 후 재검증이 필요합니다.",
+    ),
+    "원주시의회": (
+        "pdf_vision_hold",
+        "강원도권 facts-only dry-run에서 최근 분기 PDF 첨부가 scanned PDF로 판정되었고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
+    ),
+    "강릉시의회": (
+        "pdf_vision_hold",
+        "강원도권 facts-only dry-run에서 최근 첨부가 scanned PDF로 판정되었고 현재 실행 "
+        "환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
+    ),
+    "속초시청": (
+        "adapter_hold",
+        "강원도권 facts-only dry-run에서 시장·부시장 업무추진비 XLSX 직접 다운로드 구조가 "
+        "generic attachment_board의 목록 파싱에 잡히지 않아 posts_seen=0이었습니다. "
+        "직접 다운로드형 목록 parser 보강 후 재검증이 필요합니다.",
+    ),
+    "정선군청": (
+        "adapter_hold",
+        "강원도권 facts-only dry-run에서 공식 XLSX 상세·첨부 구조는 있으나 generic "
+        "attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. 목록 parser "
+        "보강 후 재검증이 필요합니다.",
+    ),
+    "평창군청": (
+        "adapter_hold",
+        "강원도권 facts-only dry-run에서 공식 XLSX 첨부 구조는 있으나 curl request failed "
+        "또는 posts_seen=0으로 안정적으로 수집하지 못했습니다. 네트워크/게시판 parser "
+        "보강 후 재검증이 필요합니다.",
+    ),
+    "화천군의회": (
+        "adapter_hold",
+        "강원도권 facts-only dry-run에서 공식 PDF 첨부 구조는 있으나 generic "
+        "council_attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
+        "목록 parser 보강 후 재검증이 필요합니다.",
+    ),
+    "인제군의회": (
+        "pdf_vision_hold",
+        "강원도권 facts-only dry-run에서 최근 분기 PDF 첨부가 scanned PDF로 판정되었고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
+    ),
+    "양양군의회": (
+        "pdf_vision_hold",
+        "강원도권 facts-only dry-run에서 최근 PDF 첨부가 scanned PDF로 판정되었고 현재 "
+        "실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
+    ),
+}
+
 NON_CAPITAL_BASIC_REGION_GROUPS = [
     (
         "busan",
@@ -6463,6 +6578,138 @@ def _apply_gangwon_legal_evidence(
     source_pattern.setdefault("derivativeUseStatus", "not_confirmed_without_kogl_type1")
 
 
+def _apply_gangwon_facts_only_release(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+    *,
+    is_council: bool,
+) -> None:
+    if parent_region != "강원특별자치도":
+        return
+    if source_pattern.get("holdStatus") != "legal_hold":
+        return
+    explicit_limit = GANGWON_EXPLICIT_REUSE_LIMITS.get(short_name)
+    if explicit_limit:
+        previous_note = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+        source_pattern.update(
+            {
+                "blocker": f"{previous_note} {explicit_limit}".strip(),
+                "commercialUseStatus": "prohibited_or_requires_prior_consultation",
+                "derivativeUseStatus": "prohibited_or_requires_prior_consultation",
+            }
+        )
+        return
+    if _gangwon_has_strong_reuse_limit(source_pattern):
+        return
+
+    source_url = str(source_pattern.get("sourceUrl") or "").strip()
+    if not source_url:
+        return
+
+    file_kinds = [
+        kind
+        for kind in (str(value).lower().strip() for value in source_pattern.get("fileKinds", []))
+        if kind in SUPPORTED_ATTACHMENT_FILE_KINDS
+    ]
+    if not file_kinds:
+        file_kinds = ["xlsx", "xls", "pdf"]
+
+    page_param = str(source_pattern.get("pageParam") or "page")
+    follow_detail = bool(source_pattern.get("followDetail", True))
+    extra_list_urls = [
+        str(value)
+        for value in source_pattern.get("extraListUrls", [])
+        if str(value).strip()
+    ]
+    optional_fields = {
+        key: source_pattern[key]
+        for key in (
+            "detailUrl",
+            "attachmentUrl",
+            "copyrightUrl",
+            "publicWorksPolicyUrl",
+            "jsDownloadPath",
+            "userAgent",
+            "commercialUseStatus",
+            "derivativeUseStatus",
+        )
+        if source_pattern.get(key)
+    }
+    previous_note = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    evidence_note = (
+        "공식 업무추진비 공개자료의 원본 파일은 재배포하지 않고, 법령상 공개된 날짜·기관·"
+        "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화·출처 저장하는 "
+        "정책 기준으로 적재 후보입니다. 공공누리 제1유형 미표시 또는 All Rights Reserved "
+        "표기만으로는 보류하지 않으며, 현재 확인 근거에서는 명시적 상업적 이용금지·"
+        "변경금지·무단 이용금지·사전협의 필요 문구를 확인하지 못했습니다."
+    )
+    if previous_note:
+        evidence_note = f"{evidence_note} 이전 출처 확인 메모: {previous_note}"
+
+    source_pattern.clear()
+    source_pattern.update(
+        {
+            "adapter": "council_attachment_board" if is_council else "attachment_board",
+            "listUrl": source_url,
+            "fileKinds": file_kinds,
+            "followDetail": follow_detail,
+            "pageParam": page_param,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+            "evidenceNote": evidence_note,
+            **optional_fields,
+        }
+    )
+    if extra_list_urls:
+        source_pattern["extraListUrls"] = extra_list_urls
+
+
+def _apply_gangwon_dry_run_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region != "강원특별자치도":
+        return
+    if source_pattern.get("holdStatus"):
+        return
+
+    hold = GANGWON_DRY_RUN_HOLDS.get(short_name)
+    if not hold:
+        return
+
+    hold_status, blocker = hold
+    source_pattern.update({"holdStatus": hold_status, "blocker": blocker})
+
+
+def _gangwon_has_strong_reuse_limit(source_pattern: dict[str, object]) -> bool:
+    commercial_status = str(source_pattern.get("commercialUseStatus") or "")
+    derivative_status = str(source_pattern.get("derivativeUseStatus") or "")
+    if commercial_status.startswith("prohibited_") or derivative_status.startswith("prohibited_"):
+        return True
+
+    blocker = str(source_pattern.get("blocker") or source_pattern.get("evidenceNote") or "")
+    strong_markers = (
+        "공공누리 제2유형",
+        "공공누리 제3유형",
+        "공공누리 제4유형",
+        "상업적이용금지",
+        "상업적 이용금지",
+        "상업적 이용 금지",
+        "변경금지",
+        "변경 금지",
+        "무단 이용 금지",
+        "무단이용 금지",
+        "무단 이용",
+        "무단이용",
+        "무단사용",
+        "사전 협의",
+        "사전협의",
+    )
+    return any(marker in blocker for marker in strong_markers)
+
+
 def _apply_gyeongsang_source_not_found(
     source_pattern: dict[str, object],
     parent_region: str,
@@ -6910,6 +7157,17 @@ def non_capital_agencies() -> list[Agency]:
             _apply_gangwon_legal_evidence(
                 office_source_pattern, parent_region, office_short_name
             )
+            _apply_gangwon_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+                is_council=False,
+            )
+            _apply_gangwon_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
                 office_source_pattern,
@@ -6970,6 +7228,17 @@ def non_capital_agencies() -> list[Agency]:
             _apply_legal_hold(council_source_pattern, council_blocker)
             _apply_gangwon_legal_evidence(
                 council_source_pattern, parent_region, council_short_name
+            )
+            _apply_gangwon_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+                is_council=True,
+            )
+            _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
             )
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
             _apply_chungcheong_source_not_found(
@@ -7142,10 +7411,32 @@ def non_capital_agencies() -> list[Agency]:
             _apply_gangwon_legal_evidence(
                 office_source_pattern, parent_region, office_short_name
             )
+            _apply_gangwon_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+                is_council=False,
+            )
+            _apply_gangwon_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
             if council_blocker and not council_board:
                 council_source_pattern.update({"holdStatus": "legal_hold", **council_blocker})
             _apply_gangwon_legal_evidence(
                 council_source_pattern, parent_region, council_short_name
+            )
+            _apply_gangwon_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+                is_council=True,
+            )
+            _apply_gangwon_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
             )
             _apply_gyeongsang_source_not_found(office_source_pattern, parent_region)
             _apply_gyeongsang_source_not_found(council_source_pattern, parent_region)
