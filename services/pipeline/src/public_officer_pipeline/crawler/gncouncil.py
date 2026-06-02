@@ -52,6 +52,7 @@ DOWNLOAD_HREF_PARTS = (
     "/portal/cmmn/file/fileDown.do",
     "/shareEtc/download_utf.asp",
     "/board/FileDown.do",
+    "/board_download.do",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
     "/cms/download.cs",
@@ -612,6 +613,9 @@ class CouncilAttachmentCrawler:
             inline_post_href = _inline_post_detail_href(anchor)
             if inline_post_href:
                 href = inline_post_href
+            gunwi_page_href = _gunwi_page_detail_href(href)
+            if gunwi_page_href:
+                href = gunwi_page_href
             if not href or _is_placeholder_href(href):
                 continue
             refs.append(
@@ -791,6 +795,16 @@ def _inline_post_detail_href(anchor) -> str:
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query["bid"] = bid
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _gunwi_page_detail_href(href: str) -> str:
+    parts = urlsplit(href)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    if parts.path.endswith("page.do") or not parts.path:
+        if query.get("cmd") == "2" and query.get("bod_uid") and query.get("mnu_uid"):
+            query["cmd"] = "258"
+            return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+    return ""
 
 
 def _detail_title_cell(cells) -> Any | None:
@@ -978,6 +992,7 @@ def _is_detail_href(href: str) -> bool:
         or "mode=view" in lowered
         or "amode=view" in lowered
         or "act=view" in lowered
+        or "cmd=2" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
         or re.search(r"(?:^|/)view(?:\?|$)", lowered) is not None
