@@ -273,29 +273,30 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 151
+    assert output["summary"]["verified_in_code"] == 163
     assert output["summary"]["pending"] == 49
     assert output["summary"]["legal_hold"] == 186
-    assert output["summary"]["source_not_found"] == 163
-    assert output["summary"]["no_recent_data"] == 283
+    assert output["summary"]["source_not_found"] == 138
+    assert output["summary"]["no_recent_data"] == 295
     assert output["summary"]["pdf_vision_hold"] == 9
-    assert output["summary"]["adapter_hold"] == 1361
+    assert output["summary"]["adapter_hold"] == 1362
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 146
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 186
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
-    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
+    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 35
+    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 25
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
-    assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 4
+    assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 6
     assert output["summary"]["priority_group_counts"]["p3"]["pending"] == 0
     assert output["summary"]["priority_group_counts"]["p3"]["no_recent_data"] == 280
     assert output["summary"]["priority_group_counts"]["p3"]["pdf_vision_hold"] == 8
-    assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 50
+    assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 48
     assert output["summary"]["priority_group_counts"]["p4"]["total"] == 1312
-    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 1
-    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 2
-    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 1309
+    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 11
+    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 14
+    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 1287
 
 
 def test_print_source_registry_summary_only_omits_entries(
@@ -308,7 +309,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 151
+    assert output["summary"]["verified_in_code"] == 163
     assert "entries" not in output
 
 

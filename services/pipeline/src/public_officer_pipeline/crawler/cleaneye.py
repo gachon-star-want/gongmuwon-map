@@ -129,24 +129,26 @@ class CleanEyeOwnerWorkCostCrawler:
         )
 
     def _detail_url(self) -> str:
+        return str(httpx.URL(self.pattern.sourceUrl).copy_merge_params(self._detail_params()))
+
+    def _detail_params(self) -> dict[str, str]:
         fixed_year = self.pattern.fixedYear
-        params = {
+        return {
             "entId": self.pattern.entId,
             "entKind": self.pattern.entKind,
             "entName": self.pattern.entName,
             "itemId": self.pattern.itemId,
             "fixedYear": str(fixed_year),
-            "beyondYear": str(fixed_year + 4),
-            "budgetSumYear": str(fixed_year + 1),
-            "pastYear": str(fixed_year - 4),
-            "fixedQuarterYear": str(fixed_year),
-            "pastQuarterYear": str(fixed_year - 4),
-            "fixedHalfYear": str(fixed_year),
-            "pastHalfYear": str(fixed_year - 4),
-            "dtFlagQuarter": "500120",
-            "dtFlagHalf": "500210",
+            "beyondYear": str(self.pattern.beyondYear or fixed_year + 4),
+            "budgetSumYear": str(self.pattern.budgetSumYear or fixed_year + 1),
+            "pastYear": str(self.pattern.pastYear or fixed_year - 4),
+            "fixedQuarterYear": str(self.pattern.fixedQuarterYear or fixed_year),
+            "pastQuarterYear": str(self.pattern.pastQuarterYear or fixed_year - 4),
+            "fixedHalfYear": str(self.pattern.fixedHalfYear or fixed_year),
+            "pastHalfYear": str(self.pattern.pastHalfYear or fixed_year - 4),
+            "dtFlagQuarter": self.pattern.dtFlagQuarter,
+            "dtFlagHalf": self.pattern.dtFlagHalf,
         }
-        return str(httpx.URL(self.pattern.sourceUrl).copy_merge_params(params))
 
 
 def _parse_json_list_q(html: str) -> list[dict[str, Any]]:
