@@ -2726,6 +2726,107 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "중구청"): {
+        "sourceUrl": "https://www.bsjunggu.go.kr/index.junggu?menuCd=DOM_000000103003008000",
+        "fileKinds": ["html"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 2026년 부서별 게시물 구조는 확인했습니다. "
+            "다만 업무추진비 화면의 공공누리 영역이 비어 있고 푸터가 All rights reserved로 "
+            "표시되어 제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "동래구청"): {
+        "sourceUrl": "https://www.dongnae.go.kr/index.dongnae?menuCd=DOM_000000101009000000",
+        "fileKinds": ["xlsx", "xls", "hwp"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 2026년 게시물 구조는 확인했습니다. 다만 "
+            "업무추진비 화면의 공공누리 영역이 비어 있고 자유이용 불가 안내가 노출되어 "
+            "제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "북구청"): {
+        "sourceUrl": (
+            "https://www.bsbukgu.go.kr/index.bsbukgu?"
+            "menuCd=DOM_000000105010010000"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf", "hwp"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행내역 목록과 최근 2026년 부서별 게시물 구조는 확인했습니다. "
+            "다만 업무추진비 화면에서 공공누리 제1유형 표시가 확인되지 않고 저작권 정책은 "
+            "공공누리 미부착 자료의 사전 협의를 요구하므로 제1유형 확인 전까지 수집하지 "
+            "않습니다."
+        ),
+    },
+    ("부산광역시", "강서구청"): {
+        "sourceUrl": "https://www.bsgangseo.go.kr/portal/contents.do?mid=0503030100",
+        "extraListUrls": [
+            "https://www.bsgangseo.go.kr/portal/contents.do?mid=0503030200"
+        ],
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 부서별·과장급 이상 업무추진비 사용내역 목록과 최근 2026년 XLS 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 All Rights Reserved로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "강서구의회"): {
+        "sourceUrl": "https://www.bsgangseo.go.kr/portal/contents.do?mid=0503030300",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의회 업무추진비 사용내역 목록과 최근 분기별 XLS 첨부 구조는 확인했습니다. "
+            "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 푸터가 All Rights Reserved로 표시되어 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "연제구청"): {
+        "sourceUrl": "https://www.yeonje.go.kr/portal/contents.do?mId=0401090000",
+        "fileKinds": ["xls", "hwp"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년 XLS/HWP 첨부 구조는 확인했습니다. 다만 "
+            "업무추진비 화면에서 공공누리 제1유형 표시가 확인되지 않고 저작권 정책은 "
+            "상업적 목적 사용 불가와 제4유형 조건을 안내하므로 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "기장군청"): {
+        "sourceUrl": "https://www.gijang.go.kr/index.gijang?menuCd=DOM_000000101002014000",
+        "fileKinds": ["html"],
+        "pageParam": "startPage",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무 추진비 공개 HTML 표와 최근 2026년 사용일자·사용장소·목적·금액 "
+            "행 구조는 확인했습니다. 다만 업무추진비 화면에서 공공누리 제1유형 표시가 "
+            "확인되지 않고 저작권 정책은 공공누리 제4유형 및 상업적 이용·변경 금지를 "
+            "안내하므로 수집하지 않습니다."
+        ),
+    },
     ("충청북도", "청주시청"): {
         "sourceUrl": (
             "https://www.cheongju.go.kr/www/selectBbsNttList.do?"
@@ -2996,6 +3097,48 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 2026년 업무추진비 공개 페이지와 구청장 월별 XLSX 다운로드 구조는 "
             "확인했습니다. 다만 공공누리 영역이 비어 있고 푸터가 All Rights Reserved로 "
             "표시되어 제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "서구청"): {
+        "sourceUrl": "https://www.dgs.go.kr/portal/board/post/list.do?bcIdx=511&mid=0502030000",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 사전정보공표 업무추진비 공개 목록과 최근 2026년 XLS 첨부 구조는 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 저작권보호정책 링크가 비활성 주석으로만 남아 "
+            "있어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "달서구청"): {
+        "sourceUrl": "https://www.dalseo.daegu.kr/index.do?menu_id=10000202",
+        "fileKinds": ["html"],
+        "pageParam": "pageIndex",
+        "followDetail": False,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 연도별 목록과 2026년 공개 경로는 확인했습니다. 다만 "
+            "업무추진비 화면의 공공누리 영역이 비어 있고 저작권 정책은 공공누리 부착 "
+            "저작물만 이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "달성군청"): {
+        "sourceUrl": "https://www.dalseong.daegu.kr/index.do?menu_id=00001704",
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 최근 2026년 XLS/XLSX 첨부 구조는 확인했습니다. "
+            "다만 업무추진비 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 "
+            "표시가 확인되지 않고 푸터가 All rights reserved로 표시되며 저작권정책 링크가 "
+            "비활성 주석으로만 남아 있어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("대구광역시", "군위군청"): {
