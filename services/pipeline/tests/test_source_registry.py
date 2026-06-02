@@ -536,8 +536,21 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     yangyang_council = next(entry for entry in non_capital_entries if entry.short_name == "양양군의회")
     assert yeongwol_city.verification_status == "verified_in_code"
     assert yeongwol_city.source_url == "https://www.yw.go.kr/www/selectBbsNttList.do?bbsNo=7&key=196"
+    assert yeongwol_city.detail_url == (
+        "https://www.yw.go.kr/www/selectBbsNttView.do?"
+        "key=196&bbsNo=7&nttNo=154331&searchCtgry=&searchCnd=all&searchKrwd="
+        "&pageIndex=1&integrDeptCode=&pageUnit=10"
+    )
+    assert yeongwol_city.attachment_url == (
+        "https://www.yw.go.kr/www/downloadBbsFile.do?bbsNo=7&atchmnflNo=131573"
+    )
+    assert yeongwol_city.public_works_policy_url == "https://www.yw.go.kr/www/contents.do?key=528"
+    assert yeongwol_city.commercial_use_status == "allowed_kogl_type1_commercial"
+    assert yeongwol_city.derivative_use_status == "allowed_kogl_type1_derivatives"
     assert yeongwol_city.source_file_kinds == ["xlsx"]
     assert "첨부 내부 문자열 검사" not in yeongwol_city.evidence_note
+    assert "kogl_box type1" in yeongwol_city.evidence_note
+    assert "production 적재가 완료" in yeongwol_city.evidence_note
     assert chuncheon_city.verification_status == "legal_hold"
     assert "춘천시청 업무추진비 집행내역 목록" in chuncheon_city.evidence_note
     assert wonju_council.verification_status == "legal_hold"
