@@ -287,20 +287,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.total == 2202
     assert summary.verified_in_code == 573
     assert summary.pending == 43
-    assert summary.legal_hold == 105
+    assert summary.legal_hold == 108
     assert summary.source_not_found == 92
     assert summary.no_recent_data == 1308
-    assert summary.pdf_vision_hold == 18
-    assert summary.adapter_hold == 63
+    assert summary.pdf_vision_hold == 19
+    assert summary.adapter_hold == 59
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 223
     assert summary.priority_group_counts["p1"].pending == 43
-    assert summary.priority_group_counts["p1"].legal_hold == 105
+    assert summary.priority_group_counts["p1"].legal_hold == 108
     assert summary.priority_group_counts["p1"].source_not_found == 65
     assert summary.priority_group_counts["p1"].no_recent_data == 2
-    assert summary.priority_group_counts["p1"].pdf_vision_hold == 15
-    assert summary.priority_group_counts["p1"].adapter_hold == 35
+    assert summary.priority_group_counts["p1"].pdf_vision_hold == 16
+    assert summary.priority_group_counts["p1"].adapter_hold == 31
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].verified_in_code == 2
@@ -329,14 +329,14 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 92
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 43
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 98
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 101
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 15
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 16
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 65
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 35
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 31
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -950,8 +950,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "scanned PDF vision extraction" in ulsan_namgu_council.evidence_note
     assert ulsan_bukgu.verification_status == "legal_hold"
     assert "공공누리 제4유형" in ulsan_bukgu.evidence_note
-    assert ulsan_bukgu_council.verification_status == "verified_in_code"
-    assert "ALL RIGHTS RESERVED" in ulsan_bukgu_council.evidence_note
+    assert ulsan_bukgu_council.verification_status == "adapter_hold"
+    assert "posts_seen=0" in ulsan_bukgu_council.evidence_note
     assert ulju_office.verification_status == "adapter_hold"
     assert "posts_seen=0" in ulju_office.evidence_note
     assert ulju_council.verification_status == "verified_in_code"
@@ -1076,8 +1076,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "업무추진비 XLS 첨부 구조" in daegu_suseong_council.evidence_note
     assert daegu_dalseo.verification_status == "adapter_hold"
     assert "posts_seen=0" in daegu_dalseo.evidence_note
-    assert daegu_dalseo_council.verification_status == "adapter_hold"
-    assert "raw_parsed_rows=0" in daegu_dalseo_council.evidence_note
+    assert daegu_dalseo_council.verification_status == "verified_in_code"
+    assert "normalized_visits=24" in daegu_dalseo_council.evidence_note
+    assert "production DB 기준 sources=3, places=21, visits=24" in daegu_dalseo_council.evidence_note
     assert daegu_dalseong.verification_status == "adapter_hold"
     assert "posts_seen=0" in daegu_dalseong.evidence_note
     assert daegu_dalseong_council.verification_status == "verified_in_code"
@@ -1164,9 +1165,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert busan_suyeong_council.verification_status == "legal_hold"
     assert busan_suyeong_council.source_file_kinds == ["xlsx"]
     assert "공공누리 제3유형" in busan_suyeong_council.evidence_note
-    assert busan_sasang_council.verification_status == "verified_in_code"
+    assert busan_sasang_council.verification_status == "legal_hold"
     assert busan_sasang_council.source_file_kinds == ["pdf"]
-    assert "ALL RIGHTS RESERVED" in busan_sasang_council.evidence_note
+    assert "사전 협의" in busan_sasang_council.evidence_note
     assert busan_yeonje_council.verification_status == "legal_hold"
     assert busan_yeonje_council.source_file_kinds == ["xls"]
     assert "비영리목적" in busan_yeonje_council.evidence_note
@@ -1569,9 +1570,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "일부 상세 HTML 표 구조" in gimcheon_city.evidence_note
     assert andong_city.verification_status == "legal_hold"
     assert "공공누리 자유이용 불가" in andong_city.evidence_note
-    assert yeongju_city.verification_status == "adapter_hold"
+    assert yeongju_city.verification_status == "verified_in_code"
     assert yeongju_city.source_file_kinds == ["pdf"]
-    assert "posts_seen=0" in yeongju_city.evidence_note
+    assert "normalized_visits=109" in yeongju_city.evidence_note
+    assert "production DB 기준 sources=1, places=78, visits=109" in yeongju_city.evidence_note
     assert uiseong_city.verification_status == "verified_in_code"
     assert "첨부 확장자를 확정할 수 없고" in uiseong_city.evidence_note
     assert bonghwa_city.verification_status == "legal_hold"
@@ -1638,12 +1640,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "경상남도" and entry.short_name == "하동군의회"
     )
-    assert gimhae_city.verification_status == "adapter_hold"
-    assert "posts_seen=0" in gimhae_city.evidence_note
+    assert gimhae_city.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in gimhae_city.evidence_note
     assert sancheong_city.verification_status == "adapter_hold"
     assert "curl request failed" in sancheong_city.evidence_note
-    assert geoje_city.verification_status == "adapter_hold"
-    assert "posts_seen=0" in geoje_city.evidence_note
+    assert geoje_city.verification_status == "legal_hold"
+    assert "normalized_visits=203" in geoje_city.evidence_note
+    assert "사전 협의" in geoje_city.evidence_note
     assert yangsan_city.verification_status == "legal_hold"
     assert "첨부 확장자를 확정할 수 없고" in yangsan_city.evidence_note
     assert uiryeong_city.verification_status == "legal_hold"
