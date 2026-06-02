@@ -279,8 +279,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
 
     assert summary.total == 2200
     assert summary.verified_in_code == 144
-    assert summary.pending == 1835
-    assert summary.legal_hold == 98
+    assert summary.pending == 1831
+    assert summary.legal_hold == 102
     assert summary.source_not_found == 122
     assert summary.no_recent_data == 0
     assert summary.pdf_vision_hold == 0
@@ -288,8 +288,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 486
     assert summary.priority_group_counts["p1"].verified_in_code == 144
-    assert summary.priority_group_counts["p1"].pending == 121
-    assert summary.priority_group_counts["p1"].legal_hold == 98
+    assert summary.priority_group_counts["p1"].pending == 117
+    assert summary.priority_group_counts["p1"].legal_hold == 102
     assert summary.priority_group_counts["p1"].source_not_found == 122
     assert summary.priority_group_counts["p1"].adapter_hold == 1
     assert summary.priority_group_counts["p2"].total == 60
@@ -307,8 +307,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 13
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 121
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 91
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 117
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 95
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 122
@@ -563,10 +563,38 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     chungbuk_council = next(
         entry for entry in non_capital_entries if entry.short_name == "충청북도의회"
     )
+    cheongju_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "충청북도" and entry.short_name == "청주시청"
+    )
+    cheongju_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "충청북도" and entry.short_name == "청주시의회"
+    )
+    chungju_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "충청북도" and entry.short_name == "충주시의회"
+    )
+    jecheon_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "충청북도" and entry.short_name == "제천시청"
+    )
     assert chungbuk_city.verification_status == "legal_hold"
     assert "XLSX 다운로드 구조" in chungbuk_city.evidence_note
     assert chungbuk_council.verification_status == "legal_hold"
     assert "XLS/XLSX 다운로드 구조" in chungbuk_council.evidence_note
+    assert cheongju_city.verification_status == "legal_hold"
+    assert "부단체장 이상 업무추진비" in cheongju_city.evidence_note
+    assert cheongju_council.verification_status == "legal_hold"
+    assert "2025년 업무추진비 게시물" in cheongju_council.evidence_note
+    assert chungju_council.verification_status == "legal_hold"
+    assert "화면 하단 저작권 문구" in chungju_council.evidence_note
+    assert jecheon_city.verification_status == "legal_hold"
+    assert "2025년 업무추진비 내역" in jecheon_city.evidence_note
 
     gyeongbuk_city = next(entry for entry in non_capital_entries if entry.short_name == "경상북도청")
     gyeongbuk_council = next(
