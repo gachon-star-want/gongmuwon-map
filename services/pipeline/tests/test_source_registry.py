@@ -500,6 +500,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "도지사·부지사 업무추진비 목록" in gangwon_city.evidence_note
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
     assert gangwon_council.verification_status == "legal_hold"
+    assert gangwon_council.copyright_url == (
+        "https://council.gangwon.kr/kr/infoBBSview.do?"
+        "uid=3EDF15021B1FDB4D25D06BF8BBA2437A&schwrd=&flag=all&sch_use_start_date="
+        "&sch_use_end_date=&page=1&list_style="
+    )
     assert "PDF/XLS 다운로드 구조" in gangwon_council.evidence_note
     yeongwol_city = next(entry for entry in non_capital_entries if entry.short_name == "영월군청")
     chuncheon_city = next(entry for entry in non_capital_entries if entry.short_name == "춘천시청")
@@ -508,6 +513,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     donghae_council = next(
         entry for entry in non_capital_entries if entry.short_name == "동해시의회"
     )
+    sokcho_city = next(entry for entry in non_capital_entries if entry.short_name == "속초시청")
     taebaek_council = next(entry for entry in non_capital_entries if entry.short_name == "태백시의회")
     gangneung_city = next(entry for entry in non_capital_entries if entry.short_name == "강릉시청")
     hoengseong_council = next(entry for entry in non_capital_entries if entry.short_name == "횡성군의회")
@@ -516,6 +522,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         entry for entry in non_capital_entries if entry.short_name == "철원군의회"
     )
     hwacheon_city = next(entry for entry in non_capital_entries if entry.short_name == "화천군청")
+    jeongseon_city = next(entry for entry in non_capital_entries if entry.short_name == "정선군청")
     yanggu_city = next(entry for entry in non_capital_entries if entry.short_name == "양구군청")
     yanggu_council = next(entry for entry in non_capital_entries if entry.short_name == "양구군의회")
     goseong_city = next(entry for entry in non_capital_entries if entry.short_name == "고성군청")
@@ -543,6 +550,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert donghae_council.attachment_url == (
         "https://www.dhcc.go.kr/gtb_download.php?gtid=information&fid=17405"
+    )
+    assert donghae_council.copyright_url == (
+        "https://www.dhcc.go.kr/content/news/operatingExpenseList.html?"
+        "fidx=6975&pg=vv&sid=1000&page=1&sword="
+    )
+    assert sokcho_city.detail_url == (
+        "https://www.sokcho.go.kr/sc/portal/adminfo/disclosure/expense/mayor"
     )
     assert taebaek_council.verification_status == "legal_hold"
     assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
@@ -599,6 +613,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
+    assert jeongseon_city.public_works_policy_url == (
+        "https://www.jeongseon.go.kr/portal/admininfo/openinfo/opendata"
+    )
     assert yanggu_city.attachment_url == (
         "https://www.yanggu.go.kr/fnc_bbs/user_bbs_download?bcd=bpc_info&bn=155012&num=1"
     )

@@ -2362,6 +2362,7 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "http://ygcl.go.kr/downLoad.do?"
             "file_key=112148&save_file_name=202606011780277936024551.xlsx"
         ),
+        "copyrightUrl": "http://ygcl.go.kr/portal/F50000/F50700/boardView?board_key=29098&page=1",
         "fileKinds": ["xlsx", "xls", "pdf"],
         "pageParam": "pageIndex",
         "followDetail": True,
@@ -4387,6 +4388,11 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "https://council.gangwon.kr/kr/bbs/download.do?"
             "bbs_id=info&uid=280EA27471413C59B04EEA08E0BE9158"
         ),
+        "copyrightUrl": (
+            "https://council.gangwon.kr/kr/infoBBSview.do?"
+            "uid=3EDF15021B1FDB4D25D06BF8BBA2437A&schwrd=&flag=all&sch_use_start_date="
+            "&sch_use_end_date=&page=1&list_style="
+        ),
     },
     "춘천시청": {
         "detailUrl": (
@@ -4404,6 +4410,7 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
     "춘천시의회": {
         "detailUrl": "https://council.chuncheon.go.kr/basic/view.do?n=682&b=50&k=8571&pu=10&sortField=RGSDE",
         "attachmentUrl": "https://council.chuncheon.go.kr/basic/bbscttDownload.do?n=682&no=13278",
+        "copyrightUrl": "https://council.chuncheon.go.kr/basic/view.do?n=682&b=50&k=8571&pu=10&sortField=RGSDE",
     },
     "원주시청": {
         "detailUrl": (
@@ -4443,6 +4450,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "https://www.gncl.go.kr/kr/bbs/download?"
             "bbs_id=open&uid=02A5E5EE2A890C13690AC6BAF65BBE2C&page=&flag=&keyword=&search_code=&bbs_id=open&list_style="
         ),
+        "copyrightUrl": (
+            "https://www.gncl.go.kr/kr/bbs?"
+            "reform=view&uid=5E8CDC33C12A58E879285C31BEAB4ACA&page=&flag=&keyword=&search_code=&bbs_id=open&list_style="
+        ),
     },
     "동해시청": {
         "detailUrl": (
@@ -4459,6 +4470,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "fidx=6975&pg=vv&sid=1000&page=1&sword="
         ),
         "attachmentUrl": "https://www.dhcc.go.kr/gtb_download.php?gtid=information&fid=17405",
+        "copyrightUrl": (
+            "https://www.dhcc.go.kr/content/news/operatingExpenseList.html?"
+            "fidx=6975&pg=vv&sid=1000&page=1&sword="
+        ),
     },
     "태백시청": {
         "detailUrl": (
@@ -4470,6 +4485,7 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "publicWorksPolicyUrl": "https://www.taebaek.go.kr/www/sub.do?key=590",
     },
     "속초시청": {
+        "detailUrl": "https://www.sokcho.go.kr/sc/portal/adminfo/disclosure/expense/mayor",
         "attachmentUrl": "https://www.sokcho.go.kr/sc/egf/bp/common/front/447461/download",
         "copyrightUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
         "publicWorksPolicyUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
@@ -4483,6 +4499,11 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "attachmentUrl": (
             "https://www.sokchocl.go.kr/bbsAttachDownload.do?"
             "key=3dcdf391cc79a945929b6c8f80af38155390020c0640e59b12b47904d96e1a107d435a60d180a3cb"
+        ),
+        "copyrightUrl": (
+            "https://www.sokchocl.go.kr/kr/news/bbsCost.do?"
+            "reform=view&key=d3ee9a633df9b106d210169933615b9a21bed0eeaa562d7533aed8a142cf60b78475df5a8632f6b9"
+            "&pageNum=1&flag=&keyword="
         ),
     },
     "삼척시청": {
@@ -4503,6 +4524,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "attachmentUrl": (
             "https://www.sccl.go.kr/kr/bbs/download?"
             "bbs_id=business&uid=A32CACC5F6C85D3E624D6432E23281FD&page=1&flag=&keyword=&search_code=&bbs_id=business&list_style="
+        ),
+        "copyrightUrl": (
+            "https://www.sccl.go.kr/kr/bbs?"
+            "reform=view&uid=62F81C74435FF57C992A5D4408412CBF&page=1&flag=&keyword=&search_code=&bbs_id=business&list_style="
         ),
     },
     "홍천군청": {
@@ -4525,6 +4550,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "attachmentUrl": (
             "https://www.hccouncil.go.kr/council/kr/bbs/download.do?"
             "bbs_id=cost&uid=5DF9FCDC94C6A9B6319E659613B027F7"
+        ),
+        "copyrightUrl": (
+            "https://www.hccouncil.go.kr/council/kr/costBBSview.do?"
+            "uid=CFEC26ED8CDDAD46D410197401A70BC2&schwrd=&flag=all&th_sch=&page=1&list_style="
         ),
     },
     "횡성군청": {
@@ -4559,6 +4588,11 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "https://cl.happy700.or.kr/bbsAttachDownload.do?"
             "key=765f146ec1965723e003072875c1736357893cac6ca8670263b309a7e64e038d4122277cd4078fd4"
         ),
+        "copyrightUrl": (
+            "https://cl.happy700.or.kr/kr/activity/bbsCost.do?"
+            "reform=view&key=090d7521a4b64a7bd650a3f37386f025e07a6662c9a6b29a3b7b57ab0df5132f42259a6e23507164"
+            "&pageNum=1&flag=&keyword="
+        ),
     },
     "정선군청": {
         "detailUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/expense?articleSeq=306517",
@@ -4566,6 +4600,8 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "https://www.jeongseon.go.kr/egf/bp/board/article/download?"
             "fileSeq=166458"
         ),
+        "copyrightUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/opendata",
+        "publicWorksPolicyUrl": "https://www.jeongseon.go.kr/portal/admininfo/openinfo/opendata",
     },
     "정선군의회": {
         "detailUrl": (
@@ -4575,6 +4611,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "attachmentUrl": (
             "https://assembly.jeongseon.go.kr/Mboard/download.html?"
             "table=board_business&column=userfile&uid=A82C8AD6935C68032FC70270EF288FC8"
+        ),
+        "copyrightUrl": (
+            "https://assembly.jeongseon.go.kr/source/kr/info/info3.html?"
+            "mode=view&number=A82C8AD6935C68032FC70270EF288FC8&table=board_business&page=1&flag=&key="
         ),
     },
     "철원군청": {
@@ -4611,6 +4651,7 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
     "화천군의회": {
         "detailUrl": "https://council.ihc.go.kr/bbs/board.php?bo_table=sub06_7&wr_id=51",
         "attachmentUrl": "https://council.ihc.go.kr/bbs/download.php?bo_table=sub06_7&wr_id=51&no=0",
+        "copyrightUrl": "https://council.ihc.go.kr/bbs/board.php?bo_table=sub06_7&wr_id=51",
     },
     "양구군청": {
         "detailUrl": (
@@ -4630,6 +4671,7 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
     "인제군의회": {
         "detailUrl": "https://www.injecl.go.kr/content/info/expense.html?G=VGEEEEEEkfIjGEEEEaGG",
         "attachmentUrl": "https://www.injecl.go.kr/gtb_download.php?gtid=chujin&fid=EEEEEkCkIk",
+        "copyrightUrl": "https://www.injecl.go.kr/content/info/expense.html?G=VGEEEEEEkfIjGEEEEaGG",
     },
     "고성군청": {
         "detailUrl": (
@@ -4649,6 +4691,7 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "https://council.gwgs.go.kr/downLoad.do?"
             "file_key=22829&save_file_name=202604061775453177982507.xlsx"
         ),
+        "copyrightUrl": "https://council.gwgs.go.kr/Home/H30000/H30500/boardView?board_key=10145",
     },
     "양양군청": {
         "detailUrl": (
@@ -4672,6 +4715,10 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
             "uid=5CA860FDFE324C03475B62D83F397910&schwrd=&listCnt=10&flag=all&page=1&list_style="
         ),
         "attachmentUrl": "https://www.yangyangcouncil.go.kr/viewer/pdf.do?group=bbs&uid=8609",
+        "copyrightUrl": (
+            "https://www.yangyangcouncil.go.kr/kr/costBBSview.do?"
+            "uid=5CA860FDFE324C03475B62D83F397910&schwrd=&listCnt=10&flag=all&page=1&list_style="
+        ),
     },
 }
 
