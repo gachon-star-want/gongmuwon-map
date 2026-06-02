@@ -3812,6 +3812,42 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    ("전라남도", "장성군청"): {
+        "sourceUrl": "https://www.jangseong.go.kr/home/www/gov3/gov3_13/gov3_13_03",
+        "extraListUrls": [
+            "https://www.jangseong.go.kr/home/www/gov3/gov3_13/business_cost",
+            "https://www.jangseong.go.kr/home/www/gov3/gov3_13/gov3_13_02",
+        ],
+        "fileKinds": ["xlsx", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 사용내역 메뉴에서 군수·부군수·부서별 업무추진비 목록과 "
+            "2026년 4월·2026년 1분기·2025년 6~12월 최근 게시물, 상세 XLSX/PDF "
+            "첨부 구조를 확인했습니다. 다만 업무추진비 목록/상세 화면에 공공누리 "
+            "표시가 부착되어 있지 않고, 장성군 저작권정책은 공공누리가 부착되지 않은 "
+            "자료를 이용하려면 공공저작물 관리책임관 및 실무담당자와 사전 협의가 "
+            "필요하다고 안내하므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("전라남도", "장성군의회"): {
+        "sourceUrl": "https://www.jangseong.go.kr/home/council/info/info_18/info_01_04",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 장성군의회 의정활동정보공개 업무추진비 현황 목록에서 2026년도 1/4분기, "
+            "2025년도 4/4분기·3/4분기·2/4분기 최근 게시물과 상세 PDF 첨부 구조를 "
+            "확인했습니다. 다만 업무추진비 목록/상세 화면에 공공누리 제1유형 또는 "
+            "명확한 자유이용 표시가 확인되지 않고, 장성군 저작권정책은 공공누리 "
+            "미부착 자료 이용 시 사전 협의를 요구하므로 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("전북특별자치도", "전주시청"): {
         "sourceUrl": (
             "https://www.jeonju.go.kr/planweb/board/list.9is?"
