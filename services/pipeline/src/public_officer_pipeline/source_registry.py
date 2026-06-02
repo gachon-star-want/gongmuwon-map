@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from public_officer_pipeline.models import Agency
 from public_officer_pipeline.source_pattern import (
+    AlioItemDisclosurePattern,
     AdapterRequiredPattern,
     AttachmentBoardPattern,
     EstimateListPattern,
@@ -226,7 +227,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
             agency,
             adapter=pattern.adapter,
             verification_status=_adapter_required_status(raw),
-            source_url=None,
+            source_url=_adapter_required_source_url(agency, raw),
             source_file_kinds=source_file_kinds,
             baseline_source_url=baseline_source_url,
             verified_at=verified_at,
@@ -237,6 +238,7 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
     source_url = _source_url(pattern)
     source_error = _source_verification_error(
         agency,
+        raw=raw,
         source_url=source_url,
         verified_at=verified_at,
         verified_by=verified_by,
@@ -315,10 +317,13 @@ def _source_url(
     pattern: SeoulOpenGovPattern
     | AttachmentBoardPattern
     | EstimateListPattern
-    | InlineExpenseTablePattern,
+    | InlineExpenseTablePattern
+    | AlioItemDisclosurePattern,
 ) -> str:
     if isinstance(pattern, SeoulOpenGovPattern):
         return "https://opengov.seoul.go.kr/expense/list"
+    if isinstance(pattern, AlioItemDisclosurePattern):
+        return pattern.sourceUrl
     return pattern.listUrl
 
 
@@ -362,6 +367,14 @@ def _adapter_required_status(raw: object) -> VerificationStatus:
     return "pending"
 
 
+def _adapter_required_source_url(agency: Agency, raw: object) -> str | None:
+    if agency.expansion_phase.value not in {"p2", "p3", "p4"}:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return _optional_str(raw.get("sourceUrl"))
+
+
 def _source_file_kinds(raw: object) -> list[str]:
     if not isinstance(raw, dict):
         return []
@@ -374,6 +387,7 @@ def _source_file_kinds(raw: object) -> list[str]:
 def _source_verification_error(
     agency: Agency,
     *,
+    raw: object,
     source_url: str,
     verified_at: str | None,
     verified_by: str | None,
@@ -390,6 +404,8 @@ def _source_verification_error(
         return "출처 URL은 절대 경로의 공식 URL이어야 합니다."
     if homepage_parts.scheme not in {"http", "https"} or not homepage_parts.netloc:
         return "홈페이지는 절대 경로의 공식 URL이어야 합니다."
+    if isinstance(raw, dict) and raw.get("officialCommonPortal") is True:
+        return None
     source_host = source_parts.netloc.lower()
     homepage_host = homepage_parts.netloc.lower()
     if source_host != homepage_host and not source_host.endswith(f".{homepage_host}"):

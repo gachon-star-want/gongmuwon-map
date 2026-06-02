@@ -65,6 +65,29 @@ class InlineExpenseTablePattern(SourcePattern):
     rowsPerPage: int = 100
 
 
+class AlioItemDisclosurePattern(SourcePattern):
+    adapter: Literal["alio_item_disclosure"]
+    reportFormRootNo: str = "20701"
+    alioAgencyName: str
+    sourceUrl: str = "https://www.alio.go.kr/item/itemOrganList.do?reportFormRootNo=20701"
+    listUrl: str = "https://www.alio.go.kr/item/itemOrganListJung.json"
+    downloadUrl: str = "https://www.alio.go.kr/download/file.json"
+    fileKinds: list[FileKind] = Field(default_factory=lambda: ["xlsx"])
+    officialCommonPortal: bool = True
+
+    @field_validator("fileKinds", mode="before")
+    @classmethod
+    def _normalize_file_kinds(cls, value: Any) -> list[str]:
+        if value is None:
+            return ["xlsx"]
+        if not isinstance(value, list):
+            raise ValueError("fileKinds must be a list")
+        normalized = [str(item).lower().strip() for item in value]
+        if not normalized:
+            raise ValueError("fileKinds must be a non-empty list")
+        return normalized
+
+
 class AdapterRequiredPattern(SourcePattern):
     status: Literal["adapter_required"]
 
@@ -74,6 +97,7 @@ ParsedSourcePattern = (
     | AttachmentBoardPattern
     | EstimateListPattern
     | InlineExpenseTablePattern
+    | AlioItemDisclosurePattern
     | AdapterRequiredPattern
 )
 
@@ -100,6 +124,8 @@ def parse_source_pattern(agency: Agency) -> ParsedSourcePattern:
             return EstimateListPattern(**raw)
         if adapter == "inline_expense_table":
             return InlineExpenseTablePattern(**raw)
+        if adapter == "alio_item_disclosure":
+            return AlioItemDisclosurePattern(**raw)
     except ValidationError as exc:
         raise SourcePatternError(str(exc)) from exc
 
