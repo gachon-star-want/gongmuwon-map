@@ -287,18 +287,18 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.total == 2202
     assert summary.verified_in_code == 151
     assert summary.pending == 51
-    assert summary.legal_hold == 176
+    assert summary.legal_hold == 177
     assert summary.source_not_found == 170
-    assert summary.no_recent_data == 284
+    assert summary.no_recent_data == 283
     assert summary.pdf_vision_hold == 9
     assert summary.adapter_hold == 1361
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 146
     assert summary.priority_group_counts["p1"].pending == 51
-    assert summary.priority_group_counts["p1"].legal_hold == 176
+    assert summary.priority_group_counts["p1"].legal_hold == 177
     assert summary.priority_group_counts["p1"].source_not_found == 110
-    assert summary.priority_group_counts["p1"].no_recent_data == 2
+    assert summary.priority_group_counts["p1"].no_recent_data == 1
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 1
     assert summary.priority_group_counts["p1"].adapter_hold == 2
     assert summary.priority_group_counts["p2"].total == 60
@@ -325,8 +325,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 15
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 51
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 169
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 170
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 1
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
@@ -532,12 +532,19 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "공공누리가 부착되지 않은 자료" in hoengseong_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
-    assert yanggu_council.verification_status == "no_recent_data"
-    assert yanggu_council.list_url == "http://www.ygcl.go.kr/portal/F50000/F50700/boardList"
-    assert yanggu_council.commercial_use_status == "not_applicable_no_recent_data"
-    assert yanggu_council.derivative_use_status == "not_applicable_no_recent_data"
-    assert "총 0개의 글" in yanggu_council.evidence_note
-    assert "2020년 이후 확장 검색" in yanggu_council.evidence_note
+    assert yanggu_council.verification_status == "legal_hold"
+    assert yanggu_council.list_url == "http://ygcl.go.kr/portal/F50000/F50700/boardList"
+    assert yanggu_council.detail_url == (
+        "http://ygcl.go.kr/portal/F50000/F50700/boardView?board_key=29098&page=1"
+    )
+    assert yanggu_council.attachment_url == (
+        "http://ygcl.go.kr/downLoad.do?"
+        "file_key=112148&save_file_name=202606011780277936024551.xlsx"
+    )
+    assert yanggu_council.commercial_use_status == "not_confirmed_without_kogl_mark"
+    assert yanggu_council.derivative_use_status == "not_confirmed_without_kogl_mark"
+    assert "총 80개 게시글" in yanggu_council.evidence_note
+    assert "All Rights Reserved" in yanggu_council.evidence_note
     assert goseong_city.verification_status == "legal_hold"
     assert "공공누리 유형 영역이 비어" in goseong_city.evidence_note
     assert goseong_council.verification_status == "legal_hold"
