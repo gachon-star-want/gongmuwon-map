@@ -319,11 +319,23 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         == 58
     )
     assert public_counts["기타공공기관"] == 254
+    verified_public_institutions = [
+        agency
+        for agency in PUBLIC_INSTITUTION_AGENCIES
+        if agency.source_pattern.get("status") != "adapter_required"
+    ]
+    adapter_required_public_institutions = [
+        agency
+        for agency in PUBLIC_INSTITUTION_AGENCIES
+        if agency.source_pattern.get("status") == "adapter_required"
+    ]
+    assert [agency.short_name for agency in verified_public_institutions] == ["게임물관리위원회"]
+    assert len(adapter_required_public_institutions) == 341
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://job.alio.go.kr/")
         and "잡알리오" in agency.source_pattern["baselineEvidence"]
-        for agency in PUBLIC_INSTITUTION_AGENCIES
+        for agency in adapter_required_public_institutions
     )
 
     assert all(
@@ -729,6 +741,27 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert gunsan_council.source_pattern["holdStatus"] == "legal_hold"
     assert gunsan_council.source_pattern["pageParam"] == "pageNum"
     assert "PDF/XLS/XLSX 다운로드 구조" in gunsan_council.source_pattern["blocker"]
+    jeonju_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "전북특별자치도" and agency.short_name == "전주시의회"
+    )
+    gunsan_city = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "전북특별자치도" and agency.short_name == "군산시청"
+    )
+    jinan_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "전북특별자치도" and agency.short_name == "진안군의회"
+    )
+    assert jeonju_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "ALL RIGHTS RESERVED" in jeonju_council.source_pattern["blocker"]
+    assert gunsan_city.source_pattern["holdStatus"] == "legal_hold"
+    assert "공공누리 제4유형" in gunsan_city.source_pattern["blocker"]
+    assert jinan_council.source_pattern["holdStatus"] == "legal_hold"
+    assert "All rights reserved" in jinan_council.source_pattern["blocker"]
 
     geumjeong_city = next(
         agency
@@ -857,7 +890,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "구미시청",
         "밀양시청",
         "창원시청",
-        "전라남도청",
+        "영월군청",
         "곡성군청",
         "곡성군의회",
         "진도군청",
@@ -868,7 +901,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
     miryang_city = next(agency for agency in verified_non_capital if agency.short_name == "밀양시청")
-    jeonnam_city = next(agency for agency in verified_non_capital if agency.short_name == "전라남도청")
+    jeonnam_city = next(agency for agency in pending_agencies if agency.short_name == "전라남도청")
     jeju_city = next(agency for agency in verified_non_capital if agency.short_name == "제주특별자치도청")
     jeju_council = next(
         agency for agency in verified_non_capital if agency.short_name == "제주특별자치도의회"
@@ -903,13 +936,15 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert miryang_city.source_pattern["fileKinds"] == ["xlsx"]
     assert miryang_city.source_pattern["pageParam"] == "pageIndex"
     assert miryang_city.source_pattern["userAgent"].startswith("Mozilla/5.0 (Macintosh")
-    assert jeonnam_city.homepage == "https://www.jeonnam.go.kr"
-    assert jeonnam_city.source_pattern["adapter"] == "attachment_board"
-    assert jeonnam_city.source_pattern["listUrl"] == (
+    assert jeonnam_city.homepage is None
+    assert jeonnam_city.source_pattern["adapter"] == "nationwide_office_required"
+    assert jeonnam_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert jeonnam_city.source_pattern["sourceUrl"] == (
         "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100"
     )
     assert jeonnam_city.source_pattern["fileKinds"] == ["hwp"]
     assert jeonnam_city.source_pattern["pageParam"] == "pageIndex"
+    assert "HWP 본문 추출" in jeonnam_city.source_pattern["blocker"]
     assert jeju_city.homepage == "https://www.jeju.go.kr"
     assert jeju_city.source_pattern["adapter"] == "attachment_board"
     assert jeju_city.source_pattern["listUrl"] == (
