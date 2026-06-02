@@ -5745,12 +5745,6 @@ GANGWON_DRY_RUN_HOLDS: dict[str, tuple[str, str]] = {
         "실패했습니다. PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 "
         "않습니다.",
     ),
-    "춘천시의회": (
-        "adapter_hold",
-        "강원도권 facts-only dry-run에서 공식 PDF 상세·첨부 구조는 있으나 generic "
-        "council_attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
-        "목록/상세 parser 보강 후 재검증이 필요합니다.",
-    ),
     "원주시의회": (
         "pdf_vision_hold",
         "강원도권 facts-only dry-run에서 최근 분기 PDF 첨부가 scanned PDF로 판정되었고 "
@@ -5761,34 +5755,12 @@ GANGWON_DRY_RUN_HOLDS: dict[str, tuple[str, str]] = {
         "강원도권 facts-only dry-run에서 최근 첨부가 scanned PDF로 판정되었고 현재 실행 "
         "환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
     ),
-    "속초시청": (
-        "adapter_hold",
-        "강원도권 facts-only dry-run에서 시장·부시장 업무추진비 XLSX 직접 다운로드 구조가 "
-        "generic attachment_board의 목록 파싱에 잡히지 않아 posts_seen=0이었습니다. "
-        "직접 다운로드형 목록 parser 보강 후 재검증이 필요합니다.",
-    ),
-    "정선군청": (
-        "adapter_hold",
-        "강원도권 facts-only dry-run에서 공식 XLSX 상세·첨부 구조는 있으나 generic "
-        "attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. 목록 parser "
-        "보강 후 재검증이 필요합니다.",
-    ),
-    "평창군청": (
-        "adapter_hold",
-        "강원도권 facts-only dry-run에서 공식 XLSX 첨부 구조는 있으나 curl request failed "
-        "또는 posts_seen=0으로 안정적으로 수집하지 못했습니다. 네트워크/게시판 parser "
-        "보강 후 재검증이 필요합니다.",
-    ),
     "화천군의회": (
-        "adapter_hold",
-        "강원도권 facts-only dry-run에서 공식 PDF 첨부 구조는 있으나 generic "
-        "council_attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
-        "목록 parser 보강 후 재검증이 필요합니다.",
-    ),
-    "인제군의회": (
         "pdf_vision_hold",
-        "강원도권 facts-only dry-run에서 최근 분기 PDF 첨부가 scanned PDF로 판정되었고 "
-        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다.",
+        "강원도권 재시도 dry-run에서 generic council_attachment_board가 최근 PDF 게시물을 "
+        "posts_seen=5로 찾는 것은 확인했지만, 첫 PDF 첨부가 scanned PDF로 판정되었고 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "PDF vision 추출 가능 상태에서 재검증 전까지 production 적재하지 않습니다.",
     ),
     "양양군의회": (
         "pdf_vision_hold",

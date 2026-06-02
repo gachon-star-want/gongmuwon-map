@@ -285,22 +285,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 550
+    assert summary.verified_in_code == 555
     assert summary.pending == 43
     assert summary.legal_hold == 102
     assert summary.source_not_found == 107
     assert summary.no_recent_data == 1193
     assert summary.pdf_vision_hold == 32
-    assert summary.adapter_hold == 175
+    assert summary.adapter_hold == 170
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 202
+    assert summary.priority_group_counts["p1"].verified_in_code == 207
     assert summary.priority_group_counts["p1"].pending == 43
     assert summary.priority_group_counts["p1"].legal_hold == 102
     assert summary.priority_group_counts["p1"].source_not_found == 75
     assert summary.priority_group_counts["p1"].no_recent_data == 2
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 22
-    assert summary.priority_group_counts["p1"].adapter_hold == 42
+    assert summary.priority_group_counts["p1"].adapter_hold == 37
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].verified_in_code == 1
@@ -326,7 +326,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 71
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 76
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 43
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 95
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
@@ -335,7 +335,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 75
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 42
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 37
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -584,11 +584,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert "facts-only 적재 정책" in donghae_council.verified_by
     assert "공공누리 제1유형 미표시" in donghae_council.evidence_note
-    assert sokcho_city.verification_status == "adapter_hold"
+    assert sokcho_city.verification_status == "verified_in_code"
     assert sokcho_city.detail_url == (
         "https://www.sokcho.go.kr/sc/portal/adminfo/disclosure/expense/mayor"
     )
-    assert "직접 다운로드형" in sokcho_city.evidence_note
+    assert "직접 다운로드 구조" in sokcho_city.evidence_note
     assert taebaek_council.verification_status == "legal_hold"
     assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
     assert taebaek_council.detail_url == (
@@ -647,11 +647,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "사전에 협의" in cheorwon_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
     assert "사전에 협의" in hwacheon_city.evidence_note
-    assert jeongseon_city.verification_status == "adapter_hold"
+    assert jeongseon_city.verification_status == "verified_in_code"
     assert jeongseon_city.public_works_policy_url == (
         "https://www.jeongseon.go.kr/portal/admininfo/openinfo/opendata"
     )
-    assert "posts_seen=0" in jeongseon_city.evidence_note
+    assert "facts-only 적재 정책" in jeongseon_city.verified_by
     assert yanggu_city.verification_status == "legal_hold"
     assert yanggu_city.commercial_use_status == "prohibited_or_requires_prior_consultation"
     assert yanggu_city.derivative_use_status == "prohibited_or_requires_prior_consultation"
