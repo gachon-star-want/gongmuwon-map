@@ -112,6 +112,7 @@ class CouncilAttachmentCrawler:
         self.page_param = pattern.pageParam
         self.page_unit_param = pattern.pageUnitParam or ""
         self.rows_per_page = pattern.rowsPerPage
+        self.max_posts_cap = pattern.maxPosts
         self.js_download_path = pattern.jsDownloadPath or ""
         self.file_kinds = set(pattern.fileKinds)
         self.default_file_kind = pattern.defaultFileKind
@@ -140,6 +141,8 @@ class CouncilAttachmentCrawler:
         limit_pages: int = 3,
         max_posts: int | None = None,
     ) -> list[PostRef]:
+        if self.max_posts_cap is not None:
+            max_posts = min(max_posts, self.max_posts_cap) if max_posts is not None else self.max_posts_cap
         refs: dict[str, PostRef] = {}
         original_list_url = self.list_url
         try:

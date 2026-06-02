@@ -285,22 +285,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 603
+    assert summary.verified_in_code == 605
     assert summary.pending == 0
     assert summary.legal_hold == 101
     assert summary.source_not_found == 86
     assert summary.no_recent_data == 1311
     assert summary.pdf_vision_hold == 35
-    assert summary.adapter_hold == 66
+    assert summary.adapter_hold == 64
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 250
+    assert summary.priority_group_counts["p1"].verified_in_code == 252
     assert summary.priority_group_counts["p1"].pending == 0
     assert summary.priority_group_counts["p1"].legal_hold == 101
     assert summary.priority_group_counts["p1"].source_not_found == 68
     assert summary.priority_group_counts["p1"].no_recent_data == 5
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 35
-    assert summary.priority_group_counts["p1"].adapter_hold == 29
+    assert summary.priority_group_counts["p1"].adapter_hold == 27
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].verified_in_code == 5
@@ -327,7 +327,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 119
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 121
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 0
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 94
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 5
@@ -336,7 +336,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 68
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 29
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 27
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -1111,6 +1111,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "부산광역시" and entry.short_name == "남구청"
     )
+    busan_haeundae = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "부산광역시" and entry.short_name == "해운대구청"
+    )
     busan_donggu_council = next(
         entry
         for entry in non_capital_entries
@@ -1148,8 +1153,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert busan_seogu.verification_status == "adapter_hold"
     assert "HWP 본문 추출" in busan_seogu.evidence_note
-    assert busan_namgu.verification_status == "adapter_hold"
-    assert "posts_seen=0" in busan_namgu.evidence_note
+    assert busan_namgu.verification_status == "verified_in_code"
+    assert busan_namgu.source_url.startswith("https://www.bsnamgu.go.kr/board/list.namgu")
+    assert busan_namgu.source_file_kinds == ["xlsx"]
+    assert "factual row" in busan_namgu.evidence_note
+    assert "maxPosts=2" in busan_namgu.evidence_note
+    assert busan_haeundae.verification_status == "verified_in_code"
+    assert busan_haeundae.source_url.startswith("https://www.haeundae.go.kr/index.do")
+    assert busan_haeundae.source_file_kinds == ["xlsx", "xls", "pdf"]
+    assert "factual row" in busan_haeundae.evidence_note
+    assert "maxPosts=2" in busan_haeundae.evidence_note
     assert busan_donggu_council.verification_status == "legal_hold"
     assert "의장단 업무추진비 공개 목록" in busan_donggu_council.evidence_note
     assert "공공누리 제4유형" in busan_donggu_council.evidence_note
