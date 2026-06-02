@@ -264,12 +264,19 @@ def test_source_registry_tracks_verified_seoul_and_legal_hold_new_regions() -> N
         for entry in legal_hold_new_region_entries
     )
     legal_hold_notes = {entry.short_name: entry.evidence_note for entry in legal_hold_new_region_entries}
-    assert "공공누리 3유형" in legal_hold_notes["경기도청"]
-    assert "공공누리 3유형" in legal_hold_notes["안산시의회"]
-    assert "공공누리 4유형" in legal_hold_notes["시흥시청"]
-    assert "공공누리 표시가 없고" in legal_hold_notes["이천시청"]
-    assert "최신 목록" in legal_hold_notes["화성시청"]
-    assert "공공누리 표시가 없어" in legal_hold_notes["여주시청"]
+    assert "공공누리 제3유형" in legal_hold_notes["경기도청"]
+    assert "변경금지 제한" in legal_hold_notes["경기도청"]
+    assert "공공누리 제3유형" in legal_hold_notes["안산시의회"]
+    assert "변경금지 제한" in legal_hold_notes["안산시의회"]
+    assert "공공누리 제4유형" in legal_hold_notes["시흥시청"]
+    assert "상업적 이용금지 및 변경금지 제한" in legal_hold_notes["시흥시청"]
+    assert "공공누리 미부착 자료" in legal_hold_notes["이천시청"]
+    assert "사전 협의" in legal_hold_notes["이천시청"]
+    assert "무단사용" in legal_hold_notes["화성시청"]
+    assert "사전 협의" in legal_hold_notes["화성시청"]
+    assert "All Rights Reserved" in legal_hold_notes["여주시청"]
+    assert "사전 협의" in legal_hold_notes["여주시청"]
+    assert "공공누리 제4유형" in legal_hold_notes["미추홀구의회"]
     assert "ZIP 중심" in legal_hold_notes["미추홀구의회"]
 
 
