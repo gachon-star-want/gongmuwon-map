@@ -40,10 +40,16 @@ LINE_GRAMMAR_ORDER: tuple[str, ...] = (
     "user_amount_purpose",
     "user_no_address",
     "purpose_first",
+    "date_time_place_purpose_party_amount",
+    "user_date_place_purpose_amount_party",
+    "purpose_amount_party_place_date_user",
+    "datetime_purpose_amount_method_place",
     "generic_text_row",
 )
 
 WHOLE_TEXT_FALLBACK_ORDER: tuple[str, ...] = (
+    "month_day_office",
+    "yearless_council_amount",
     "user_place_purpose_layout",
     "layout_office",
     "segmented_office",
