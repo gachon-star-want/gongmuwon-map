@@ -22,6 +22,8 @@ HEADER_ALIASES = {
     "사용일자": "used_date",
     "사용일": "used_date",
     "승인일": "used_date",
+    "승인일자": "used_date",
+    "승인일시": "used_date",
     "사용일시": "used_date",
     "집행일시": "used_date",
     "일시": "used_date",
@@ -32,9 +34,12 @@ HEADER_ALIASES = {
     "사용시간": "used_time",
     "사용시각": "used_time",
     "승인시각": "used_time",
+    "승인시간": "used_time",
     "시각": "used_time",
     "시간": "used_time",
     "시": "used_time",
+    "부서명": "department_name",
+    "부서": "department_name",
     "사용자": "user_text",
     "집행자": "user_text",
     "구분": "user_text",
@@ -54,6 +59,7 @@ HEADER_ALIASES = {
     "집행목적": "purpose",
     "사용목적": "purpose",
     "사용내역": "purpose",
+    "카드사용내역": "purpose",
     "사용내용": "purpose",
     "집행내역": "purpose",
     "내용": "purpose",
@@ -461,12 +467,13 @@ def _parse_row(
     if not item.get("used_date") or not place_text or not item.get("amount"):
         return None
 
-    user_text = item.get("user_text") or department
+    department_name = item.get("department_name") or department
+    user_text = item.get("user_text") or department_name
     amount_text = item.get("amount")
     date_text = _row_date_text(raw_row, mapped_headers, item["used_date"], sheet_month=sheet_month)
     return build_expense_row(
         RawExpenseFields(
-            department_name=department,
+            department_name=department_name,
             date_text=date_text,
             time_text=item.get("used_time"),
             place_name=place_text,
