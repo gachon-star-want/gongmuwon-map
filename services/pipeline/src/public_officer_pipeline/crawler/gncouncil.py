@@ -52,6 +52,7 @@ DOWNLOAD_HREF_PARTS = (
     "/portal/cmmn/file/fileDown.do",
     "/shareEtc/download_utf.asp",
     "/board/FileDown.do",
+    "/boardFileDown.ac",
     "/board_download.do",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",

@@ -277,8 +277,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     entries = source_registry_entries(NATIONWIDE_AGENCIES)
     summary = source_registry_summary(entries)
 
-    assert summary.total == 2200
-    assert summary.verified_in_code == 146
+    assert summary.total == 2202
+    assert summary.verified_in_code == 148
     assert summary.pending == 96
     assert summary.legal_hold == 136
     assert summary.source_not_found == 165
@@ -286,8 +286,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.pdf_vision_hold == 9
     assert summary.adapter_hold == 1369
     assert summary.invalid_source_pattern == 0
-    assert summary.priority_group_counts["p1"].total == 486
-    assert summary.priority_group_counts["p1"].verified_in_code == 145
+    assert summary.priority_group_counts["p1"].total == 488
+    assert summary.priority_group_counts["p1"].verified_in_code == 147
     assert summary.priority_group_counts["p1"].pending == 96
     assert summary.priority_group_counts["p1"].legal_hold == 136
     assert summary.priority_group_counts["p1"].source_not_found == 105
@@ -314,7 +314,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 14
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 16
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 96
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 129
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
@@ -646,6 +646,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     jeju_council = next(
         entry for entry in non_capital_entries if entry.short_name == "제주특별자치도의회"
     )
+    jejusi_city = next(entry for entry in non_capital_entries if entry.short_name == "제주시청")
+    seogwipo_city = next(entry for entry in non_capital_entries if entry.short_name == "서귀포시청")
     assert gyeongnam_city.verification_status == "legal_hold"
     assert "자유이용을 불가" in gyeongnam_city.evidence_note
     assert gyeongnam_council.verification_status == "legal_hold"
@@ -660,6 +662,18 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert jeju_council.homepage == "https://www.council.jeju.kr"
     assert "업무추진비 현황" in jeju_council.evidence_note
     assert "의회 이용약관" in jeju_council.evidence_note
+    assert jejusi_city.verification_status == "verified_in_code"
+    assert jejusi_city.source_url == "https://www.jejusi.go.kr/information/status/sijang.do"
+    assert jejusi_city.homepage == "https://www.jejusi.go.kr"
+    assert jejusi_city.branch == "admin"
+    assert "부서별 업무추진비 공개" in jejusi_city.evidence_note
+    assert "산하 행정시" in jejusi_city.evidence_note
+    assert seogwipo_city.verification_status == "verified_in_code"
+    assert seogwipo_city.source_url == "https://www.seogwipo.go.kr/info/gov/open/expense.htm"
+    assert seogwipo_city.homepage == "https://www.seogwipo.go.kr"
+    assert seogwipo_city.branch == "admin"
+    assert "업무추진비공개" in seogwipo_city.evidence_note
+    assert "산하 행정시" in seogwipo_city.evidence_note
 
     ulsan_city = next(
         entry

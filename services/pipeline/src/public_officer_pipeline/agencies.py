@@ -1398,6 +1398,57 @@ NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS = {
     },
 }
 
+JEJU_ADMINISTRATIVE_CITY_OFFICE_ATTACHMENT_BOARDS = {
+    "제주시청": {
+        "homepage": "https://www.jejusi.go.kr",
+        "listUrl": "https://www.jejusi.go.kr/information/status/sijang.do",
+        "extraListUrls": [
+            "https://www.jejusi.go.kr/information/status/part.do",
+        ],
+        "fileKinds": ["xls", "xlsx"],
+        "followDetail": True,
+        "pageParam": "currentPageNo",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "evidenceNote": (
+            "제주특별자치도 산하 행정시로 별도 지방의회는 없지만, 사용자 기준 제주 행정구역 "
+            "공개 업무추진비를 포함하기 위해 P1 행정기관으로 등록합니다. 공식 원문은 제주시 "
+            "정보공개 > 업무추진비 공개의 제주시장 업무추진비 공개 "
+            "(https://www.jejusi.go.kr/information/status/sijang.do)와 부서별 업무추진비 공개 "
+            "(https://www.jejusi.go.kr/information/status/part.do)입니다. 목록에서 "
+            "mode=detail&notice_id 상세, 상세에서 /boardFileDown.ac?file_id= XLS/XLSX 첨부 "
+            "구조를 확인했습니다. 부서별 업무추진비 공개 화면은 공개 근거를 "
+            "「제주특별자치도 업무추진비 집행기준 및 공개에 관한 조례(2022.1.12.)」로 "
+            "명시합니다. 제주시 저작권보호정책 "
+            "(https://www.jejusi.go.kr/guide/copyrights.do)은 저작권법 제24조의2 및 공공누리 "
+            "표시 공공저작물의 자유이용, 제1유형의 출처표시·상업적 이용 가능 조건을 안내합니다. "
+            "공무원맵은 출처표시 조건으로 법정 공개 사실 데이터만 정규화합니다."
+        ),
+    },
+    "서귀포시청": {
+        "homepage": "https://www.seogwipo.go.kr",
+        "listUrl": "https://www.seogwipo.go.kr/info/gov/open/expense.htm",
+        "fileKinds": ["xls", "xlsx"],
+        "followDetail": True,
+        "pageParam": "page",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "evidenceNote": (
+            "제주특별자치도 산하 행정시로 별도 지방의회는 없지만, 사용자 기준 제주 행정구역 "
+            "공개 업무추진비를 포함하기 위해 P1 행정기관으로 등록합니다. 공식 원문은 서귀포시 "
+            "시정공유 > 행정정보공개 > 사전정보공개 > 업무추진비공개 "
+            "(https://www.seogwipo.go.kr/info/gov/open/expense.htm)입니다. 목록·상세에서 "
+            "act=view 및 act=download&seq=&no= XLS/XLSX/PDF 첨부 구조를 확인했고, production "
+            "경로는 PDF vision 리스크를 피하기 위해 XLS/XLSX 첨부만 처리합니다. 해당 화면은 "
+            "공개 항목과 근거를 「제주특별자치도 업무추진비 집행기준 및 공개에 관한 조례」로 "
+            "명시합니다. 서귀포시 저작권보호정책 "
+            "(https://www.seogwipo.go.kr/help/copyright.htm)은 저작권법 제24조의2 및 공공누리 "
+            "표시 공공저작물의 자유이용, 제1유형의 출처표시·상업적 이용 가능 조건을 안내합니다. "
+            "공무원맵은 출처표시 조건으로 법정 공개 사실 데이터만 정규화합니다."
+        ),
+    },
+}
+
 NON_CAPITAL_BASIC_OFFICE_ATTACHMENT_BOARDS = {
     ("강원특별자치도", "영월군청"): {
         "homepage": "https://www.yw.go.kr",
@@ -4259,6 +4310,38 @@ def non_capital_agencies() -> list[Agency]:
             ]
         )
 
+    for local_name in ("제주시", "서귀포시"):
+        office_short_name = f"{local_name}청"
+        office_board = JEJU_ADMINISTRATIVE_CITY_OFFICE_ATTACHMENT_BOARDS[office_short_name]
+        agencies.append(
+            Agency(
+                id=agency_uuid(f"jeju:{local_name}:administrative-city:office"),
+                name=f"제주특별자치도 {office_short_name}",
+                short_name=office_short_name,
+                gov_tier=GovTier.BASIC,
+                branch=GovBranch.ADMIN,
+                jurisdiction_type=JurisdictionType.SI,
+                parent_region="제주특별자치도",
+                sub_region=local_name,
+                homepage=office_board["homepage"],
+                source_pattern={
+                    "adapter": "attachment_board",
+                    "listUrl": office_board["listUrl"],
+                    "fileKinds": office_board["fileKinds"],
+                    "followDetail": office_board["followDetail"],
+                    "pageParam": office_board["pageParam"],
+                    "verifiedAt": office_board["verifiedAt"],
+                    "verifiedBy": office_board["verifiedBy"],
+                    "evidenceNote": office_board["evidenceNote"],
+                    **(
+                        {"extraListUrls": office_board["extraListUrls"]}
+                        if "extraListUrls" in office_board
+                        else {}
+                    ),
+                },
+            )
+        )
+
     for region_key, parent_region, local_governments in NON_CAPITAL_BASIC_REGION_GROUPS:
         for local_name, jurisdiction_type in local_governments:
             office_short_name = f"{local_name}청"
@@ -4652,11 +4735,11 @@ NATIONWIDE_AGENCIES = (
 assert len(SEOUL_AGENCIES) == 52
 assert len(GYEONGGI_AGENCIES) == 64
 assert len(INCHEON_AGENCIES) == 22
-assert len(NON_CAPITAL_AGENCIES) == 348
-assert len(LOCAL_GOVERNMENT_AGENCIES) == 486
+assert len(NON_CAPITAL_AGENCIES) == 350
+assert len(LOCAL_GOVERNMENT_AGENCIES) == 488
 assert len(CENTRAL_STATE_AGENCIES) == 60
 assert len(PUBLIC_INSTITUTION_AGENCIES) == 342
 assert len(LOCAL_PUBLIC_INSTITUTION_AGENCIES) == 1312
-assert len(NATIONWIDE_AGENCIES) == 2200
+assert len(NATIONWIDE_AGENCIES) == 2202
 assert SEOUL_AGENCIES[0].id == SEOUL_CITY_HALL_AGENCY_ID
 assert len(CAPITAL_AREA_AGENCIES) == 138
