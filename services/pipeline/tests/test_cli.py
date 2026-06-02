@@ -275,15 +275,15 @@ def test_print_source_registry_reports_nationwide_verification_state(
     assert output["summary"]["total"] == 2202
     assert output["summary"]["verified_in_code"] == 525
     assert output["summary"]["pending"] == 43
-    assert output["summary"]["legal_hold"] == 150
-    assert output["summary"]["source_not_found"] == 120
-    assert output["summary"]["no_recent_data"] == 1182
-    assert output["summary"]["pdf_vision_hold"] == 23
-    assert output["summary"]["adapter_hold"] == 159
+    assert output["summary"]["legal_hold"] == 161
+    assert output["summary"]["source_not_found"] == 109
+    assert output["summary"]["no_recent_data"] == 295
+    assert output["summary"]["pdf_vision_hold"] == 21
+    assert output["summary"]["adapter_hold"] == 162
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 178
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 150
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 161
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
     assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 1
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 32

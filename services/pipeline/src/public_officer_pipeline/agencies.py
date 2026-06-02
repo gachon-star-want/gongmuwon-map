@@ -3691,6 +3691,23 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "이용이 가능하지 않으므로 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "수영구의회"): {
+        "sourceUrl": (
+            "https://www.suyeong.go.kr/board/list.suyeong?"
+            "boardId=BBS_0000261&menuCd=DOM_000001403008000000&"
+            "contentsSid=2405&cpath=%2Fcouncil"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 의회운영업무추진비·의정운영공통경비 XLSX 첨부 "
+            "구조는 확인했습니다. 다만 최근 상세 화면이 공공누리 제3유형(출처표시+변경금지)으로 "
+            "표시되어 제1유형 원칙을 바꾸는 ADR·법적 결정 전까지 수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "사상구청"): {
         "sourceUrl": (
             "https://www.sasang.go.kr/board/list.sasang?"
@@ -3715,6 +3732,26 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "사상구의회"): {
+        "sourceUrl": (
+            "https://www.sasang.go.kr/council/board/list.sasang?"
+            "boardId=BBS_0000239&menuCd=DOM_000000233001004000&"
+            "contentsSid=2603&cpath=%2Fcouncil"
+        ),
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 현황 목록과 최근 의회운영업무추진비·의정운영공통경비·의회사무국 "
+            "업무추진비 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 "
+            "제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 푸터가 "
+            "ALL RIGHTS RESERVED로 표시되며, 저작권정책은 공공누리 부착 저작물만 "
+            "이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "중구청"): {
         "sourceUrl": "https://www.bsjunggu.go.kr/index.junggu?menuCd=DOM_000000103003008000",
         "fileKinds": ["html"],
@@ -3726,6 +3763,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 공개 목록과 최근 2026년 부서별 게시물 구조는 확인했습니다. "
             "다만 업무추진비 화면의 공공누리 영역이 비어 있고 푸터가 All rights reserved로 "
             "표시되어 제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "연제구의회"): {
+        "sourceUrl": "https://www.yeonje.go.kr/council/bbs/list.do?ptIdx=198&mId=0408000000",
+        "fileKinds": ["xls"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 의회사무국 업무추진비·의회운영업무추진비 "
+            "XLS 첨부 표시 구조는 확인했습니다. 다만 화면의 공공누리 문구가 비영리목적·"
+            "저작물 변경금지 조건이고 푸터가 All rights reserved로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
         ),
     },
     ("부산광역시", "동래구청"): {
@@ -4470,6 +4521,21 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("경상북도", "경주시청"): {
+        "sourceUrl": "https://www.gyeongju.go.kr/open_content/ko/page.do?mnu_uid=2870",
+        "fileKinds": ["xls", "xlsx"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 사전정보공표 목록과 최근 2026년 1분기 XLS/XLSX 첨부 구조는 "
+            "확인했습니다. 다만 업무추진비 목록/상세 화면에서 공공누리 제1유형 표시가 "
+            "확인되지 않고 푸터가 All rights reserved로 표시되며, 저작권보호정책은 "
+            "공공누리 제1유형 표시가 부착된 자료만 자유이용 가능하다고 안내하므로 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("경상북도", "문경시청"): {
         "sourceUrl": "https://www.gbmg.go.kr/portal/contents.do?mId=0201070000",
         "fileKinds": ["pdf", "xls", "xlsx"],
@@ -4524,6 +4590,70 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 목록과 XLSX 첨부 구조는 확인했습니다. 다만 최근 상세 화면이 "
             "공공누리 자유이용 불가로 표시되거나 일부 게시물이 제4유형으로 표시되어 "
             "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "영주시청"): {
+        "sourceUrl": "https://www.yeongju.go.kr/open_content/main/page.do?mnu_uid=11132",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장 업무추진비 목록과 최근 분기별 PDF 첨부 구조는 확인했습니다. 다만 "
+            "업무추진비 목록/상세 화면에서 공공누리 제1유형 표시가 확인되지 않고 푸터가 "
+            "All Rights Reserved로 표시되며, 저작권정책은 공공누리 제1유형 표시가 "
+            "부착된 자료만 자유이용 가능하다고 안내하므로 제1유형 확인 전까지 수집하지 "
+            "않습니다."
+        ),
+    },
+    ("경상북도", "의성군청"): {
+        "sourceUrl": "https://www.usc.go.kr/ko/page.do?mnu_uid=322",
+        "fileKinds": [],
+        "pageParam": "pageNo",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비공개 목록은 확인했습니다. 다만 정적 목록 화면에서 첨부 "
+            "확장자를 확정할 수 없고 업무추진비 화면에서 해당 게시물의 공공누리 제1유형 "
+            "표시가 확인되지 않으며 푸터가 All Rights Reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "봉화군청"): {
+        "sourceUrl": (
+            "https://www.bonghwa.go.kr/portal/board/post/list.do?"
+            "bcIdx=528&mid=0301050000"
+        ),
+        "fileKinds": [],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 자치단체장·부단체장 게시물 구조는 확인했습니다. "
+            "다만 정적 목록 화면에서 첨부 확장자를 확정할 수 없고, 저작권정책은 공공누리 "
+            "제1유형 표시가 부착된 자료만 자유이용 가능하며 공공누리 미부착 자료는 사전 "
+            "협의가 필요하다고 안내하므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상북도", "울진군청"): {
+        "sourceUrl": (
+            "https://www.uljin.go.kr/board/list.uljin?"
+            "boardId=BBS_0000141&menuCd=DOM_000000103004011000&"
+            "orderBy=REGISTER_DATE+DESC&paging=ok&startPage=1"
+        ),
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 목록/상세 "
+            "화면에서 공공누리 제1유형 표시가 확인되지 않고 저작권정책 자체가 공공누리 "
+            "제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 상업적 이용이 "
+            "가능하지 않으므로 수집하지 않습니다."
         ),
     },
     ("경상남도", "진주시청"): {
@@ -4583,6 +4713,52 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 현황 목록과 최근 12개월 게시물·XLSX 첨부 구조는 확인했습니다. "
             "다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 "
             "않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "거제시청"): {
+        "sourceUrl": (
+            "https://www.geoje.go.kr/gbg/board/list.geoje?"
+            "boardId=BBS_0000042&menuCd=DOM_000008904002001000&"
+            "contentsSid=10113&cpath=%2Fgbg"
+        ),
+        "fileKinds": ["xlsx"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장 업무추진비 공개 목록과 최근 XLSX 첨부 구조는 확인했습니다. 다만 "
+            "업무추진비 목록/상세 화면에서 해당 게시물의 공공누리 제1유형 표시가 확인되지 "
+            "않고 푸터가 All Rights Reserved로 표시되며, 저작권정책은 공공누리 부착 "
+            "저작물만 이용조건 범위 안에서 자유이용 가능하다고 안내하므로 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "양산시청"): {
+        "sourceUrl": "https://yangsan.go.kr/portal/board/post/list.do?bcIdx=113&mid=0401050100",
+        "fileKinds": [],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 시장·부시장 업무추진비 공개 목록과 최근 2026년 게시물 구조는 확인했습니다. "
+            "다만 정적 목록 화면에서 첨부 확장자를 확정할 수 없고, 업무추진비 화면에서 "
+            "해당 게시물의 공공누리 제1유형 표시가 확인되지 않으며 저작권정책은 공공누리 "
+            "미부착 자료의 사전 협의를 요구하므로 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("경상남도", "의령군청"): {
+        "sourceUrl": "https://uiryeong.go.kr/index.uiryeong?menuCd=DOM_000000202001005000",
+        "fileKinds": ["pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 군수 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 최근 "
+            "상세 화면이 공공누리 제4유형(출처표시+상업적이용금지+변경금지)으로 표시되어 "
+            "상업적 이용이 가능하지 않으므로 수집하지 않습니다."
         ),
     },
     ("경상남도", "산청군청"): {
