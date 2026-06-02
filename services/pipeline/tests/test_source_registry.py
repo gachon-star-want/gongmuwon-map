@@ -285,22 +285,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 546
+    assert summary.verified_in_code == 549
     assert summary.pending == 43
     assert summary.legal_hold == 102
     assert summary.source_not_found == 107
     assert summary.no_recent_data == 1193
     assert summary.pdf_vision_hold == 32
-    assert summary.adapter_hold == 179
+    assert summary.adapter_hold == 176
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 198
+    assert summary.priority_group_counts["p1"].verified_in_code == 201
     assert summary.priority_group_counts["p1"].pending == 43
     assert summary.priority_group_counts["p1"].legal_hold == 102
     assert summary.priority_group_counts["p1"].source_not_found == 75
     assert summary.priority_group_counts["p1"].no_recent_data == 2
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 22
-    assert summary.priority_group_counts["p1"].adapter_hold == 46
+    assert summary.priority_group_counts["p1"].adapter_hold == 43
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].verified_in_code == 1
@@ -326,7 +326,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 67
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 70
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 43
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 95
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 2
@@ -335,7 +335,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 75
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 46
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 43
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -1043,8 +1043,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "대구광역시" and entry.short_name == "군위군청"
     )
-    assert daegu_namgu.verification_status == "adapter_hold"
-    assert "posts_seen=0" in daegu_namgu.evidence_note
+    assert daegu_namgu.verification_status == "verified_in_code"
+    assert "normalized_visits=2" in daegu_namgu.evidence_note
+    assert "production에 sources=2, places=2, visits=2" in daegu_namgu.evidence_note
     assert daegu_bukgu.verification_status == "legal_hold"
     assert "공공누리 제4유형" in daegu_bukgu.evidence_note
     assert daegu_suseong.verification_status == "adapter_hold"
@@ -1053,11 +1054,12 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "posts_seen=0" in daegu_seogu.evidence_note
     assert daegu_junggu_council.verification_status == "adapter_hold"
     assert "spreadsheet sheet row limit" in daegu_junggu_council.evidence_note
-    assert daegu_namgu_council.verification_status == "adapter_hold"
+    assert daegu_namgu_council.verification_status == "verified_in_code"
     assert daegu_namgu_council.source_url == (
         "https://www.nam.daegu.kr/council/index.do?menu_id=00205128"
     )
-    assert "posts_seen=0" in daegu_namgu_council.evidence_note
+    assert "normalized_visits=123" in daegu_namgu_council.evidence_note
+    assert "production에 sources=2, places=109, visits=123" in daegu_namgu_council.evidence_note
     assert daegu_donggu_council.verification_status == "verified_in_code"
     assert "업무추진비·공통경비 PDF 첨부 구조" in daegu_donggu_council.evidence_note
     assert daegu_seogu_council.verification_status == "verified_in_code"

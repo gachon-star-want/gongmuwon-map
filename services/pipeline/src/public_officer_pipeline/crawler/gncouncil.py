@@ -54,6 +54,7 @@ DOWNLOAD_HREF_PARTS = (
     "/shareEtc/download_utf.asp",
     "/board/FileDown.do",
     "/board_down.php",
+    "/board/download.",
     "/boardFileDown.ac",
     "/board_download.do",
     "/common/download.php",
@@ -152,6 +153,7 @@ class CouncilAttachmentCrawler:
 
     def _parse_list(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)
+        js_download_path = _egov_download_path_from_html(html) or self.js_download_path
         refs: list[PostRef] = []
         seen_urls: set[str] = set()
         for row in tree.css("tbody tr"):
@@ -164,7 +166,7 @@ class CouncilAttachmentCrawler:
             published_at = _find_date(cells)
             for download in row.css("a[href]"):
                 filename = _filename_from_download_link(download)
-                href = download.attributes.get("href", "")
+                href = _download_href_from_anchor(download, js_download_path)
                 file_kind = _file_kind_from_download(download, filename)
                 if (
                     not href
@@ -244,7 +246,7 @@ class CouncilAttachmentCrawler:
                 )
                 for download in row_links:
                     filename = _filename_from_download_link(download)
-                    href = download.attributes.get("href", "")
+                    href = _download_href_from_anchor(download, self.js_download_path)
                     file_kind = _file_kind_from_download(download, filename)
                     if (
                         not href

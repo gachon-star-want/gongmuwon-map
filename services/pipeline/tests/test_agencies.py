@@ -476,7 +476,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     ]
     pending_agencies = NON_CAPITAL_AGENCIES
 
-    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 126
+    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 133
     assert all(agency.homepage is None for agency in baseline_pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in baseline_pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in baseline_pending_agencies)
@@ -629,20 +629,20 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert nonsan_council.source_pattern["fileKinds"] == ["xlsx"]
     assert "facts-only" in nonsan_council.source_pattern["verifiedBy"]
-    assert buyeo_city.source_pattern["holdStatus"] == "legal_hold"
-    assert buyeo_city.source_pattern["sourceUrl"] == (
+    assert buyeo_city.source_pattern["holdStatus"] == "adapter_hold"
+    assert buyeo_city.source_pattern["listUrl"] == (
         "https://www.buyeo.go.kr/_prog/_board/?code=service_010211&site_dvs_cd=kr&menu_dvs_cd=010211"
     )
     assert buyeo_city.source_pattern["fileKinds"] == ["hwp"]
     assert buyeo_city.source_pattern["pageParam"] == "GotoPage"
-    assert "저작권정책 링크" in buyeo_city.source_pattern["blocker"]
-    assert buyeo_council.source_pattern["holdStatus"] == "legal_hold"
-    assert buyeo_council.source_pattern["sourceUrl"] == (
+    assert "HWP extractor" in buyeo_city.source_pattern["blocker"]
+    assert "holdStatus" not in buyeo_council.source_pattern
+    assert buyeo_council.source_pattern["listUrl"] == (
         "https://council.buyeo.go.kr/kr/open/bbsBusiness.do"
     )
-    assert buyeo_council.source_pattern["fileKinds"] == ["pdf", "zip"]
+    assert buyeo_council.source_pattern["fileKinds"] == ["pdf"]
     assert buyeo_council.source_pattern["pageParam"] == "pageNum"
-    assert "목록 ZIP 다운로드" in buyeo_council.source_pattern["blocker"]
+    assert "facts-only" in buyeo_council.source_pattern["verifiedBy"]
 
     busan_council = next(agency for agency in pending_agencies if agency.short_name == "부산시의회")
     assert busan_council.source_pattern["holdStatus"] == "legal_hold"
@@ -1177,9 +1177,13 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     )
     assert daegu_city.source_pattern["holdStatus"] == "legal_hold"
     assert daegu_council.source_pattern["holdStatus"] == "legal_hold"
-    assert daegu_namgu_council.source_pattern["holdStatus"] == "adapter_hold"
+    assert "holdStatus" not in daegu_namgu_council.source_pattern
     assert daegu_namgu_council.source_pattern["fileKinds"] == ["xlsx"]
-    assert "posts_seen=0" in daegu_namgu_council.source_pattern["blocker"]
+    assert "normalized_visits=123" in daegu_namgu_council.source_pattern["evidenceNote"]
+    assert (
+        "production에 sources=2, places=109, visits=123"
+        in daegu_namgu_council.source_pattern["evidenceNote"]
+    )
     assert "제1유형 확인 전까지 수집하지 않습니다" in daegu_city.source_pattern["blocker"]
 
     verified_non_capital = [
@@ -1207,7 +1211,6 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "당진시의회",
         "당진시청",
         "대덕구의회",
-        "대덕구청",
         "대전시의회",
         "대전시청",
         "동구의회",
@@ -1249,7 +1252,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "태안군의회",
         "홍성군의회",
     }.issubset(verified_non_capital_names)
-    assert len(verified_non_capital_names) == 117
+    assert len(verified_non_capital_names) == 123
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
@@ -1402,6 +1405,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         and agency.source_pattern.get("holdStatus") == "legal_hold"
     ]
     assert {agency.short_name for agency in daejeon_basic_holds} == {
+        "대덕구청",
         "동구청",
         "중구청",
         "서구청",

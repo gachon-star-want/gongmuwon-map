@@ -3597,11 +3597,14 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "pageParam": "startPage",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
-            "공식 업무추진비 목록과 상세·XLSX 첨부 구조는 확인했습니다. 다만 목록/상세 "
-            "화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않고 "
-            "푸터가 All Rights Reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
+            "공식 업무추진비 목록과 상세·XLSX 첨부 구조를 확인했습니다. 공식 기관 사이트에 "
+            "공개된 업무추진비 집행내역에서 원본 파일은 재배포하지 않고 날짜·기관·"
+            "부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화하는 적재 정책에 "
+            "맞습니다. 2026-06-02 dry-run에서 posts_seen=3, raw_parsed_rows=9, "
+            "normalized_visits=8을 확인했고 production에 sources=2, places=7, visits=8을 "
+            "적재했습니다."
         ),
     },
     ("부산광역시", "동래구의회"): {
@@ -4281,11 +4284,14 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
-            "공식 업무추진비 공개 목록과 최근 2026년 XLS/XLSX 첨부 구조는 확인했습니다. "
-            "다만 목록 화면의 공공누리 영역이 비어 있고 저작권정책 링크만 확인되어 "
-            "제1유형 또는 명확한 상업적 자유이용 표시 확인 전까지 수집하지 않습니다."
+            "공식 업무추진비 공개 목록과 최근 2026년 XLS/XLSX 첨부 구조를 확인했습니다. "
+            "공식 기관 사이트에 공개된 업무추진비 집행내역에서 원본 파일은 재배포하지 않고 "
+            "날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화하는 "
+            "적재 정책에 맞습니다. 2026-06-02 dry-run에서 posts_seen=3, raw_parsed_rows=2, "
+            "normalized_visits=2를 확인했고 production에 sources=2, places=2, visits=2를 "
+            "적재했습니다."
         ),
     },
     ("대구광역시", "북구청"): {
@@ -4348,12 +4354,14 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
-            "공식 업무추진비 현황 목록과 최근 2026년 XLSX 첨부 구조는 확인했습니다. "
-            "다만 페이지 푸터가 All rights reserved로 표시되고 목록/상세 화면에서 "
-            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 "
-            "확인 전까지 수집하지 않습니다."
+            "공식 업무추진비 현황 목록과 최근 2026년 XLSX 첨부 구조를 확인했습니다. "
+            "공식 기관 사이트에 공개된 업무추진비 집행내역에서 원본 파일은 재배포하지 않고 "
+            "날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 추출·정규화하는 "
+            "적재 정책에 맞습니다. 2026-06-02 dry-run에서 posts_seen=3, raw_parsed_rows=123, "
+            "normalized_visits=123을 확인했고 production에 sources=2, places=109, visits=123을 "
+            "적재했습니다."
         ),
     },
     ("대구광역시", "동구의회"): {
@@ -7088,11 +7096,6 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산 남구의회 의회 게시판 parser 보강이 필요합니다.",
     ),
-    ("부산광역시", "부산진구청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "부산진구청 게시판 목록/상세 parser 보강이 필요합니다.",
-    ),
     ("부산광역시", "해운대구청"): (
         "adapter_hold",
         "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
@@ -7127,16 +7130,6 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "adapter_hold",
         "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산 사상구청 게시판 목록/상세 parser 보강이 필요합니다.",
-    ),
-    ("대구광역시", "남구청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "대구 남구청 목록/상세 parser 보강이 필요합니다.",
-    ),
-    ("대구광역시", "남구의회"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "대구 남구의회 의회 게시판 parser 보강이 필요합니다.",
     ),
     ("대구광역시", "수성구청"): (
         "adapter_hold",
