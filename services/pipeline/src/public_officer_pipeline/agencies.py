@@ -2176,6 +2176,44 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "All rights reserved로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("광주광역시", "남구의회"): {
+        "sourceUrl": "http://www.gjnc.or.kr/main/board/45",
+        "detailUrl": "http://www.gjnc.or.kr/main/board/45/1/read/4157?query=",
+        "attachmentUrl": "http://www.gjnc.or.kr/main/board/45/1/download/4157/6941",
+        "fileKinds": ["xlsx"],
+        "pageParam": "path",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 광주광역시 남구의회 의정소식 행정정보공표 목록에서 2025년 1분기 및 "
+            "2024년 4분기·3분기·2분기 업무추진비 최근 게시물과 상세 XLSX 첨부 "
+            "구조를 확인했습니다. 다만 목록/상세 화면에 공공누리 제1유형 또는 명확한 "
+            "자유이용 표시가 확인되지 않고 푸터가 All Right Reserved로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("광주광역시", "광산구의회"): {
+        "sourceUrl": "https://gjgc.or.kr/main/board/45",
+        "detailUrl": "https://gjgc.or.kr/main/board/45/1/read/13247",
+        "attachmentUrl": "https://gjgc.or.kr/main/board/45/1/download/13247/18191",
+        "fileKinds": ["xlsx"],
+        "pageParam": "path",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
+        "blocker": (
+            "공식 광주광역시 광산구의회 열린의회 행정정보공표 목록에서 2026년 1분기 및 "
+            "2025년 4분기·3분기·2분기 업무추진비 최근 게시물과 상세 XLSX 첨부 "
+            "구조를 확인했습니다. 다만 목록/상세 화면에 공공누리 제1유형 또는 명확한 "
+            "자유이용 표시가 확인되지 않고 푸터가 All Right Reserved로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("강원특별자치도", "강릉시청"): {
         "sourceUrl": "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20",
         "fileKinds": ["xlsx", "xls", "pdf"],
