@@ -5232,12 +5232,15 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "pageParam": "page",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
             "공식 업무추진비공개 목록과 2026년 의회운영업무추진비 XLS 첨부 구조는 "
-            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
-            "자유이용 표시가 확인되지 않고 푸터가 All rights reserved로 표시되어 "
-            "제1유형 확인 전까지 수집하지 않습니다."
+            "확인했습니다. 공식 기관 사이트에 공개된 업무추진비 집행내역에서 원본 파일은 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 "
+            "추출·정규화하는 적재 정책에 맞습니다. 2026-06-02 spreadsheet extractor "
+            "used-range guard 패치 후 dry-run에서 posts_seen=5, raw_parsed_rows=1, "
+            "normalized_visits=1을 확인했고 production에 sources=1, places=1, visits=1을 "
+            "적재했습니다."
         ),
     },
     ("대구광역시", "남구의회"): {
@@ -8104,13 +8107,6 @@ def _gyeongsang_has_strong_reuse_limit(blocker: str) -> bool:
 
 
 GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
-    ("울산광역시", "울산시청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 HTML 업무추진비 URL은 확인했지만 generic "
-        "attachment_board가 최근 게시물을 posts_seen=0으로 처리했습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py 또는 별도 "
-        "울산시 HTML table adapter 보강 후 재검증이 필요합니다.",
-    ),
     ("부산광역시", "중구청"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
@@ -8170,12 +8166,6 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "adapter_hold",
         "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "대구 서구청 목록/상세 parser 보강이 필요합니다.",
-    ),
-    ("대구광역시", "중구의회"): (
-        "adapter_hold",
-        "경상도권 4차 dry-run에서 posts_seen=5, posts_fetched=1 이후 XLS 첨부가 "
-        "spreadsheet sheet row limit(65511 rows > 5000)에 걸려 raw_parsed_rows=0으로 실패했습니다. "
-        "대구 중구의회 workbook used-range 정리 또는 spreadsheet extractor 보강 후 재검증이 필요합니다.",
     ),
     ("대구광역시", "달서구청"): (
         "adapter_hold",

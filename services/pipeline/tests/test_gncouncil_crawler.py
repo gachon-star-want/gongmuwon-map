@@ -204,6 +204,52 @@ def test_attachment_crawler_extracts_egf_direct_download_rows() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_ulsan_daily_html_detail_refs() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="울산시청",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.METRO_CITY,
+            parent_region="울산광역시",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.ulsan.go.kr/u/rep/transfer/chief/list.ulsan?mId=001003002005000000",
+                "fileKinds": ["html"],
+                "pageParam": "curPage",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table class="tbl_bd_list txt_c valg_m">
+          <tbody>
+            <tr>
+              <td>2116</td>
+              <td>2026-06-01</td>
+              <td style="text-align:left;">
+                <a href="#" onclick="f_detail('2026-06-01');return false;">
+                  부서장 업무추진비 집행내역(1건)
+                </a>
+              </td>
+              <td>6</td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.ulsan.go.kr/u/rep/transfer/chief/list.ulsan"
+        "?mId=001003002005000000&useDe=2026-06-01"
+    )
+    assert refs[0].published_at == date(2026, 6, 1)
+    assert refs[0].department_name == "울산시청"
+    assert refs[0].file_kind == "html"
+
+
 def test_attachment_crawler_extracts_article_seq_detail_links() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(

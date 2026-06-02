@@ -235,6 +235,8 @@ class CouncilAttachmentCrawler:
             refs.extend(self._parse_file_list_items(tree))
         if not refs:
             refs.extend(self._parse_current_detail_downloads(tree))
+        if not refs:
+            refs.extend(self._parse_daily_html_detail_refs(tree))
         return _sort_download_refs(refs)
 
     def _parse_header_mapped_download_table(self, tree: HTMLParser) -> list[PostRef]:
@@ -594,6 +596,57 @@ class CouncilAttachmentCrawler:
                 )
             )
         return refs
+
+    def _parse_daily_html_detail_refs(self, tree: HTMLParser) -> list[PostRef]:
+        if "html" not in self.file_kinds:
+            return []
+
+        refs: list[PostRef] = []
+        seen_urls: set[str] = set()
+        for row in tree.css("tbody tr"):
+            cells = row.css("th,td")
+            if len(cells) < 3:
+                continue
+            trigger = " ".join(
+                value
+                for anchor in row.css("a[href]")
+                for value in (
+                    anchor.attributes.get("onclick", ""),
+                    anchor.attributes.get("href", ""),
+                )
+            )
+            detail_date = re.search(r"\bf_detail\(['\"](?P<date>20\d{2}-\d{1,2}-\d{1,2})['\"]\)", trigger)
+            if not detail_date:
+                continue
+            title = _clean_title(
+                _normalize_spaces(
+                    (row.css_first("a[href]") or cells[-2]).text(separator=" ", strip=True)
+                )
+            )
+            if not _looks_like_expense(title):
+                continue
+            published_at = _parse_date(detail_date.group("date")) or _find_date(cells)
+            parts = urlsplit(self.list_url)
+            query = dict(parse_qsl(parts.query, keep_blank_values=True))
+            query["useDe"] = detail_date.group("date")
+            url = urljoin(
+                self.list_url,
+                urlunsplit(("", "", parts.path, urlencode(query), parts.fragment)),
+            )
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=url,
+                    title=title,
+                    published_at=published_at,
+                    department_name=self.agency.short_name,
+                    file_kind="html",
+                )
+            )
+        return _sort_download_refs(refs)
 
     def _parse_detail_links(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)

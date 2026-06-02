@@ -324,13 +324,9 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
     worksheets: list[list[list[str]]] = []
     total_cells = 0
     for worksheet in workbook.sheets()[: guards.MAX_SPREADSHEET_SHEETS]:
-        if worksheet.nrows > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
-            raise guards.DocumentProcessingLimitError(
-                f"spreadsheet sheet {worksheet.name!r} has {worksheet.nrows} rows, "
-                f"exceeding limit of {guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
-            )
         rows: list[list[str]] = []
         non_empty_row_count = 0
+        empty_run = 0
         for row_index in range(worksheet.nrows):
             row_values = _trim_trailing_empty_cells(
                 [
@@ -341,8 +337,17 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
                 ]
             )
             if not any(row_values):
+                empty_run += 1
+                if rows and empty_run >= guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+                    break
                 continue
+            empty_run = 0
             non_empty_row_count += 1
+            if non_empty_row_count > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
+                raise guards.DocumentProcessingLimitError(
+                    f"spreadsheet sheet {worksheet.name!r} rows count exceeds limit of "
+                    f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
+                )
             total_cells += _checked_row_width(
                 sheet_name=worksheet.name,
                 row_index=non_empty_row_count,
