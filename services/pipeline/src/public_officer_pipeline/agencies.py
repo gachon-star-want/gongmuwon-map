@@ -3374,6 +3374,35 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    ("울산광역시", "중구청"): {
+        "sourceUrl": "https://www.junggu.ulsan.kr/board/list.ulsan?boardId=BBS_0000114&menuCd=DOM_000000104007001000&paging=ok&startPage=1",
+        "fileKinds": ["zip"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년·2025년 부구청장 업무추진비 ZIP 첨부 "
+            "구조는 확인했습니다. 다만 저작권정책은 공공누리 표시가 부착된 저작물만 "
+            "이용조건 범위 안에서 자유이용 가능하다고 안내하고, 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 "
+            "확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("울산광역시", "중구의회"): {
+        "sourceUrl": "https://council.junggu.ulsan.kr/content/public/expenses.html",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 정보공개 메뉴에서 의회운영 업무추진비 현황 경로는 확인했습니다. 다만 "
+            "업무추진비 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 사이트 푸터가 All rights reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
     ("울산광역시", "남구청"): {
         "sourceUrl": "https://www.ulsannamgu.go.kr/cop/bbs/selectBoardList.do?bbsId=PrmtFee3",
         "extraListUrls": [
@@ -3395,6 +3424,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    ("울산광역시", "남구의회"): {
+        "sourceUrl": "https://www.namgucouncil.ulsan.kr/content/activity/businessOperatingExpense.html",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 현황 목록과 최근 2026년 의장단·의회사무국장·의정운영공통경비 "
+            "PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 상업적 자유이용 표시가 확인되지 않고 푸터가 단순 Copyright로 표시되어 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
     ("울산광역시", "울주군의회"): {
         "sourceUrl": "https://assembly.ulju.ulsan.kr/kr/bbs?bbs_id=business",
         "fileKinds": ["xlsx"],
@@ -3405,6 +3448,53 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "blocker": (
             "공식 업무추진비 집행 현황 목록과 상세·XLSX 다운로드 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 자유이용 표시가 확인되지 않아 "
+            "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("울산광역시", "북구청"): {
+        "sourceUrl": "https://www.bukgu.ulsan.kr/lay1/bbs/S1T136C1896/A/348/list.do",
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "cpage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년 부서별 업무추진비 게시물·첨부파일 구조는 "
+            "확인했습니다. 다만 저작권보호정책은 공공누리 표시가 부착된 저작물만 "
+            "자유이용 가능하다고 안내하고, 업무추진비 화면 자체는 공공누리 제4유형으로 "
+            "표시되어 상업적 이용이 가능하지 않으므로 수집하지 않습니다."
+        ),
+    },
+    ("울산광역시", "북구의회"): {
+        "sourceUrl": "https://council.bukgu.ulsan.kr/kr/open/openspace.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비공개 목록과 최근 2026년 공통경비·상임위원장·기관운영·의장단 "
+            "PDF 첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 상업적 자유이용 표시가 확인되지 않고 푸터가 ALL RIGHTS RESERVED로 "
+            "표시되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("울산광역시", "울주군청"): {
+        "sourceUrl": "https://www.ulju.ulsan.kr/ulju/bbs/list.do?ptIdx=117&mId=0216040100",
+        "extraListUrls": [
+            "https://www.ulju.ulsan.kr/ulju/bbs/list.do?ptIdx=117&mId=0216040200",
+            "https://www.ulju.ulsan.kr/ulju/bbs/list.do?ptIdx=117&mId=0216040300",
+        ],
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 공개 목록과 부군수·국장·부서장 탭, 최근 2026년·2025년 "
+            "PDF 첨부 구조는 확인했습니다. 다만 저작권 보호정책은 공공누리 표시가 "
+            "부착된 저작물만 이용조건 범위 안에서 자유이용 가능하다고 안내하고, 목록/상세 "
+            "화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 "
             "제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
@@ -3632,6 +3722,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 공개 목록과 최근 PDF 첨부 구조는 확인했습니다. 다만 상세 화면이 "
             "공공누리 제2유형(출처표시+상업적 이용금지)으로 표시되어 상업적 이용이 가능하지 "
             "않으므로 수집하지 않습니다."
+        ),
+    },
+    ("울산광역시", "동구의회"): {
+        "sourceUrl": "https://www.donggu-council.ulsan.kr/kr/cost1BBS.do",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 목록과 최근 2026년 의장단·의정운영공통경비·의회사무과 PDF "
+            "첨부 구조는 확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 상업적 자유이용 표시가 확인되지 않고 메타·푸터가 ALL RIGHTS "
+            "RESERVED로 표시되어 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
     ("경상북도", "포항시청"): {
