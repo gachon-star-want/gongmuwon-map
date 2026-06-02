@@ -176,6 +176,13 @@ P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
         "fileKinds": ["xlsx"],
     },
 }
+P2_CENTRAL_STATE_PLACE_LEVEL_CANDIDATES = {
+    "국가보훈부",
+}
+P2_CENTRAL_STATE_PDF_VISION_HOLD = {
+    "경찰청",
+    "통일부",
+}
 
 P3_ALIO_PLACE_LEVEL_CANDIDATES = {
     "게임물관리위원회",
@@ -7518,6 +7525,7 @@ def central_state_agencies() -> list[Agency]:
     for row in central_state_baseline():
         is_constitutional = row.institution_type == "헌법기관"
         is_independent = row.institution_type == "독립국가기관"
+        source_pattern = _central_state_source_pattern(row.name, row.institution_type)
         agencies.append(
             Agency(
                 id=agency_uuid(f"p2:{row.name}"),
@@ -7539,8 +7547,8 @@ def central_state_agencies() -> list[Agency]:
                 expansion_phase=ExpansionPhase.P2,
                 parent_region="대한민국",
                 sub_region=row.institution_type,
-                homepage=None,
-                source_pattern=_central_state_source_pattern(row.name, row.institution_type),
+                homepage=_homepage_from_source_pattern(source_pattern),
+                source_pattern=source_pattern,
             )
         )
     return agencies
@@ -7571,19 +7579,52 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
         ),
     }
     if candidate:
+        is_place_level_candidate = name in P2_CENTRAL_STATE_PLACE_LEVEL_CANDIDATES
+        is_pdf_vision_hold = name in P2_CENTRAL_STATE_PDF_VISION_HOLD
         return {
             **common,
-            "adapter": "central_state_required",
-            "holdStatus": "adapter_hold",
-            "sourceUrl": candidate["sourceUrl"],
+            "adapter": "central_state_attachment_board",
+            "status": None,
+            **(
+                {}
+                if is_place_level_candidate
+                else {"holdStatus": "pdf_vision_hold" if is_pdf_vision_hold else "adapter_hold"}
+            ),
+            "listUrl": candidate["sourceUrl"],
             "dataName": candidate["dataName"],
             "fileKinds": candidate["fileKinds"],
+            "followDetail": True,
+            "pageParam": "page",
             "licenseUrl": "https://www.kogl.or.kr",
-            "blocker": (
-                f"{name}은 공식 후보 URL에서 업무추진비성 공개 경로를 확인했습니다. "
-                "다만 중앙행정기관별 게시판·검색·첨부 다운로드 패턴이 서로 다르고, PDF/HWP/XLS "
-                "혼재 원문에 대한 중앙기관 adapter/parser와 게시물별 공공누리/저작권 표시 확인 "
-                "로직이 아직 없습니다. dry-run 검증 전까지 production 적재하지 않습니다."
+            **(
+                {
+                    "evidenceNote": (
+                        f"{name} 공식 업무추진비 게시판에서 central_state_attachment_board "
+                        "목록->상세->첨부 다운로드 흐름을 dry-run으로 검증했습니다. 최근 "
+                        "12개월 원문은 사용일자·사용처/장소·집행금액 place-level 행을 "
+                        "포함하며, 원문 파일 자체를 재배포하지 않고 사실 데이터만 "
+                        "마스킹·정규화합니다."
+                    )
+                }
+                if is_place_level_candidate
+                else {
+                    "blocker": (
+                        (
+                            f"{name}은 공식 업무추진비 게시판에서 최근 게시물과 PDF 첨부를 "
+                            "central_state_attachment_board dry-run으로 확인했지만, 첨부가 "
+                            "scanned PDF vision 경로로 넘어가 현재 실행 환경의 vision/LLM 키 "
+                            "부재로 row 추출이 중단됐습니다. text PDF 우회 또는 vision fallback "
+                            "검증 전까지 production 적재하지 않습니다."
+                        )
+                        if is_pdf_vision_hold
+                        else (
+                            f"{name}은 공식 후보 URL에서 업무추진비성 공개 경로를 확인했습니다. "
+                            "central_state_attachment_board를 기존 attachment-board crawler에 연결했지만, "
+                            "기관별 게시판·검색·첨부 다운로드 패턴과 PDF/HWP/XLS 혼재 원문에 대해 "
+                            "dry-run 검증 전까지 production 적재하지 않습니다."
+                        )
+                    )
+                }
             ),
         }
     return {

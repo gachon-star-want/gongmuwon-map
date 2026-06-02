@@ -26,7 +26,12 @@ class SeoulOpenGovPattern(SourcePattern):
 
 
 class AttachmentBoardPattern(SourcePattern):
-    adapter: Literal["attachment_board", "council_attachment_board", "gangnam_xlsx_board"]
+    adapter: Literal[
+        "attachment_board",
+        "council_attachment_board",
+        "central_state_attachment_board",
+        "gangnam_xlsx_board",
+    ]
     listUrl: str
     extraListUrls: list[str] = Field(default_factory=list)
     fileKinds: list[FileKind] = Field(default_factory=lambda: list(ALLOWED_FILE_KINDS))
@@ -154,7 +159,12 @@ def parse_source_pattern(agency: Agency) -> ParsedSourcePattern:
     try:
         if adapter == "seoul_opengov":
             return SeoulOpenGovPattern(**raw)
-        if adapter in {"attachment_board", "council_attachment_board", "gangnam_xlsx_board"}:
+        if adapter in {
+            "attachment_board",
+            "council_attachment_board",
+            "central_state_attachment_board",
+            "gangnam_xlsx_board",
+        }:
             return AttachmentBoardPattern(**raw)
         if adapter == "estimate_list_html":
             return EstimateListPattern(**raw)
