@@ -102,6 +102,47 @@ PDF_TEXT_CENTRAL_STATE_USER_PLACE_PURPOSE_AMOUNT_ROW_RE = re.compile(
     r"(?P<party_size>\d+\s*명?|-)\s+"
     r"(?P<payment_method>정부구매카드|신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
 )
+PDF_TEXT_USER_DATE_PLACE_PURPOSE_PARTY_AMOUNT_CATEGORY_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<expense_category>\S+)\s*$"
+)
+PDF_TEXT_DATE_TIME_PLACE_PURPOSE_PARTY_AMOUNT_SIMPLE_ROW_RE = re.compile(
+    r"^\s*(?P<date>20\d{2}[.-]\d{1,2}[.-]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)"
+    r"(?:\s+(?P<expense_category>\S+))?\s*$"
+)
+PDF_TEXT_USER_DATE_PAYMENT_PURPOSE_PLACE_TIME_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{2}[.]\d{1,2}[.]\d{1,2}[.]?)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<expense_category>\S+)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)"
+    r"(?:\s+(?P<party_size>\d+|-))?\s*$"
+)
+PDF_TEXT_DATE_TIME_USER_PURPOSE_AMOUNT_PARTY_PLACE_ROW_RE = re.compile(
+    r"^\s*(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<user>\S+)\s+"
+    r"(?P<purpose>.+?)\s{2,}"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_MONTH_DAY_OFFICE_ROW_RE = re.compile(
     r"^\s*(?:\d+\s+)?"
     r"(?P<user>\S+)\s+"
@@ -474,6 +515,38 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     )
     if datetime_purpose_amount_method_place:
         return datetime_purpose_amount_method_place
+    user_date_place_purpose_party_amount_category = (
+        _parse_pdf_text_user_date_place_purpose_party_amount_category_line(
+            line,
+            fallback_department=fallback_department,
+        )
+    )
+    if user_date_place_purpose_party_amount_category:
+        return user_date_place_purpose_party_amount_category
+    date_time_place_purpose_party_amount_simple = (
+        _parse_pdf_text_date_time_place_purpose_party_amount_simple_line(
+            line,
+            fallback_department=fallback_department,
+        )
+    )
+    if date_time_place_purpose_party_amount_simple:
+        return date_time_place_purpose_party_amount_simple
+    user_date_payment_purpose_place_time_amount = (
+        _parse_pdf_text_user_date_payment_purpose_place_time_amount_line(
+            line,
+            fallback_department=fallback_department,
+        )
+    )
+    if user_date_payment_purpose_place_time_amount:
+        return user_date_payment_purpose_place_time_amount
+    date_time_user_purpose_amount_party_place = (
+        _parse_pdf_text_date_time_user_purpose_amount_party_place_line(
+            line,
+            fallback_department=fallback_department,
+        )
+    )
+    if date_time_user_purpose_amount_party_place:
+        return date_time_user_purpose_amount_party_place
     return _parse_pdf_text_generic_row(line, fallback_department=fallback_department)
 
 
@@ -1319,6 +1392,132 @@ def _parse_pdf_text_central_state_user_place_purpose_amount_line(
     )
 
 
+def _parse_pdf_text_user_date_place_purpose_party_amount_category_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_USER_DATE_PLACE_PURPOSE_PARTY_AMOUNT_CATEGORY_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} 00:00",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[line.strip()],
+    )
+
+
+def _parse_pdf_text_date_time_place_purpose_party_amount_simple_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_DATE_TIME_PLACE_PURPOSE_PARTY_AMOUNT_SIMPLE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[line.strip()],
+    )
+
+
+def _parse_pdf_text_user_date_payment_purpose_place_time_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_USER_DATE_PAYMENT_PURPOSE_PLACE_TIME_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[line.strip()],
+    )
+
+
+def _parse_pdf_text_date_time_user_purpose_amount_party_place_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_DATE_TIME_USER_PURPOSE_AMOUNT_PARTY_PLACE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+        },
+        fallback_department=fallback_department,
+        raw_values=[line.strip()],
+    )
+
+
 def _parse_month_day_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
     year_match = re.search(r"(20\d{2})년\s*\d{1,2}월", text)
     if not year_match:
@@ -1400,6 +1599,282 @@ def _parse_yearless_council_amount_pdf_text(text: str, *, fallback_department: s
         if parsed:
             rows.append(parsed)
     return rows
+
+
+def _parse_columnar_ocr_sections_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    if "사용일자" not in text or "집행목적" not in text or "사용처" not in text:
+        return []
+    lines = [_normalize_pdf_text_fragment(line) for line in text.splitlines() if line.strip()]
+    start_indexes = [index for index, line in enumerate(lines) if line == "사용일자"]
+    rows: list[ParsedExpenseRow] = []
+    for section_index, start_index in enumerate(start_indexes):
+        end_index = start_indexes[section_index + 1] if section_index + 1 < len(start_indexes) else len(lines)
+        section = lines[start_index:end_index]
+        title = next((line for line in section if "업무추진" in line and "집행" in line), "")
+        user_text = "부의장" if "부의장" in title else "의장" if "의장" in title else fallback_department
+
+        dates = _normalize_columnar_date_values(_columnar_values(section, "사용일자", {"집행목적"}))
+        purposes = _coalesce_columnar_values(
+            _columnar_values(section, "집행목적", {"인원/수량"}),
+            len(dates),
+        )
+        party_sizes = _columnar_values(section, "인원/수량", {"금액(원)"})
+        amounts = [_normalize_ocr_amount(value) for value in _columnar_values(section, "금액(원)", {"사용처"})]
+        places = _columnar_values(section, "사용처", {"주소"})
+        addresses = _columnar_values(section, "주소", {"결재방법"})
+        payment_methods = _columnar_values(section, "결재방법", {"사용일자"})
+
+        count = min(
+            len(dates),
+            len(purposes),
+            len(party_sizes),
+            len(amounts),
+            len(places),
+            len(addresses),
+            len(payment_methods),
+        )
+        for index in range(count):
+            place = _normalize_pdf_text_fragment(places[index])
+            purpose = _normalize_pdf_text_fragment(purposes[index])
+            payment_method = _normalize_pdf_text_fragment(payment_methods[index])
+            if _looks_like_non_place_expense(place, purpose, payment_method):
+                continue
+            parsed = _build_pdf_row(
+                {
+                    "used_at": dates[index],
+                    "place_name": place,
+                    "address": addresses[index],
+                    "purpose": purpose,
+                    "amount": amounts[index],
+                    "party_size": party_sizes[index],
+                    "user_text": user_text,
+                    "payment_method": payment_method,
+                },
+                fallback_department=fallback_department,
+                raw_values=[
+                    dates[index],
+                    purpose,
+                    party_sizes[index],
+                    amounts[index],
+                    place,
+                    addresses[index],
+                    payment_method,
+                ],
+            )
+            if parsed:
+                rows.append(parsed)
+    return rows
+
+
+def _parse_generic_columnar_ocr_sections_pdf_text(
+    text: str,
+    *,
+    fallback_department: str,
+) -> list[ParsedExpenseRow]:
+    date_headers = {"사용일자", "사용일시"}
+    purpose_headers = {"집행목적", "사용목적", "집행내용", "사용내역"}
+    party_headers = {"인원/수량", "대상인원수(명)", "인원(수량)", "인원"}
+    amount_headers = {"금액(원)", "지출액"}
+    place_headers = {"사용처", "장소"}
+    address_headers = {"주소"}
+    payment_headers = {"결재방법", "결제방법", "결제 방식", "결제 방법", "결제방식"}
+    user_headers = {"사용자"}
+    all_headers = (
+        date_headers
+        | purpose_headers
+        | party_headers
+        | amount_headers
+        | place_headers
+        | address_headers
+        | payment_headers
+        | user_headers
+        | {"집행대상", "비고", "기관명", "계"}
+    )
+
+    if not any(header in text for header in date_headers) or not any(
+        header in text for header in place_headers
+    ):
+        return []
+
+    lines = [_normalize_pdf_text_fragment(line) for line in text.splitlines() if line.strip()]
+    start_indexes = [index for index, line in enumerate(lines) if line in date_headers]
+    rows: list[ParsedExpenseRow] = []
+    for section_index, start_index in enumerate(start_indexes):
+        end_index = start_indexes[section_index + 1] if section_index + 1 < len(start_indexes) else len(lines)
+        section = lines[start_index:end_index]
+        dates = _normalize_columnar_date_values(
+            _columnar_values_any(section, date_headers, all_headers - date_headers)
+        )
+        if not dates:
+            continue
+        purposes = _coalesce_columnar_values(
+            _columnar_values_any(section, purpose_headers, all_headers - purpose_headers),
+            len(dates),
+        )
+        if not purposes:
+            purposes = _coalesce_columnar_values(
+                _columnar_values_after_marker(section, "계", amount_headers),
+                len(dates),
+            )
+        party_sizes = _columnar_values_any(section, party_headers, all_headers - party_headers)
+        amounts = [
+            _normalize_ocr_amount(value)
+            for value in _columnar_values_any(section, amount_headers, all_headers - amount_headers)
+        ]
+        places = _columnar_values_any(section, place_headers, all_headers - place_headers)
+        addresses = _columnar_values_any(section, address_headers, all_headers - address_headers)
+        payment_methods = _columnar_values_any(section, payment_headers, all_headers - payment_headers)
+        users = _columnar_values_any(section, user_headers, all_headers - user_headers)
+        title = next((line for line in section if "업무추진" in line and line not in all_headers), "")
+        default_user = _columnar_user_from_title(title, fallback_department)
+
+        count = min(len(dates), len(purposes), len(amounts), len(places))
+        for index in range(count):
+            place = _normalize_pdf_text_fragment(places[index])
+            purpose = _normalize_pdf_text_fragment(purposes[index])
+            payment_method = (
+                _normalize_pdf_text_fragment(payment_methods[index])
+                if index < len(payment_methods)
+                else None
+            )
+            if _looks_like_non_place_expense(place, purpose, payment_method):
+                continue
+            row_values = {
+                "used_at": dates[index],
+                "place_name": place,
+                "purpose": purpose,
+                "amount": amounts[index],
+                "party_size": party_sizes[index] if index < len(party_sizes) else None,
+                "user_text": users[index] if index < len(users) else default_user,
+                "payment_method": payment_method,
+            }
+            if index < len(addresses):
+                row_values["address"] = addresses[index]
+            parsed = _build_pdf_row(
+                row_values,
+                fallback_department=fallback_department,
+                raw_values=[
+                    dates[index],
+                    purpose,
+                    amounts[index],
+                    place,
+                    payment_method or "",
+                ],
+            )
+            if parsed:
+                rows.append(parsed)
+    return rows
+
+
+def _columnar_values(section: list[str], header: str, stop_headers: set[str]) -> list[str]:
+    try:
+        start = section.index(header) + 1
+    except ValueError:
+        return []
+    end = len(section)
+    for index in range(start, len(section)):
+        if section[index] in stop_headers:
+            end = index
+            break
+    values = []
+    for value in section[start:end]:
+        if "업무추진" in value and "집행" in value:
+            continue
+        values.append(value)
+    return values
+
+
+def _columnar_values_any(section: list[str], headers: set[str], stop_headers: set[str]) -> list[str]:
+    starts = [index for index, line in enumerate(section) if line in headers]
+    if not starts:
+        return []
+    start = starts[0] + 1
+    end = len(section)
+    for index in range(start, len(section)):
+        if section[index] in stop_headers:
+            end = index
+            break
+    values = []
+    for value in section[start:end]:
+        if value in headers or "업무추진" in value and "집행" in value:
+            continue
+        if value == "계":
+            break
+        values.append(value)
+    return values
+
+
+def _columnar_values_after_marker(
+    section: list[str],
+    marker: str,
+    stop_headers: set[str],
+) -> list[str]:
+    try:
+        start = section.index(marker) + 1
+    except ValueError:
+        return []
+    end = len(section)
+    for index in range(start, len(section)):
+        if section[index] in stop_headers:
+            end = index
+            break
+    return [value for value in section[start:end] if value != marker]
+
+
+def _columnar_user_from_title(title: str, fallback_department: str) -> str:
+    if "부의장" in title:
+        return "부의장"
+    if "의장" in title:
+        return "의장"
+    match = re.search(r"([가-힣A-Za-z0-9·]+(?:위원장|담당관|과장|국장|실장))", title)
+    if match:
+        return match.group(1)
+    return fallback_department
+
+
+def _normalize_columnar_date_values(values: list[str]) -> list[str]:
+    normalized: list[str] = []
+    index = 0
+    while index < len(values):
+        value = values[index]
+        if (
+            re.match(r"^20\d{2}[.,]\d{1,2}[.,]\d{1,2}[.]?$", value)
+            and index + 1 < len(values)
+            and re.match(r"^\d{1,2}:\d{2}(?::\d{2})?$", values[index + 1])
+        ):
+            value = f"{value} {values[index + 1]}"
+            index += 1
+        value = value.replace(",", ".")
+        value = re.sub(r"^(20\d{2})(\d{2})(\d{2})(\s+\d{1,2}:\d{2})", r"\1.\2.\3.\4", value)
+        value = re.sub(r"^(20\d{2})(\d{2})-(\d{2})$", r"\1.\2.\3.", value)
+        value = re.sub(r"^(20\d{2})(\d{2})[.](\d{1,2}[.])", r"\1.\2.\3", value)
+        value = re.sub(r"^(20\d{2})\s+(\d{1,2}[.]\d{1,2})", r"\1.\2", value)
+        value = re.sub(r"^(20\d{2})\s+(\d{1,2})", r"\1.\2", value)
+        value = re.sub(r"(20\d{2}[.]\d{1,2}[.]\d{1,2}[.])(\d{1,2}:\d{2})", r"\1 \2", value)
+        normalized.append(value)
+        index += 1
+    return normalized
+
+
+def _coalesce_columnar_values(values: list[str], target_count: int) -> list[str]:
+    if target_count <= 0:
+        return values
+    merged = values[:]
+    while len(merged) > target_count:
+        merge_index = next(
+            (
+                index
+                for index in range(len(merged) - 1)
+                if not re.search(r"(급식|구입|지급|제공|간담회|격려품|다과)$", merged[index])
+            ),
+            len(merged) - 2,
+        )
+        merged[merge_index : merge_index + 2] = [f"{merged[merge_index]} {merged[merge_index + 1]}"]
+    return merged
+
+
+def _normalize_ocr_amount(value: str) -> str:
+    return value.replace(".", ",")
 
 
 def _split_place_and_purpose(body: str, user: str) -> tuple[str, str]:

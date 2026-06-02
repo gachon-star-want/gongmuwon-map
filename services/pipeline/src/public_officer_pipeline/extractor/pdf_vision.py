@@ -5,7 +5,9 @@ import base64
 import json
 import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -85,6 +87,15 @@ async def _extract_pdf_rows_with_vision(
         return []
     if _expense_text_lacks_place_column(text) or _expense_text_lacks_place_column(plain_text):
         return []
+
+    ocr_text = _pdf_to_local_ocr_text(content, max_pages=max_pages)
+    if ocr_text:
+        if _expense_text_lacks_place_column(ocr_text):
+            return []
+        ocr_rows = rows_from_pdf_text(ocr_text, fallback_department=fallback_department)
+        if ocr_rows or "총 0건" in ocr_text:
+            return ocr_rows
+
     if not anthropic_key and not gemini_key and not os.getenv("OPENAI_API_KEY"):
         raise PipelineConfigError("At least one LLM API key is required for scanned PDF vision extraction")
 
@@ -225,6 +236,96 @@ def _pdf_to_png_images(content: bytes, *, max_pages: int) -> list[bytes]:
         return images
 
 
+def _pdf_to_local_ocr_text(content: bytes, *, max_pages: int) -> str:
+    if sys.platform != "darwin":
+        return ""
+    swift_path = shutil.which("swift")
+    if not swift_path:
+        return ""
+
+    images = _pdf_to_png_images(content, max_pages=max_pages)
+    if not images:
+        return ""
+
+    with tempfile.TemporaryDirectory() as directory:
+        directory_path = Path(directory)
+        script_path = directory_path / "ocr.swift"
+        output_path = directory_path / "ocr.txt"
+        image_paths: list[Path] = []
+        for index, image in enumerate(images, start=1):
+            image_path = directory_path / f"page-{index}.png"
+            image_path.write_bytes(image)
+            image_paths.append(image_path)
+
+        script_path.write_text(
+            r'''
+import Foundation
+import Vision
+import CoreGraphics
+import ImageIO
+
+func recognize(path: String) throws -> String {
+    let url = URL(fileURLWithPath: path)
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+          let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+        return ""
+    }
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["ko-KR", "en-US"]
+    request.usesLanguageCorrection = true
+    let handler = VNImageRequestHandler(cgImage: image, options: [:])
+    try handler.perform([request])
+    let lines = request.results?.compactMap { observation in
+        observation.topCandidates(1).first?.string
+    } ?? []
+    return lines.joined(separator: "\n")
+}
+
+let arguments = Array(CommandLine.arguments.dropFirst())
+if arguments.count < 2 {
+    exit(2)
+}
+let outputPath = arguments[0]
+let imagePaths = Array(arguments.dropFirst())
+var recognized: [String] = []
+for imagePath in imagePaths {
+    recognized.append((try? recognize(path: imagePath)) ?? "")
+}
+try recognized.joined(separator: "\n").write(
+    toFile: outputPath,
+    atomically: true,
+    encoding: .utf8
+)
+''',
+            encoding="utf-8",
+        )
+        command = [
+            swift_path,
+            str(script_path),
+            str(output_path),
+            *[str(path) for path in image_paths],
+        ]
+        try:
+            _run_subprocess_with_output_file_limit(
+                command,
+                output_path=output_path,
+                max_bytes=guards.MAX_PDF_TEXT_BYTES,
+                subject="local OCR text",
+                timeout_seconds=90.0,
+            )
+        except (
+            FileNotFoundError,
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            guards.DocumentProcessingLimitError,
+        ):
+            return ""
+        if not output_path.exists():
+            return ""
+        return output_path.read_bytes().decode("utf-8", errors="ignore")
+
+
 def _terminate_process(process: subprocess.Popen[bytes]) -> None:
     try:
         process.kill()
@@ -312,9 +413,12 @@ def _expense_text_lacks_place_column(text: str) -> bool:
     if not text:
         return False
     compact = re.sub(r"\s+", "", text)
-    has_expense_columns = "집행목적" in compact and ("집행금액" in compact or "사용금액" in compact)
+    has_expense_columns = any(
+        keyword in compact for keyword in ("집행목적", "사용목적", "집행내용", "사용내역")
+    ) and any(keyword in compact for keyword in ("집행금액", "사용금액", "금액", "지출액"))
     has_place_column = any(
-        keyword in compact for keyword in ("집행장소", "사용장소", "가맹점", "상호", "집행처", "장소")
+        keyword in compact
+        for keyword in ("집행장소", "사용장소", "가맹점", "상호", "집행처", "사용처", "장소")
     )
     return has_expense_columns and not has_place_column
 
