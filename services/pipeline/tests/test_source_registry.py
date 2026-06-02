@@ -285,13 +285,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 524
+    assert summary.verified_in_code == 525
     assert summary.pending == 43
     assert summary.legal_hold == 150
     assert summary.source_not_found == 120
     assert summary.no_recent_data == 1182
-    assert summary.pdf_vision_hold == 21
-    assert summary.adapter_hold == 162
+    assert summary.pdf_vision_hold == 23
+    assert summary.adapter_hold == 159
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 178
@@ -303,8 +303,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p1"].adapter_hold == 15
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
+    assert summary.priority_group_counts["p2"].verified_in_code == 1
     assert summary.priority_group_counts["p2"].source_not_found == 32
-    assert summary.priority_group_counts["p2"].adapter_hold == 28
+    assert summary.priority_group_counts["p2"].pdf_vision_hold == 2
+    assert summary.priority_group_counts["p2"].adapter_hold == 25
     assert summary.priority_group_counts["p3"].total == 342
     assert summary.priority_group_counts["p3"].verified_in_code == 6
     assert summary.priority_group_counts["p3"].pending == 0
@@ -1637,17 +1639,18 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 346
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 347
     assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 32
     assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 1181
-    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 8
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 147
+    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 10
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 144
     assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
 
     science = next(entry for entry in entries if entry.short_name == "과학기술정보통신부")
     haeng = next(entry for entry in entries if entry.short_name == "행정안전부")
+    mpva = next(entry for entry in entries if entry.short_name == "국가보훈부")
     audit = next(entry for entry in entries if entry.short_name == "감사원")
     court = next(entry for entry in entries if entry.short_name == "헌법재판소")
     nps = next(entry for entry in entries if entry.short_name == "국민연금공단")
@@ -1660,6 +1663,15 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert "source URL 미발견" in science.evidence_note
     assert haeng.verification_status == "adapter_hold"
     assert haeng.source_url == "https://mois.go.kr/frt/sub/a02/openBusinessPromotion/screen.do"
+    assert mpva.verification_status == "verified_in_code"
+    assert mpva.adapter == "central_state_attachment_board"
+    assert mpva.source_url == "https://www.mpva.go.kr/mpva/selectBbsNttList.do?bbsNo=3&key=7"
+    assert mpva.source_file_kinds == ["xlsx", "pdf"]
+    assert "central_state_attachment_board" in mpva.evidence_note
+    police = next(entry for entry in entries if entry.short_name == "경찰청")
+    assert police.verification_status == "pdf_vision_hold"
+    assert police.adapter == "central_state_attachment_board"
+    assert "scanned PDF vision" in police.evidence_note
     assert audit.jurisdiction_type_label == "독립국가기관"
     assert court.gov_tier_label == "헌법기관"
     assert court.branch_label == "헌법기관"

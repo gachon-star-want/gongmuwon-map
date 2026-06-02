@@ -273,20 +273,22 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 524
+    assert output["summary"]["verified_in_code"] == 525
     assert output["summary"]["pending"] == 43
     assert output["summary"]["legal_hold"] == 150
     assert output["summary"]["source_not_found"] == 120
     assert output["summary"]["no_recent_data"] == 1182
-    assert output["summary"]["pdf_vision_hold"] == 21
-    assert output["summary"]["adapter_hold"] == 162
+    assert output["summary"]["pdf_vision_hold"] == 23
+    assert output["summary"]["adapter_hold"] == 159
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
     assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 178
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 150
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
+    assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 1
     assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 32
-    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 28
+    assert output["summary"]["priority_group_counts"]["p2"]["pdf_vision_hold"] == 2
+    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 25
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
     assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 6
     assert output["summary"]["priority_group_counts"]["p3"]["pending"] == 0
@@ -309,7 +311,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 524
+    assert output["summary"]["verified_in_code"] == 525
     assert "entries" not in output
 
 
