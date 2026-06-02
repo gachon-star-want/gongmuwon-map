@@ -24,7 +24,7 @@ DEFAULT_USER_AGENT = (
     "PublicOfficerMapBot/0.1 "
     "(operator: wylee0806@naver.com; public-interest archive)"
 )
-SUPPORTED_FILE_KINDS = {"pdf", "xls", "xlsx", "hwpx"}
+SUPPORTED_FILE_KINDS = {"pdf", "hwp", "xls", "xlsx", "hwpx"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비", "시책추진비")
 DOWNLOAD_HREF_PARTS = (
     "/site/main/file/download/",
@@ -56,8 +56,10 @@ DOWNLOAD_HREF_PARTS = (
     "/WDB_common/include/download.asp",
     "/common/board/Download.do",
     "/component/file/ND_fileDownload.do",
+    "/attach/down/",
     "/comm/getFile",
     "/common/file/download.do",
+    "/common/fileDown.do",
     "/other/file_down.do",
     "/portal/cmmn/file/fileDown.do",
     "/shareEtc/download_utf.asp",
@@ -81,6 +83,8 @@ DOWNLOAD_HREF_PARTS = (
     "/cmsfile/download.do",
     "/FileDownLoad.php",
     "/ExFileDownLoad.php",
+    "/fileDownLoadDw.do",
+    "/down.do",
     "/cwsboard/board.do?mode=download",
     "bbscttDownload.do",
     "act=download",
@@ -1199,6 +1203,13 @@ def _find_date(cells) -> date | None:
 
 def _file_kind(filename: str | None) -> str:
     lowered = (filename or "").lower()
+    normalized = _normalize_spaces(filename or "").lower()
+    if "excel" in normalized or "엑셀" in normalized:
+        return "xlsx"
+    if "hwpx" in normalized:
+        return "hwpx"
+    if "한글" in normalized or re.search(r"\bhwp\b|\.hwp(?:\b|[^\w])", normalized):
+        return "hwp"
     for file_kind in SUPPORTED_FILE_KINDS:
         if (
             re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered)
@@ -1259,6 +1270,7 @@ def _is_detail_href(href: str) -> bool:
         "view.do" in lowered
         or "selectboarddetail.do" in lowered
         or "dataview.jsp" in lowered
+        or "read.do" in lowered
         or "act=view" in lowered
         or "mode=view" in lowered
         or "mode=v" in lowered

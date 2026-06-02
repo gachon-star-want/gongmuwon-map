@@ -35,7 +35,7 @@ PDF_TEXT_DATE_TIME_PLACE_PURPOSE_PARTY_AMOUNT_ROW_RE = re.compile(
     r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
     r"(?P<place_text>.+?)\s{2,}"
     r"(?P<purpose>.+?)\s+"
-    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<party_size>\d+\s*명?|-)\s+"
     r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
     r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
     r"(?P<expense_category>\S+)\s*$"
@@ -46,14 +46,14 @@ PDF_TEXT_USER_DATE_PLACE_PURPOSE_AMOUNT_PARTY_ROW_RE = re.compile(
     r"(?P<place_text>.+?)\s{2,}"
     r"(?P<purpose>.+?)\s+"
     r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
-    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<party_size>\d+\s*명?|-)\s+"
     r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
     r"(?P<expense_category>\S+)\s*$"
 )
 PDF_TEXT_PURPOSE_AMOUNT_PARTY_PLACE_DATE_USER_ROW_RE = re.compile(
     r"^\s*(?P<purpose>.+?)\s+"
     r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
-    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<party_size>\d+\s*명?|-)\s+"
     r"(?P<place_text>.+?)\s+"
     r"(?P<date>20\d{2}[.]\d{1,2}[.]\d{1,2}[.]?)\s+"
     r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
@@ -68,6 +68,39 @@ PDF_TEXT_DATETIME_PURPOSE_AMOUNT_METHOD_PLACE_ROW_RE = re.compile(
     r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
     r"(?P<place_text>.+?)\s+"
     r"(?P<party_size>\d+|-)\s*$"
+)
+PDF_TEXT_CENTRAL_STATE_PURPOSE_PLACE_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?:(?P<user>[^0-9\s][^0-9]{0,20}?)\s+)?"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+\s*명?|-)\s+"
+    r"(?P<payment_method>정부구매카드|신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
+)
+PDF_TEXT_CENTRAL_STATE_AMOUNT_PLACE_PURPOSE_ROW_RE = re.compile(
+    r"^\s*(?:(?P<user>[^0-9\s][^0-9]{0,20}?)\s+)?"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<party_size>\d+\s*명?|-)"
+    r"(?:\s+(?P<payment_method>정부구매카드|신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체))?\s*$"
+)
+PDF_TEXT_CENTRAL_STATE_PLACE_PURPOSE_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+\s*명?|-)"
+    r"(?:\s+(?P<payment_method>정부구매카드|신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체))?\s*$"
+)
+PDF_TEXT_CENTRAL_STATE_USER_PLACE_PURPOSE_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<user>[^0-9\s].+?)\s+"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+\s*명?|-)\s+"
+    r"(?P<payment_method>정부구매카드|신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
 )
 PDF_TEXT_MONTH_DAY_OFFICE_ROW_RE = re.compile(
     r"^\s*(?:\d+\s+)?"
@@ -1126,6 +1159,166 @@ def _parse_pdf_text_datetime_purpose_amount_method_place_line(
     )
 
 
+def _parse_pdf_text_central_state_purpose_place_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    if not _is_central_state_department(fallback_department, "경찰청"):
+        return None
+    row_match = PDF_TEXT_CENTRAL_STATE_PURPOSE_PLACE_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    purpose, place = _split_purpose_and_place(row_match.group("body").strip())
+    if not purpose or not place:
+        purpose, place = _split_central_state_purpose_and_place(row_match.group("body").strip())
+    if not purpose or not place:
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} 00:00",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": (row_match.group("user") or fallback_department).strip(),
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("user"),
+            row_match.group("date"),
+            purpose,
+            place,
+            row_match.group("amount"),
+            party_size,
+            row_match.group("payment_method"),
+        ],
+    )
+
+
+def _parse_pdf_text_central_state_amount_place_purpose_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    if not _is_central_state_department(fallback_department, "통일부"):
+        return None
+    row_match = PDF_TEXT_CENTRAL_STATE_AMOUNT_PLACE_PURPOSE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place, purpose = _split_place_and_purpose_by_columns(row_match.group("body").strip())
+    if not place or not purpose:
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": (row_match.group("user") or fallback_department).strip(),
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("user"),
+            row_match.group("date"),
+            row_match.group("time"),
+            row_match.group("amount"),
+            place,
+            purpose,
+            party_size,
+            row_match.group("payment_method"),
+        ],
+    )
+
+
+def _parse_pdf_text_central_state_place_purpose_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    if not _is_central_state_department(fallback_department, "보건복지부"):
+        return None
+    row_match = PDF_TEXT_CENTRAL_STATE_PLACE_PURPOSE_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place, purpose = _split_place_and_purpose_by_columns(row_match.group("body").strip())
+    if not place or not purpose:
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} 00:00",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": fallback_department,
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("date"),
+            place,
+            purpose,
+            row_match.group("amount"),
+            party_size,
+            row_match.group("payment_method"),
+        ],
+    )
+
+
+def _parse_pdf_text_central_state_user_place_purpose_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    if not _is_central_state_department(fallback_department, "보건복지부"):
+        return None
+    row_match = PDF_TEXT_CENTRAL_STATE_USER_PLACE_PURPOSE_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place, purpose = _split_place_and_purpose_by_columns(row_match.group("body").strip())
+    if not place or not purpose:
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    user_text = row_match.group("user").strip()
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": user_text,
+            "payment_method": row_match.group("payment_method"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            user_text,
+            row_match.group("date"),
+            row_match.group("time"),
+            place,
+            purpose,
+            row_match.group("amount"),
+            party_size,
+            row_match.group("payment_method"),
+        ],
+    )
+
+
 def _parse_month_day_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
     year_match = re.search(r"(20\d{2})년\s*\d{1,2}월", text)
     if not year_match:
@@ -1248,6 +1441,24 @@ def _split_place_and_purpose_by_marker(body: str) -> tuple[str, str]:
         if match and match.start() > 0:
             place = _clean_pdf_place_fragment(body[: match.start()])
             return place, _normalize_pdf_text_fragment(body[match.start() :])
+    return "", ""
+
+
+def _is_central_state_department(fallback_department: str, agency_name: str) -> bool:
+    return fallback_department == agency_name or fallback_department.startswith(f"{agency_name} ")
+
+
+def _split_central_state_purpose_and_place(body: str) -> tuple[str, str]:
+    normalized = _normalize_pdf_text_fragment(body)
+    for marker in ("간담회", "티타임", "물품 구매", "현장방문", "업무협의", "격려"):
+        index = normalized.find(marker)
+        if index < 0:
+            continue
+        split_at = index + len(marker)
+        purpose = normalized[:split_at].strip()
+        place = normalized[split_at:].strip()
+        if place:
+            return purpose, place
     return "", ""
 
 
