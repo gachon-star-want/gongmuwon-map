@@ -2095,19 +2095,26 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("강원특별자치도", "양구군의회"): {
-        "holdStatus": "no_recent_data",
-        "sourceUrl": "http://www.ygcl.go.kr/portal/F50000/F50700/boardList",
-        "fileKinds": ["pdf", "xlsx", "xls"],
+        "holdStatus": "legal_hold",
+        "sourceUrl": "http://ygcl.go.kr/portal/F50000/F50700/boardList",
+        "detailUrl": "http://ygcl.go.kr/portal/F50000/F50700/boardView?board_key=29098&page=1",
+        "attachmentUrl": (
+            "http://ygcl.go.kr/downLoad.do?"
+            "file_key=112148&save_file_name=202606011780277936024551.xlsx"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
         "pageParam": "pageIndex",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
         "verifiedBy": "공식 사이트 원격 확인",
+        "commercialUseStatus": "not_confirmed_without_kogl_mark",
+        "derivativeUseStatus": "not_confirmed_without_kogl_mark",
         "blocker": (
-            "공식 양구군의회 업무추진비 집행 현황 목록은 확인했지만 원문 기준 총 0개의 글로 "
-            "최근 12개월 집행내역 게시글이 없습니다. 2020년 이후 확장 검색에서도 현행 "
-            "업무추진비 메뉴는 동일한 빈 목록이며, 확인된 F80000/F80200/F80208 메뉴는 "
-            "업무추진비가 아니라 의원별 회의 출석율 현황으로 확인되어 데이터가 공개될 때까지 "
-            "수집하지 않습니다."
+            "공식 양구군의회 업무추진비 집행 현황 목록에서 총 80개 게시글과 "
+            "2026-06-01 등록된 2026년 5월 업무추진비 사용내역 상세·XLSX 첨부 구조를 "
+            "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
+            "자유이용 표시가 확인되지 않고 푸터가 All Rights Reserved로 표시되어 제1유형 "
+            "확인 전까지 수집하지 않습니다."
         ),
     },
     ("강원특별자치도", "인제군청"): {
@@ -3802,15 +3809,45 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "copyrightUrl": "https://state.gwd.go.kr/portal/services/copyright",
         "publicWorksPolicyUrl": "https://state.gwd.go.kr/portal/services/copyright",
     },
+    "강원특별자치도의회": {
+        "detailUrl": (
+            "https://council.gangwon.kr/kr/infoBBSview.do?"
+            "uid=3EDF15021B1FDB4D25D06BF8BBA2437A&schwrd=&flag=all&sch_use_start_date="
+            "&sch_use_end_date=&page=1&list_style="
+        ),
+        "attachmentUrl": (
+            "https://council.gangwon.kr/kr/bbs/download.do?"
+            "bbs_id=info&uid=280EA27471413C59B04EEA08E0BE9158"
+        ),
+    },
     "춘천시청": {
+        "detailUrl": (
+            "https://www.chuncheon.go.kr/cityhall/information-disclosure/"
+            "business-expenses/chuncheon-cityhall/?bbsId=BBSMSTR_000000000290"
+            "&nttId=518006&flag=view"
+        ),
         "copyrightUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
         "publicWorksPolicyUrl": "https://www.chuncheon.go.kr/cityhall/other-service/copyright-policy",
     },
+    "춘천시의회": {
+        "detailUrl": "https://council.chuncheon.go.kr/basic/view.do?n=682&b=50&k=8571&pu=10&sortField=RGSDE",
+        "attachmentUrl": "https://council.chuncheon.go.kr/basic/bbscttDownload.do?n=682&no=13278",
+    },
     "원주시청": {
+        "detailUrl": (
+            "https://www.wonju.go.kr/www/selectBbsNttView.do?"
+            "key=5126&bbsNo=1095&nttNo=484469&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1&integrDeptCode="
+        ),
+        "attachmentUrl": "https://www.wonju.go.kr/www/downloadBbsFile.do?key=5126&atchmnflNo=415141",
         "copyrightUrl": "https://www.wonju.go.kr/www/sub.do?key=251",
         "publicWorksPolicyUrl": "https://www.wonju.go.kr/www/contents.do?key=5855",
     },
     "원주시의회": {
+        "detailUrl": (
+            "https://council.wonju.go.kr/content/info/releaseInformation.html?"
+            "fidx=18121&pg=vv&sid=1000&page=1&sword="
+        ),
+        "attachmentUrl": "https://council.wonju.go.kr/gtb_download.php?gtid=information&fid=63101",
         "copyrightUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
         "publicWorksPolicyUrl": "https://council.wonju.go.kr/content/etc/copyright.html",
     },
@@ -3819,6 +3856,16 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "publicWorksPolicyUrl": "https://www.gn.go.kr/www/selectBbsNttList.do?bbsNo=4&key=20",
         "commercialUseStatus": "prohibited_kogl_type4_noncommercial",
         "derivativeUseStatus": "prohibited_kogl_type4_no_derivatives",
+    },
+    "강릉시의회": {
+        "detailUrl": (
+            "https://www.gncl.go.kr/kr/bbs?"
+            "reform=view&uid=5E8CDC33C12A58E879285C31BEAB4ACA&page=&flag=&keyword=&search_code=&bbs_id=open&list_style="
+        ),
+        "attachmentUrl": (
+            "https://www.gncl.go.kr/kr/bbs/download?"
+            "bbs_id=open&uid=02A5E5EE2A890C13690AC6BAF65BBE2C&page=&flag=&keyword=&search_code=&bbs_id=open&list_style="
+        ),
     },
     "태백시청": {
         "detailUrl": (
@@ -3833,8 +3880,31 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "copyrightUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
         "publicWorksPolicyUrl": "https://www.sokcho.go.kr/sc/portal/additional/copyright",
     },
+    "속초시의회": {
+        "detailUrl": (
+            "https://www.sokchocl.go.kr/kr/news/bbsCost.do?"
+            "reform=view&key=d3ee9a633df9b106d210169933615b9a21bed0eeaa562d7533aed8a142cf60b78475df5a8632f6b9"
+            "&pageNum=1&flag=&keyword="
+        ),
+        "attachmentUrl": (
+            "https://www.sokchocl.go.kr/bbsAttachDownload.do?"
+            "key=3dcdf391cc79a945929b6c8f80af38155390020c0640e59b12b47904d96e1a107d435a60d180a3cb"
+        ),
+    },
     "삼척시청": {
+        "detailUrl": "https://www.samcheok.go.kr/02815.web?gcode=1321&idx=139915&amode=view&",
+        "attachmentUrl": (
+            "https://www.samcheok.go.kr/board/download.do?"
+            "gcode=1321&name=2026.+5%EC%9B%94+%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84+"
+            "%EC%82%AC%EC%9A%A9%EB%82%B4%EC%97%AD%28%EB%AF%BC%EC%9B%90%EA%B3%BC%EC%9E%A5%29.xlsx"
+        ),
         "publicWorksPolicyUrl": "https://www.samcheok.go.kr/opendata/03211.web",
+    },
+    "삼척시의회": {
+        "detailUrl": (
+            "https://www.sccl.go.kr/kr/bbs?"
+            "reform=view&uid=62F81C74435FF57C992A5D4408412CBF&page=1&flag=&keyword=&search_code=&bbs_id=business&list_style="
+        ),
     },
     "홍천군청": {
         "detailUrl": (
@@ -3917,10 +3987,23 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "publicWorksPolicyUrl": "https://www.cwg.go.kr/www/contents.do?key=190",
     },
     "화천군청": {
+        "detailUrl": (
+            "https://www.ihc.go.kr/www/selectBbsNttView.do?"
+            "key=2424&bbsNo=106&nttNo=185293&searchCtgry=&searchCnd=all&searchKrwd=&pageIndex=1&integrDeptCode="
+        ),
+        "attachmentUrl": "https://www.ihc.go.kr/www/downloadBbsFile.do?atchmnflNo=80248",
         "copyrightUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
         "publicWorksPolicyUrl": "https://www.ihc.go.kr/www/sub.do?key=466",
     },
+    "화천군의회": {
+        "detailUrl": "https://council.ihc.go.kr/bbs/board.php?bo_table=sub06_7&wr_id=51",
+        "attachmentUrl": "https://council.ihc.go.kr/bbs/download.php?bo_table=sub06_7&wr_id=51&no=0",
+    },
     "양구군청": {
+        "detailUrl": (
+            "https://www.yanggu.go.kr/user_sub?"
+            "gfnc=www&pg=1&bk=IGSRJ260601181922439&mu_idx=201&bt=rd&pgsize=10&bcd=bpc_info"
+        ),
         "copyrightUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
         "publicWorksPolicyUrl": "https://www.yanggu.go.kr/user_sub?gfnc=www&mu_idx=378",
     },
@@ -3928,13 +4011,27 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
         "copyrightUrl": "https://www.inje.go.kr/portal/optional/copyright",
         "publicWorksPolicyUrl": "https://www.inje.go.kr/portal/optional/copyright",
     },
+    "인제군의회": {
+        "detailUrl": "https://www.injecl.go.kr/content/info/expense.html?G=VGEEEEEEkfIjGEEEEaGG",
+        "attachmentUrl": "https://www.injecl.go.kr/gtb_download.php?gtid=chujin&fid=EEEEEkCkIk",
+    },
     "고성군청": {
         "copyrightUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
         "publicWorksPolicyUrl": "https://www.gwgs.go.kr/kor/sitemap_06.do",
     },
+    "고성군의회": {
+        "detailUrl": "https://council.gwgs.go.kr/Home/H30000/H30500/boardView?board_key=10145",
+    },
     "양양군청": {
         "copyrightUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
         "publicWorksPolicyUrl": "https://yangyang.go.kr/gw/portal/yyc_yyintro_useguide_copypolicy",
+    },
+    "양양군의회": {
+        "detailUrl": (
+            "https://www.yangyangcouncil.go.kr/kr/costBBSview.do?"
+            "uid=5CA860FDFE324C03475B62D83F397910&schwrd=&listCnt=10&flag=all&page=1&list_style="
+        ),
+        "attachmentUrl": "https://www.yangyangcouncil.go.kr/viewer/pdf.do?group=bbs&uid=8609",
     },
 }
 
