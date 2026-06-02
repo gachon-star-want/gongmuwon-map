@@ -2479,6 +2479,59 @@ def test_attachment_crawler_extracts_egov_file_downloads() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_egov_file_downloads_from_list_rows() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="대구 남구의회",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.COUNCIL,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            parent_region="대구광역시",
+            source_pattern={
+                "adapter": "council_attachment_board",
+                "listUrl": "https://www.nam.daegu.kr/council/index.do?menu_id=00205128",
+                "fileKinds": ["xlsx"],
+                "pageParam": "pageIndex",
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <script>
+          function fn_egov_downFile(atchFileId, fileSn){
+            window.open("/icms/cmm/fms/FileDown.do;jsessionid=ABC?atchFileId="+atchFileId+"&fileSn="+fileSn+"");
+          }
+        </script>
+        <table><tbody>
+          <tr>
+            <td>1</td>
+            <td>
+              <a href="javascript:;" onclick="fn_icms_navi_common('view', '191106');return false;">
+                2026년 4월 대구남구의회 업무추진비 집행내역 공개
+              </a>
+            </td>
+            <td>의회사무국</td>
+            <td>2026-05-12</td>
+            <td>
+              <a href="javascript:fn_egov_downFile('FILE_HASH','FILE_SN')">
+                <img src="/cms_images/bbs/icon_file//ico_file_xlsx.jpg"
+                     alt="2026년 4월 의회 업무추진비 집행내역.xlsx [30861 byte]">
+              </a>
+            </td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.nam.daegu.kr/icms/cmm/fms/FileDown.do;jsessionid=ABC"
+        "?atchFileId=FILE_HASH&fileSn=FILE_SN"
+    )
+    assert refs[0].file_kind == "xlsx"
+
+
 def test_attachment_crawler_extracts_configured_egov_file_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
