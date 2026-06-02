@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from urllib.parse import urlsplit
 from uuid import UUID, uuid5
 
 from public_officer_pipeline.models import (
@@ -1343,6 +1344,8 @@ CHUNGCHEONG_PARENT_REGIONS = {
     "충청남도",
 }
 
+SUPPORTED_ATTACHMENT_FILE_KINDS = {"pdf", "hwp", "hwpx", "xls", "xlsx", "html"}
+
 NON_CAPITAL_LEGAL_HOLD_BLOCKERS = {
     "광주시청": {
         "sourceUrl": "https://www.gwangju.go.kr/boardList.do?boardId=BD_0000000252&pageId=www101",
@@ -2547,7 +2550,7 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     ("대전광역시", "유성구의회"): {
         "sourceUrl": (
             "https://yuseonggucouncil.go.kr/bbs/board.php?"
-            "bo_table=0603&page=1&sod=asc&sop=and&sst=wr_datetime"
+            "bo_table=0603&page=1&sod=desc&sop=and&sst=wr_datetime"
         ),
         "fileKinds": ["xlsx", "xls"],
         "pageParam": "page",
@@ -3253,6 +3256,22 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
         ),
     },
+    ("충청북도", "제천시의회"): {
+        "sourceUrl": "https://media.jecheon.go.kr/council/selectBbsNttList.do?bbsNo=3157&key=50671",
+        "fileKinds": ["xls", "pdf", "zip"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "blocker": (
+            "충청도권 3차 재검색에서 제천시의회 공식 업무추진비 목록"
+            "(https://media.jecheon.go.kr/council/selectBbsNttList.do?bbsNo=3157&key=50671), "
+            "최근 12개월 게시물, XLS/ZIP/PDF 첨부 구조를 확인했습니다. 다만 목록/상세 "
+            "화면에 공공누리 또는 공공저작물 자유이용 근거가 표시되지 않고 푸터가 "
+            "COPYRIGHT/ALL RIGHTS RESERVED로 표시되어 facts-only 정책에서도 production "
+            "적재하지 않습니다."
+        ),
+    },
     ("충청북도", "옥천군청"): {
         "sourceUrl": "https://www.oc.go.kr/www/selectBbsNttList.do?bbsNo=16&key=124",
         "extraListUrls": ["https://www.oc.go.kr/www/selectBbsNttList.do?bbsNo=17&key=125"],
@@ -3278,6 +3297,54 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 업무추진비 공개 목록과 최근 12개월 게시물·XLSX/PDF 첨부 구조는 "
             "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
             "자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("충청북도", "영동군의회"): {
+        "sourceUrl": "https://council.yd21.go.kr/kr/bbs?bbs_id=open",
+        "fileKinds": ["pdf"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "blocker": (
+            "충청도권 3차 재검색에서 영동군의회 공식 업무추진비 현황 목록"
+            "(https://council.yd21.go.kr/kr/bbs?bbs_id=open), 2026년 3~4월 상세, PDF "
+            "첨부 구조를 확인했습니다. 다만 목록/상세 화면에 공공누리 또는 공공저작물 "
+            "자유이용 근거가 표시되지 않고 푸터가 All right reserved로 표시되어 "
+            "facts-only 정책에서도 production 적재하지 않습니다."
+        ),
+    },
+    ("충청북도", "증평군청"): {
+        "sourceUrl": "https://www.jp.go.kr/kor/cop/bbs/BBSMSTR_000000000023/selectBoardList.do",
+        "copyrightUrl": "https://www.jp.go.kr/kor/sitemap_14.do",
+        "fileKinds": ["xlsx", "pdf"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "blocker": (
+            "충청도권 3차 재검색에서 증평군청 공식 업무추진비 목록"
+            "(https://www.jp.go.kr/kor/cop/bbs/BBSMSTR_000000000023/selectBoardList.do), "
+            "2026년 5월 군수/부군수 게시물, XLSX/PDF 첨부 구조를 확인했습니다. 다만 "
+            "증평군 저작권보호정책(https://www.jp.go.kr/kor/sitemap_14.do)은 공공누리가 "
+            "부착되지 않은 자료 이용 시 공공저작물 담당자와 사전 협의하라고 안내하므로 "
+            "facts-only 정책에서도 production 적재하지 않습니다."
+        ),
+    },
+    ("충청북도", "진천군청"): {
+        "sourceUrl": "https://www.jincheon.go.kr/home/sub.do?menukey=2849&mode=list",
+        "extraListUrls": ["https://www.jincheon.go.kr/home/sub.do?menukey=2850&mode=list"],
+        "fileKinds": ["hwp"],
+        "pageParam": "page",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인",
+        "blocker": (
+            "충청도권 3차 재검색에서 진천군청 공식 군수/부군수 업무추진비 목록"
+            "(https://www.jincheon.go.kr/home/sub.do?menukey=2849&mode=list), 부서별 "
+            "업무추진비 목록, 최근 12개월 게시물, HWP 첨부 구조를 확인했습니다. 다만 "
+            "목록/상세 화면이 공공누리 제4유형(출처표시+상업적 이용금지+변경금지)으로 "
+            "표시되어 facts-only 정책에서도 production 적재하지 않습니다."
         ),
     },
     ("충청북도", "증평군의회"): {
@@ -5858,6 +5925,139 @@ CHUNGCHEONG_SOURCE_NOT_FOUND_EVIDENCE: dict[tuple[str, str], list[str]] = {
 }
 
 
+CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
+    ("대전광역시", "유성구청"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("대전광역시", "유성구의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록의 최근 XLSX 게시물은 확인했지만 "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py의 "
+        "council_attachment_board가 gnuboard 목록/상세 구조를 posts_seen=0으로 처리했습니다. "
+        "유성구의회 목록 parser 보강 후 재검증이 필요합니다.",
+    ),
+    ("대전광역시", "대덕구청"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청북도", "청주시청"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록 URL이 HTTP 200 block 응답을 반환해 "
+        "posts_seen=0이었습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
+        "청주시청 차단 우회 또는 공식 다운로드 경로별 adapter 보강이 필요합니다.",
+    ),
+    ("충청북도", "영동군청"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 다운로드 단계가 "
+        "HTTP status 404로 실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py의 "
+        "영동군청 상세/첨부 URL 조립 보강 후 재검증이 필요합니다.",
+    ),
+    ("충청북도", "증평군의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록의 최근 2026년 XLSX 게시물은 확인했지만 "
+        "EUC-KR/상대경로 board 구조를 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 증평군의회 "
+        "목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("충청북도", "진천군의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5, posts_fetched=5였지만 raw_parsed_rows=0이었습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/spreadsheet.py 또는 "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에서 진천군의회 "
+        "첨부 파일 구조 보강 후 재검증이 필요합니다.",
+    ),
+    ("충청북도", "단양군청"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 일부 PDF가 scanned PDF vision extraction을 "
+        "요구했고 현재 실행 환경에 LLM vision API key가 없어 config_error로 종료되었습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청북도", "단양군의회"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 일부 PDF가 scanned PDF vision extraction을 "
+        "요구했고 현재 실행 환경에 LLM vision API key가 없어 config_error로 종료되었습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청남도", "충청남도의회"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청남도", "천안시청"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 업무추진비 목록 다운로드 단계가 HTTP status 403으로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
+        "천안시청 접근/첨부 다운로드 adapter 보강 후 재검증이 필요합니다.",
+    ),
+    ("충청남도", "천안시의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록의 최근 XLSX 게시물은 확인했지만 javascript "
+        "goBbsViewPage 상세 이동 구조를 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 천안시의회 "
+        "상세 URL parser 보강이 필요합니다.",
+    ),
+    ("충청남도", "아산시청"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록의 최근 2026년 XLSX/HWPX/PDF 게시물은 확인했지만 "
+        "custom cms 목록 구조를 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 아산시청 "
+        "목록/상세 parser 보강이 필요합니다.",
+    ),
+    ("충청남도", "논산시청"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 File is not a zip file 오류로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/spreadsheet.py와 "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에서 논산시청 "
+        "첨부 확장자 판별 및 XLS/HWP fallback 보강 후 재검증이 필요합니다.",
+    ),
+    ("충청남도", "계룡시청"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청남도", "계룡시의회"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청남도", "서천군청"): (
+        "pdf_vision_hold",
+        "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
+        "현재 실행 환경에 LLM vision API key가 없어 raw_parsed_rows=0으로 실패했습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+    ),
+    ("충청남도", "예산군의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 업무추진비 목록 다운로드 단계가 HTTP status 404로 "
+        "실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
+        "예산군의회 상세/첨부 URL 조립 보강 후 재검증이 필요합니다.",
+    ),
+    ("충청남도", "태안군의회"): (
+        "adapter_hold",
+        "충청도권 3차 dry-run에서 공식 목록의 최근 2026년 게시물은 확인했지만 data-opt "
+        "기반 javascript 상세/다운로드 구조를 posts_seen=0으로 처리했습니다. "
+        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 태안군의회 "
+        "상세/첨부 parser 보강이 필요합니다.",
+    ),
+}
+
+
 def _apply_chungcheong_source_not_found(
     source_pattern: dict[str, object],
     parent_region: str,
@@ -5886,6 +6086,126 @@ def _apply_chungcheong_source_not_found(
             ),
         }
     )
+
+
+def _apply_chungcheong_dry_run_hold(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    short_name: str,
+) -> None:
+    if parent_region not in CHUNGCHEONG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus"):
+        return
+
+    hold = CHUNGCHEONG_DRY_RUN_HOLDS.get((parent_region, short_name))
+    if not hold:
+        return
+
+    hold_status, blocker = hold
+    source_pattern.update({"holdStatus": hold_status, "blocker": blocker})
+
+
+def _apply_chungcheong_facts_only_release(
+    source_pattern: dict[str, object],
+    parent_region: str,
+    *,
+    is_council: bool,
+) -> None:
+    if parent_region not in CHUNGCHEONG_PARENT_REGIONS:
+        return
+    if source_pattern.get("holdStatus") != "legal_hold":
+        return
+
+    blocker = str(source_pattern.get("blocker") or "")
+    if _chungcheong_has_strong_reuse_limit(blocker):
+        return
+
+    source_url = str(source_pattern.get("sourceUrl") or "").strip()
+    if not source_url:
+        return
+
+    file_kinds = [
+        kind
+        for kind in (str(value).lower().strip() for value in source_pattern.get("fileKinds", []))
+        if kind in SUPPORTED_ATTACHMENT_FILE_KINDS
+    ]
+    if not file_kinds:
+        file_kinds = ["xlsx", "xls", "pdf"]
+
+    page_param = str(source_pattern.get("pageParam") or "page")
+    follow_detail = bool(source_pattern.get("followDetail", True))
+    extra_list_urls = [
+        str(value)
+        for value in source_pattern.get("extraListUrls", [])
+        if str(value).strip()
+    ]
+    evidence_note = (
+        "공식 업무추진비 공개자료이며 원문 파일을 재배포하지 않고 사실 데이터만 "
+        "추출·정규화·마스킹·출처 저장하는 정책 기준으로 적재 후보입니다. "
+        "공공누리 제1유형 표시 부재만으로 보류하지 않으며, 명시적 상업적 이용 금지·"
+        "변경 금지·무단 이용 금지는 확인되지 않았습니다."
+    )
+
+    source_pattern.clear()
+    source_pattern.update(
+        {
+            "adapter": "council_attachment_board" if is_council else "attachment_board",
+            "listUrl": source_url,
+            "fileKinds": file_kinds,
+            "followDetail": follow_detail,
+            "pageParam": page_param,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "공식 사이트 원격 확인 및 facts-only 적재 정책 재검토",
+            "evidenceNote": evidence_note,
+        }
+    )
+    if extra_list_urls:
+        source_pattern["extraListUrls"] = extra_list_urls
+
+
+def _chungcheong_has_strong_reuse_limit(blocker: str) -> bool:
+    strong_markers = (
+        "공공누리 제2유형",
+        "공공누리 제3유형",
+        "공공누리 제4유형",
+        "상업적이용금지",
+        "상업적 이용금지",
+        "상업적 이용 금지",
+        "상업적 이용과 변경이 모두 제한",
+        "변경금지",
+        "변경 금지",
+        "사전 협의",
+        "무단 이용",
+        "무단이용",
+        "저작권 문구만",
+        "All Rights Reserved",
+        "All Right Reserved",
+        "All right reserved",
+        "all rights reserved",
+        "ALL RIGHTS RESERVED",
+        "COPYRIGHT",
+    )
+    return any(marker in blocker for marker in strong_markers)
+
+
+def _homepage_from_source_pattern(source_pattern: dict[str, object]) -> str | None:
+    if (
+        source_pattern.get("officialCommonPortal") is True
+        or source_pattern.get("status") == "adapter_required"
+    ):
+        return None
+
+    source_url = str(
+        source_pattern.get("listUrl") or source_pattern.get("sourceUrl") or ""
+    ).strip()
+    if not source_url:
+        return None
+
+    parsed = urlsplit(source_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 def non_capital_agencies() -> list[Agency]:
@@ -5949,6 +6269,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 office_short_name,
             )
+            _apply_chungcheong_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_chungcheong_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
 
         council_board = NON_CAPITAL_REGIONAL_COUNCIL_ATTACHMENT_BOARDS.get(council_short_name)
         council_source_pattern = (
@@ -6000,6 +6330,16 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 council_short_name,
             )
+            _apply_chungcheong_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_chungcheong_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
 
         agencies.extend(
             [
@@ -6012,7 +6352,11 @@ def non_capital_agencies() -> list[Agency]:
                     jurisdiction_type=jurisdiction_type,
                     parent_region=parent_region,
                     sub_region=None,
-                    homepage=office_board["homepage"] if office_board else None,
+                    homepage=(
+                        office_board["homepage"]
+                        if office_board
+                        else _homepage_from_source_pattern(office_source_pattern)
+                    ),
                     source_pattern=office_source_pattern,
                 ),
                 Agency(
@@ -6024,7 +6368,11 @@ def non_capital_agencies() -> list[Agency]:
                     jurisdiction_type=jurisdiction_type,
                     parent_region=parent_region,
                     sub_region=None,
-                    homepage=council_board["homepage"] if council_board else None,
+                    homepage=(
+                        council_board["homepage"]
+                        if council_board
+                        else _homepage_from_source_pattern(council_source_pattern)
+                    ),
                     source_pattern=council_source_pattern,
                 ),
             ]
@@ -6164,6 +6512,26 @@ def non_capital_agencies() -> list[Agency]:
                 parent_region,
                 council_short_name,
             )
+            _apply_chungcheong_facts_only_release(
+                office_source_pattern,
+                parent_region,
+                is_council=False,
+            )
+            _apply_chungcheong_dry_run_hold(
+                office_source_pattern,
+                parent_region,
+                office_short_name,
+            )
+            _apply_chungcheong_facts_only_release(
+                council_source_pattern,
+                parent_region,
+                is_council=True,
+            )
+            _apply_chungcheong_dry_run_hold(
+                council_source_pattern,
+                parent_region,
+                council_short_name,
+            )
             agencies.extend(
                 [
                     Agency(
@@ -6175,7 +6543,11 @@ def non_capital_agencies() -> list[Agency]:
                         jurisdiction_type=jurisdiction_type,
                         parent_region=parent_region,
                         sub_region=local_name,
-                        homepage=office_board["homepage"] if office_board else None,
+                        homepage=(
+                            office_board["homepage"]
+                            if office_board
+                            else _homepage_from_source_pattern(office_source_pattern)
+                        ),
                         source_pattern=office_source_pattern,
                     ),
                     Agency(
@@ -6187,7 +6559,11 @@ def non_capital_agencies() -> list[Agency]:
                         jurisdiction_type=jurisdiction_type,
                         parent_region=parent_region,
                         sub_region=local_name,
-                        homepage=council_board["homepage"] if council_board else None,
+                        homepage=(
+                            council_board["homepage"]
+                            if council_board
+                            else _homepage_from_source_pattern(council_source_pattern)
+                        ),
                         source_pattern=council_source_pattern,
                     ),
                 ]
