@@ -502,6 +502,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert gangwon_city.derivative_use_status == "not_confirmed_without_kogl_type1"
     assert "도지사·부지사 업무추진비 목록" in gangwon_city.evidence_note
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
+    assert "첨부 내부 문자열 검사" in gangwon_city.evidence_note
     assert gangwon_council.verification_status == "legal_hold"
     assert gangwon_council.copyright_url == (
         "https://council.gangwon.kr/kr/infoBBSview.do?"
@@ -509,6 +510,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "&sch_use_end_date=&page=1&list_style="
     )
     assert "PDF/XLS 다운로드 구조" in gangwon_council.evidence_note
+    assert "첨부 내부 문자열 검사" in gangwon_council.evidence_note
     yeongwol_city = next(entry for entry in non_capital_entries if entry.short_name == "영월군청")
     chuncheon_city = next(entry for entry in non_capital_entries if entry.short_name == "춘천시청")
     wonju_council = next(entry for entry in non_capital_entries if entry.short_name == "원주시의회")
@@ -535,6 +537,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert yeongwol_city.verification_status == "verified_in_code"
     assert yeongwol_city.source_url == "https://www.yw.go.kr/www/selectBbsNttList.do?bbsNo=7&key=196"
     assert yeongwol_city.source_file_kinds == ["xlsx"]
+    assert "첨부 내부 문자열 검사" not in yeongwol_city.evidence_note
     assert chuncheon_city.verification_status == "legal_hold"
     assert "춘천시청 업무추진비 집행내역 목록" in chuncheon_city.evidence_note
     assert wonju_council.verification_status == "legal_hold"

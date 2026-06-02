@@ -4989,6 +4989,12 @@ GANGWON_LEGAL_EVIDENCE_OVERRIDES: dict[str, dict[str, str]] = {
     },
 }
 
+GANGWON_ATTACHMENT_LEGAL_AUDIT_NOTE = (
+    "첨부 내부 문자열 검사(2026-06-02, 37개 legal_hold attachmentUrl 대상 XLSX/XLS/PDF "
+    "추출 텍스트에서 공공누리·KOGL·공공저작·저작권·상업·변경·출처표시·제1유형 검색)에서도 "
+    "자유이용 근거를 찾지 못했습니다."
+)
+
 NON_CAPITAL_BASIC_REGION_GROUPS = [
     (
         "busan",
@@ -5986,6 +5992,8 @@ def _apply_gangwon_legal_evidence(
         source_pattern.setdefault("commercialUseStatus", "not_applicable_no_recent_data")
         source_pattern.setdefault("derivativeUseStatus", "not_applicable_no_recent_data")
         return
+    if source_pattern.get("attachmentUrl"):
+        source_pattern.setdefault("attachmentLegalAuditNote", GANGWON_ATTACHMENT_LEGAL_AUDIT_NOTE)
     source_pattern.setdefault("commercialUseStatus", "not_confirmed_without_kogl_type1")
     source_pattern.setdefault("derivativeUseStatus", "not_confirmed_without_kogl_type1")
 
