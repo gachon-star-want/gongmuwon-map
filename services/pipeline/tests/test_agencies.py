@@ -368,7 +368,10 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
         if agency.source_pattern.get("status") == "adapter_required"
     ]
-    assert {agency.short_name for agency in verified_local_public_institutions} == {
+    verified_local_short_names = {
+        agency.short_name for agency in verified_local_public_institutions
+    }
+    assert {
         "가평군상수도",
         "강남구도시관리공단(시설)",
         "강릉관광개발공사",
@@ -405,8 +408,9 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         "포항시상수도",
         "화성시상수도",
         "화성시하수도",
-    }
-    assert len(adapter_required_local_public_institutions) == 1276
+    }.issubset(verified_local_short_names)
+    assert len(verified_local_public_institutions) == 337
+    assert len(adapter_required_local_public_institutions) == 975
     assert all(
         agency.source_pattern["status"] == "adapter_required"
         and agency.source_pattern["baselineSourceUrl"].startswith("https://www.cleaneye.go.kr/")
@@ -423,7 +427,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     ]
     pending_agencies = NON_CAPITAL_AGENCIES
 
-    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 54
+    assert len(baseline_pending_agencies) == len(NON_CAPITAL_AGENCIES) - 73
     assert all(agency.homepage is None for agency in baseline_pending_agencies)
     assert all("listUrl" not in agency.source_pattern for agency in baseline_pending_agencies)
     assert all(any("가" <= char <= "힣" for char in agency.name) for agency in baseline_pending_agencies)
@@ -444,10 +448,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     gangwon_council = next(
         agency for agency in pending_agencies if agency.short_name == "강원특별자치도의회"
     )
-    assert gangwon_council.source_pattern["holdStatus"] == "legal_hold"
+    assert gangwon_council.source_pattern["holdStatus"] == "pdf_vision_hold"
     assert gangwon_council.source_pattern["fileKinds"] == ["pdf", "xls", "xlsx"]
     assert gangwon_council.source_pattern["pageParam"] == "page"
-    assert "PDF/XLS 다운로드 구조" in gangwon_council.source_pattern["blocker"]
+    assert "scanned PDF" in gangwon_council.source_pattern["blocker"]
 
     jeonbuk_city = next(
         agency for agency in pending_agencies if agency.short_name == "전북특별자치도청"
@@ -534,10 +538,10 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert cheonan_city.source_pattern["fileKinds"] == ["xlsx", "xls", "pdf", "hwp", "hwpx"]
     assert cheonan_city.source_pattern["pageParam"] == "pageIndex"
     assert "HTTP status 403" in cheonan_city.source_pattern["blocker"]
-    assert cheonan_council.source_pattern["holdStatus"] == "adapter_hold"
+    assert "holdStatus" not in cheonan_council.source_pattern
     assert cheonan_council.source_pattern["fileKinds"] == ["xlsx"]
     assert cheonan_council.source_pattern["pageParam"] == "schPageNo"
-    assert "상세 URL parser 보강" in cheonan_council.source_pattern["blocker"]
+    assert "facts-only 적재 정책" in cheonan_council.source_pattern["verifiedBy"]
     assert "holdStatus" not in gongju_city.source_pattern
     assert gongju_city.source_pattern["fileKinds"] == ["xlsx", "xls", "hwp"]
     assert gongju_city.source_pattern["pageParam"] == "pageIndex"
@@ -1054,7 +1058,7 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         if agency.source_pattern.get("status") != "adapter_required"
     ]
     verified_non_capital_names = {agency.short_name for agency in verified_non_capital}
-    assert verified_non_capital_names == {
+    assert {
         "계룡시의회",
         "계룡시청",
         "공주시의회",
@@ -1107,9 +1111,15 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         "충청남도의회",
         "충청북도의회",
         "충청북도청",
+        "동해시의회",
+        "속초시청",
+        "홍천군의회",
+        "양구군의회",
+        "고성군의회",
         "태안군의회",
         "홍성군의회",
-    }
+    }.issubset(verified_non_capital_names)
+    assert len(verified_non_capital_names) == 73
     daejeon_city = next(agency for agency in verified_non_capital if agency.short_name == "대전시청")
     daejeon_council = next(agency for agency in verified_non_capital if agency.short_name == "대전시의회")
     gumi_city = next(agency for agency in verified_non_capital if agency.short_name == "구미시청")
