@@ -3167,11 +3167,11 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ),
     },
     ("충청남도", "천안시의회"): {
-        "sourceUrl": "https://www.cheonancouncil.go.kr/svc/ctz/councilExpenseList.do",
+        "sourceUrl": "https://www.cheonancouncil.go.kr/svc/ctz/operatingExpenseList.do",
         "fileKinds": ["xlsx"],
         "pageParam": "schPageNo",
         "followDetail": True,
-        "verifiedAt": "2026-06-01",
+        "verifiedAt": "2026-06-02",
         "verifiedBy": "공식 사이트 원격 확인",
         "blocker": (
             "공식 업무추진비 목록과 상세·XLSX 다운로드 구조는 확인했습니다. 다만 "
@@ -6606,13 +6606,6 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
         "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
-    ("대전광역시", "유성구의회"): (
-        "adapter_hold",
-        "충청도권 3차 dry-run에서 공식 목록의 최근 XLSX 게시물은 확인했지만 "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py의 "
-        "council_attachment_board가 gnuboard 목록/상세 구조를 posts_seen=0으로 처리했습니다. "
-        "유성구의회 목록 parser 보강 후 재검증이 필요합니다.",
-    ),
     ("대전광역시", "대덕구청"): (
         "pdf_vision_hold",
         "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
@@ -6646,20 +6639,6 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에서 진천군의회 "
         "첨부 파일 구조 보강 후 재검증이 필요합니다.",
     ),
-    ("충청북도", "단양군청"): (
-        "pdf_vision_hold",
-        "충청도권 3차 dry-run에서 posts_seen=5 이후 일부 PDF가 scanned PDF vision extraction을 "
-        "요구했고 현재 실행 환경에 LLM vision API key가 없어 config_error로 종료되었습니다. "
-        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
-        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
-    ),
-    ("충청북도", "단양군의회"): (
-        "pdf_vision_hold",
-        "충청도권 3차 dry-run에서 posts_seen=5 이후 일부 PDF가 scanned PDF vision extraction을 "
-        "요구했고 현재 실행 환경에 LLM vision API key가 없어 config_error로 종료되었습니다. "
-        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
-        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
-    ),
     ("충청남도", "충청남도의회"): (
         "pdf_vision_hold",
         "충청도권 3차 dry-run에서 posts_seen=5 이후 PDF vision extraction이 필요했지만 "
@@ -6672,13 +6651,6 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "충청도권 3차 dry-run에서 공식 업무추진비 목록 다운로드 단계가 HTTP status 403으로 "
         "실패했습니다. services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
         "천안시청 접근/첨부 다운로드 adapter 보강 후 재검증이 필요합니다.",
-    ),
-    ("충청남도", "천안시의회"): (
-        "adapter_hold",
-        "충청도권 3차 dry-run에서 공식 목록의 최근 XLSX 게시물은 확인했지만 javascript "
-        "goBbsViewPage 상세 이동 구조를 posts_seen=0으로 처리했습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 천안시의회 "
-        "상세 URL parser 보강이 필요합니다.",
     ),
     ("충청남도", "아산시청"): (
         "adapter_hold",
@@ -6722,11 +6694,13 @@ CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "예산군의회 상세/첨부 URL 조립 보강 후 재검증이 필요합니다.",
     ),
     ("충청남도", "태안군의회"): (
-        "adapter_hold",
-        "충청도권 3차 dry-run에서 공식 목록의 최근 2026년 게시물은 확인했지만 data-opt "
-        "기반 javascript 상세/다운로드 구조를 posts_seen=0으로 처리했습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 태안군의회 "
-        "상세/첨부 parser 보강이 필요합니다.",
+        "pdf_vision_hold",
+        "충청도권 4차 dry-run에서 data-opt 기반 상세/첨부 parser 보강 후 posts_seen=5, "
+        "posts_fetched=1까지 진행했지만 최신 업무추진비 PDF가 scanned PDF vision "
+        "extraction을 요구했고 현재 실행 환경에 LLM vision API key가 없어 "
+        "raw_parsed_rows=0으로 종료되었습니다. "
+        "services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py 경로에서 "
+        "scanned PDF 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
     ),
 }
 

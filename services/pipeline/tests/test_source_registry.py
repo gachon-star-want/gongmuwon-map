@@ -285,22 +285,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 508
+    assert summary.verified_in_code == 512
     assert summary.pending == 43
     assert summary.legal_hold == 169
     assert summary.source_not_found == 120
     assert summary.no_recent_data == 295
-    assert summary.pdf_vision_hold == 17
-    assert summary.adapter_hold == 1050
+    assert summary.pdf_vision_hold == 16
+    assert summary.adapter_hold == 1047
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 165
+    assert summary.priority_group_counts["p1"].verified_in_code == 169
     assert summary.priority_group_counts["p1"].pending == 43
     assert summary.priority_group_counts["p1"].legal_hold == 169
     assert summary.priority_group_counts["p1"].source_not_found == 88
     assert summary.priority_group_counts["p1"].no_recent_data == 1
-    assert summary.priority_group_counts["p1"].pdf_vision_hold == 9
-    assert summary.priority_group_counts["p1"].adapter_hold == 13
+    assert summary.priority_group_counts["p1"].pdf_vision_hold == 8
+    assert summary.priority_group_counts["p1"].adapter_hold == 10
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
     assert summary.priority_group_counts["p2"].source_not_found == 32
@@ -324,16 +324,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 34
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 38
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 43
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 162
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 9
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 8
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
         == 88
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 13
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 10
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -743,8 +743,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert cheonan_city.verification_status == "adapter_hold"
     assert cheonan_city.source_url == "https://www.cheonan.go.kr/bbs/BBSMSTR_000000000050/list.do"
     assert "HTTP status 403" in cheonan_city.evidence_note
-    assert cheonan_council.verification_status == "adapter_hold"
-    assert "goBbsViewPage" in cheonan_council.evidence_note
+    assert cheonan_council.verification_status == "verified_in_code"
+    assert cheonan_council.source_url == (
+        "https://www.cheonancouncil.go.kr/svc/ctz/operatingExpenseList.do"
+    )
+    assert "facts-only 적재 정책" in cheonan_council.verified_by
     assert gongju_city.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in gongju_city.verified_by
     assert gongju_council.verification_status == "verified_in_code"
@@ -1560,6 +1563,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "대전시의회",
         "동구의회",
         "중구의회",
+        "유성구의회",
         "대덕구의회",
     }
     daejeon_pdf_hold_names = {
@@ -1575,7 +1579,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         if entry.parent_region == "대전광역시"
         and entry.verification_status == "adapter_hold"
     }
-    assert daejeon_adapter_hold_names == {"유성구의회"}
+    assert daejeon_adapter_hold_names == set()
     daejeon_source_not_found_names = {
         entry.short_name
         for entry in non_capital_entries
