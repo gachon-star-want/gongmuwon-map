@@ -49,6 +49,7 @@ from public_officer_pipeline.extractor import (
     extract_hwpx_rows,
     extract_pdf_rows_with_vision,
     extract_spreadsheet_rows,
+    extract_zip_rows,
 )
 from public_officer_pipeline.loader import PostgresLoader
 from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
@@ -1242,6 +1243,12 @@ async def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
         return extract_hwp_rows(
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
+        )
+    if detail.file_kind == "zip" and detail.content_bytes:
+        return extract_zip_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+            source_title=detail.title,
         )
     if detail.file_kind == "pdf" and detail.content_bytes:
         return extract_pdf_rows_with_vision(

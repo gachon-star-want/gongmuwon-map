@@ -7,7 +7,7 @@ from openpyxl import Workbook
 
 from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor import spreadsheet as spreadsheet_module
-from public_officer_pipeline.extractor import extract_spreadsheet_rows
+from public_officer_pipeline.extractor import extract_spreadsheet_rows, extract_zip_rows
 
 
 def _workbook_bytes(workbook: Workbook) -> bytes:
@@ -836,6 +836,24 @@ def test_extracts_xlsx_with_large_blank_formatted_range() -> None:
     assert len(rows) == 1
     assert rows[0].place_text == "식당"
     assert rows[0].amount == 10000
+
+
+def test_extracts_zip_archive_xlsx_member_rows() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "서천식당", 33000])
+
+    rows = extract_zip_rows(
+        _zip_bytes({"2026년 4월 업무추진비 집행내역.xlsx": _workbook_bytes(workbook)}),
+        fallback_department="홍성군청",
+        source_title="2026년 1분기 업무추진비 집행내역",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "홍성군청"
+    assert rows[0].place_text == "서천식당"
+    assert rows[0].amount == 33000
 
 
 def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:

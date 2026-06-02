@@ -4227,7 +4227,7 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
     },
     ("충청남도", "아산시청"): {
         "sourceUrl": "https://www.asan.go.kr/main/cms/?m_mode=list&no=335&tb_nm=dep_expense",
-        "fileKinds": ["xlsx", "hwpx", "pdf"],
+        "fileKinds": ["xlsx", "hwpx"],
         "pageParam": "PageNo",
         "followDetail": True,
         "verifiedAt": "2026-06-02",
@@ -4925,6 +4925,12 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "fileKinds": ["xlsx", "xls", "pdf"],
         "pageParam": "GotoPage",
         "followDetail": True,
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "referer": "https://www.yd21.go.kr/kr/html/sub03/030504.html",
         "verifiedAt": "2026-06-02",
         "verifiedBy": "공식 사이트 원격 재확인",
         "blocker": (
@@ -8420,10 +8426,10 @@ CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
         "sourceUrl": "https://www.seogucouncil.daejeon.kr/svc/cdr/OperatingExpenseList.do",
         "fileKinds": ["html"],
         "pageParam": "schPageNo",
-        "followDetail": True,
+        "followDetail": False,
         "holdStatus": "no_recent_data",
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 재확인",
+        "verifiedBy": "공식 사이트 원격 재확인 및 2020-01-01 확장 dry-run",
         "searchedPaths": [
             "site:seogucouncil.daejeon.kr 업무추진비",
             "https://www.seogucouncil.daejeon.kr/svc/cdr/OperatingExpenseList.do",
@@ -8431,8 +8437,9 @@ CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
         ],
         "blocker": (
             "대전 서구의회 공식 의정자료실 업무추진비 목록은 확인했지만 "
-            "2026-06-02 재확인 시 목록 form의 schTotalCnt=0으로 표시되어 최근 12개월 "
-            "place-level 업무추진비 적재 대상이 없습니다."
+            "2026-06-02 재확인 시 목록 form의 schTotalCnt=0으로 표시되었습니다. "
+            "since/row-since 2020-01-01 확장 dry-run도 posts_seen=0, normalized_visits=0으로 "
+            "성공 종료되어 현재 place-level 업무추진비 적재 대상이 없습니다."
         ),
     },
     ("충청북도", "충주시청"): {
@@ -8623,6 +8630,36 @@ CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
             "대상입니다."
         ),
     },
+    ("충청남도", "서천군의회"): {
+        "adapter": "attachment_board",
+        "listUrl": "https://www.scouncil.go.kr/cop/bbs/BBSMSTR_000000000627/selectBoardList.do",
+        "sourceUrl": "https://www.scouncil.go.kr/cop/bbs/BBSMSTR_000000000627/selectBoardList.do",
+        "fileKinds": ["xlsx", "xls"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "referer": "https://www.scouncil.go.kr/cop/bbs/BBSMSTR_000000000627/selectBoardList.do",
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 재확인 및 facts-only 적재 정책 재검토",
+        "searchedPaths": [
+            "site:scouncil.go.kr 업무추진비",
+            "site:scouncil.go.kr 의장 업무추진비",
+            "https://www.scouncil.go.kr",
+            "https://www.scouncil.go.kr/cop/bbs/BBSMSTR_000000000627/selectBoardList.do",
+            "서천군의회 정보공개 게시판",
+        ],
+        "evidenceNote": (
+            "서천군의회 공식 홈페이지의 정보공개 게시판에서 2026년·2025년 의회사무과 "
+            "의회운영업무추진비, 공통경비 및 기관·부서·시책추진 업무추진비 사용내역 "
+            "게시물과 XLS/XLSX 첨부를 확인했습니다. 원문 재배포 없는 facts-only 적재 "
+            "정책 기준에서 명시적 상업적 이용 금지·변경 금지·사전협의 요구는 확인되지 "
+            "않아 dry-run 재검증 대상입니다."
+        ),
+    },
     ("충청남도", "청양군의회"): {
         "adapter": "council_attachment_board",
         "listUrl": "https://council.cheongyang.go.kr/bbs/BBSMSTR_000000000036.do",
@@ -8651,25 +8688,33 @@ CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
         ),
     },
     ("충청남도", "홍성군청"): {
-        "adapter": "nationwide_office_required",
-        "status": "adapter_required",
-        "searchKeyword": "홍성군청 업무추진비",
-        "holdStatus": "adapter_hold",
+        "adapter": "attachment_board",
+        "listUrl": "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
         "sourceUrl": "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
+        "fileKinds": ["zip"],
+        "defaultFileKind": "zip",
+        "pageParam": "pageIndex",
+        "followDetail": False,
+        "userAgent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "referer": "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 재확인",
+        "verifiedBy": "공식 사이트 원격 재확인 및 ZIP 내부 XLS 추출 adapter 보강",
         "searchedPaths": [
             "site:hongseong.go.kr 업무추진비",
             "site:hongseong.go.kr 군수 업무추진비",
             "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
             "홍성군청 정보공개 > 업무추진비 공식 목록",
         ],
-        "blocker": (
-            "홍성군청 공식 업무추진비 목록과 최근 게시물은 확인했습니다. 다만 첨부가 "
-            "fn_zipDownload/zipDownload.do 기반 묶음 다운로드로만 노출되어 현재 "
-            "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py 및 "
-            "첨부 extractor 경로에서 ZIP 내부 XLSX/PDF를 안전하게 선택·추출하는 adapter "
-            "보강이 필요합니다."
+        "evidenceNote": (
+            "홍성군청 공식 업무추진비 목록과 최근 게시물의 fn_zipDownload/zipDownload.do "
+            "묶음 첨부를 확인했습니다. ZIP 내부 2026년 분기 XLS 파일을 안전하게 선택·"
+            "추출하는 adapter를 보강했으며, 원문 재배포 없는 facts-only 적재 정책 "
+            "기준에서 명시적 상업적 이용 금지·변경 금지·사전협의 요구는 확인되지 "
+            "않아 dry-run 재검증 대상입니다."
         ),
     },
     ("충청남도", "청양군청"): {
@@ -8696,52 +8741,30 @@ CHUNGCHEONG_DISCOVERY_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
 
 
 CHUNGCHEONG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
-    ("충청북도", "영동군청"): (
-        "adapter_hold",
-        "충청도권 최종 재시도에서 공식 업무추진비 목록은 확인했지만 pipeline HTTP client가 "
-        "영동군청 페이지/다운로드 요청에서 HTTP status 404 및 SSL/응답 디코딩 문제를 "
-        "반복해 posts_seen=0, normalized_visits=0으로 실패했습니다. "
-        "services/pipeline/src/public_officer_pipeline/http_client.py 또는 "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에서 영동군청 "
-        "전용 HTTP fallback/다운로드 adapter 보강 후 재검증해야 합니다.",
-    ),
-    ("충청북도", "옥천군의회"): (
-        "adapter_hold",
-        "충청도권 최종 재시도에서 공식 업무추진비 현황 URL"
-        "(https://council.oc.go.kr/kr/costBBS.do)은 확인했지만 list parser가 최근 "
-        "XLSX 게시물을 posts_seen=0으로 처리했습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 옥천군의회 "
-        "costBBS 목록/다운로드 parser 보강 후 재검증해야 합니다.",
-    ),
-    ("충청남도", "아산시청"): (
-        "adapter_hold",
-        "충청도권 최종 재시도에서 공식 아산시청 업무추진비 공개 custom CMS 목록"
-        "(https://www.asan.go.kr/main/cms/?m_mode=list&no=335&tb_nm=dep_expense)은 "
-        "확인했지만 posts_seen=0, normalized_visits=0이었습니다. "
-        "services/pipeline/src/public_officer_pipeline/crawler/gncouncil.py에 "
-        "m_mode=view/pds_no 기반 목록·상세·첨부 parser 보강 후 재검증해야 합니다.",
-    ),
     ("충청남도", "계룡시의회"): (
         "pdf_vision_hold",
-        "충청도권 최종 재시도에서 공식 계룡시의회 업무추진비 PDF는 posts_seen=5, "
-        "posts_fetched=1까지 진행됐지만 text rows가 0이고 scanned PDF vision extraction이 "
-        "필요했습니다. 현재 실행 환경에 LLM vision API key가 없어 normalized_visits=0으로 "
-        "실패했으므로 services/pipeline/src/public_officer_pipeline/extractor/pdf_vision.py "
-        "경로에서 vision 처리 가능 상태가 확인되기 전까지 production 적재하지 않습니다.",
+        "충청도권 기술 blocker 재시도에서 공식 계룡시의회 업무추진비 PDF는 "
+        "posts_seen=1, posts_fetched=1까지 진행됐지만 raw_parsed_rows=0이고 scanned "
+        "PDF vision extraction이 필요했습니다. 현재 실행 환경에 LLM vision API key가 "
+        "없어 'At least one LLM API key is required for scanned PDF vision extraction' "
+        "오류가 5회 재현되어 production 적재하지 않습니다.",
     ),
     ("충청남도", "청양군의회"): (
         "pdf_vision_hold",
-        "충청도권 최종 재시도에서 공식 청양군의회 업무추진비 PDF는 browser UA/Referer "
-        "보강 후에도 posts_seen=5, posts_fetched=1, raw_parsed_rows=0이었고 scanned PDF "
-        "vision extraction이 필요했습니다. 현재 실행 환경에 LLM vision API key가 없어 "
-        "production 적재하지 않습니다.",
+        "충청도권 기술 blocker 재시도에서 공식 청양군의회 업무추진비 PDF는 "
+        "posts_seen=1, posts_fetched=1까지 진행됐지만 raw_parsed_rows=0이고 scanned "
+        "PDF vision extraction이 필요했습니다. 현재 실행 환경에 LLM vision API key가 "
+        "없어 'At least one LLM API key is required for scanned PDF vision extraction' "
+        "오류가 5회 재현되어 production 적재하지 않습니다.",
     ),
     ("충청남도", "부여군청"): (
         "adapter_hold",
-        "충청도권 5차 facts-only dry-run에서 공식 업무추진비 목록의 2026년 HWP "
-        "게시물은 확인했지만 현재 안전 수집 경로는 HWP 첨부를 production 품질로 "
-        "추출하지 못해 posts_seen=0, normalized_visits=0으로 종료되었습니다. "
-        "HWP extractor/변환 adapter 보강 후 재검증해야 합니다.",
+        "충청도권 기술 blocker 재시도에서 공식 부여군청 업무추진비 목록과 HWP 첨부는 "
+        "posts_seen=1, posts_fetched=1까지 진행됐지만 services/pipeline/src/"
+        "public_officer_pipeline/extractor/hwp.py의 LibreOffice 변환 경로가 "
+        "'LibreOffice HWP conversion produced no HTML output' 오류를 5회 재현했습니다. "
+        "hwp5txt 등 안정적인 HWP 5.x extractor 또는 변환 adapter 보강 전에는 "
+        "production 품질로 적재하지 않습니다.",
     ),
 }
 

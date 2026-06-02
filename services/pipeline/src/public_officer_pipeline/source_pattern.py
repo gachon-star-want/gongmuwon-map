@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from public_officer_pipeline.models import Agency
 
-ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html")
-FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html"]
+ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip")
+FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip"]
 
 
 class SourcePatternError(ValueError):
