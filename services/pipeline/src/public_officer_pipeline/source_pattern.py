@@ -42,6 +42,7 @@ class AttachmentBoardPattern(SourcePattern):
     rowsPerPage: int = 10
     jsDownloadPath: str | None = None
     userAgent: str | None = None
+    referer: str | None = None
 
     @field_validator("fileKinds", mode="before")
     @classmethod

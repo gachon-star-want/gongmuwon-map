@@ -33,6 +33,8 @@ DOWNLOAD_HREF_PARTS = (
     "/bbs/download.do",
     "/bbs/download?",
     "/bbs/download.php",
+    "/getFile",
+    "/moa/bbs/layout/basic/download.php",
     "bbsMsgFileDown.do",
     "bbsMsgFileDownCompress.do",
     "/bbsAttachDownload.do",
@@ -76,6 +78,7 @@ DOWNLOAD_HREF_PARTS = (
     "bbscttDownload.do",
     "act=download",
     "act=down",
+    "mode=download",
 )
 DATE_RE = re.compile(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})")
 KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
@@ -102,9 +105,13 @@ class CouncilAttachmentCrawler:
         self.file_kinds = set(pattern.fileKinds)
         self.default_file_kind = pattern.defaultFileKind
         self.user_agent = pattern.userAgent or DEFAULT_USER_AGENT
+        self.referer = pattern.referer or pattern.listUrl
+        headers = {"User-Agent": self.user_agent}
+        if self.referer:
+            headers["Referer"] = self.referer
         self._client = client or create_http_client(
             timeout=DEFAULT_TIMEOUT,
-            headers={"User-Agent": self.user_agent},
+            headers=headers,
             follow_redirects=True,
         )
         self._owns_client = client is None
@@ -215,7 +222,7 @@ class CouncilAttachmentCrawler:
             refs.extend(self._parse_file_list_items(tree))
         if not refs:
             refs.extend(self._parse_current_detail_downloads(tree))
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_header_mapped_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -287,7 +294,7 @@ class CouncilAttachmentCrawler:
                             file_kind=file_kind,
                         )
                     )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_direct_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -341,7 +348,7 @@ class CouncilAttachmentCrawler:
                             file_kind=file_kind,
                         )
                     )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_data_column_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -414,7 +421,7 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_responsive_downloads(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -453,7 +460,7 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_file_list_items(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -512,7 +519,7 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_current_detail_downloads(self, tree: HTMLParser) -> list[PostRef]:
         title_node = (
@@ -792,7 +799,13 @@ class CouncilAttachmentCrawler:
             if not href or not _is_download_href(href):
                 continue
             filename = _filename_from_download_link(download)
-            file_kind = _file_kind(filename) or _file_kind(href) or _file_kind_from_download(download, filename)
+            file_kind = (
+                _file_kind(filename)
+                or _file_kind(href)
+                or _file_kind_from_download(download, filename)
+                or self.default_file_kind
+                or ""
+            )
             if (
                 file_kind not in self.file_kinds
                 or not _download_looks_like_expense(title=detail.title, filename=filename)
@@ -816,7 +829,7 @@ class CouncilAttachmentCrawler:
                     file_kind=file_kind,
                 )
             )
-        return refs
+        return _sort_download_refs(refs)
 
 
 class GangnamCouncilCrawler(CouncilAttachmentCrawler):
@@ -1132,12 +1145,15 @@ def _is_download_href(href: str) -> bool:
     lowered = href.lower()
     if (
         "downloadview.do" in lowered
+        or "pre_viewer.php" in lowered
         or "synap.jsp" in lowered
         or "synap/" in lowered
         or "synep.jsp" in lowered
         or "convert.jsp" in lowered
     ):
         return False
+    if "mode=d" in lowered and "file_id=" in lowered:
+        return True
     return any(part.lower() in lowered for part in DOWNLOAD_HREF_PARTS) or re.search(
         r"\.(?:pdf|xls|xlsx|hwpx)(?:$|[?#&])",
         lowered,
@@ -1155,6 +1171,7 @@ def _is_detail_href(href: str) -> bool:
         or "act=view" in lowered
         or "mode=view" in lowered
         or "mode=v" in lowered
+        or "m_mode=view" in lowered
         or "amode=view" in lowered
         or "type=view" in lowered
         or "act=view" in lowered
@@ -1209,6 +1226,21 @@ def _looks_like_uninformative_file_label(filename: str) -> bool:
         "공개내역 파일",
         "바로보기",
     } or _looks_like_generic_file_label(filename)
+
+
+def _file_kind_priority(file_kind: str) -> int:
+    return {
+        "xlsx": 0,
+        "xls": 1,
+        "html": 2,
+        "hwpx": 3,
+        "pdf": 4,
+        "hwp": 5,
+    }.get(file_kind, 9)
+
+
+def _sort_download_refs(refs: list[PostRef]) -> list[PostRef]:
+    return sorted(refs, key=lambda ref: _file_kind_priority(ref.file_kind))
 
 
 def _url_with_page(

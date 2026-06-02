@@ -30,6 +30,64 @@ PDF_TEXT_PURPOSE_FIRST_ROW_RE = re.compile(
     r"(?P<place_text>.+?)\s{2,}"
     r"(?P<party_size>\d+|-)\s*$"
 )
+PDF_TEXT_DATE_TIME_PLACE_PURPOSE_PARTY_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<purpose>.+?)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<expense_category>\S+)\s*$"
+)
+PDF_TEXT_USER_DATE_PLACE_PURPOSE_AMOUNT_PARTY_ROW_RE = re.compile(
+    r"^\s*(?P<user>.+?)\s+"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<place_text>.+?)\s{2,}"
+    r"(?P<purpose>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<expense_category>\S+)\s*$"
+)
+PDF_TEXT_PURPOSE_AMOUNT_PARTY_PLACE_DATE_USER_ROW_RE = re.compile(
+    r"^\s*(?P<purpose>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<date>20\d{2}[.]\d{1,2}[.]\d{1,2}[.]?)\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<user>.+?)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
+)
+PDF_TEXT_DATETIME_PURPOSE_AMOUNT_METHOD_PLACE_ROW_RE = re.compile(
+    r"^\s*(?P<date>20\d{2}-\d{1,2}-\d{1,2})\s+"
+    r"(?P<time>\d{1,2}:\d{2}(?::\d{2})?)\s+"
+    r"(?P<purpose>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<party_size>\d+|-)\s*$"
+)
+PDF_TEXT_MONTH_DAY_OFFICE_ROW_RE = re.compile(
+    r"^\s*(?:\d+\s+)?"
+    r"(?P<user>\S+)\s+"
+    r"(?P<month>\d{1,2})월\s+(?P<day>\d{1,2})일"
+    r"(?:\s+(?P<time>\d{1,2}:\d{2}(?::\d{2})?))?\s+"
+    r"(?P<body>.+?)\s+"
+    r"(?:(?P<party_size>\d+|-)\s+)?"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s+"
+    r"(?P<expense_category>\S+)\s*$"
+)
+PDF_TEXT_YEARLESS_COUNCIL_AMOUNT_ROW_RE = re.compile(
+    r"^\s*(?P<month>\d{1,2})[.](?P<day>\d{1,2})[.]?\s+"
+    r"(?P<purpose>.+?)\s+"
+    r"(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s+"
+    r"(?P<party_size>\d+|-)\s+"
+    r"(?P<place_text>.+?)\s+"
+    r"(?P<payment_method>신용카드|카드결제|법인카드|카드|현금|제로페이|계좌이체)\s*$"
+)
 PDF_TEXT_USER_ADDRESS_ROW_RE = re.compile(
     r"^\s*\d+\s+"
     r"(?P<user>.+?)\s+"
@@ -359,6 +417,30 @@ def _parse_pdf_text_line(line: str, *, fallback_department: str) -> ParsedExpens
     purpose_first = _parse_pdf_text_purpose_first_line(line, fallback_department=fallback_department)
     if purpose_first:
         return purpose_first
+    date_time_place_purpose_party_amount = _parse_pdf_text_date_time_place_purpose_party_amount_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if date_time_place_purpose_party_amount:
+        return date_time_place_purpose_party_amount
+    user_date_place_purpose_amount_party = _parse_pdf_text_user_date_place_purpose_amount_party_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if user_date_place_purpose_amount_party:
+        return user_date_place_purpose_amount_party
+    purpose_amount_party_place_date_user = _parse_pdf_text_purpose_amount_party_place_date_user_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if purpose_amount_party_place_date_user:
+        return purpose_amount_party_place_date_user
+    datetime_purpose_amount_method_place = _parse_pdf_text_datetime_purpose_amount_method_place_line(
+        line,
+        fallback_department=fallback_department,
+    )
+    if datetime_purpose_amount_method_place:
+        return datetime_purpose_amount_method_place
     return _parse_pdf_text_generic_row(line, fallback_department=fallback_department)
 
 
@@ -883,6 +965,248 @@ def _parse_pdf_text_user_no_address_line(line: str, *, fallback_department: str)
             row_match.group("expense_category"),
         ],
     )
+
+
+def _parse_pdf_text_date_time_place_purpose_party_amount_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_DATE_TIME_PLACE_PURPOSE_PARTY_AMOUNT_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("date"),
+            row_match.group("time"),
+            place,
+            purpose,
+            party_size,
+            row_match.group("amount"),
+            payment_method,
+            row_match.group("expense_category"),
+        ],
+    )
+
+
+def _parse_pdf_text_user_date_place_purpose_amount_party_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_USER_DATE_PLACE_PURPOSE_AMOUNT_PARTY_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} 00:00",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+            "expense_category": row_match.group("expense_category"),
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("user"),
+            row_match.group("date"),
+            place,
+            purpose,
+            row_match.group("amount"),
+            party_size,
+            payment_method,
+            row_match.group("expense_category"),
+        ],
+    )
+
+
+def _parse_pdf_text_purpose_amount_party_place_date_user_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_PURPOSE_AMOUNT_PARTY_PLACE_DATE_USER_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "user_text": row_match.group("user").strip(),
+            "payment_method": payment_method,
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            purpose,
+            row_match.group("amount"),
+            party_size,
+            place,
+            row_match.group("date"),
+            row_match.group("time"),
+            row_match.group("user"),
+            payment_method,
+        ],
+    )
+
+
+def _parse_pdf_text_datetime_purpose_amount_method_place_line(
+    line: str,
+    *,
+    fallback_department: str,
+) -> ParsedExpenseRow | None:
+    row_match = PDF_TEXT_DATETIME_PURPOSE_AMOUNT_METHOD_PLACE_ROW_RE.match(line)
+    if not row_match:
+        return None
+    place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+    purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+    payment_method = row_match.group("payment_method")
+    if _looks_like_non_place_expense(place, purpose, payment_method):
+        return None
+    party_size = row_match.group("party_size")
+    if party_size == "-":
+        party_size = None
+    return _build_pdf_row(
+        {
+            "used_at": f"{row_match.group('date')} {row_match.group('time')}",
+            "place_name": place,
+            "purpose": purpose,
+            "amount": row_match.group("amount"),
+            "party_size": party_size,
+            "payment_method": payment_method,
+        },
+        fallback_department=fallback_department,
+        raw_values=[
+            row_match.group("date"),
+            row_match.group("time"),
+            purpose,
+            row_match.group("amount"),
+            payment_method,
+            place,
+            party_size,
+        ],
+    )
+
+
+def _parse_month_day_office_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    year_match = re.search(r"(20\d{2})년\s*\d{1,2}월", text)
+    if not year_match:
+        return []
+    year = year_match.group(1)
+    rows: list[ParsedExpenseRow] = []
+    for line in text.splitlines():
+        row_match = PDF_TEXT_MONTH_DAY_OFFICE_ROW_RE.match(line.strip())
+        if not row_match:
+            continue
+        body = _normalize_pdf_text_fragment(row_match.group("body"))
+        address = ""
+        body_parts = [_normalize_pdf_text_fragment(part) for part in re.split(r"\s{2,}", row_match.group("body")) if part.strip()]
+        if len(body_parts) >= 3:
+            place, address, purpose = body_parts[0], body_parts[1], " ".join(body_parts[2:])
+        else:
+            place, purpose = _split_place_and_purpose_by_columns(body)
+            if not place or not purpose:
+                place, purpose = _split_place_and_purpose_by_marker(body)
+        if not place or _looks_like_non_place_expense(place, purpose, row_match.group("payment_method")):
+            continue
+        party_size = row_match.group("party_size")
+        if party_size == "-":
+            party_size = None
+        time_value = row_match.group("time") or "00:00"
+        parsed = _build_pdf_row(
+            {
+                "used_at": f"{year}-{int(row_match.group('month')):02d}-{int(row_match.group('day')):02d} {time_value}",
+                "place_name": place,
+                "address_hint": address,
+                "purpose": purpose or "업무추진비 집행",
+                "amount": row_match.group("amount"),
+                "party_size": party_size,
+                "user_text": row_match.group("user"),
+                "payment_method": row_match.group("payment_method"),
+                "expense_category": row_match.group("expense_category"),
+            },
+            fallback_department=fallback_department,
+            raw_values=[line.strip()],
+        )
+        if parsed:
+            rows.append(parsed)
+    return rows
+
+
+def _parse_yearless_council_amount_pdf_text(text: str, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    year_match = re.search(r"(20\d{2})년\s*\d{1,2}\s*[~～-]\s*\d{1,2}월", text) or re.search(
+        r"(20\d{2})년",
+        text,
+    )
+    if not year_match:
+        return []
+    year = year_match.group(1)
+    rows: list[ParsedExpenseRow] = []
+    for line in text.splitlines():
+        row_match = PDF_TEXT_YEARLESS_COUNCIL_AMOUNT_ROW_RE.match(line.strip())
+        if not row_match:
+            continue
+        place = _normalize_pdf_text_fragment(row_match.group("place_text"))
+        purpose = _normalize_pdf_text_fragment(row_match.group("purpose"))
+        payment_method = row_match.group("payment_method")
+        if _looks_like_non_place_expense(place, purpose, payment_method):
+            continue
+        party_size = row_match.group("party_size")
+        if party_size == "-":
+            party_size = None
+        parsed = _build_pdf_row(
+            {
+                "used_at": f"{year}-{int(row_match.group('month')):02d}-{int(row_match.group('day')):02d} 00:00",
+                "place_name": place,
+                "purpose": purpose,
+                "amount": row_match.group("amount"),
+                "party_size": party_size,
+                "payment_method": payment_method,
+            },
+            fallback_department=fallback_department,
+            raw_values=[line.strip()],
+        )
+        if parsed:
+            rows.append(parsed)
+    return rows
 
 
 def _split_place_and_purpose(body: str, user: str) -> tuple[str, str]:
