@@ -287,8 +287,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.total == 2202
     assert summary.verified_in_code == 163
     assert summary.pending == 47
-    assert summary.legal_hold == 188
-    assert summary.source_not_found == 138
+    assert summary.legal_hold == 195
+    assert summary.source_not_found == 131
     assert summary.no_recent_data == 295
     assert summary.pdf_vision_hold == 9
     assert summary.adapter_hold == 1362
@@ -296,8 +296,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert summary.priority_group_counts["p1"].total == 488
     assert summary.priority_group_counts["p1"].verified_in_code == 146
     assert summary.priority_group_counts["p1"].pending == 47
-    assert summary.priority_group_counts["p1"].legal_hold == 188
-    assert summary.priority_group_counts["p1"].source_not_found == 103
+    assert summary.priority_group_counts["p1"].legal_hold == 195
+    assert summary.priority_group_counts["p1"].source_not_found == 96
     assert summary.priority_group_counts["p1"].no_recent_data == 1
     assert summary.priority_group_counts["p1"].pdf_vision_hold == 1
     assert summary.priority_group_counts["p1"].adapter_hold == 2
@@ -326,12 +326,12 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 15
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 47
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 181
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 188
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 1
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
-        == 103
+        == 96
     )
     assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 2
     assert all(
@@ -835,6 +835,36 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "울산광역시" and entry.short_name == "남구청"
     )
+    ulsan_junggu = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "중구청"
+    )
+    ulsan_junggu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "중구의회"
+    )
+    ulsan_namgu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "남구의회"
+    )
+    ulsan_bukgu = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "북구청"
+    )
+    ulsan_bukgu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "북구의회"
+    )
+    ulju_office = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "울주군청"
+    )
     ulju_council = next(
         entry
         for entry in non_capital_entries
@@ -846,8 +876,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "사용일자·결제내용·결제방법" in ulsan_city.evidence_note
     assert ulsan_council.verification_status == "legal_hold"
     assert "XLSX 다운로드 구조" in ulsan_council.evidence_note
+    assert ulsan_junggu.verification_status == "legal_hold"
+    assert "부구청장 업무추진비 ZIP 첨부" in ulsan_junggu.evidence_note
+    assert ulsan_junggu_council.verification_status == "legal_hold"
+    assert "업무추진비 현황 경로" in ulsan_junggu_council.evidence_note
     assert ulsan_namgu.verification_status == "legal_hold"
     assert "구청장·부구청장·국장·부서장·동장·보건소" in ulsan_namgu.evidence_note
+    assert ulsan_namgu_council.verification_status == "legal_hold"
+    assert "의정운영공통경비 PDF 첨부" in ulsan_namgu_council.evidence_note
+    assert ulsan_bukgu.verification_status == "legal_hold"
+    assert "공공누리 제4유형" in ulsan_bukgu.evidence_note
+    assert ulsan_bukgu_council.verification_status == "legal_hold"
+    assert "ALL RIGHTS RESERVED" in ulsan_bukgu_council.evidence_note
+    assert ulju_office.verification_status == "legal_hold"
+    assert "부군수·국장·부서장 탭" in ulju_office.evidence_note
     assert ulju_council.verification_status == "legal_hold"
     assert "XLSX 다운로드 구조" in ulju_council.evidence_note
     ulsan_donggu = next(
@@ -855,8 +897,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "울산광역시" and entry.short_name == "동구청"
     )
+    ulsan_donggu_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "울산광역시" and entry.short_name == "동구의회"
+    )
     assert ulsan_donggu.verification_status == "legal_hold"
     assert "공공누리 제2유형" in ulsan_donggu.evidence_note
+    assert ulsan_donggu_council.verification_status == "legal_hold"
+    assert "의정운영공통경비" in ulsan_donggu_council.evidence_note
 
     daegu_namgu = next(
         entry

@@ -648,6 +648,36 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
         for agency in pending_agencies
         if agency.parent_region == "울산광역시" and agency.short_name == "남구청"
     )
+    ulsan_junggu = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "중구청"
+    )
+    ulsan_junggu_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "중구의회"
+    )
+    ulsan_namgu_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "남구의회"
+    )
+    ulsan_bukgu = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "북구청"
+    )
+    ulsan_bukgu_council = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "북구의회"
+    )
+    ulju_office = next(
+        agency
+        for agency in pending_agencies
+        if agency.parent_region == "울산광역시" and agency.short_name == "울주군청"
+    )
     ulju_council = next(
         agency
         for agency in pending_agencies
@@ -659,9 +689,23 @@ def test_non_capital_pending_entries_keep_korean_public_values_without_real_urls
     assert "HTML 상세 표 구조" in ulsan_city.source_pattern["blocker"]
     assert ulsan_council.source_pattern["holdStatus"] == "legal_hold"
     assert ulsan_council.source_pattern["fileKinds"] == ["xlsx"]
+    assert ulsan_junggu.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_junggu.source_pattern["fileKinds"] == ["zip"]
+    assert ulsan_junggu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_junggu_council.source_pattern["sourceUrl"] == (
+        "https://council.junggu.ulsan.kr/content/public/expenses.html"
+    )
     assert ulsan_namgu.source_pattern["holdStatus"] == "legal_hold"
     assert ulsan_namgu.source_pattern["fileKinds"] == ["pdf"]
     assert "구청장·부구청장·국장·부서장·동장·보건소" in ulsan_namgu.source_pattern["blocker"]
+    assert ulsan_namgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_namgu_council.source_pattern["fileKinds"] == ["pdf"]
+    assert ulsan_bukgu.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_bukgu.source_pattern["pageParam"] == "cpage"
+    assert ulsan_bukgu_council.source_pattern["holdStatus"] == "legal_hold"
+    assert ulsan_bukgu_council.source_pattern["fileKinds"] == ["pdf"]
+    assert ulju_office.source_pattern["holdStatus"] == "legal_hold"
+    assert "부군수·국장·부서장 탭" in ulju_office.source_pattern["blocker"]
     assert ulju_council.source_pattern["holdStatus"] == "legal_hold"
     assert ulju_council.source_pattern["sourceUrl"] == (
         "https://assembly.ulju.ulsan.kr/kr/bbs?bbs_id=business"
