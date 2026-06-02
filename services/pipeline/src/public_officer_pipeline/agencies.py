@@ -30,13 +30,148 @@ CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL = "https://www.cleaneye.go.kr/user/headO
 CLEANEYE_PUBLIC_ENTERPRISE_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/itemGongsi.do"
 CLEANEYE_PUBLIC_ENTERPRISE_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
 CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL = "https://www.cleaneye.go.kr/user/iptItemGongsi.do"
+CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL = "https://www.cleaneye.go.kr/user/iptBuOwnerWorkCost.do"
 CLEANEYE_COPYRIGHT_URL = "https://www.cleaneye.go.kr/user/copyrightPolicy.do"
+
+P2_CENTRAL_STATE_SOURCE_CANDIDATES = {
+    "재정경제부": {
+        "sourceUrl": "https://mofe.go.kr/com/bbs/ComtnbbsList.do?bbsId=MOSFBBS_000000000012&menuNo=3020200",
+        "dataName": "주요공표목록 업무추진비",
+        "fileKinds": ["pdf", "html"],
+    },
+    "문화체육관광부": {
+        "sourceUrl": "https://www.mcst.go.kr/site/s_open/generalData/dataList.jsp?pMenuCD=1101040200",
+        "dataName": "실·국장 업무추진비 / 장·차관 업무추진비",
+        "fileKinds": ["pdf", "hwp", "xlsx"],
+    },
+    "농림축산식품부": {
+        "sourceUrl": "https://www.mafra.go.kr/home/5004/subview.do",
+        "dataName": "사전정보공표 업무추진비",
+        "fileKinds": ["pdf", "xlsx"],
+    },
+    "산업통상부": {
+        "sourceUrl": "https://www.motie.go.kr/kor/article/ATCLf589e9758?pageIndex=1",
+        "dataName": "장·차관/실·국장 업무추진비",
+        "fileKinds": ["pdf", "hwp"],
+    },
+    "보건복지부": {
+        "sourceUrl": "https://www.mohw.go.kr/menu.es?mid=a10414000000",
+        "dataName": "실국장급 공무원 업무추진비 사용내역",
+        "fileKinds": ["pdf"],
+    },
+    "기후에너지환경부": {
+        "sourceUrl": "https://www.me.go.kr/ysg/web/index.do?menuId=10118",
+        "dataName": "행정정보공개 업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "고용노동부": {
+        "sourceUrl": "https://www.moel.go.kr/info/publict/publictDataList.do?searchMasterSeq=3&searchSeq=506",
+        "dataName": "사전정보공표 업무추진비",
+        "fileKinds": ["pdf", "xlsx"],
+    },
+    "성평등가족부": {
+        "sourceUrl": "https://www.mogef.go.kr/io/ind/io_ind_s017.do",
+        "dataName": "장차관 업무추진비 공개내역",
+        "fileKinds": ["pdf"],
+    },
+    "국토교통부": {
+        "sourceUrl": "https://www.molit.go.kr/USR/BORD0201/m_36784/BRD.jsp?cate=upmu&id=www_doc",
+        "dataName": "사전정보공개 업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "해양수산부": {
+        "sourceUrl": "https://www.mof.go.kr/doc/ko/selectDocList.do?bbsSeq=2&menuSeq=429",
+        "dataName": "부서별사전공표정보 업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "중소벤처기업부": {
+        "sourceUrl": "https://mss.go.kr/site/smba/ex/bbs/List.do?cbIdx=135",
+        "dataName": "장관 업무추진비 공개",
+        "fileKinds": ["pdf", "xlsx"],
+    },
+    "외교부": {
+        "sourceUrl": "https://www.mofa.go.kr/www/brd/m_20536/list.do",
+        "dataName": "사전정보공표 업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "통일부": {
+        "sourceUrl": "https://www.unikorea.go.kr/web/unikorea/bbs/bbs_0000000000000125",
+        "dataName": "장·차관 업무추진비 공개",
+        "fileKinds": ["pdf", "hwp"],
+    },
+    "법무부": {
+        "sourceUrl": "https://www.moj.go.kr/moj/150/subview.do",
+        "dataName": "업무추진비 사전정보공표",
+        "fileKinds": ["pdf", "hwp"],
+    },
+    "국가보훈부": {
+        "sourceUrl": "https://www.mpva.go.kr/mpva/selectBbsNttList.do?bbsNo=3&key=7",
+        "dataName": "기관장 업무추진비 사용 내역",
+        "fileKinds": ["xlsx", "pdf"],
+    },
+    "인사혁신처": {
+        "sourceUrl": "https://www.mpm.go.kr/mpm/open/openBudget/?pageIdx=8",
+        "dataName": "업무추진비 게시판",
+        "fileKinds": ["xlsx", "pdf"],
+    },
+    "산림청": {
+        "sourceUrl": "https://forest.go.kr/kfsweb/kfi/kfs/evb/selectImgInfoOpenList.do?advCtgry=3030101&mn=NKFS_06_02_01",
+        "dataName": "사전정보공표 업무추진비",
+        "fileKinds": ["html"],
+    },
+    "질병관리청": {
+        "sourceUrl": "https://kdca.go.kr/board/board.es?mid=a20709000000&bid=0013",
+        "dataName": "기관장업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "기상청": {
+        "sourceUrl": "https://amo.kma.go.kr/data/open/public/public-info4.do?bid=bizcost&field=&mode=view",
+        "dataName": "업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "행정중심복합도시건설청": {
+        "sourceUrl": "https://naacc.go.kr/WEB/contents/N2080200000.do?id=78323",
+        "dataName": "청,차장실 업무추진비 내역",
+        "fileKinds": ["xlsx"],
+    },
+    "새만금개발청": {
+        "sourceUrl": "https://www.saemangeum.go.kr/sda/brd/list.do?key=2009075612500",
+        "dataName": "업무추진비 공개",
+        "fileKinds": ["pdf", "xlsx", "xls"],
+    },
+    "경찰청": {
+        "sourceUrl": "https://www.police.go.kr/user/bbs/BD_selectBbsList.do?q_bbsCode=1025&q_bbscttSn=&q_tab=",
+        "dataName": "각 실·국장 업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "소방청": {
+        "sourceUrl": "https://www.nfa.go.kr/nfa/releaseinformation/beforehand/propulsioncost/?boardId=bbs_0000000000000042",
+        "dataName": "업무추진비",
+        "fileKinds": ["pdf"],
+    },
+    "해양경찰청": {
+        "sourceUrl": "https://www.kcg.go.kr/kcg/na/ntt/selectNttList.do?bbsId=1144&mi=5303",
+        "dataName": "청·차장 업무추진비현황",
+        "fileKinds": ["pdf"],
+    },
+    "우주항공청": {
+        "sourceUrl": "https://www.kasa.go.kr/bbs/BBSMSTR_000000000031/list.do",
+        "dataName": "업무추진비",
+        "fileKinds": ["xlsx"],
+    },
+}
 
 P3_ALIO_PLACE_LEVEL_CANDIDATES = {
     "게임물관리위원회",
     "(재)우체국금융개발원",
+    "국제식물검역인증원",
     "한국남부발전(주)",
+    "한국에너지정보문화재단",
     "한국석유공사",
+}
+P3_ALIO_XLS_PLACE_LEVEL_CANDIDATES = {
+    "국제식물검역인증원",
+    "한국에너지정보문화재단",
 }
 P3_ALIO_AMOUNT_THOUSANDS_NEEDS_PATCH: set[str] = set()
 P3_ALIO_RECENT_AGGREGATE_ONLY = {
@@ -83,7 +218,6 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "국립중앙의료원",
     "국민건강보험공단",
     "국제방송교류재단",
-    "국제식물검역인증원",
     "농림식품기술기획평가원",
     "농업정책보험금융원",
     "무역안보관리원",
@@ -102,7 +236,6 @@ P3_ALIO_XLS_PARSER_HOLD = {
     "한국보건산업진흥원",
     "한국부동산원",
     "한국에너지공단",
-    "한국에너지정보문화재단",
     "한국전력거래소",
     "한국제품안전관리원",
     "한국토지주택공사",
@@ -115,7 +248,67 @@ P4_CLEANEYE_PLACE_LEVEL_CANDIDATES = {
         "entId": "2007100239",
         "entKind": "006002",
         "entName": "경기주택도시공사",
-    }
+    },
+    "의왕시상수도": {
+        "entId": "2007100025",
+        "entKind": "005001",
+        "entName": "의왕시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "화성시상수도": {
+        "entId": "2007100031",
+        "entKind": "005001",
+        "entName": "화성시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "포천시상수도": {
+        "entId": "2007100035",
+        "entKind": "005001",
+        "entName": "포천시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "양평군상수도": {
+        "entId": "2007100036",
+        "entKind": "005001",
+        "entName": "양평군상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "남원시상수도": {
+        "entId": "2007100071",
+        "entKind": "005001",
+        "entName": "남원시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "경산시상수도": {
+        "entId": "2007100092",
+        "entKind": "005001",
+        "entName": "경산시상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "영광군상수도": {
+        "entId": "2012000002",
+        "entKind": "005001",
+        "entName": "영광군상수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "대구광역시하수도": {
+        "entId": "2007100110",
+        "entKind": "005002",
+        "entName": "대구광역시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "광주광역시하수도": {
+        "entId": "2007100112",
+        "entKind": "005002",
+        "entName": "광주광역시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
+    "부천시하수도": {
+        "entId": "2007100118",
+        "entKind": "005002",
+        "entName": "부천시하수도",
+        "fileKinds": ["xls", "xlsx"],
+    },
 }
 P4_CLEANEYE_RECENT_AGGREGATE_ONLY = {
     "서울시설공단": {
@@ -127,6 +320,68 @@ P4_CLEANEYE_RECENT_AGGREGATE_ONLY = {
         "entId": "2007100247",
         "entKind": "006003",
         "entName": "서울특별시농수산식품공사",
+    },
+    "대구도시개발공사": {
+        "entId": "2007100235",
+        "entKind": "006002",
+        "entName": "대구도시개발공사",
+    },
+    "인천교통공사": {
+        "entId": "2007100230",
+        "entKind": "006001",
+        "entName": "인천교통공사",
+    },
+    "광주교통공사": {
+        "entId": "2007100231",
+        "entKind": "006001",
+        "entName": "광주교통공사",
+    },
+    "대전교통공사": {
+        "entId": "2007100232",
+        "entKind": "006001",
+        "entName": "대전교통공사",
+    },
+    "울산시설공단": {
+        "entId": "2007100294",
+        "entKind": "011001",
+        "entName": "울산시설공단",
+    },
+    "수원시상수도": {
+        "entId": "2007100008",
+        "entKind": "005001",
+        "entName": "수원시상수도",
+    },
+    "안양도시공사": {
+        "entId": "2019000005",
+        "entKind": "006003",
+        "entName": "안양도시공사",
+    },
+    "전북개발공사": {
+        "entId": "2007100242",
+        "entKind": "006002",
+        "entName": "전북개발공사",
+    },
+    "제주특별자치도개발공사": {
+        "entId": "2007100246",
+        "entKind": "006002",
+        "entName": "제주특별자치도개발공사",
+    },
+    "강원특별자치도개발공사": {
+        "entId": "2007100240",
+        "entKind": "006002",
+        "entName": "강원개발공사",
+    },
+}
+P4_CLEANEYE_IPT_RECENT_AGGREGATE_ONLY = {
+    "대한민국동작 주식회사": {
+        "entId": "B000594",
+        "entKind": "012001",
+        "entName": "대한민국동작주식회사",
+    },
+    "서울의료원": {
+        "entId": "B000253",
+        "entKind": "012002",
+        "entName": "서울의료원",
     },
 }
 
@@ -5678,6 +5933,7 @@ def central_state_agencies() -> list[Agency]:
 
 def _central_state_source_pattern(name: str, institution_type: str) -> dict[str, object]:
     keyword = f"{name} 업무추진비"
+    candidate = P2_CENTRAL_STATE_SOURCE_CANDIDATES.get(name)
     searched_paths = [
         keyword,
         f"{name} 공식 홈페이지 정보공개·사전정보공표·업무추진비 메뉴",
@@ -5686,20 +5942,39 @@ def _central_state_source_pattern(name: str, institution_type: str) -> dict[str,
         "정보공개포털(open.go.kr) 업무추진비 검색",
         "정부조직관리정보시스템 기준 기관명 대조",
     ]
-    return {
-        "adapter": "central_state_required",
+    common = {
         "searchKeyword": keyword,
         "status": "adapter_required",
-        "holdStatus": "source_not_found",
         "searchedPaths": searched_paths,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "P2-P4 공공부문 확장 조사",
+        "verifiedBy": "P2-P4 3차 중앙기관 후보 URL 재검토",
         "baselineSourceUrl": CENTRAL_STATE_BASELINE_SOURCE_URL,
         "baselineAdditionalUrls": [CENTRAL_STATE_CHART_URL],
         "baselineEvidence": (
             "P2 공식 기준: 정부조직관리정보시스템 2026 정부기구도에서 "
             f"{institution_type} 기관명 확인."
         ),
+    }
+    if candidate:
+        return {
+            **common,
+            "adapter": "central_state_required",
+            "holdStatus": "adapter_hold",
+            "sourceUrl": candidate["sourceUrl"],
+            "dataName": candidate["dataName"],
+            "fileKinds": candidate["fileKinds"],
+            "licenseUrl": "https://www.kogl.or.kr",
+            "blocker": (
+                f"{name}은 공식 후보 URL에서 업무추진비성 공개 경로를 확인했습니다. "
+                "다만 중앙행정기관별 게시판·검색·첨부 다운로드 패턴이 서로 다르고, PDF/HWP/XLS "
+                "혼재 원문에 대한 중앙기관 adapter/parser와 게시물별 공공누리/저작권 표시 확인 "
+                "로직이 아직 없습니다. dry-run 검증 전까지 production 적재하지 않습니다."
+            ),
+        }
+    return {
+        **common,
+        "adapter": "central_state_required",
+        "holdStatus": "source_not_found",
         "blocker": (
             f"{name}은 정부조직관리정보시스템 2026 정부기구도에서 P2 {institution_type} "
             "기준 기관으로 확인했지만, 이번 P2-P4 조사에서 기관별 공식 홈페이지 정보공개·"
@@ -5768,9 +6043,11 @@ def _public_institution_source_pattern(
             **common,
             "adapter": "alio_item_disclosure",
             "alioAgencyName": name,
-            "fileKinds": ["xlsx"],
+            "fileKinds": (
+                ["xls", "xlsx"] if name in P3_ALIO_XLS_PLACE_LEVEL_CANDIDATES else ["xlsx"]
+            ),
             "evidenceNote": (
-                "ALIO 경영공시 항목 20701(기관장 업무추진비)에서 2025년 XLSX 첨부를 확인했고, "
+                "ALIO 경영공시 항목 20701(기관장 업무추진비)에서 2025년 XLS/XLSX 첨부를 확인했고, "
                 "샘플 원문은 사용일자·사용처/장소·집행금액 place-level 행을 포함합니다. "
                 "ALIO 저작권 정책을 근거로 출처표시 조건의 사실 데이터만 정규화합니다."
             ),
@@ -5888,11 +6165,11 @@ def _local_public_institution_source_pattern(
             "entName": cleaneye["entName"],
             "itemId": "ownerWorkCost",
             "dataName": "기관장 업무추진비",
-            "fileKinds": ["xlsx"],
+            "fileKinds": cleaneye.get("fileKinds", ["xlsx"]),
             "licenseUrl": CLEANEYE_COPYRIGHT_URL,
             "officialCommonPortal": True,
             "verifiedAt": "2026-06-02",
-            "verifiedBy": "P2-P4 2차 CleanEye entId/file download dry-run 후보 검증",
+            "verifiedBy": "P2-P4 3차 CleanEye entId/file download dry-run 후보 검증",
             "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
             "baselineAdditionalUrls": [
                 CLEANEYE_PUBLIC_ENTERPRISE_WORKCOST_URL,
@@ -5904,9 +6181,9 @@ def _local_public_institution_source_pattern(
             ),
             "evidenceNote": (
                 "CleanEye 기관별공시에서 entId/itemId=ownerWorkCost 상세 페이지와 "
-                "fn_FileDown(/file/fileExists.do -> /file/FileDownload.do) XLSX 첨부를 "
-                "확인했습니다. 2025년 2분기 원문은 사용일자·집행목적·장소·대상인원·"
-                "지출금액(원) place-level 행을 포함합니다."
+                "fn_FileDown(/file/fileExists.do -> /file/FileDownload.do) XLS/XLSX 첨부를 "
+                "확인했습니다. 최근 12개월 원문은 사용일자·사용처/장소·집행금액 "
+                "place-level 행을 포함합니다."
             ),
         }
     if name in P4_CLEANEYE_RECENT_AGGREGATE_ONLY:
@@ -5935,6 +6212,43 @@ def _local_public_institution_source_pattern(
             "blocker": (
                 "CleanEye 기관별공시에서 최근 12개월 XLSX 첨부는 확인했지만, 원문이 "
                 "유형별/월별 건수·금액 집계표이며 사용처·장소·상호 place-level 열을 "
+                "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
+                "0건으로 보류합니다."
+            ),
+        }
+    if name in P4_CLEANEYE_IPT_RECENT_AGGREGATE_ONLY:
+        cleaneye = P4_CLEANEYE_IPT_RECENT_AGGREGATE_ONLY[name]
+        return {
+            "adapter": "local_public_institution_required",
+            "searchKeyword": f"{name} 업무추진비",
+            "status": "adapter_required",
+            "holdStatus": "no_recent_data",
+            "sourceUrl": CLEANEYE_LOCAL_FOUNDATION_OWNER_WORKCOST_URL,
+            "extraListUrls": [CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL],
+            "entId": cleaneye["entId"],
+            "entKind": cleaneye["entKind"],
+            "entName": cleaneye["entName"],
+            "itemId": "iptBuOwnerWorkCost",
+            "dtFlagQuarter": "500140",
+            "dataName": "기관장 업무추진비",
+            "fileKinds": ["html"],
+            "licenseUrl": CLEANEYE_COPYRIGHT_URL,
+            "verifiedAt": "2026-06-02",
+            "verifiedBy": "P2-P4 3차 CleanEye iptBuOwnerWorkCost jsonListQ 원격 확인",
+            "baselineSourceUrl": LOCAL_PUBLIC_BASELINE_SOURCE_URL,
+            "baselineAdditionalUrls": [
+                CLEANEYE_LOCAL_FOUNDATION_DISCLOSURE_URL,
+                CLEANEYE_COPYRIGHT_URL,
+            ],
+            "baselineEvidence": (
+                "P4 공식 기준: 클린아이 정책자료의 2026.3.31 기준 첨부에서 "
+                f"{institution_type}/{institution_subtype} 기관명 확인."
+            ),
+            "blocker": (
+                "CleanEye 지방출자출연 기관별공시 iptBuOwnerWorkCost 경로와 "
+                "entId/itemId=iptBuOwnerWorkCost/dtFlagQuarter=500140 jsonListQ 응답은 "
+                "확인했습니다. 그러나 응답 행은 분기별 officecost 기관합계이며 "
+                "filename/saveFileName/filePath 첨부 키와 사용처·장소 place-level 열을 "
                 "포함하지 않습니다. 공무원맵 적재 대상 최근 12개월 place-level 데이터 "
                 "0건으로 보류합니다."
             ),

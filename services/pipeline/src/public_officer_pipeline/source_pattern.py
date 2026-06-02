@@ -99,6 +99,15 @@ class CleanEyeOwnerWorkCostPattern(SourcePattern):
     downloadUrl: str = "https://www.cleaneye.go.kr/file/FileDownload.do"
     fileKinds: list[FileKind] = Field(default_factory=lambda: ["xlsx"])
     fixedYear: int = 2025
+    beyondYear: int | None = None
+    budgetSumYear: int | None = None
+    pastYear: int | None = None
+    fixedQuarterYear: int | None = None
+    pastQuarterYear: int | None = None
+    fixedHalfYear: int | None = None
+    pastHalfYear: int | None = None
+    dtFlagQuarter: str = "500120"
+    dtFlagHalf: str = "500210"
     officialCommonPortal: bool = True
 
     @field_validator("fileKinds", mode="before")
