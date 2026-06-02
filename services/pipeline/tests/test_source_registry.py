@@ -489,13 +489,22 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     chuncheon_city = next(entry for entry in non_capital_entries if entry.short_name == "춘천시청")
     wonju_council = next(entry for entry in non_capital_entries if entry.short_name == "원주시의회")
     donghae_city = next(entry for entry in non_capital_entries if entry.short_name == "동해시청")
+    donghae_council = next(
+        entry for entry in non_capital_entries if entry.short_name == "동해시의회"
+    )
     taebaek_council = next(entry for entry in non_capital_entries if entry.short_name == "태백시의회")
     gangneung_city = next(entry for entry in non_capital_entries if entry.short_name == "강릉시청")
     hoengseong_council = next(entry for entry in non_capital_entries if entry.short_name == "횡성군의회")
+    cheorwon_city = next(entry for entry in non_capital_entries if entry.short_name == "철원군청")
+    cheorwon_council = next(
+        entry for entry in non_capital_entries if entry.short_name == "철원군의회"
+    )
     hwacheon_city = next(entry for entry in non_capital_entries if entry.short_name == "화천군청")
+    yanggu_city = next(entry for entry in non_capital_entries if entry.short_name == "양구군청")
     yanggu_council = next(entry for entry in non_capital_entries if entry.short_name == "양구군의회")
     goseong_city = next(entry for entry in non_capital_entries if entry.short_name == "고성군청")
     goseong_council = next(entry for entry in non_capital_entries if entry.short_name == "고성군의회")
+    yangyang_city = next(entry for entry in non_capital_entries if entry.short_name == "양양군청")
     yangyang_council = next(entry for entry in non_capital_entries if entry.short_name == "양양군의회")
     assert yeongwol_city.verification_status == "verified_in_code"
     assert yeongwol_city.source_url == "https://www.yw.go.kr/www/selectBbsNttList.do?bbsNo=7&key=196"
@@ -505,7 +514,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert wonju_council.verification_status == "legal_hold"
     assert "원주시의회 업무추진비 현황 목록" in wonju_council.evidence_note
     assert donghae_city.verification_status == "legal_hold"
+    assert donghae_city.detail_url == (
+        "https://www.dh.go.kr/www/selectBbsNttView.do?"
+        "key=237&bbsNo=67&nttNo=201950&searchCtgry=&searchCnd=all&searchKrwd=&integrDeptCode=&pageIndex=1"
+    )
+    assert donghae_city.attachment_url == (
+        "https://www.dh.go.kr/www/downloadBbsFile.do?atchmnflNo=249725"
+    )
     assert "koglUseAt=N" in donghae_city.evidence_note
+    assert donghae_council.list_url == (
+        "https://www.dhcc.go.kr/content/news/operatingExpenseList.html"
+    )
+    assert donghae_council.attachment_url == (
+        "https://www.dhcc.go.kr/gtb_download.php?gtid=information&fid=17405"
+    )
     assert taebaek_council.verification_status == "legal_hold"
     assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
     assert taebaek_council.detail_url == (
@@ -545,8 +567,25 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert "횡성군의회 공식 경로가 횡성군 통합 도메인" in hoengseong_council.evidence_note
     assert "공공누리가 부착되지 않은 자료" in hoengseong_council.evidence_note
+    assert cheorwon_city.verification_status == "legal_hold"
+    assert cheorwon_city.list_url == (
+        "https://www.cwg.go.kr/www/selectInfoPublicWebList.do?"
+        "key=183&searchCnd=all&searchKrwd=%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84"
+    )
+    assert cheorwon_city.attachment_url == (
+        "https://www.cwg.go.kr/www/pubDownload.do?idx=2089&key=183"
+    )
+    assert "기존 후보 URL" in cheorwon_city.evidence_note
+    assert "2026년 1분기 단체장 업무추진비" in cheorwon_city.evidence_note
+    assert cheorwon_council.attachment_url == (
+        "https://council.cwg.go.kr/council/downloadBbsFile.do?"
+        "atchmnflNo=170009&bbsNo=69&nttNo=277732"
+    )
     assert hwacheon_city.verification_status == "legal_hold"
     assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
+    assert yanggu_city.attachment_url == (
+        "https://www.yanggu.go.kr/fnc_bbs/user_bbs_download?bcd=bpc_info&bn=155012&num=1"
+    )
     assert yanggu_council.verification_status == "legal_hold"
     assert yanggu_council.list_url == "http://ygcl.go.kr/portal/F50000/F50700/boardList"
     assert yanggu_council.detail_url == (
@@ -563,7 +602,17 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert goseong_city.verification_status == "legal_hold"
     assert "공공누리 유형 영역이 비어" in goseong_city.evidence_note
     assert goseong_council.verification_status == "legal_hold"
+    assert goseong_council.attachment_url == (
+        "https://council.gwgs.go.kr/downLoad.do?"
+        "file_key=22829&save_file_name=202604061775453177982507.xlsx"
+    )
     assert "ALL RIGHT RESERVED" in goseong_council.evidence_note
+    assert yangyang_city.list_url == (
+        "https://www.yangyang.go.kr/gw/portal/yyc_opinfo_adinfo_oper_governor"
+    )
+    assert yangyang_city.commercial_use_status == "prohibited_kogl_type4_noncommercial"
+    assert yangyang_city.derivative_use_status == "prohibited_kogl_type4_no_derivatives"
+    assert "공공누리 제4유형" in yangyang_city.evidence_note
     assert yangyang_council.verification_status == "legal_hold"
     assert "양양군의회 업무추진비공개 목록" in yangyang_council.evidence_note
 
