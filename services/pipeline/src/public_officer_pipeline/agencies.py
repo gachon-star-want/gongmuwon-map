@@ -3199,6 +3199,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "확인 전까지 수집하지 않습니다."
         ),
     },
+    ("부산광역시", "영도구의회"): {
+        "sourceUrl": "https://www.yeongdo.go.kr/council/01221/04617/01236.web",
+        "fileKinds": ["html"],
+        "pageParam": "cpage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 의회 홈페이지 메뉴에서 업무추진비 집행 현황 경로는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 사이트 푸터가 All Rights Reserved로 표시되어 제1유형 확인 "
+            "전까지 수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "부산진구청"): {
         "sourceUrl": (
             "https://www.busanjin.go.kr/board/list.busanjin?"
@@ -3242,6 +3256,24 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "수집하지 않습니다."
         ),
     },
+    ("부산광역시", "해운대구의회"): {
+        "sourceUrl": (
+            "https://council.haeundae.go.kr/board/list.do?"
+            "boardId=BBS_0000120&menuCd=DOM_000000703009001004&"
+            "paging=ok&startPage=1"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 집행 현황 목록과 최근 게시물·첨부 구조는 확인했습니다. 다만 "
+            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
+            "확인되지 않고 푸터가 All rights reserved로 표시되어 제1유형 확인 전까지 "
+            "수집하지 않습니다."
+        ),
+    },
     ("부산광역시", "사하구청"): {
         "sourceUrl": "https://www.saha.go.kr/portal/contents.do?mId=0302070000",
         "fileKinds": ["xlsx", "xls", "pdf"],
@@ -3267,6 +3299,25 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "공식 의회운영업무추진비 공개 목록과 분기별 XLS 첨부 구조는 확인했습니다. 다만 "
             "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
             "확인되지 않고 저작권정책 링크만 확인되어 제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("부산광역시", "금정구의회"): {
+        "sourceUrl": (
+            "https://www.geumjeong.go.kr/board/list.geumj?"
+            "boardId=BBS_0000332&contentsSid=6841&cpath=&"
+            "menuCd=DOM_000000724001004000"
+        ),
+        "fileKinds": ["xlsx", "xls", "pdf"],
+        "pageParam": "startPage",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 현황 목록과 최근 월별 의정운영공통경비·업무추진비 게시물 및 "
+            "첨부 구조는 확인했습니다. 다만 푸터가 홈페이지 내용의 무단복제 불가와 "
+            "ALL RIGHTS RESERVED를 표시하고, 목록/상세 화면에서 공공누리 제1유형 또는 "
+            "명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 확인 전까지 수집하지 "
+            "않습니다."
         ),
     },
     ("부산광역시", "수영구청"): {
@@ -3863,6 +3914,20 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
             "확인했습니다. 다만 목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 "
             "자유이용 표시가 확인되지 않고 푸터가 All rights reserved로 표시되어 "
             "제1유형 확인 전까지 수집하지 않습니다."
+        ),
+    },
+    ("대구광역시", "남구의회"): {
+        "sourceUrl": "https://www.nam.daegu.kr/council/index.do?menu_id=00205128",
+        "fileKinds": ["xlsx"],
+        "pageParam": "pageIndex",
+        "followDetail": True,
+        "verifiedAt": "2026-06-02",
+        "verifiedBy": "공식 사이트 원격 확인",
+        "blocker": (
+            "공식 업무추진비 현황 목록과 최근 2026년 XLSX 첨부 구조는 확인했습니다. "
+            "다만 페이지 푸터가 All rights reserved로 표시되고 목록/상세 화면에서 "
+            "공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 확인되지 않아 제1유형 "
+            "확인 전까지 수집하지 않습니다."
         ),
     },
     ("대구광역시", "동구의회"): {
