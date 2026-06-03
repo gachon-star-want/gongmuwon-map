@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'auth_login');
-    if (!turnstile.ok) {
+    if (turnstile.ok === false) {
       sendTurnstileError(res, turnstile);
       return;
     }

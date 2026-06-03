@@ -10,7 +10,7 @@ export default privateWriteRoute(async function handler({ req, res }) {
   }
   const body = parseBody(req);
   const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(body), 'closure_report');
-  if (!turnstile.ok) {
+  if (turnstile.ok === false) {
     return { status: turnstile.status, body: { error: turnstile.error } };
   }
   const placeId = String(body.place_id || '');

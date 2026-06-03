@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const parsedBody = parseBody(req);
       const turnstile = await verifyTurnstileToken(req, turnstileTokenFromBody(parsedBody), 'community_comment');
-      if (!turnstile.ok) {
+      if (turnstile.ok === false) {
         sendTurnstileError(res, turnstile);
         return;
       }
