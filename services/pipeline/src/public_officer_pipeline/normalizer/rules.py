@@ -15,7 +15,11 @@ from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 
 SEOUL_DISTRICT_HINT_RE = re.compile(r"(?P<district>[가-힣]+구)(?:청|의회)?")
 NON_PLACE_EXPENSE_RE = re.compile(r"경조사|축의금|조의금|부의금|부조금|화환|격려금")
-SUMMARY_PLACE_RE = re.compile(r"^\s*(?:합계|총계|\d+\s*건|-)\s*$")
+SUMMARY_PLACE_RE = re.compile(r"^\s*(?:합계|총계|\d+(?:\s*건)?|-)\s*$")
+PURPOSE_ONLY_PLACE_RE = re.compile(
+    r"간담회|정례회|대응|결혼\s*축하|축하금|임직원\s*소통|업무협의|정책협의|"
+    r"주요정책추진|회의|행사|유관(?:\s*기관|\(관련\)\s*기관)"
+)
 
 
 def deterministic_normalize_rows(
@@ -69,6 +73,10 @@ def deterministic_normalize_rows(
 
 
 def _is_non_place_expense(row: ParsedExpenseRow) -> bool:
+    place = re.sub(r"\s+", "", row.place_text or "")
+    purpose = re.sub(r"\s+", "", row.purpose or "")
+    if place and purpose and place == purpose and PURPOSE_ONLY_PLACE_RE.search(row.place_text):
+        return True
     joined = " ".join(
         value
         for value in (
@@ -111,7 +119,7 @@ def mask_user_text(
     elected_re = _person_re_for_ranks(elected_ranks)
 
     elected = elected_re.search(value)
-    if elected:
+    if elected and not _looks_like_institutional_elected_subject(elected.group(1), agency):
         representative = elected.group(1)
         rank_label = elected.group(2)
     else:
@@ -131,7 +139,7 @@ def mask_user_text(
         rank_label = "5급 이하"
 
     party_size = _parse_party_size(value)
-    department_name = _masked_department(value, fallback_department, rank_label, elected_ranks)
+    department_name = _masked_department(value, fallback_department, rank_label, elected_ranks, agency)
     return {
         "party_size": party_size,
         "department_name": department_name,
@@ -157,13 +165,50 @@ def _masked_department(
     fallback_department: str,
     rank_label: str,
     elected_ranks: tuple[str, ...],
+    agency: Agency | None = None,
 ) -> str:
     cleaned_department = fallback_department.strip() or "서울시본청"
     if rank_label in elected_ranks:
-        return cleaned_department
+        return _strip_institutional_elected_rank_department(cleaned_department, rank_label, agency)
     if "직원" in user_text or rank_label == "5급 이하":
+        for elected_rank in elected_ranks:
+            cleaned_department = _strip_institutional_elected_rank_department(
+                cleaned_department,
+                elected_rank,
+                agency,
+            )
         return cleaned_department if "외" in cleaned_department else f"{cleaned_department} 외"
     return cleaned_department
+
+
+def _strip_institutional_elected_rank_department(
+    department: str,
+    rank_label: str,
+    agency: Agency | None,
+) -> str:
+    match = re.match(rf"^(?P<prefix>.+)\s+{re.escape(rank_label)}$", department)
+    if not match:
+        return department
+    prefix = match.group("prefix").strip()
+    if _looks_like_institutional_elected_subject(prefix, agency):
+        return prefix
+    return department
+
+
+def _looks_like_institutional_elected_subject(value: str, agency: Agency | None) -> bool:
+    compact = re.sub(r"\s+", "", value)
+    if compact.endswith(("시청", "군청", "구청", "도청", "의회")):
+        return True
+    if agency is None:
+        return False
+    candidates = {
+        agency.name,
+        agency.short_name,
+        agency.parent_region,
+        agency.sub_region or "",
+    }
+    normalized_candidates = {re.sub(r"\s+", "", candidate) for candidate in candidates if candidate}
+    return compact in normalized_candidates
 
 
 def _person_re_for_ranks(ranks: tuple[str, ...]) -> re.Pattern[str]:

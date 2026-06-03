@@ -285,37 +285,40 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     summary = source_registry_summary(entries)
 
     assert summary.total == 2202
-    assert summary.verified_in_code == 207
-    assert summary.pending == 43
-    assert summary.legal_hold == 169
-    assert summary.source_not_found == 120
-    assert summary.no_recent_data == 295
-    assert summary.pdf_vision_hold == 17
-    assert summary.adapter_hold == 1351
+    assert summary.verified_in_code == 610
+    assert summary.pending == 0
+    assert summary.legal_hold == 101
+    assert summary.source_not_found == 85
+    assert summary.no_recent_data == 1311
+    assert summary.pdf_vision_hold == 35
+    assert summary.adapter_hold == 60
     assert summary.invalid_source_pattern == 0
     assert summary.priority_group_counts["p1"].total == 488
-    assert summary.priority_group_counts["p1"].verified_in_code == 165
-    assert summary.priority_group_counts["p1"].pending == 43
-    assert summary.priority_group_counts["p1"].legal_hold == 169
-    assert summary.priority_group_counts["p1"].source_not_found == 88
-    assert summary.priority_group_counts["p1"].no_recent_data == 1
-    assert summary.priority_group_counts["p1"].pdf_vision_hold == 9
-    assert summary.priority_group_counts["p1"].adapter_hold == 13
+    assert summary.priority_group_counts["p1"].verified_in_code == 257
+    assert summary.priority_group_counts["p1"].pending == 0
+    assert summary.priority_group_counts["p1"].legal_hold == 101
+    assert summary.priority_group_counts["p1"].source_not_found == 67
+    assert summary.priority_group_counts["p1"].no_recent_data == 5
+    assert summary.priority_group_counts["p1"].pdf_vision_hold == 35
+    assert summary.priority_group_counts["p1"].adapter_hold == 23
     assert summary.priority_group_counts["p2"].total == 60
     assert summary.priority_group_counts["p2"].pending == 0
-    assert summary.priority_group_counts["p2"].source_not_found == 32
-    assert summary.priority_group_counts["p2"].adapter_hold == 28
+    assert summary.priority_group_counts["p2"].verified_in_code == 5
+    assert summary.priority_group_counts["p2"].source_not_found == 18
+    assert summary.priority_group_counts["p2"].no_recent_data == 2
+    assert summary.priority_group_counts["p2"].pdf_vision_hold == 0
+    assert summary.priority_group_counts["p2"].adapter_hold == 35
     assert summary.priority_group_counts["p3"].total == 342
     assert summary.priority_group_counts["p3"].verified_in_code == 6
     assert summary.priority_group_counts["p3"].pending == 0
-    assert summary.priority_group_counts["p3"].no_recent_data == 280
-    assert summary.priority_group_counts["p3"].pdf_vision_hold == 8
-    assert summary.priority_group_counts["p3"].adapter_hold == 48
+    assert summary.priority_group_counts["p3"].no_recent_data == 334
+    assert summary.priority_group_counts["p3"].pdf_vision_hold == 0
+    assert summary.priority_group_counts["p3"].adapter_hold == 2
     assert summary.priority_group_counts["p4"].total == 1312
-    assert summary.priority_group_counts["p4"].verified_in_code == 36
+    assert summary.priority_group_counts["p4"].verified_in_code == 342
     assert summary.priority_group_counts["p4"].pending == 0
-    assert summary.priority_group_counts["p4"].no_recent_data == 14
-    assert summary.priority_group_counts["p4"].adapter_hold == 1262
+    assert summary.priority_group_counts["p4"].no_recent_data == 970
+    assert summary.priority_group_counts["p4"].adapter_hold == 0
 
     non_capital_entries = [
         entry
@@ -324,16 +327,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         and entry.parent_region not in {"서울특별시", "경기도", "인천광역시"}
     ]
     assert len(non_capital_entries) == len(NON_CAPITAL_AGENCIES)
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 34
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 43
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 162
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 1
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 9
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "verified_in_code") == 126
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pending") == 0
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "legal_hold") == 94
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "no_recent_data") == 5
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "pdf_vision_hold") == 35
     assert (
         sum(1 for entry in non_capital_entries if entry.verification_status == "source_not_found")
-        == 88
+        == 67
     )
-    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 13
+    assert sum(1 for entry in non_capital_entries if entry.verification_status == "adapter_hold") == 23
     assert all(
         entry.source_url is None
         for entry in non_capital_entries
@@ -374,8 +377,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert gwangju_city.verification_status == "legal_hold"
     assert "자유이용 불가" in gwangju_city.evidence_note
-    assert gwangju_council.verification_status == "legal_hold"
-    assert "제1유형 확인 전까지 수집하지 않습니다" in gwangju_council.evidence_note
+    assert gwangju_council.verification_status == "verified_in_code"
+    assert gwangju_council.source_url == "https://council.gwangju.go.kr/index.do?PID=168"
+    assert "factual row" in gwangju_council.evidence_note
 
     daejeon_city = next(entry for entry in non_capital_entries if entry.short_name == "대전시청")
     daejeon_council = next(entry for entry in non_capital_entries if entry.short_name == "대전시의회")
@@ -419,28 +423,28 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     jangseong_council = next(entry for entry in non_capital_entries if entry.short_name == "장성군의회")
     shinan_city = next(entry for entry in non_capital_entries if entry.short_name == "신안군청")
     shinan_council = next(entry for entry in non_capital_entries if entry.short_name == "신안군의회")
-    assert jeonnam_city.verification_status == "adapter_hold"
+    assert jeonnam_city.verification_status == "verified_in_code"
     assert jeonnam_city.source_url == (
         "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100"
     )
-    assert jeonnam_city.homepage is None
+    assert jeonnam_city.homepage == "https://www.jeonnam.go.kr"
     assert jeonnam_city.source_file_kinds == ["hwp"]
     assert jeonnam_city.verified_at == "2026-06-02"
     assert "공공누리 제1유형 표시" in jeonnam_city.evidence_note
-    assert "HWP 본문 추출" in jeonnam_city.evidence_note
+    assert "HWP 첨부 구조" in jeonnam_city.evidence_note
     assert gokseong_city.verification_status == "verified_in_code"
     assert gokseong_city.source_url == (
         "https://www.gokseong.go.kr/kr/board/list.do?"
         "bbsId=BBS_000000000000540&menuNo=102006001000"
     )
     assert gokseong_city.homepage == "https://www.gokseong.go.kr"
-    assert gokseong_council.verification_status == "verified_in_code"
+    assert gokseong_council.verification_status == "pdf_vision_hold"
     assert gokseong_council.source_url == (
         "https://www.gokseong.go.kr/council/board/list.do?"
         "bbsId=BBS_000000000000380&menuNo=106005004000"
     )
     assert gokseong_council.homepage == "https://www.gokseong.go.kr"
-    assert jindo_city.verification_status == "verified_in_code"
+    assert jindo_city.verification_status == "pdf_vision_hold"
     assert jindo_city.source_url == "https://www.jindo.go.kr/home/board/B0071.cs?m=52"
     assert jindo_city.homepage == "https://www.jindo.go.kr"
     assert jindo_city.source_file_kinds == ["pdf"]
@@ -472,10 +476,10 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert shinan_council.source_file_kinds == ["pdf"]
     assert "신안군의회 의정활동 업무추진비 목록" in shinan_council.evidence_note
     assert "사전 협의" in shinan_council.evidence_note
-    assert jeonnam_council.verification_status == "legal_hold"
+    assert jeonnam_council.verification_status == "verified_in_code"
     assert jeonnam_council.source_url == "https://www.jnassembly.go.kr/jnassem/board/412"
     assert "의정활동 정보공개 업무추진비 목록" in jeonnam_council.evidence_note
-    assert "제1유형 확인 전까지 수집하지 않습니다" in jeonnam_council.evidence_note
+    assert "factual row" in jeonnam_council.evidence_note
     assert sejong_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in sejong_city.evidence_note
     assert sejong_council.verification_status == "verified_in_code"
@@ -498,19 +502,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert gangwon_city.public_works_policy_url == (
         "https://state.gwd.go.kr/portal/services/copyright"
     )
-    assert gangwon_city.commercial_use_status == "not_confirmed_without_kogl_type1"
-    assert gangwon_city.derivative_use_status == "not_confirmed_without_kogl_type1"
+    assert gangwon_city.commercial_use_status == "prohibited_or_requires_prior_consultation"
+    assert gangwon_city.derivative_use_status == "prohibited_or_requires_prior_consultation"
     assert "도지사·부지사 업무추진비 목록" in gangwon_city.evidence_note
     assert "XLSX 다운로드 구조" in gangwon_city.evidence_note
+    assert "사전에 협의" in gangwon_city.evidence_note
     assert "첨부 내부 문자열 검사" in gangwon_city.evidence_note
-    assert gangwon_council.verification_status == "legal_hold"
+    assert gangwon_council.verification_status == "verified_in_code"
     assert gangwon_council.copyright_url == (
         "https://council.gangwon.kr/kr/infoBBSview.do?"
         "uid=3EDF15021B1FDB4D25D06BF8BBA2437A&schwrd=&flag=all&sch_use_start_date="
         "&sch_use_end_date=&page=1&list_style="
     )
-    assert "PDF/XLS 다운로드 구조" in gangwon_council.evidence_note
-    assert "첨부 내부 문자열 검사" in gangwon_council.evidence_note
+    assert "facts-only 적재 정책" in gangwon_council.verified_by
+    assert "factual row" in gangwon_council.evidence_note
     yeongwol_city = next(entry for entry in non_capital_entries if entry.short_name == "영월군청")
     chuncheon_city = next(entry for entry in non_capital_entries if entry.short_name == "춘천시청")
     wonju_council = next(entry for entry in non_capital_entries if entry.short_name == "원주시의회")
@@ -553,9 +558,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "production 적재가 완료" in yeongwol_city.evidence_note
     assert chuncheon_city.verification_status == "legal_hold"
     assert "춘천시청 업무추진비 집행내역 목록" in chuncheon_city.evidence_note
-    assert wonju_council.verification_status == "legal_hold"
-    assert "원주시의회 업무추진비 현황 목록" in wonju_council.evidence_note
+    assert "사전에 협의" in chuncheon_city.evidence_note
+    assert wonju_council.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in wonju_council.verified_by
+    assert "factual row" in wonju_council.evidence_note
     assert donghae_city.verification_status == "legal_hold"
+    assert donghae_city.commercial_use_status == "prohibited_or_requires_prior_consultation"
+    assert donghae_city.derivative_use_status == "prohibited_or_requires_prior_consultation"
     assert donghae_city.detail_url == (
         "https://www.dh.go.kr/www/selectBbsNttView.do?"
         "key=237&bbsNo=67&nttNo=201950&searchCtgry=&searchCnd=all&searchKrwd=&integrDeptCode=&pageIndex=1"
@@ -564,6 +573,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "https://www.dh.go.kr/www/downloadBbsFile.do?atchmnflNo=249725"
     )
     assert "koglUseAt=N" in donghae_city.evidence_note
+    assert "사전 협의" in donghae_city.evidence_note
+    assert donghae_council.verification_status == "verified_in_code"
     assert donghae_council.list_url == (
         "https://www.dhcc.go.kr/content/news/operatingExpenseList.html"
     )
@@ -574,9 +585,13 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "https://www.dhcc.go.kr/content/news/operatingExpenseList.html?"
         "fidx=6975&pg=vv&sid=1000&page=1&sword="
     )
+    assert "facts-only 적재 정책" in donghae_council.verified_by
+    assert "공공누리 제1유형 미표시" in donghae_council.evidence_note
+    assert sokcho_city.verification_status == "verified_in_code"
     assert sokcho_city.detail_url == (
         "https://www.sokcho.go.kr/sc/portal/adminfo/disclosure/expense/mayor"
     )
+    assert "직접 다운로드 구조" in sokcho_city.evidence_note
     assert taebaek_council.verification_status == "legal_hold"
     assert taebaek_council.list_url == "https://council.taebaek.go.kr/source/kr/news/info2.html"
     assert taebaek_council.detail_url == (
@@ -626,19 +641,28 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert "기존 후보 URL" in cheorwon_city.evidence_note
     assert "2026년 1분기 단체장 업무추진비" in cheorwon_city.evidence_note
+    assert "사전에 협의" in cheorwon_city.evidence_note
+    assert cheorwon_council.verification_status == "legal_hold"
     assert cheorwon_council.attachment_url == (
         "https://council.cwg.go.kr/council/downloadBbsFile.do?"
         "atchmnflNo=170009&bbsNo=69&nttNo=277732"
     )
+    assert "사전에 협의" in cheorwon_council.evidence_note
     assert hwacheon_city.verification_status == "legal_hold"
-    assert "ALL RIGHTS RESERVED" in hwacheon_city.evidence_note
+    assert "사전에 협의" in hwacheon_city.evidence_note
+    assert jeongseon_city.verification_status == "verified_in_code"
     assert jeongseon_city.public_works_policy_url == (
         "https://www.jeongseon.go.kr/portal/admininfo/openinfo/opendata"
     )
+    assert "facts-only 적재 정책" in jeongseon_city.verified_by
+    assert yanggu_city.verification_status == "legal_hold"
+    assert yanggu_city.commercial_use_status == "prohibited_or_requires_prior_consultation"
+    assert yanggu_city.derivative_use_status == "prohibited_or_requires_prior_consultation"
     assert yanggu_city.attachment_url == (
         "https://www.yanggu.go.kr/fnc_bbs/user_bbs_download?bcd=bpc_info&bn=155012&num=1"
     )
-    assert yanggu_council.verification_status == "legal_hold"
+    assert "무단사용" in yanggu_city.evidence_note
+    assert yanggu_council.verification_status == "verified_in_code"
     assert yanggu_council.list_url == "http://ygcl.go.kr/portal/F50000/F50700/boardList"
     assert yanggu_council.detail_url == (
         "http://ygcl.go.kr/portal/F50000/F50700/boardView?board_key=29098&page=1"
@@ -650,14 +674,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert yanggu_council.commercial_use_status == "not_confirmed_without_kogl_mark"
     assert yanggu_council.derivative_use_status == "not_confirmed_without_kogl_mark"
     assert "총 80개 게시글" in yanggu_council.evidence_note
-    assert "All Rights Reserved" in yanggu_council.evidence_note
+    assert "facts-only 적재 정책" in yanggu_council.verified_by
+    assert "All Rights Reserved 표기만으로는 보류하지 않으며" in yanggu_council.evidence_note
     assert goseong_city.verification_status == "legal_hold"
     assert "공공누리 유형 영역이 비어" in goseong_city.evidence_note
-    assert goseong_council.verification_status == "legal_hold"
+    assert goseong_council.verification_status == "verified_in_code"
     assert goseong_council.attachment_url == (
         "https://council.gwgs.go.kr/downLoad.do?"
         "file_key=22829&save_file_name=202604061775453177982507.xlsx"
     )
+    assert "facts-only 적재 정책" in goseong_council.verified_by
     assert "ALL RIGHT RESERVED" in goseong_council.evidence_note
     assert yangyang_city.list_url == (
         "https://www.yangyang.go.kr/gw/portal/yyc_opinfo_adinfo_oper_governor"
@@ -665,8 +691,9 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert yangyang_city.commercial_use_status == "prohibited_kogl_type4_noncommercial"
     assert yangyang_city.derivative_use_status == "prohibited_kogl_type4_no_derivatives"
     assert "공공누리 제4유형" in yangyang_city.evidence_note
-    assert yangyang_council.verification_status == "legal_hold"
-    assert "양양군의회 업무추진비공개 목록" in yangyang_council.evidence_note
+    assert yangyang_council.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in yangyang_council.verified_by
+    assert "factual row" in yangyang_council.evidence_note
 
     jeonbuk_city = next(
         entry for entry in non_capital_entries if entry.short_name == "전북특별자치도청"
@@ -677,7 +704,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert jeonbuk_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in jeonbuk_city.evidence_note
     assert "HWP/HWPX/XLSX/PDF 다운로드 구조" in jeonbuk_city.evidence_note
-    assert jeonbuk_council.verification_status == "legal_hold"
+    assert jeonbuk_council.verification_status == "verified_in_code"
+    assert jeonbuk_council.source_url == "https://jbstatecouncil.jeonbuk.kr/jbassem/board/39/4"
     assert "XLSX/PDF/HWP 다운로드 구조" in jeonbuk_council.evidence_note
 
     chungnam_city = next(entry for entry in non_capital_entries if entry.short_name == "충청남도청")
@@ -687,8 +715,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert chungnam_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in chungnam_city.evidence_note
     assert "HWP/PDF 다운로드 구조" in chungnam_city.evidence_note
-    assert chungnam_council.verification_status == "pdf_vision_hold"
-    assert "PDF vision extraction" in chungnam_council.evidence_note
+    assert chungnam_council.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in chungnam_council.verified_by
 
     cheonan_city = next(
         entry
@@ -740,11 +768,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "충청남도" and entry.short_name == "부여군의회"
     )
-    assert cheonan_city.verification_status == "adapter_hold"
+    assert cheonan_city.verification_status == "verified_in_code"
     assert cheonan_city.source_url == "https://www.cheonan.go.kr/bbs/BBSMSTR_000000000050/list.do"
-    assert "HTTP status 403" in cheonan_city.evidence_note
-    assert cheonan_council.verification_status == "adapter_hold"
-    assert "goBbsViewPage" in cheonan_council.evidence_note
+    assert cheonan_city.source_file_kinds == ["xlsx", "xls", "hwpx"]
+    assert "facts-only 적재 정책" in cheonan_city.verified_by
+    assert cheonan_council.verification_status == "verified_in_code"
+    assert cheonan_council.source_url == (
+        "https://www.cheonancouncil.go.kr/svc/ctz/operatingExpenseList.do"
+    )
+    assert "facts-only 적재 정책" in cheonan_council.verified_by
     assert gongju_city.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in gongju_city.verified_by
     assert gongju_council.verification_status == "verified_in_code"
@@ -763,14 +795,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert boryeong_city.source_file_kinds == ["xls", "xlsx", "pdf"]
     assert boryeong_city.verified_at == "2026-06-01"
     assert boryeong_city.verified_by == "공식 사이트 원격 확인"
-    assert nonsan_city.verification_status == "adapter_hold"
-    assert "File is not a zip file" in nonsan_city.evidence_note
+    assert nonsan_city.verification_status == "verified_in_code"
+    assert nonsan_city.source_file_kinds == ["xlsx", "xls"]
+    assert "facts-only 적재 정책" in nonsan_city.verified_by
     assert nonsan_council.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in nonsan_council.verified_by
-    assert buyeo_city.verification_status == "legal_hold"
-    assert "HWP 다운로드 링크 구조" in buyeo_city.evidence_note
-    assert buyeo_council.verification_status == "legal_hold"
-    assert "목록 ZIP 다운로드" in buyeo_council.evidence_note
+    assert buyeo_city.verification_status == "adapter_hold"
+    assert "LibreOffice HWP conversion produced no HTML output" in buyeo_city.evidence_note
+    assert buyeo_council.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in buyeo_council.verified_by
 
     chungbuk_city = next(entry for entry in non_capital_entries if entry.short_name == "충청북도청")
     chungbuk_council = next(
@@ -800,14 +833,14 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert "facts-only 적재 정책" in chungbuk_city.verified_by
     assert chungbuk_council.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in chungbuk_council.verified_by
-    assert cheongju_city.verification_status == "adapter_hold"
-    assert "HTTP 200 block" in cheongju_city.evidence_note
+    assert cheongju_city.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in cheongju_city.verified_by
     assert cheongju_council.verification_status == "verified_in_code"
     assert "facts-only 적재 정책" in cheongju_council.verified_by
-    assert chungju_council.verification_status == "legal_hold"
-    assert "화면 하단 저작권 문구" in chungju_council.evidence_note
-    assert jecheon_city.verification_status == "legal_hold"
-    assert "2025년 업무추진비 내역" in jecheon_city.evidence_note
+    assert chungju_council.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in chungju_council.verified_by
+    assert jecheon_city.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in jecheon_city.verified_by
 
     gyeongbuk_city = next(entry for entry in non_capital_entries if entry.short_name == "경상북도청")
     gyeongbuk_council = next(
@@ -816,7 +849,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert gyeongbuk_city.verification_status == "legal_hold"
     assert "공공누리 제3유형" in gyeongbuk_city.evidence_note
     assert "XLSX/XLS/PDF 다운로드 구조" in gyeongbuk_city.evidence_note
-    assert gyeongbuk_council.verification_status == "legal_hold"
+    assert gyeongbuk_council.verification_status == "verified_in_code"
     assert "XLSX 다운로드 구조" in gyeongbuk_council.evidence_note
 
     gyeongnam_city = next(entry for entry in non_capital_entries if entry.short_name == "경상남도청")
@@ -831,8 +864,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     seogwipo_city = next(entry for entry in non_capital_entries if entry.short_name == "서귀포시청")
     assert gyeongnam_city.verification_status == "legal_hold"
     assert "자유이용을 불가" in gyeongnam_city.evidence_note
-    assert gyeongnam_council.verification_status == "legal_hold"
-    assert "PDF 다운로드 구조" in gyeongnam_council.evidence_note
+    assert gyeongnam_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision" in gyeongnam_council.evidence_note
     assert jeju_city.verification_status == "verified_in_code"
     assert jeju_city.source_url == "https://www.jeju.go.kr/open/open/work/work2.htm?category=1409"
     assert jeju_city.homepage == "https://www.jeju.go.kr"
@@ -906,27 +939,26 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "울산광역시" and entry.short_name == "울주군의회"
     )
-    assert ulsan_city.verification_status == "legal_hold"
-    assert ulsan_city.verification_status_label == "법적 검토 보류"
+    assert ulsan_city.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in ulsan_city.verified_by
     assert "HTML 상세 표 구조" in ulsan_city.evidence_note
-    assert "사용일자·결제내용·결제방법" in ulsan_city.evidence_note
-    assert ulsan_council.verification_status == "legal_hold"
+    assert ulsan_council.verification_status == "verified_in_code"
     assert "XLSX 다운로드 구조" in ulsan_council.evidence_note
-    assert ulsan_junggu.verification_status == "legal_hold"
-    assert "부구청장 업무추진비 ZIP 첨부" in ulsan_junggu.evidence_note
-    assert ulsan_junggu_council.verification_status == "legal_hold"
-    assert "업무추진비 현황 경로" in ulsan_junggu_council.evidence_note
-    assert ulsan_namgu.verification_status == "legal_hold"
-    assert "구청장·부구청장·국장·부서장·동장·보건소" in ulsan_namgu.evidence_note
-    assert ulsan_namgu_council.verification_status == "legal_hold"
-    assert "의정운영공통경비 PDF 첨부" in ulsan_namgu_council.evidence_note
+    assert ulsan_junggu.verification_status == "adapter_hold"
+    assert "첨부 형식(zip)" in ulsan_junggu.evidence_note
+    assert ulsan_junggu_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in ulsan_junggu_council.evidence_note
+    assert ulsan_namgu.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in ulsan_namgu.evidence_note
+    assert ulsan_namgu_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in ulsan_namgu_council.evidence_note
     assert ulsan_bukgu.verification_status == "legal_hold"
     assert "공공누리 제4유형" in ulsan_bukgu.evidence_note
-    assert ulsan_bukgu_council.verification_status == "legal_hold"
-    assert "ALL RIGHTS RESERVED" in ulsan_bukgu_council.evidence_note
-    assert ulju_office.verification_status == "legal_hold"
-    assert "부군수·국장·부서장 탭" in ulju_office.evidence_note
-    assert ulju_council.verification_status == "legal_hold"
+    assert ulsan_bukgu_council.verification_status == "adapter_hold"
+    assert "posts_seen=0" in ulsan_bukgu_council.evidence_note
+    assert ulju_office.verification_status == "adapter_hold"
+    assert "posts_seen=0" in ulju_office.evidence_note
+    assert ulju_council.verification_status == "verified_in_code"
     assert "XLSX 다운로드 구조" in ulju_council.evidence_note
     ulsan_donggu = next(
         entry
@@ -940,7 +972,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert ulsan_donggu.verification_status == "legal_hold"
     assert "공공누리 제2유형" in ulsan_donggu.evidence_note
-    assert ulsan_donggu_council.verification_status == "legal_hold"
+    assert ulsan_donggu_council.verification_status == "verified_in_code"
     assert "의정운영공통경비" in ulsan_donggu_council.evidence_note
 
     daegu_namgu = next(
@@ -1018,41 +1050,44 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "대구광역시" and entry.short_name == "군위군청"
     )
-    assert daegu_namgu.verification_status == "legal_hold"
-    assert "XLS/XLSX 첨부 구조" in daegu_namgu.evidence_note
+    assert daegu_namgu.verification_status == "verified_in_code"
+    assert "normalized_visits=2" in daegu_namgu.evidence_note
+    assert "production에 sources=2, places=2, visits=2" in daegu_namgu.evidence_note
     assert daegu_bukgu.verification_status == "legal_hold"
     assert "공공누리 제4유형" in daegu_bukgu.evidence_note
-    assert daegu_suseong.verification_status == "legal_hold"
-    assert "공공누리 영역이 비어" in daegu_suseong.evidence_note
-    assert daegu_seogu.verification_status == "legal_hold"
-    assert "사전정보공표 업무추진비 공개" in daegu_seogu.evidence_note
-    assert daegu_junggu_council.verification_status == "legal_hold"
-    assert "의회운영업무추진비 XLS 첨부 구조" in daegu_junggu_council.evidence_note
-    assert daegu_namgu_council.verification_status == "legal_hold"
+    assert daegu_suseong.verification_status == "adapter_hold"
+    assert "posts_seen=0" in daegu_suseong.evidence_note
+    assert daegu_seogu.verification_status == "adapter_hold"
+    assert "posts_seen=0" in daegu_seogu.evidence_note
+    assert daegu_junggu_council.verification_status == "verified_in_code"
+    assert "normalized_visits=1" in daegu_junggu_council.evidence_note
+    assert "production에 sources=1, places=1, visits=1" in daegu_junggu_council.evidence_note
+    assert daegu_namgu_council.verification_status == "verified_in_code"
     assert daegu_namgu_council.source_url == (
         "https://www.nam.daegu.kr/council/index.do?menu_id=00205128"
     )
-    assert "2026년 XLSX 첨부 구조" in daegu_namgu_council.evidence_note
-    assert "All rights reserved" in daegu_namgu_council.evidence_note
-    assert daegu_donggu_council.verification_status == "legal_hold"
+    assert "normalized_visits=123" in daegu_namgu_council.evidence_note
+    assert "production에 sources=2, places=109, visits=123" in daegu_namgu_council.evidence_note
+    assert daegu_donggu_council.verification_status == "verified_in_code"
     assert "업무추진비·공통경비 PDF 첨부 구조" in daegu_donggu_council.evidence_note
-    assert daegu_seogu_council.verification_status == "legal_hold"
+    assert daegu_seogu_council.verification_status == "verified_in_code"
     assert daegu_seogu_council.source_url == "https://dgscouncil.go.kr/kr/bbs?bbs_id=cost"
     assert "XLSX 첨부 구조" in daegu_seogu_council.evidence_note
     assert "All Rights Reserved" in daegu_seogu_council.evidence_note
-    assert daegu_bukgu_council.verification_status == "legal_hold"
+    assert daegu_bukgu_council.verification_status == "pdf_vision_hold"
     assert daegu_bukgu_council.source_url == "https://www.bukgucouncil.daegu.kr/kr/costBBS.do"
-    assert "의정운영공통경비 PDF 첨부 구조" in daegu_bukgu_council.evidence_note
-    assert "All Rights Reserved" in daegu_bukgu_council.evidence_note
-    assert daegu_suseong_council.verification_status == "legal_hold"
+    assert "scanned PDF vision extraction" in daegu_bukgu_council.evidence_note
+    assert daegu_suseong_council.verification_status == "verified_in_code"
     assert "업무추진비 XLS 첨부 구조" in daegu_suseong_council.evidence_note
-    assert daegu_dalseo.verification_status == "legal_hold"
-    assert "공공누리 영역이 비어" in daegu_dalseo.evidence_note
-    assert daegu_dalseo_council.verification_status == "legal_hold"
-    assert "의정공통경비 XLSX 첨부 구조" in daegu_dalseo_council.evidence_note
-    assert daegu_dalseong.verification_status == "legal_hold"
-    assert "XLS/XLSX 첨부 구조" in daegu_dalseong.evidence_note
-    assert daegu_dalseong_council.verification_status == "legal_hold"
+    assert daegu_dalseo.verification_status == "adapter_hold"
+    assert "posts_seen=0" in daegu_dalseo.evidence_note
+    assert daegu_dalseo_council.verification_status == "verified_in_code"
+    assert "normalized_visits=24" in daegu_dalseo_council.evidence_note
+    assert "production DB 기준 sources=3, places=21, visits=24" in daegu_dalseo_council.evidence_note
+    assert daegu_dalseong.verification_status == "verified_in_code"
+    assert "facts-only 적재 정책" in daegu_dalseong.verified_by
+    assert "factual row" in daegu_dalseong.evidence_note
+    assert daegu_dalseong_council.verification_status == "verified_in_code"
     assert "업무추진비 XLS 첨부 구조" in daegu_dalseong_council.evidence_note
     assert daegu_gunwi.verification_status == "pdf_vision_hold"
     assert daegu_gunwi.source_url == "https://www.gunwi.go.kr/ko/page.do?mnu_uid=160"
@@ -1096,29 +1131,52 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "부산광역시" and entry.short_name == "금정구의회"
     )
+    busan_suyeong_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "부산광역시" and entry.short_name == "수영구의회"
+    )
+    busan_sasang_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "부산광역시" and entry.short_name == "사상구의회"
+    )
+    busan_yeonje_council = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "부산광역시" and entry.short_name == "연제구의회"
+    )
     assert busan_seogu.verification_status == "adapter_hold"
     assert "HWP 본문 추출" in busan_seogu.evidence_note
-    assert busan_namgu.verification_status == "legal_hold"
-    assert "국장급 이상 업무추진비" in busan_namgu.evidence_note
+    assert busan_namgu.verification_status == "adapter_hold"
+    assert "posts_seen=0" in busan_namgu.evidence_note
     assert busan_donggu_council.verification_status == "legal_hold"
     assert "의장단 업무추진비 공개 목록" in busan_donggu_council.evidence_note
     assert "공공누리 제4유형" in busan_donggu_council.evidence_note
-    assert busan_yeongdo_council.verification_status == "legal_hold"
+    assert busan_yeongdo_council.verification_status == "adapter_hold"
     assert busan_yeongdo_council.source_url == (
         "https://www.yeongdo.go.kr/council/01221/04617/01236.web"
     )
-    assert "업무추진비 집행 현황 경로" in busan_yeongdo_council.evidence_note
-    assert "All Rights Reserved" in busan_yeongdo_council.evidence_note
-    assert busan_haeundae_council.verification_status == "legal_hold"
+    assert "posts_seen=0" in busan_yeongdo_council.evidence_note
+    assert busan_haeundae_council.verification_status == "adapter_hold"
     assert busan_haeundae_council.source_url.startswith(
         "https://council.haeundae.go.kr/board/list.do"
     )
-    assert "업무추진비 집행 현황 목록" in busan_haeundae_council.evidence_note
+    assert "posts_seen=0" in busan_haeundae_council.evidence_note
     assert busan_geumjeong_council.verification_status == "legal_hold"
     assert busan_geumjeong_council.source_url.startswith(
         "https://www.geumjeong.go.kr/board/list.geumj"
     )
     assert "무단복제 불가" in busan_geumjeong_council.evidence_note
+    assert busan_suyeong_council.verification_status == "legal_hold"
+    assert busan_suyeong_council.source_file_kinds == ["xlsx"]
+    assert "공공누리 제3유형" in busan_suyeong_council.evidence_note
+    assert busan_sasang_council.verification_status == "legal_hold"
+    assert busan_sasang_council.source_file_kinds == ["pdf"]
+    assert "사전 협의" in busan_sasang_council.evidence_note
+    assert busan_yeonje_council.verification_status == "legal_hold"
+    assert busan_yeonje_council.source_file_kinds == ["xls"]
+    assert "비영리목적" in busan_yeonje_council.evidence_note
     busan_junggu = next(
         entry
         for entry in non_capital_entries
@@ -1154,16 +1212,16 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "부산광역시" and entry.short_name == "기장군청"
     )
-    assert busan_junggu.verification_status == "legal_hold"
-    assert "업무추진비 공개 목록" in busan_junggu.evidence_note
+    assert busan_junggu.verification_status == "adapter_hold"
+    assert "posts_seen=0" in busan_junggu.evidence_note
     assert busan_dongnae.verification_status == "legal_hold"
     assert "자유이용 불가 안내" in busan_dongnae.evidence_note
     assert busan_bukgu.verification_status == "legal_hold"
     assert "공공누리 미부착 자료의 사전 협의" in busan_bukgu.evidence_note
-    assert busan_gangseo.verification_status == "legal_hold"
-    assert "과장급 이상 업무추진비" in busan_gangseo.evidence_note
-    assert busan_gangseo_council.verification_status == "legal_hold"
-    assert "의회 업무추진비 사용내역" in busan_gangseo_council.evidence_note
+    assert busan_gangseo.verification_status == "adapter_hold"
+    assert "posts_seen=0" in busan_gangseo.evidence_note
+    assert busan_gangseo_council.verification_status == "adapter_hold"
+    assert "posts_seen=0" in busan_gangseo_council.evidence_note
     assert busan_yeonje.verification_status == "legal_hold"
     assert "상업적 목적 사용 불가" in busan_yeonje.evidence_note
     assert busan_gijang.verification_status == "legal_hold"
@@ -1229,12 +1287,14 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "전라남도" and entry.short_name == "강진군의회"
     )
-    assert mokpo_city.verification_status == "legal_hold"
-    assert "공공누리 유형 표시가 비어" in mokpo_city.evidence_note
-    assert mokpo_council.verification_status == "legal_hold"
-    assert "명확한 자유이용 표시" in mokpo_council.evidence_note
-    assert naju_city.verification_status == "legal_hold"
-    assert "본문이 0바이트" in naju_city.evidence_note
+    assert mokpo_city.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in mokpo_city.evidence_note
+    assert mokpo_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in mokpo_council.evidence_note
+    assert naju_city.verification_status == "verified_in_code"
+    assert naju_city.source_url == "https://www.naju.go.kr/www/open_data/budget/expense/group_expense"
+    assert naju_city.source_file_kinds == ["pdf"]
+    assert "window.open" in naju_city.evidence_note
     assert gurye_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in gurye_city.evidence_note
     assert gurye_council.verification_status == "legal_hold"
@@ -1252,12 +1312,11 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert suncheon_city.verification_status == "legal_hold"
     assert "PDF/HWPX 다운로드 구조" in suncheon_city.evidence_note
     assert "출처표시-비상업적-변경금지" in suncheon_city.evidence_note
-    assert gangjin_city.verification_status == "legal_hold"
+    assert gangjin_city.verification_status == "verified_in_code"
     assert "file_download XLSX 다운로드" in gangjin_city.evidence_note
-    assert "All Rights Reserved" in gangjin_city.evidence_note
-    assert gangjin_council.verification_status == "legal_hold"
-    assert "2025년 4분기" in gangjin_council.evidence_note
-    assert "All rights reserved" in gangjin_council.evidence_note
+    assert "factual row" in gangjin_city.evidence_note
+    assert gangjin_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in gangjin_council.evidence_note
 
     gwangju_donggu_city = next(
         entry
@@ -1312,19 +1371,19 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert gwangju_donggu_city.verification_status == "legal_hold"
     assert "부서장 업무추진비 목록" in gwangju_donggu_city.evidence_note
     assert "공공누리 제4유형" in gwangju_donggu_city.evidence_note
-    assert gwangju_donggu_council.verification_status == "legal_hold"
+    assert gwangju_donggu_council.verification_status == "verified_in_code"
     assert "업무추진비 현황 목록과 XLSX 첨부" in gwangju_donggu_council.evidence_note
-    assert "제1유형 확인 전까지 수집하지 않습니다" in gwangju_donggu_council.evidence_note
-    assert gwangju_seogu_city.verification_status == "legal_hold"
+    assert "factual row" in gwangju_donggu_council.evidence_note
+    assert gwangju_seogu_city.verification_status == "verified_in_code"
     assert "국장급이상 업무추진비 공개" in gwangju_seogu_city.evidence_note
-    assert "All Rights Reserved" in gwangju_seogu_city.evidence_note
+    assert "factual row" in gwangju_seogu_city.evidence_note
     assert gwangju_seogu_council.verification_status == "no_recent_data"
     assert "2023-08-29" in gwangju_seogu_council.evidence_note
     assert "최근 12개월 적재 대상 데이터가 없습니다" in gwangju_seogu_council.evidence_note
     assert gwangju_namgu_city.verification_status == "legal_hold"
     assert "업무추진비 공개 목록" in gwangju_namgu_city.evidence_note
     assert "공공누리 제4유형" in gwangju_namgu_city.evidence_note
-    assert gwangju_namgu_council.verification_status == "legal_hold"
+    assert gwangju_namgu_council.verification_status == "no_recent_data"
     assert gwangju_namgu_council.source_url == "http://www.gjnc.or.kr/main/board/45"
     assert gwangju_namgu_council.detail_url == (
         "http://www.gjnc.or.kr/main/board/45/1/read/4157?query="
@@ -1333,14 +1392,12 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "http://www.gjnc.or.kr/main/board/45/1/download/4157/6941"
     )
     assert gwangju_namgu_council.source_file_kinds == ["xlsx"]
-    assert gwangju_namgu_council.commercial_use_status == "not_confirmed_without_kogl_mark"
-    assert gwangju_namgu_council.derivative_use_status == "not_confirmed_without_kogl_mark"
-    assert "2025년 1분기" in gwangju_namgu_council.evidence_note
-    assert "All Right Reserved" in gwangju_namgu_council.evidence_note
+    assert "2025-04-30" in gwangju_namgu_council.evidence_note
+    assert "최근 12개월" in gwangju_namgu_council.evidence_note
     assert gwangju_bukgu_city.verification_status == "legal_hold"
     assert "업무추진비공개 목록" in gwangju_bukgu_city.evidence_note
     assert "사전 협의" in gwangju_bukgu_city.evidence_note
-    assert gwangju_bukgu_council.verification_status == "legal_hold"
+    assert gwangju_bukgu_council.verification_status == "verified_in_code"
     assert gwangju_bukgu_council.source_url == (
         "https://council.bukgu.gwangju.kr/index.do?PID=094"
     )
@@ -1351,15 +1408,21 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "https://council.bukgu.gwangju.kr/download.do?attSeq=83251&bbsSn=28777"
     )
     assert gwangju_bukgu_council.source_file_kinds == ["xlsx"]
-    assert gwangju_bukgu_council.commercial_use_status == "not_confirmed_without_kogl_mark"
-    assert gwangju_bukgu_council.derivative_use_status == "not_confirmed_without_kogl_mark"
+    assert (
+        gwangju_bukgu_council.commercial_use_status
+        == "factual_rows_candidate_no_explicit_reuse_limit"
+    )
+    assert (
+        gwangju_bukgu_council.derivative_use_status
+        == "factual_rows_candidate_no_explicit_reuse_limit"
+    )
     assert "업무추진비 현황" in gwangju_bukgu_council.evidence_note
-    assert "ALL RIGHTS RESERVED" in gwangju_bukgu_council.evidence_note
+    assert "factual row" in gwangju_bukgu_council.evidence_note
     assert gwangju_gwangsan_city.verification_status == "legal_hold"
     assert "getInfoOpenList.do/getInfoOpenData.do" in gwangju_gwangsan_city.evidence_note
     assert "2026-05-29" in gwangju_gwangsan_city.evidence_note
     assert "공공누리 제4유형" in gwangju_gwangsan_city.evidence_note
-    assert gwangju_gwangsan_council.verification_status == "legal_hold"
+    assert gwangju_gwangsan_council.verification_status == "verified_in_code"
     assert gwangju_gwangsan_council.source_url == "https://gjgc.or.kr/main/board/45"
     assert gwangju_gwangsan_council.detail_url == "https://gjgc.or.kr/main/board/45/1/read/13247"
     assert gwangju_gwangsan_council.attachment_url == (
@@ -1367,13 +1430,15 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     )
     assert gwangju_gwangsan_council.source_file_kinds == ["xlsx"]
     assert (
-        gwangju_gwangsan_council.commercial_use_status == "not_confirmed_without_kogl_mark"
+        gwangju_gwangsan_council.commercial_use_status
+        == "factual_rows_candidate_no_explicit_reuse_limit"
     )
     assert (
-        gwangju_gwangsan_council.derivative_use_status == "not_confirmed_without_kogl_mark"
+        gwangju_gwangsan_council.derivative_use_status
+        == "factual_rows_candidate_no_explicit_reuse_limit"
     )
     assert "2026년 1분기" in gwangju_gwangsan_council.evidence_note
-    assert "All Right Reserved" in gwangju_gwangsan_council.evidence_note
+    assert "factual row" in gwangju_gwangsan_council.evidence_note
 
     jeonju_city = next(
         entry
@@ -1423,23 +1488,21 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert jeonju_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in jeonju_city.evidence_note
     assert "HWPX/PDF/XLSX 다운로드 구조" in jeonju_city.evidence_note
-    assert jeonju_council.verification_status == "legal_hold"
-    assert "2026년 1분기" in jeonju_council.evidence_note
-    assert "ALL RIGHTS RESERVED" in jeonju_council.evidence_note
+    assert jeonju_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in jeonju_council.evidence_note
     assert gunsan_city.verification_status == "legal_hold"
     assert "eFileDownload 첨부 구조" in gunsan_city.evidence_note
     assert "공공누리 제4유형" in gunsan_city.evidence_note
-    assert gunsan_council.verification_status == "legal_hold"
-    assert "PDF/XLS/XLSX 다운로드 구조" in gunsan_council.evidence_note
+    assert gunsan_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in gunsan_council.evidence_note
     assert iksan_council.verification_status == "legal_hold"
     assert "상세·PDF 다운로드 구조" in iksan_council.evidence_note
     assert "공공누리 제4유형" in iksan_council.evidence_note
-    assert jinan_city.verification_status == "legal_hold"
-    assert "2025년 6~12월" in jinan_city.evidence_note
-    assert "공공누리 표시가 부착된 저작물만" in jinan_city.evidence_note
-    assert jinan_council.verification_status == "legal_hold"
-    assert "업무추진비 공개 메뉴" in jinan_council.evidence_note
-    assert "All rights reserved" in jinan_council.evidence_note
+    assert jinan_city.verification_status == "pdf_vision_hold"
+    assert "scanned PDF" in jinan_city.evidence_note
+    assert jinan_council.verification_status == "verified_in_code"
+    assert "업무추진비 공개 목록" in jinan_council.evidence_note
+    assert "factual row" in jinan_council.evidence_note
     assert namwon_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in namwon_city.evidence_note
     assert jangsu_city.verification_status == "legal_hold"
@@ -1456,10 +1519,20 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "경상북도" and entry.short_name == "포항시의회"
     )
-    assert pohang_city.verification_status == "legal_hold"
-    assert "XLSX 다운로드 구조" in pohang_city.evidence_note
-    assert pohang_council.verification_status == "legal_hold"
-    assert "PDF 다운로드 구조" in pohang_council.evidence_note
+    gyeongju_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상북도" and entry.short_name == "경주시청"
+    )
+    assert pohang_city.verification_status == "adapter_hold"
+    assert "posts_seen=0" in pohang_city.evidence_note
+    assert pohang_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision" in pohang_council.evidence_note
+    assert gyeongju_city.verification_status == "verified_in_code"
+    assert gyeongju_city.attachment_url == (
+        "https://www.gyeongju.go.kr/programs/board/download.do?parm_file_uid=395085"
+    )
+    assert "normalized_visits=39" in gyeongju_city.evidence_note
     mungyeong_city = next(
         entry
         for entry in non_capital_entries
@@ -1480,15 +1553,45 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "경상북도" and entry.short_name == "안동시청"
     )
+    yeongju_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상북도" and entry.short_name == "영주시청"
+    )
+    uiseong_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상북도" and entry.short_name == "의성군청"
+    )
+    bonghwa_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상북도" and entry.short_name == "봉화군청"
+    )
+    uljin_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상북도" and entry.short_name == "울진군청"
+    )
     assert mungyeong_city.verification_status == "legal_hold"
     assert "공공누리 제4유형" in mungyeong_city.evidence_note
-    assert gyeongju_council.verification_status == "legal_hold"
-    assert "분기별 PDF 첨부 구조" in gyeongju_council.evidence_note
-    assert "All Rights Reserved" in gyeongju_council.evidence_note
-    assert gimcheon_city.verification_status == "legal_hold"
+    assert gyeongju_council.verification_status == "adapter_hold"
+    assert "posts_seen=0" in gyeongju_council.evidence_note
+    assert gimcheon_city.verification_status == "verified_in_code"
     assert "일부 상세 HTML 표 구조" in gimcheon_city.evidence_note
     assert andong_city.verification_status == "legal_hold"
     assert "공공누리 자유이용 불가" in andong_city.evidence_note
+    assert yeongju_city.verification_status == "verified_in_code"
+    assert yeongju_city.source_file_kinds == ["pdf"]
+    assert "normalized_visits=109" in yeongju_city.evidence_note
+    assert "production DB 기준 sources=1, places=78, visits=109" in yeongju_city.evidence_note
+    assert uiseong_city.verification_status == "verified_in_code"
+    assert "첨부 확장자를 확정할 수 없고" in uiseong_city.evidence_note
+    assert bonghwa_city.verification_status == "legal_hold"
+    assert "공공누리 미부착 자료는 사전 협의" in bonghwa_city.evidence_note
+    assert uljin_city.verification_status == "legal_hold"
+    assert uljin_city.source_file_kinds == ["pdf"]
+    assert "공공누리 제4유형" in uljin_city.evidence_note
 
     jinju_city = next(
         entry
@@ -1516,8 +1619,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
     assert changwon_city.source_file_kinds == ["xlsx", "pdf"]
     assert changwon_city.verified_at == "2026-06-01"
     assert changwon_city.verified_by == "공식 사이트 원격 확인"
-    assert changwon_council.verification_status == "legal_hold"
-    assert "PDF 다운로드 구조" in changwon_council.evidence_note
+    assert changwon_council.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in changwon_council.evidence_note
     gimhae_city = next(
         entry
         for entry in non_capital_entries
@@ -1528,15 +1631,37 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         for entry in non_capital_entries
         if entry.parent_region == "경상남도" and entry.short_name == "산청군청"
     )
+    geoje_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상남도" and entry.short_name == "거제시청"
+    )
+    yangsan_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상남도" and entry.short_name == "양산시청"
+    )
+    uiryeong_city = next(
+        entry
+        for entry in non_capital_entries
+        if entry.parent_region == "경상남도" and entry.short_name == "의령군청"
+    )
     hadong_council = next(
         entry
         for entry in non_capital_entries
         if entry.parent_region == "경상남도" and entry.short_name == "하동군의회"
     )
-    assert gimhae_city.verification_status == "legal_hold"
-    assert "All Rights Reserved" in gimhae_city.evidence_note
-    assert sancheong_city.verification_status == "legal_hold"
-    assert "실제 공공누리 제1유형 표시" in sancheong_city.evidence_note
+    assert gimhae_city.verification_status == "pdf_vision_hold"
+    assert "scanned PDF vision extraction" in gimhae_city.evidence_note
+    assert sancheong_city.verification_status == "adapter_hold"
+    assert "curl request failed" in sancheong_city.evidence_note
+    assert geoje_city.verification_status == "legal_hold"
+    assert "normalized_visits=203" in geoje_city.evidence_note
+    assert "사전 협의" in geoje_city.evidence_note
+    assert yangsan_city.verification_status == "legal_hold"
+    assert "첨부 확장자를 확정할 수 없고" in yangsan_city.evidence_note
+    assert uiryeong_city.verification_status == "legal_hold"
+    assert "공공누리 제4유형" in uiryeong_city.evidence_note
     assert hadong_council.verification_status == "source_not_found"
 
     daejeon_basic_hold_names = {
@@ -1548,6 +1673,8 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "동구청",
         "중구청",
         "서구청",
+        "유성구청",
+        "대덕구청",
     }
     daejeon_verified_names = {
         entry.short_name
@@ -1560,6 +1687,7 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         "대전시의회",
         "동구의회",
         "중구의회",
+        "유성구의회",
         "대덕구의회",
     }
     daejeon_pdf_hold_names = {
@@ -1568,21 +1696,28 @@ def test_source_registry_tracks_nationwide_pending_scope_with_korean_labels() ->
         if entry.parent_region == "대전광역시"
         and entry.verification_status == "pdf_vision_hold"
     }
-    assert daejeon_pdf_hold_names == {"유성구청", "대덕구청"}
+    assert daejeon_pdf_hold_names == set()
     daejeon_adapter_hold_names = {
         entry.short_name
         for entry in non_capital_entries
         if entry.parent_region == "대전광역시"
         and entry.verification_status == "adapter_hold"
     }
-    assert daejeon_adapter_hold_names == {"유성구의회"}
+    assert daejeon_adapter_hold_names == set()
     daejeon_source_not_found_names = {
         entry.short_name
         for entry in non_capital_entries
         if entry.parent_region == "대전광역시"
         and entry.verification_status == "source_not_found"
     }
-    assert daejeon_source_not_found_names == {"서구의회"}
+    assert daejeon_source_not_found_names == set()
+    daejeon_no_recent_names = {
+        entry.short_name
+        for entry in non_capital_entries
+        if entry.parent_region == "대전광역시"
+        and entry.verification_status == "no_recent_data"
+    }
+    assert daejeon_no_recent_names == {"서구의회"}
     daejeon_junggu = next(
         entry
         for entry in non_capital_entries
@@ -1611,17 +1746,18 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert len(entries) == 1714
     assert {entry.priority_group for entry in entries} == {"p2", "p3", "p4"}
     assert sum(1 for entry in entries if entry.verification_status == "pending") == 0
-    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 42
-    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 32
-    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 294
-    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 8
-    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 1338
+    assert sum(1 for entry in entries if entry.verification_status == "verified_in_code") == 353
+    assert sum(1 for entry in entries if entry.verification_status == "source_not_found") == 18
+    assert sum(1 for entry in entries if entry.verification_status == "no_recent_data") == 1306
+    assert sum(1 for entry in entries if entry.verification_status == "pdf_vision_hold") == 0
+    assert sum(1 for entry in entries if entry.verification_status == "adapter_hold") == 37
     assert sum(1 for entry in entries if entry.verification_status == "invalid_source_pattern") == 0
     assert all(entry.baseline_source_url for entry in entries)
     assert all(any("가" <= char <= "힣" for char in entry.evidence_note) for entry in entries)
 
     science = next(entry for entry in entries if entry.short_name == "과학기술정보통신부")
     haeng = next(entry for entry in entries if entry.short_name == "행정안전부")
+    mpva = next(entry for entry in entries if entry.short_name == "국가보훈부")
     audit = next(entry for entry in entries if entry.short_name == "감사원")
     court = next(entry for entry in entries if entry.short_name == "헌법재판소")
     nps = next(entry for entry in entries if entry.short_name == "국민연금공단")
@@ -1634,6 +1770,15 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert "source URL 미발견" in science.evidence_note
     assert haeng.verification_status == "adapter_hold"
     assert haeng.source_url == "https://mois.go.kr/frt/sub/a02/openBusinessPromotion/screen.do"
+    assert mpva.verification_status == "verified_in_code"
+    assert mpva.adapter == "central_state_attachment_board"
+    assert mpva.source_url == "https://www.mpva.go.kr/mpva/selectBbsNttList.do?bbsNo=3&key=7"
+    assert mpva.source_file_kinds == ["xlsx", "pdf"]
+    assert "central_state_attachment_board" in mpva.evidence_note
+    police = next(entry for entry in entries if entry.short_name == "경찰청")
+    assert police.verification_status == "verified_in_code"
+    assert police.adapter == "central_state_attachment_board"
+    assert "production에 적재" in police.evidence_note
     assert audit.jurisdiction_type_label == "독립국가기관"
     assert court.gov_tier_label == "헌법기관"
     assert court.branch_label == "헌법기관"
@@ -1660,13 +1805,55 @@ def test_source_registry_exposes_public_sector_priority_group_metadata() -> None
     assert seoul_facility.verification_status == "no_recent_data"
     assert "place-level" in seoul_facility.evidence_note
 
-    local_public = next(entry for entry in entries if entry.priority_group == "p4")
+    local_public = next(entry for entry in entries if entry.short_name == "동대문구시설관리공단")
     assert local_public.priority_group_label == "P4 지방공공기관"
     assert local_public.gov_tier_label == "지방공공기관"
     assert local_public.jurisdiction_type_label == "지방공공기관"
-    assert local_public.verification_status == "adapter_hold"
-    assert local_public.source_url == "https://www.cleaneye.go.kr/user/headOrgWorkCostStat.do"
-    assert "클린아이" in local_public.evidence_note
+    assert local_public.verification_status == "verified_in_code"
+    assert local_public.adapter == "cleaneye_owner_work_cost"
+    assert local_public.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert local_public.source_file_kinds == ["xls", "xlsx"]
+    assert "FileDownload.do" in local_public.evidence_note
+
+    dongducheon_facility = next(
+        entry for entry in entries if entry.short_name == "동두천시 시설관리공단"
+    )
+    assert dongducheon_facility.verification_status == "verified_in_code"
+    assert dongducheon_facility.adapter == "cleaneye_owner_work_cost"
+    assert dongducheon_facility.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert dongducheon_facility.source_file_kinds == ["xls", "xlsx"]
+
+    changnyeong_facility = next(entry for entry in entries if entry.short_name == "창녕군시설관리공단")
+    assert changnyeong_facility.verification_status == "verified_in_code"
+    assert changnyeong_facility.adapter == "cleaneye_owner_work_cost"
+    assert changnyeong_facility.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert "FileDownload.do" in changnyeong_facility.evidence_note
+
+    busan_namgu_facility = next(
+        entry for entry in entries if entry.short_name == "부산광역시 남구 시설관리공단"
+    )
+    changwon_leports = next(entry for entry in entries if entry.short_name == "창원레포츠파크")
+    assert busan_namgu_facility.verification_status == "no_recent_data"
+    assert changwon_leports.verification_status == "no_recent_data"
+    assert "normalized visit 0건" in busan_namgu_facility.evidence_note
+    assert "place-level 데이터 0건" in changwon_leports.evidence_note
+
+    nowon_jobs = next(entry for entry in entries if entry.short_name == "노원어르신행복주식회사")
+    assert nowon_jobs.verification_status == "no_recent_data"
+    assert nowon_jobs.source_url == "https://www.cleaneye.go.kr/user/iptBuOwnerWorkCost.do"
+    assert "iptBuOwnerWorkCost" in nowon_jobs.evidence_note
+    assert "place-level 데이터 0건" in nowon_jobs.evidence_note
+
+    siheung_water = next(entry for entry in entries if entry.short_name == "시흥시상수도")
+    siheung_development = next(entry for entry in entries if entry.short_name == "시흥시공영개발")
+    changwon_sewer = next(entry for entry in entries if entry.short_name == "창원시하수도")
+    assert siheung_water.verification_status == "no_recent_data"
+    assert siheung_development.verification_status == "no_recent_data"
+    assert siheung_water.source_url == "https://www.cleaneye.go.kr/user/empOwnerWorkCost.do"
+    assert changwon_sewer.verification_status == "verified_in_code"
+    assert changwon_sewer.adapter == "cleaneye_owner_work_cost"
+    assert "CleanEye" in local_public.evidence_note
+    assert "CleanEye" in siheung_water.evidence_note
 
 
 def test_source_registry_keeps_incheon_name_collisions_disambiguated() -> None:

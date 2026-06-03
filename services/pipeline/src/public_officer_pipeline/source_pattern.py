@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from public_officer_pipeline.models import Agency
 
-ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html")
-FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html"]
+ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip")
+FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip"]
 
 
 class SourcePatternError(ValueError):
@@ -26,7 +26,12 @@ class SeoulOpenGovPattern(SourcePattern):
 
 
 class AttachmentBoardPattern(SourcePattern):
-    adapter: Literal["attachment_board", "council_attachment_board", "gangnam_xlsx_board"]
+    adapter: Literal[
+        "attachment_board",
+        "council_attachment_board",
+        "central_state_attachment_board",
+        "gangnam_xlsx_board",
+    ]
     listUrl: str
     extraListUrls: list[str] = Field(default_factory=list)
     fileKinds: list[FileKind] = Field(default_factory=lambda: list(ALLOWED_FILE_KINDS))
@@ -37,6 +42,8 @@ class AttachmentBoardPattern(SourcePattern):
     rowsPerPage: int = 10
     jsDownloadPath: str | None = None
     userAgent: str | None = None
+    referer: str | None = None
+    httpBackend: Literal["auto", "httpx", "curl"] | None = None
 
     @field_validator("fileKinds", mode="before")
     @classmethod
@@ -73,6 +80,7 @@ class AlioItemDisclosurePattern(SourcePattern):
     listUrl: str = "https://www.alio.go.kr/item/itemOrganListJung.json"
     downloadUrl: str = "https://www.alio.go.kr/download/file.json"
     fileKinds: list[FileKind] = Field(default_factory=lambda: ["xlsx"])
+    directFiles: list[dict[str, str]] = Field(default_factory=list)
     officialCommonPortal: bool = True
 
     @field_validator("fileKinds", mode="before")
@@ -154,7 +162,12 @@ def parse_source_pattern(agency: Agency) -> ParsedSourcePattern:
     try:
         if adapter == "seoul_opengov":
             return SeoulOpenGovPattern(**raw)
-        if adapter in {"attachment_board", "council_attachment_board", "gangnam_xlsx_board"}:
+        if adapter in {
+            "attachment_board",
+            "council_attachment_board",
+            "central_state_attachment_board",
+            "gangnam_xlsx_board",
+        }:
             return AttachmentBoardPattern(**raw)
         if adapter == "estimate_list_html":
             return EstimateListPattern(**raw)

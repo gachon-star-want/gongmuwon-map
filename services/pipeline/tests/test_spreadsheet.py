@@ -7,7 +7,7 @@ from openpyxl import Workbook
 
 from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor import spreadsheet as spreadsheet_module
-from public_officer_pipeline.extractor import extract_spreadsheet_rows
+from public_officer_pipeline.extractor import extract_spreadsheet_rows, extract_zip_rows
 
 
 def _workbook_bytes(workbook: Workbook) -> bytes:
@@ -39,6 +39,44 @@ def _workbook_bytes_without_normal_style_name(workbook: Workbook) -> bytes:
                 )
                 assert count == 1
             target.writestr(item, data)
+    return output.getvalue()
+
+
+def _workbook_bytes_with_unnamed_custom_property(workbook: Workbook) -> bytes:
+    original = _workbook_bytes(workbook)
+    custom_xml = b"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"
+ xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2">
+    <vt:lpwstr>invalid but ignorable</vt:lpwstr>
+  </property>
+</Properties>
+"""
+    output = BytesIO()
+    with zipfile.ZipFile(BytesIO(original)) as source, zipfile.ZipFile(output, "w") as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == "[Content_Types].xml":
+                data = data.replace(
+                    b"</Types>",
+                    (
+                        b'<Override PartName="/docProps/custom.xml" '
+                        b'ContentType="application/vnd.openxmlformats-officedocument.custom-properties+xml"/>'
+                        b"</Types>"
+                    ),
+                )
+            elif item.filename == "_rels/.rels":
+                data = data.replace(
+                    b"</Relationships>",
+                    (
+                        b'<Relationship Id="rIdCustomProps" '
+                        b'Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+                        b'relationships/custom-properties" Target="docProps/custom.xml"/>'
+                        b"</Relationships>"
+                    ),
+                )
+            target.writestr(item, data)
+        target.writestr("docProps/custom.xml", custom_xml)
     return output.getvalue()
 
 
@@ -710,6 +748,23 @@ def test_extracts_xlsx_with_missing_builtin_cell_style_name() -> None:
     assert rows[0].amount == 33000
 
 
+def test_extracts_xlsx_with_missing_custom_property_name() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-02-01", "순창식당", 12000])
+
+    rows = extract_spreadsheet_rows(
+        _workbook_bytes_with_unnamed_custom_property(workbook),
+        fallback_department="순창군청",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "순창군청"
+    assert rows[0].place_text == "순창식당"
+    assert rows[0].amount == 12000
+
+
 def test_rejects_spreadsheet_content_over_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(guards, "MAX_SPREADSHEET_BYTES", 3)
 
@@ -783,6 +838,24 @@ def test_extracts_xlsx_with_large_blank_formatted_range() -> None:
     assert rows[0].amount == 10000
 
 
+def test_extracts_zip_archive_xlsx_member_rows() -> None:
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.append(["집행일자", "장소", "금액"])
+    worksheet.append(["2026-04-01", "서천식당", 33000])
+
+    rows = extract_zip_rows(
+        _zip_bytes({"2026년 4월 업무추진비 집행내역.xlsx": _workbook_bytes(workbook)}),
+        fallback_department="홍성군청",
+        source_title="2026년 1분기 업무추진비 집행내역",
+    )
+
+    assert len(rows) == 1
+    assert rows[0].department_name == "홍성군청"
+    assert rows[0].place_text == "서천식당"
+    assert rows[0].amount == 33000
+
+
 def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:
     workbook = Workbook()
     worksheet = workbook.active
@@ -791,6 +864,52 @@ def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:
     worksheet.cell(row=1, column=guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET + 1000).number_format = "@"
 
     rows = extract_spreadsheet_rows(_workbook_bytes(workbook), fallback_department="구리시청")
+
+    assert len(rows) == 1
+    assert rows[0].place_text == "식당"
+    assert rows[0].amount == 10000
+
+
+def test_extracts_xls_with_large_blank_formatted_range(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_ROWS_PER_SHEET", 2)
+
+    values = {
+        (0, 0): "집행일자",
+        (0, 1): "장소",
+        (0, 2): "금액",
+        (1, 0): "2026-04-01",
+        (1, 1): "식당",
+        (1, 2): 10000,
+    }
+
+    class FakeSheet:
+        name = "legacy"
+        nrows = 10
+        ncols = 3
+
+        def cell(self, row_index: int, column_index: int):
+            class FakeCell:
+                ctype = 1
+                value = values.get((row_index, column_index), "")
+
+            return FakeCell()
+
+    class FakeWorkbook:
+        datemode = 0
+
+        def sheets(self) -> list[FakeSheet]:
+            return [FakeSheet()]
+
+    monkeypatch.setattr(
+        spreadsheet_module.xlrd,
+        "open_workbook",
+        lambda *, file_contents: FakeWorkbook(),
+    )
+
+    rows = extract_spreadsheet_rows(
+        b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1legacy",
+        fallback_department="중구의회",
+    )
 
     assert len(rows) == 1
     assert rows[0].place_text == "식당"
@@ -841,6 +960,13 @@ def test_rejects_xls_declared_column_budget(monkeypatch: pytest.MonkeyPatch) -> 
         name = "legacy"
         nrows = 1
         ncols = 3
+
+        def cell(self, _row_index: int, column_index: int):
+            class FakeCell:
+                ctype = 1
+                value = f"value-{column_index}"
+
+            return FakeCell()
 
     class FakeWorkbook:
         nsheets = 1

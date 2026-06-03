@@ -9,7 +9,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import httpx
 
@@ -37,6 +37,14 @@ def _build_url_with_params(url: str, params: dict[str, Any] | None) -> str:
             continue
         query[str(key)] = str(value)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _curl_safe_url(url: str) -> str:
+    parts = urlsplit(url)
+    path = quote(parts.path, safe="/%:@")
+    query = quote(parts.query, safe="=&%/:;+,@?()-_.~")
+    fragment = quote(parts.fragment, safe="%/:;+,@?()-_.~")
+    return urlunsplit((parts.scheme, parts.netloc, path, query, fragment))
 
 
 def _parse_status_from_headers(header_text: str) -> int:
@@ -251,6 +259,8 @@ class _CurlClient(AsyncHttpClient):
         self._doh_url = doh_url
         self._max_download_bytes = max_download_bytes
         self._compressed = compressed
+        self._cookie_directory = tempfile.TemporaryDirectory()
+        self._cookie_path = Path(self._cookie_directory.name) / "cookies.txt"
 
     async def get(
         self,
@@ -268,6 +278,11 @@ class _CurlClient(AsyncHttpClient):
             command = [
                 "curl",
                 "-sS",
+                "--http1.1",
+                "-b",
+                str(self._cookie_path),
+                "-c",
+                str(self._cookie_path),
                 "-D",
                 str(header_path),
                 "-o",
@@ -288,7 +303,7 @@ class _CurlClient(AsyncHttpClient):
                 command.append("-L")
             for key, value in _merge_headers(self._headers, headers).items():
                 command.extend(["-H", f"{key}: {value}"])
-            command.append(request_url)
+            command.append(_curl_safe_url(request_url))
 
             process = await asyncio.create_subprocess_exec(
                 *command,
@@ -325,7 +340,14 @@ class _CurlClient(AsyncHttpClient):
                 subject="downloaded document body",
             )
             body_bytes = body_path.read_bytes() if body_path.exists() else b""
-            text = _decode_response_text(body_bytes, headers)
+            decode_headers = dict(headers)
+            if self._compressed:
+                decode_headers = {
+                    key: value
+                    for key, value in decode_headers.items()
+                    if key.lower() != "content-encoding"
+                }
+            text = _decode_response_text(body_bytes, decode_headers)
 
         return SimpleHttpResponse(
             status_code=status_code,
@@ -336,7 +358,7 @@ class _CurlClient(AsyncHttpClient):
         )
 
     async def aclose(self) -> None:
-        return None
+        self._cookie_directory.cleanup()
 
 
 class _AdaptiveHttpClient(AsyncHttpClient):
@@ -393,11 +415,12 @@ def create_http_client(
     timeout: httpx.Timeout,
     headers: dict[str, str],
     follow_redirects: bool,
+    backend: str | None = None,
 ) -> AsyncHttpClient:
-    backend = os.getenv("PIPELINE_HTTP_BACKEND", "auto").strip().lower()
-    if backend not in Backend:
-        backend = "auto"
-    if backend == "curl":
+    selected_backend = (backend or os.getenv("PIPELINE_HTTP_BACKEND", "auto")).strip().lower()
+    if selected_backend not in Backend:
+        selected_backend = "auto"
+    if selected_backend == "curl":
         doh_url = os.getenv("PIPELINE_CURL_DOH_URL", "").strip() or None
         return _CurlClient(
             timeout=_resolve_timeout_seconds(timeout),
@@ -405,6 +428,6 @@ def create_http_client(
             follow_redirects=follow_redirects,
             doh_url=doh_url,
         )
-    if backend == "httpx":
+    if selected_backend == "httpx":
         return _HttpxClient(timeout=timeout, headers=headers, follow_redirects=follow_redirects)
     return _AdaptiveHttpClient(timeout=timeout, headers=headers, follow_redirects=follow_redirects)

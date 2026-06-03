@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 
 from selectolax.parser import HTMLParser, Node
 
@@ -24,19 +25,23 @@ HEADER_ALIASES = {
     "집행목적": "purpose",
     "집행유형": "purpose",
     "집행내역": "purpose",
+    "결제내용": "purpose",
     "사용목적(내역)": "purpose",
     "집행구분": "expense_category",
     "사용금액(원)": "amount",
     "집행금액(원)": "amount",
     "집행액(천원)": "amount_thousand",
+    "금액(천원)": "amount_thousand",
     "집행액": "amount",
     "금액": "amount",
     "사용자 및 인원": "user_text",
     "사용자": "user_text",
     "집행대상": "user_text",
+    "참석대상": "user_text",
     "집행인원": "party_size",
     "대상인원": "party_size",
     "대상인원수(명)": "party_size",
+    "인원(수량)": "party_size",
     "결제방법": "payment_method",
     "결재방법": "payment_method",
     "사용방법": "payment_method",
@@ -45,12 +50,13 @@ HEADER_ALIASES = {
 }
 
 
-def extract_expense_rows(html: str) -> list[ParsedExpenseRow]:
+def extract_expense_rows(html: str, fallback_date: date | None = None) -> list[ParsedExpenseRow]:
     tree = HTMLParser(html)
     rows: list[ParsedExpenseRow] = []
     for table in tree.css("table"):
         keyed = _extract_key_value_table(table)
         if keyed:
+            keyed = _with_fallback_date(keyed, fallback_date)
             parsed = _parse_row(keyed, [f"{key}: {value}" for key, value in keyed.items()])
             if parsed:
                 rows.append(parsed)
@@ -60,7 +66,7 @@ def extract_expense_rows(html: str) -> list[ParsedExpenseRow]:
             continue
         headers = [_clean(cell) for cell in table_rows[0]]
         mapped_headers = [_map_header(header) for header in headers]
-        if "used_at" not in mapped_headers or "place_text" not in mapped_headers:
+        if ("used_at" not in mapped_headers and fallback_date is None) or "place_text" not in mapped_headers:
             continue
         for raw_row in table_rows[1:]:
             if len(raw_row) < len(headers):
@@ -70,6 +76,7 @@ def extract_expense_rows(html: str) -> list[ParsedExpenseRow]:
                 for index, value in enumerate(raw_row[: len(mapped_headers)])
                 if mapped_headers[index]
             }
+            item = _with_fallback_date(item, fallback_date)
             parsed = _parse_row(item, raw_row)
             if parsed:
                 rows.append(parsed)
@@ -109,6 +116,12 @@ def _extract_table_rows(table: Node) -> list[list[str]]:
 def _map_header(header: str) -> str | None:
     compact = re.sub(r"\s+", "", header)
     return HEADER_ALIASES.get(compact)
+
+
+def _with_fallback_date(item: dict[str, str], fallback_date: date | None) -> dict[str, str]:
+    if fallback_date is not None and not item.get("used_at"):
+        return {**item, "used_at": fallback_date.isoformat()}
+    return item
 
 
 def _parse_row(item: dict[str, str], raw_row: list[str]) -> ParsedExpenseRow | None:

@@ -45,9 +45,11 @@ from public_officer_pipeline.source_registry import (
 from public_officer_pipeline.entity import KakaoResolver
 from public_officer_pipeline.extractor import (
     extract_expense_rows,
+    extract_hwp_rows,
     extract_hwpx_rows,
     extract_pdf_rows_with_vision,
     extract_spreadsheet_rows,
+    extract_zip_rows,
 )
 from public_officer_pipeline.loader import PostgresLoader
 from public_officer_pipeline.loader.postgres import apply_schema, refresh_materialized_views
@@ -509,6 +511,15 @@ async def _run_supported_agency_result(
     args: argparse.Namespace,
     agency: Agency,
 ) -> tuple[int, dict[str, object]]:
+    hold_failure_reason = _source_pattern_hold_failure_reason(agency)
+    if hold_failure_reason:
+        return 2, {
+            "error": "adapter_required",
+            "agency": agency.short_name,
+            "adapter": agency.source_pattern.get("adapter"),
+            "failure_reason": hold_failure_reason,
+        }
+
     try:
         pattern = parse_source_pattern(agency)
     except SourcePatternError as exc:
@@ -646,6 +657,24 @@ async def _run_agencies(args: argparse.Namespace) -> int:
 
     async def run_one(agency: Agency) -> None:
         async with semaphore:
+            hold_failure_reason = _source_pattern_hold_failure_reason(agency)
+            if hold_failure_reason:
+                results.append(
+                    {
+                        "agency_id": str(agency.id),
+                        "short_name": agency.short_name,
+                        "parent_region": agency.parent_region,
+                        "adapter": agency.source_pattern.get("adapter"),
+                        "status_code": 2,
+                        "result": "adapter_required",
+                        "failure_reason": hold_failure_reason,
+                        "attempt_count": 0,
+                        "max_attempts": args.max_attempts,
+                        "attempts": [],
+                    }
+                )
+                return
+
             try:
                 pattern = parse_source_pattern(agency)
                 adapter = pattern.adapter
@@ -1044,6 +1073,13 @@ def _adapter_required_failure_reason(agency: Agency) -> str:
     return "source_not_found"
 
 
+def _source_pattern_hold_failure_reason(agency: Agency) -> str | None:
+    raw = agency.source_pattern
+    if isinstance(raw, dict) and raw.get("holdStatus"):
+        return _adapter_required_failure_reason(agency)
+    return None
+
+
 _RETRYABLE_FAILURE_REASONS = {
     "auth_js_download",
     "llm_extraction_failure",
@@ -1192,16 +1228,33 @@ def _loader_for_write_target(args: argparse.Namespace) -> PostgresLoader:
 
 async def _extract_detail_rows(detail: PostDetail) -> list[ParsedExpenseRow]:
     if detail.file_kind == "html":
-        return extract_expense_rows(detail.html)
+        return extract_expense_rows(detail.html, fallback_date=detail.published_at)
     if detail.file_kind in {"xls", "xlsx"} and detail.content_bytes:
         return extract_spreadsheet_rows(
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
         )
+    if detail.file_kind == "hwp" and detail.content_bytes:
+        return extract_hwp_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+            source_title=detail.title,
+        )
     if detail.file_kind == "hwpx" and detail.content_bytes:
         return extract_hwpx_rows(
             detail.content_bytes,
             fallback_department=detail.department_name or "서울특별시",
+        )
+    if detail.file_kind == "hwp" and detail.content_bytes:
+        return extract_hwp_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+        )
+    if detail.file_kind == "zip" and detail.content_bytes:
+        return extract_zip_rows(
+            detail.content_bytes,
+            fallback_department=detail.department_name or "서울특별시",
+            source_title=detail.title,
         )
     if detail.file_kind == "pdf" and detail.content_bytes:
         return extract_pdf_rows_with_vision(

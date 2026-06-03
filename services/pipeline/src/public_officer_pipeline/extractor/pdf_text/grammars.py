@@ -71,6 +71,54 @@ def _build_default_line_grammars() -> list[PdfTextGrammar]:
         LineGrammar("user_no_address", _to_parse_fn(text_parser._parse_pdf_text_user_no_address_line)),
         LineGrammar("purpose_first", _to_parse_fn(text_parser._parse_pdf_text_purpose_first_line)),
         LineGrammar(
+            "date_time_place_purpose_party_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_date_time_place_purpose_party_amount_line),
+        ),
+        LineGrammar(
+            "user_date_place_purpose_amount_party",
+            _to_parse_fn(text_parser._parse_pdf_text_user_date_place_purpose_amount_party_line),
+        ),
+        LineGrammar(
+            "purpose_amount_party_place_date_user",
+            _to_parse_fn(text_parser._parse_pdf_text_purpose_amount_party_place_date_user_line),
+        ),
+        LineGrammar(
+            "datetime_purpose_amount_method_place",
+            _to_parse_fn(text_parser._parse_pdf_text_datetime_purpose_amount_method_place_line),
+        ),
+        LineGrammar(
+            "central_state_purpose_place_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_purpose_place_amount_line),
+        ),
+        LineGrammar(
+            "central_state_amount_place_purpose",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_amount_place_purpose_line),
+        ),
+        LineGrammar(
+            "central_state_place_purpose_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_place_purpose_amount_line),
+        ),
+        LineGrammar(
+            "central_state_user_place_purpose_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_central_state_user_place_purpose_amount_line),
+        ),
+        LineGrammar(
+            "user_date_place_purpose_party_amount_category",
+            _to_parse_fn(text_parser._parse_pdf_text_user_date_place_purpose_party_amount_category_line),
+        ),
+        LineGrammar(
+            "date_time_place_purpose_party_amount_simple",
+            _to_parse_fn(text_parser._parse_pdf_text_date_time_place_purpose_party_amount_simple_line),
+        ),
+        LineGrammar(
+            "user_date_payment_purpose_place_time_amount",
+            _to_parse_fn(text_parser._parse_pdf_text_user_date_payment_purpose_place_time_amount_line),
+        ),
+        LineGrammar(
+            "date_time_user_purpose_amount_party_place",
+            _to_parse_fn(text_parser._parse_pdf_text_date_time_user_purpose_amount_party_place_line),
+        ),
+        LineGrammar(
             "generic_text_row",
             _to_parse_fn(text_parser._parse_pdf_text_generic_row),
         ),
@@ -79,6 +127,20 @@ def _build_default_line_grammars() -> list[PdfTextGrammar]:
 
 def _build_default_whole_text_grammars() -> list[PdfTextGrammar]:
     return [
+        WholeTextGrammar(
+            "month_day_office",
+            lambda text, fallback_department: text_parser._parse_month_day_office_pdf_text(
+                text,
+                fallback_department=fallback_department,
+            ),
+        ),
+        WholeTextGrammar(
+            "yearless_council_amount",
+            lambda text, fallback_department: text_parser._parse_yearless_council_amount_pdf_text(
+                text,
+                fallback_department=fallback_department,
+            ),
+        ),
         WholeTextGrammar(
             "user_place_purpose_layout",
             lambda text, fallback_department: text_parser._parse_user_place_purpose_layout_pdf_text(
@@ -96,6 +158,20 @@ def _build_default_whole_text_grammars() -> list[PdfTextGrammar]:
         WholeTextGrammar(
             "segmented_office",
             lambda text, fallback_department: text_parser._parse_segmented_office_pdf_text(
+                text,
+                fallback_department=fallback_department,
+            ),
+        ),
+        WholeTextGrammar(
+            "columnar_ocr_sections",
+            lambda text, fallback_department: text_parser._parse_columnar_ocr_sections_pdf_text(
+                text,
+                fallback_department=fallback_department,
+            ),
+        ),
+        WholeTextGrammar(
+            "generic_columnar_ocr_sections",
+            lambda text, fallback_department: text_parser._parse_generic_columnar_ocr_sections_pdf_text(
                 text,
                 fallback_department=fallback_department,
             ),

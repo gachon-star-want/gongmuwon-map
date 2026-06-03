@@ -24,14 +24,25 @@ DEFAULT_USER_AGENT = (
     "PublicOfficerMapBot/0.1 "
     "(operator: wylee0806@naver.com; public-interest archive)"
 )
-SUPPORTED_FILE_KINDS = {"pdf", "xls", "xlsx", "hwpx"}
+SUPPORTED_FILE_KINDS = {"pdf", "hwp", "xls", "xlsx", "hwpx", "zip"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비", "시책추진비")
 DOWNLOAD_HREF_PARTS = (
     "/site/main/file/download/",
     "/bbs/FileDownLoadProc.do",
     "/board/news/download.do",
+    "/boardDown.do",
+    "/board/download.",
+    "/download/",
+    "/download.do",
+    "/education/fileDownload",
+    "/boardDownload.es",
+    "/board_down.php",
+    "/openInfoDataFileDownload.es",
     "/bbs/download.do",
     "/bbs/download?",
+    "/bbs/download.php",
+    "/getFile",
+    "/moa/bbs/layout/basic/download.php",
     "bbsMsgFileDown.do",
     "bbsMsgFileDownCompress.do",
     "/bbsAttachDownload.do",
@@ -46,23 +57,45 @@ DOWNLOAD_HREF_PARTS = (
     "/WDB_common/include/download.asp",
     "/common/board/Download.do",
     "/component/file/ND_fileDownload.do",
+    "/attach/down/",
     "/comm/getFile",
     "/common/file/download.do",
+    "/common/fileDown.do",
+    "/common/file_download/",
     "/other/file_down.do",
     "/portal/cmmn/file/fileDown.do",
     "/shareEtc/download_utf.asp",
     "/board/FileDown.do",
+    "/board_down.php",
+    "/board/download.",
     "/boardFileDown.ac",
     "/board_download.do",
+    "/bbs/download.do",
+    "bbs/download.do",
+    "/programs/board/download.do",
+    "/common/download.php",
+    "common/download.php",
+    "download.php",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
+    "/egf/bp/common/front/",
+    "/egf/bp/board/article/download",
+    "/cmmn/file/fileDown.do",
+    "/jfile/readDownloadFile.do",
+    "/file/readDownloadFile.do",
+    "boardDownload.es",
+    "download.es",
     "/cms/download.cs",
     "/cmsfile/download.do",
     "/FileDownLoad.php",
     "/ExFileDownLoad.php",
+    "/fileDownLoadDw.do",
+    "/down.do",
     "/cwsboard/board.do?mode=download",
+    "bbscttDownload.do",
     "act=download",
     "act=down",
+    "mode=download",
 )
 DATE_RE = re.compile(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})")
 KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
@@ -88,13 +121,25 @@ class CouncilAttachmentCrawler:
         self.js_download_path = pattern.jsDownloadPath or ""
         self.file_kinds = set(pattern.fileKinds)
         self.default_file_kind = pattern.defaultFileKind
-        self.user_agent = pattern.userAgent or DEFAULT_USER_AGENT
-        self._client = client or create_http_client(
-            timeout=DEFAULT_TIMEOUT,
-            headers={"User-Agent": self.user_agent},
-            follow_redirects=True,
+        self.fallback_file_kind = pattern.defaultFileKind or (
+            next(iter(self.file_kinds)) if len(self.file_kinds) == 1 else ""
         )
+        self.http_backend = pattern.httpBackend or ""
+        self.user_agent = pattern.userAgent or DEFAULT_USER_AGENT
+        self.referer = pattern.referer or pattern.listUrl
+        headers = {"User-Agent": self.user_agent}
+        if self.referer:
+            headers["Referer"] = self.referer
+        client_kwargs = {
+            "timeout": DEFAULT_TIMEOUT,
+            "headers": headers,
+            "follow_redirects": True,
+        }
+        if self.http_backend:
+            client_kwargs["backend"] = self.http_backend
+        self._client = client or create_http_client(**client_kwargs)
         self._owns_client = client is None
+        self._download_referers: dict[str, str] = {}
 
     async def aclose(self) -> None:
         if self._owns_client:
@@ -132,7 +177,10 @@ class CouncilAttachmentCrawler:
                         for detail in self._parse_detail_links(_response_text(response)):
                             if detail.published_at and detail.published_at < since:
                                 continue
-                            detail_response = await self._client.get(detail.url)
+                            detail_response = await self._client.get(
+                                detail.url,
+                                headers={"Referer": self.list_url},
+                            )
                             detail_response.raise_for_status()
                             for ref in self._parse_detail_downloads(_response_text(detail_response), detail):
                                 refs[ref.url] = ref
@@ -143,17 +191,49 @@ class CouncilAttachmentCrawler:
         return list(refs.values())
 
     async def fetch_post(self, ref: PostRef) -> PostDetail:
-        response = await self._client.get(ref.url, headers={"Referer": self.list_url})
+        download_url = ref.url
+        referer = self._download_referers.get(ref.url, self.list_url)
+        if ref.url in self._download_referers:
+            fresh_url = await self._fresh_detail_download_url(ref, referer)
+            if fresh_url:
+                download_url = fresh_url
+                referer = self._download_referers.get(fresh_url, referer)
+                ref = ref.model_copy(update={"url": fresh_url})
+        response = await self._client.get(
+            download_url,
+            headers={"Referer": referer},
+        )
         response.raise_for_status()
         return post_detail_from_artifact(artifact_from_response(ref, response))
 
+    async def _fresh_detail_download_url(self, ref: PostRef, referer: str) -> str:
+        response = await self._client.get(referer, headers={"Referer": self.list_url})
+        response.raise_for_status()
+        fresh_refs = self._parse_detail_downloads(
+            _response_text(response),
+            PostRef(
+                agency_id=ref.agency_id,
+                url=referer,
+                title=ref.title,
+                published_at=ref.published_at,
+                department_name=ref.department_name,
+                file_kind=ref.file_kind,
+            ),
+        )
+        ref_identity = _download_identity(ref.url)
+        for fresh_ref in fresh_refs:
+            if _download_identity(fresh_ref.url) == ref_identity:
+                return fresh_ref.url
+        return ""
+
     def _parse_list(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)
+        js_download_path = _egov_download_path_from_html(html) or self.js_download_path
         refs: list[PostRef] = []
         seen_urls: set[str] = set()
         for row in tree.css("tbody tr"):
             cells = row.css("th,td")
-            if len(cells) < 4:
+            if len(cells) < 2:
                 continue
             title = _clean_title(_normalize_spaces(cells[1].text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
@@ -161,8 +241,8 @@ class CouncilAttachmentCrawler:
             published_at = _find_date(cells)
             for download in row.css("a[href]"):
                 filename = _filename_from_download_link(download)
-                href = download.attributes.get("href", "")
-                file_kind = _file_kind_from_download(download, filename)
+                href = _download_href_from_anchor(download, js_download_path)
+                file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                 if (
                     not href
                     or not _is_download_href(href)
@@ -199,7 +279,11 @@ class CouncilAttachmentCrawler:
             refs.extend(self._parse_responsive_downloads(tree))
         if not refs:
             refs.extend(self._parse_file_list_items(tree))
-        return refs
+        if not refs:
+            refs.extend(self._parse_current_detail_downloads(tree))
+        if not refs:
+            refs.extend(self._parse_daily_html_detail_refs(tree))
+        return _sort_download_refs(refs)
 
     def _parse_header_mapped_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -212,7 +296,7 @@ class CouncilAttachmentCrawler:
                 re.sub(r"\s+", "", _normalize_spaces(header.text(separator=" ", strip=True)))
                 for header in header_row.css("th")
             ]
-            title_index = _column_index(headers, "제목", "업무명")
+            title_index = _column_index(headers, "제목", "업무명", "공개일자")
             file_index = _column_index(headers, "파일", "첨부")
             if title_index is None or file_index is None:
                 continue
@@ -241,8 +325,8 @@ class CouncilAttachmentCrawler:
                 )
                 for download in row_links:
                     filename = _filename_from_download_link(download)
-                    href = download.attributes.get("href", "")
-                    file_kind = _file_kind_from_download(download, filename)
+                    href = _download_href_from_anchor(download, self.js_download_path)
+                    file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                     if (
                         not href
                         or not _is_download_href(href)
@@ -271,7 +355,7 @@ class CouncilAttachmentCrawler:
                             file_kind=file_kind,
                         )
                     )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_direct_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -304,7 +388,11 @@ class CouncilAttachmentCrawler:
                     if not href or not _is_download_href(href):
                         continue
                     filename = _filename_from_download_link(download)
-                    file_kind = _file_kind_from_download(download, filename) or _file_kind(href)
+                    file_kind = (
+                        _file_kind_from_download(download, filename)
+                        or _file_kind(href)
+                        or self.fallback_file_kind
+                    )
                     if file_kind not in self.file_kinds:
                         continue
                     filename_kind = _file_kind(filename)
@@ -325,7 +413,7 @@ class CouncilAttachmentCrawler:
                             file_kind=file_kind,
                         )
                     )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_data_column_download_table(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -371,7 +459,11 @@ class CouncilAttachmentCrawler:
                 if not href or not _is_download_href(href):
                     continue
                 filename = _filename_from_download_link(download)
-                file_kind = _file_kind_from_download(download, filename) or _file_kind(href)
+                file_kind = (
+                    _file_kind_from_download(download, filename)
+                    or _file_kind(href)
+                    or self.fallback_file_kind
+                )
                 if file_kind not in self.file_kinds:
                     continue
                 display_filename = (
@@ -398,7 +490,7 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_responsive_downloads(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -437,7 +529,7 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
-        return refs
+        return _sort_download_refs(refs)
 
     def _parse_file_list_items(self, tree: HTMLParser) -> list[PostRef]:
         refs: list[PostRef] = []
@@ -474,7 +566,7 @@ class CouncilAttachmentCrawler:
                 if not href or not _is_download_href(href):
                     continue
                 filename = _filename_from_download_link(download)
-                file_kind = _file_kind_from_download(download, filename) or self.default_file_kind or ""
+                file_kind = _file_kind_from_download(download, filename) or self.fallback_file_kind
                 if file_kind not in self.file_kinds:
                     continue
                 url = urljoin(self.list_url, href)
@@ -496,7 +588,111 @@ class CouncilAttachmentCrawler:
                         file_kind=file_kind,
                     )
                 )
+        return _sort_download_refs(refs)
+
+    def _parse_current_detail_downloads(self, tree: HTMLParser) -> list[PostRef]:
+        title_node = (
+            tree.css_first(".board-post-title-text")
+            or tree.css_first(".board-post-title")
+            or tree.css_first("h1")
+        )
+        title = (
+            _clean_title(_normalize_spaces(title_node.text(separator=" ", strip=True)))
+            if title_node
+            else ""
+        )
+        if not _looks_like_expense(title):
+            return []
+
+        published_at = None
+        for item in tree.css(".board-post-meta-text, .skinTb-date, time"):
+            published_at = _parse_date(item.text(separator=" ", strip=True))
+            if published_at:
+                break
+
+        refs: list[PostRef] = []
+        seen_urls: set[str] = set()
+        for download in tree.css("a[href]"):
+            href = _download_href_from_anchor(download, self.js_download_path)
+            if not href or not _is_download_href(href):
+                continue
+            filename = _filename_from_download_link(download)
+            file_kind = _file_kind(filename) or _file_kind(href) or _file_kind_from_download(download, filename)
+            if (
+                file_kind not in self.file_kinds
+                or not _download_looks_like_expense(title=title, filename=filename)
+            ):
+                continue
+            url = urljoin(self.list_url, href)
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=url,
+                    title=f"{title} - {filename}",
+                    published_at=published_at,
+                    department_name=_best_department(
+                        _department_from_filename(filename or title, self.agency.short_name),
+                        _department_from_filename(title, self.agency.short_name),
+                        self.agency.short_name,
+                    ),
+                    file_kind=file_kind,
+                )
+            )
         return refs
+
+    def _parse_daily_html_detail_refs(self, tree: HTMLParser) -> list[PostRef]:
+        if "html" not in self.file_kinds:
+            return []
+
+        refs: list[PostRef] = []
+        seen_urls: set[str] = set()
+        for row in tree.css("tbody tr"):
+            cells = row.css("th,td")
+            if len(cells) < 3:
+                continue
+            trigger = " ".join(
+                value
+                for anchor in row.css("a[href]")
+                for value in (
+                    anchor.attributes.get("onclick", ""),
+                    anchor.attributes.get("href", ""),
+                )
+            )
+            detail_date = re.search(r"\bf_detail\(['\"](?P<date>20\d{2}-\d{1,2}-\d{1,2})['\"]\)", trigger)
+            if not detail_date:
+                continue
+            title = _clean_title(
+                _normalize_spaces(
+                    (row.css_first("a[href]") or cells[-2]).text(separator=" ", strip=True)
+                )
+            )
+            if not _looks_like_expense(title):
+                continue
+            published_at = _parse_date(detail_date.group("date")) or _find_date(cells)
+            parts = urlsplit(self.list_url)
+            query = dict(parse_qsl(parts.query, keep_blank_values=True))
+            query["useDe"] = detail_date.group("date")
+            url = urljoin(
+                self.list_url,
+                urlunsplit(("", "", parts.path, urlencode(query), parts.fragment)),
+            )
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            refs.append(
+                PostRef(
+                    agency_id=self.agency.id,
+                    url=url,
+                    title=title,
+                    published_at=published_at,
+                    department_name=self.agency.short_name,
+                    file_kind="html",
+                )
+            )
+        return _sort_download_refs(refs)
 
     def _parse_detail_links(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)
@@ -513,7 +709,10 @@ class CouncilAttachmentCrawler:
                 continue
             anchor = title_cell.css_first("a[href]")
             row_onclick = row.attributes.get("onclick", "")
-            if not anchor and not any(marker in row_onclick for marker in ("fnActDetail", "boardViewRenewal")):
+            if not anchor and not any(
+                marker in row_onclick
+                for marker in ("fnActDetail", "boardViewRenewal", "BoardDetailView")
+            ):
                 continue
             script_title = re.search(r"wdigm_title\('(?P<title>[^']+)'\)", title)
             if script_title:
@@ -555,12 +754,52 @@ class CouncilAttachmentCrawler:
                     f"&bIdx={board_view.group('b_idx')}"
                     f"&ptIdx={board_view.group('pt_idx')}"
                 )
+            hwasun_board_detail = re.search(
+                r"BoardDetailView\(['\"](?P<bbs_sn>[^'\"]+)['\"]\)",
+                row_trigger,
+            )
+            if hwasun_board_detail:
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["bbsSn"] = hwasun_board_detail.group("bbs_sn")
+                href = urlunsplit(("", "", parts.path, urlencode(query), ""))
             bbs_view = re.search(r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'", onclick)
             if bbs_view:
                 href = (
                     "/site/yangcheon/ex/bbs/View.do"
                     f"?cbIdx={bbs_view.group('cb_idx')}&bcIdx={bbs_view.group('bc_idx')}"
                 )
+            bbs_view_four_args = re.search(
+                r"doBbsFView\('(?P<cb_idx>[^']+)'\s*,\s*'(?P<bc_idx>[^']+)'\s*,"
+                r"\s*'(?P<menu>[^']*)'\s*,\s*'(?P<ntt>[^']+)'",
+                onclick,
+            )
+            if bbs_view_four_args:
+                parts = urlsplit(self.list_url)
+                href = (
+                    f"{parts.path.replace('List.do', 'View.do')}"
+                    f"?cbIdx={bbs_view_four_args.group('cb_idx')}"
+                    f"&bcIdx={bbs_view_four_args.group('bc_idx')}"
+                    f"&nttNo={bbs_view_four_args.group('ntt')}"
+                )
+            data_view_jsp = re.search(r"dataView\.jsp\?(?P<query>[^'\" ]+)", trigger)
+            if data_view_jsp:
+                parts = urlsplit(self.list_url)
+                href = f"{parts.path.rsplit('/', 1)[0]}/dataView.jsp?{data_view_jsp.group('query')}"
+            fn_view = re.search(r"fnView\(\s*['\"]?(?P<id>[^,'\")]+)['\"]?", trigger)
+            if fn_view and (not href or _is_placeholder_href(href) or href.lower().startswith("javascript")):
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["nttId"] = fn_view.group("id")
+                detail_path = re.sub(r"(?:list|List)\.do$", "view.do", parts.path)
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
+            fn_select_doc = re.search(r"fn_selectDoc\(\s*['\"]?(?P<id>[^,'\")]+)['\"]?", trigger)
+            if fn_select_doc:
+                parts = urlsplit(self.list_url)
+                detail_path = re.sub(r"selectDocList\.do$", "selectDocView.do", parts.path)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["docSeq"] = fn_select_doc.group("id")
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
             bd_board_view = re.search(
                 r"jsView\(\s*['\"](?P<bbs_cd>[^'\"]+)['\"]\s*,\s*['\"](?P<seq>[^'\"]+)['\"]",
                 trigger,
@@ -604,6 +843,27 @@ class CouncilAttachmentCrawler:
                 query["bbsSn"] = info_bbs_view.group("bbs_sn")
                 detail_path = re.sub(r"List\.php$", "View.php", parts.path)
                 href = urlunsplit(("", "", detail_path, urlencode(query), ""))
+            article_seq_view = re.search(r"goPage2?\(\s*['\"]?(?P<article_seq>\d+)['\"]?\s*\)", row_trigger)
+            if article_seq_view:
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query["articleSeq"] = article_seq_view.group("article_seq")
+                href = urlunsplit(("", "", parts.path, urlencode(query), parts.fragment))
+            data_opt = anchor.attributes.get("data-opt", "") if anchor else ""
+            if data_opt and "." in data_opt:
+                checksum, post_id = data_opt.split(".", 1)
+                parts = urlsplit(self.list_url)
+                query = dict(parse_qsl(parts.query, keep_blank_values=True))
+                query.setdefault("page", "1")
+                query.update({"sp": "2", "wr_id": post_id, "chk": checksum})
+                href = urlunsplit(("", "", parts.path, urlencode(query), ""))
+            go_bbs_view = re.search(r"goBbsViewPage\(['\"](?P<bbs_sn>[^'\"]+)['\"]\)", row_trigger)
+            if go_bbs_view:
+                parts = urlsplit(self.list_url)
+                query = _hidden_form_query(tree, "bbsViewPageFrm")
+                query["schBbsSn"] = go_bbs_view.group("bbs_sn")
+                detail_path = re.sub(r"List\.do$", "View.do", parts.path)
+                href = urlunsplit(("", "", detail_path, urlencode(query), ""))
             inline_post_idx = anchor.attributes.get("data-req-get-p-idx", "") if anchor else ""
             if inline_post_idx:
                 parts = urlsplit(self.list_url)
@@ -619,6 +879,7 @@ class CouncilAttachmentCrawler:
                 href = gunwi_page_href
             if not href or _is_placeholder_href(href):
                 continue
+            href = _strip_path_jsessionid(href)
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -639,6 +900,7 @@ class CouncilAttachmentCrawler:
             href = anchor.attributes.get("href", "")
             if not href or not _is_detail_href_for_list(href, self.list_url):
                 continue
+            href = _strip_path_jsessionid(href)
             url = urljoin(self.list_url, href)
             if url in seen:
                 continue
@@ -671,7 +933,12 @@ class CouncilAttachmentCrawler:
             if not href or not _is_download_href(href):
                 continue
             filename = _filename_from_download_link(download)
-            file_kind = _file_kind(filename) or _file_kind(href) or _file_kind_from_download(download, filename)
+            file_kind = (
+                _file_kind(filename)
+                or _file_kind(href)
+                or _file_kind_from_download(download, filename)
+                or self.fallback_file_kind
+            )
             if (
                 file_kind not in self.file_kinds
                 or not _download_looks_like_expense(title=detail.title, filename=filename)
@@ -681,6 +948,7 @@ class CouncilAttachmentCrawler:
             if url in seen_urls:
                 continue
             seen_urls.add(url)
+            self._download_referers[url] = detail.url
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -695,7 +963,7 @@ class CouncilAttachmentCrawler:
                     file_kind=file_kind,
                 )
             )
-        return refs
+        return _sort_download_refs(refs)
 
 
 class GangnamCouncilCrawler(CouncilAttachmentCrawler):
@@ -706,6 +974,12 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
     href = download.attributes.get("href", "") or ""
     onclick = download.attributes.get("onclick", "") or ""
     trigger = f"{onclick} {href}"
+    window_open = re.search(
+        r"window\.open\(\s*['\"](?P<url>[^'\"]+)['\"]",
+        trigger,
+    )
+    if window_open and _is_window_open_download_candidate(window_open.group("url")):
+        return window_open.group("url")
     js_download = re.search(
         r"yhLib\.file\.download\('(?P<attach_id>[^']+)'\s*,\s*'(?P<file_sn>[^']+)'",
         onclick,
@@ -774,7 +1048,49 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
             f"?flSn={php_file_down_load.group('file_id')}"
             f"&flCd={php_file_down_load.group('file_cd')}"
         )
+    bbs_file_download = re.search(
+        r"goBbsFileDownload\(['\"](?P<file_id>[^'\"]+)['\"]\s*,\s*['\"](?P<bbs_cd>[^'\"]+)['\"]\)",
+        trigger,
+    )
+    if bbs_file_download:
+        return "/bbs/FileDownLoadProc.do?" + urlencode(
+            {
+                "schFlSn": bbs_file_download.group("file_id"),
+                "bbsCd": bbs_file_download.group("bbs_cd"),
+            }
+        )
+    open_download_files = re.search(r"openDownloadFiles\((?P<file_uid>\d+)\)", trigger)
+    if open_download_files:
+        return "/programs/board/download.do?" + urlencode(
+            {"parm_file_uid": open_download_files.group("file_uid")}
+        )
+    zip_download = re.search(r"fn_zipDownload\(['\"](?P<attach_id>[^'\"]+)['\"]\)", trigger)
+    if zip_download:
+        return "/cmm/fms/zipDownload.do?" + urlencode(
+            {
+                "atchFileIdStr": zip_download.group("attach_id"),
+                "zipFileName": "zipDownload.zip",
+            }
+        )
     return href
+
+
+def _strip_path_jsessionid(href: str) -> str:
+    parts = urlsplit(href)
+    path = re.sub(r";jsessionid=[^/?#]+", "", parts.path, flags=re.IGNORECASE)
+    return urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
+
+
+def _hidden_form_query(tree: HTMLParser, form_id: str) -> dict[str, str]:
+    form = tree.css_first(f"form#{form_id}") or tree.css_first(f"form[name='{form_id}']")
+    if not form:
+        return {}
+    query: dict[str, str] = {}
+    for item in form.css("input[name]"):
+        name = item.attributes.get("name", "")
+        if name:
+            query[name] = item.attributes.get("value", "")
+    return query
 
 
 def _egov_download_path_from_html(html: str) -> str:
@@ -819,6 +1135,9 @@ def _detail_title_cell(cells) -> Any | None:
 
 
 def _filename_from_download_link(download) -> str:
+    trigger = f"{download.attributes.get('onclick', '')} {download.attributes.get('href', '')}"
+    if "fn_zipDownload" in trigger:
+        return "zipDownload.zip"
     candidates = [
         download.text(separator=" ", strip=True) or "",
         download.attributes.get("title") or "",
@@ -835,8 +1154,14 @@ def _filename_from_download_link(download) -> str:
             normalized = normalized.replace("파일 내려받기", "")
         normalized_candidates.append(normalized.strip(" '\""))
     if normalized_candidates and all(_looks_like_uninformative_file_label(item) for item in normalized_candidates):
-        if download.parent:
-            normalized_candidates.append(_normalize_spaces(download.parent.text(separator=" ", strip=True)).strip(" '\""))
+        parent = download.parent
+        for _ in range(3):
+            if not parent:
+                break
+            parent_text = _normalize_spaces(parent.text(separator=" ", strip=True)).strip(" '\"")
+            if parent_text and len(parent_text) <= 500:
+                normalized_candidates.append(parent_text)
+            parent = parent.parent
     for candidate in normalized_candidates:
         if _file_kind(candidate) or _looks_like_expense(candidate):
             return candidate
@@ -848,6 +1173,18 @@ def _filename_from_download_link(download) -> str:
 def _department_from_filename(filename: str, agency_short_name: str = "강남구의회") -> str:
     if "사무국" in filename:
         return f"{agency_short_name} 사무국"
+    if "부지사" in filename:
+        return f"{agency_short_name} 부지사"
+    if "도지사" in filename:
+        return f"{agency_short_name} 도지사"
+    if "부시장" in filename:
+        return f"{agency_short_name} 부시장"
+    if re.search(r"(?<!부)시장", filename):
+        return f"{agency_short_name} 시장"
+    if "부군수" in filename:
+        return f"{agency_short_name} 부군수"
+    if re.search(r"(?<!부)군수", filename):
+        return f"{agency_short_name} 군수"
     if "의장단" in filename:
         return f"{agency_short_name} 의장단"
     if "부의장" in filename:
@@ -932,8 +1269,15 @@ def _find_date(cells) -> date | None:
     return None
 
 
-def _file_kind(filename: str) -> str:
-    lowered = filename.lower()
+def _file_kind(filename: str | None) -> str:
+    lowered = (filename or "").lower()
+    normalized = _normalize_spaces(filename or "").lower()
+    if "excel" in normalized or "엑셀" in normalized:
+        return "xlsx"
+    if "hwpx" in normalized:
+        return "hwpx"
+    if "한글" in normalized or re.search(r"\bhwp\b|\.hwp(?:\b|[^\w])", normalized):
+        return "hwp"
     for file_kind in SUPPORTED_FILE_KINDS:
         if (
             re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered)
@@ -958,6 +1302,8 @@ def _looks_like_expense(value: str) -> bool:
 
 
 def _download_looks_like_expense(*, title: str, filename: str) -> bool:
+    if filename.lower().endswith(".zip"):
+        return _looks_like_expense(title)
     if filename and _looks_like_expense(filename):
         return True
     if filename and not _looks_like_uninformative_file_label(filename):
@@ -971,16 +1317,37 @@ def _is_download_href(href: str) -> bool:
     lowered = href.lower()
     if (
         "downloadview.do" in lowered
+        or "pre_viewer.php" in lowered
         or "synap.jsp" in lowered
         or "synap/" in lowered
         or "synep.jsp" in lowered
         or "convert.jsp" in lowered
     ):
         return False
+    if "mode=d" in lowered and "file_id=" in lowered:
+        return True
     return any(part.lower() in lowered for part in DOWNLOAD_HREF_PARTS) or re.search(
-        r"\.(?:pdf|xls|xlsx|hwpx)(?:$|[?#&])",
+        r"\.(?:pdf|hwp|xls|xlsx|hwpx|zip)(?:$|[?#&])",
         lowered,
     ) is not None
+
+
+def _is_window_open_download_candidate(href: str) -> bool:
+    if not href:
+        return False
+    lowered = href.lower()
+    if any(
+        marker in lowered
+        for marker in (
+            "downloadview.do",
+            "pre_viewer.php",
+            "synap",
+            "convert.jsp",
+            "viewer",
+        )
+    ):
+        return False
+    return _is_download_href(href) or "file_download" in lowered or _file_kind(href) != ""
 
 
 def _is_detail_href(href: str) -> bool:
@@ -990,12 +1357,20 @@ def _is_detail_href(href: str) -> bool:
     return (
         "view.do" in lowered
         or "selectboarddetail.do" in lowered
-        or "mode=view" in lowered
-        or "amode=view" in lowered
+        or "dataview.jsp" in lowered
+        or "read.do" in lowered
         or "act=view" in lowered
+        or "mode=view" in lowered
+        or "mode=v" in lowered
+        or "m_mode=view" in lowered
+        or "amode=view" in lowered
+        or "type=view" in lowered
+        or "act=view" in lowered
+        or "articleseq=" in lowered
         or "cmd=2" in lowered
         or "bd_selectbbs.do" in lowered
         or ("pg=vv" in lowered and "fidx=" in lowered)
+        or re.search(r"/read/\d+(?:$|[?#/])", lowered) is not None
         or re.search(r"(?:^|/)view(?:\?|$)", lowered) is not None
     )
 
@@ -1040,9 +1415,26 @@ def _looks_like_uninformative_file_label(filename: str) -> bool:
         "첨부파일 다운로드",
         "파일",
         "파일 다운로드",
+        "파일이 여러개 있음",
         "공개내역 파일",
         "바로보기",
     } or _looks_like_generic_file_label(filename)
+
+
+def _file_kind_priority(file_kind: str) -> int:
+    return {
+        "xlsx": 0,
+        "xls": 1,
+        "html": 2,
+        "hwpx": 3,
+        "zip": 4,
+        "pdf": 5,
+        "hwp": 6,
+    }.get(file_kind, 9)
+
+
+def _sort_download_refs(refs: list[PostRef]) -> list[PostRef]:
+    return sorted(refs, key=lambda ref: _file_kind_priority(ref.file_kind))
 
 
 def _url_with_page(
@@ -1059,6 +1451,16 @@ def _url_with_page(
     if page_unit_param and rows_per_page:
         query[page_unit_param] = str(rows_per_page)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _download_identity(url: str) -> str:
+    parts = urlsplit(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if key.lower() not in {"pkey", "token", "key"}
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ""))
 
 
 def _response_text(response: Any) -> str:

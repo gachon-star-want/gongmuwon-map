@@ -62,6 +62,50 @@ def test_elected_rank_without_name_keeps_rank_only() -> None:
     assert result["party_size"] == 12
 
 
+def test_institutional_elected_rank_subject_is_not_representative() -> None:
+    agency = Agency(
+        name="경상남도 거제시청",
+        short_name="거제시청",
+        gov_tier=GovTier.BASIC,
+        branch=GovBranch.ADMIN,
+        jurisdiction_type=JurisdictionType.SI,
+        parent_region="경상남도",
+        sub_region="거제시",
+    )
+    result = mask_user_text(
+        "거제시청 시장 5명",
+        fallback_department="거제시청 시장",
+        agency=agency,
+    )
+
+    assert result["representative"] is None
+    assert result["rank_label"] == "시장"
+    assert result["department_name"] == "거제시청"
+    assert result["party_size"] == 5
+
+
+def test_staff_masking_strips_institutional_elected_rank_from_department() -> None:
+    agency = Agency(
+        name="전라남도 나주시청",
+        short_name="나주시청",
+        gov_tier=GovTier.BASIC,
+        branch=GovBranch.ADMIN,
+        jurisdiction_type=JurisdictionType.SI,
+        parent_region="전라남도",
+        sub_region="나주시",
+    )
+    result = mask_user_text(
+        "1 890명",
+        fallback_department="나주시청 시장",
+        agency=agency,
+    )
+
+    assert result["representative"] is None
+    assert result["rank_label"] == "5급 이하"
+    assert result["department_name"] == "나주시청 외"
+    assert result["party_size"] == 890
+
+
 def test_deterministic_normalizer_adds_seoul_district_hint_for_gu_department() -> None:
     visits = deterministic_normalize_rows(
         agency_id=agency_uuid("성동구:office"),
@@ -152,6 +196,56 @@ def test_deterministic_normalizer_skips_non_place_expense_rows() -> None:
             ParsedExpenseRow(
                 department_name="테스트기관",
                 used_at=datetime(2025, 6, 4, 12, 0),
+                place_text="임직원 소통 간담회",
+                purpose="임직원 소통 간담회",
+                amount=245000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="임직원 소통 간담회",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 5, 12, 0),
+                place_text="윤정호 차장 결혼축하금 지급",
+                purpose="윤정호 차장 결혼축하금 지급",
+                amount=50000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="윤정호 차장 결혼축하금 지급",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 6, 12, 0),
+                place_text="유관(관련)기관 업무협의 등",
+                purpose="유관(관련)기관 업무협의 등",
+                amount=152000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="유관(관련)기관 업무협의 등",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 7, 12, 0),
+                place_text="주요정책추진관련 회의, 행사(1건)",
+                purpose="주요정책추진관련 회의, 행사(1건)",
+                amount=376000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="주요정책추진관련 회의, 행사(1건)",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 8, 12, 0),
+                place_text="1",
+                purpose="1",
+                amount=456000,
+                user_text="테스트기관",
+                payment_method="카드",
+                raw_excerpt="1",
+            ),
+            ParsedExpenseRow(
+                department_name="테스트기관",
+                used_at=datetime(2025, 6, 9, 12, 0),
                 place_text="테스트식당",
                 purpose="업무협의 오찬",
                 amount=70000,

@@ -19,6 +19,10 @@ def test_pdf_text_parser_selects_expected_line_grammar_for_each_representative_c
         "user_amount_purpose": "1    의정팀     2026.01.13    09:54:36                가까운온누리약국           30,000         부서운영 음료구입비 지출                  신용카드    부서운영",
         "user_no_address": " 1    부의장      2026. 4. 1. 18:26      본가한우생고기           의정활동 및 직무수행과 관련된 소요경비                5명   124,300  카드    의회운영",
         "purpose_first": "1    2026-04-01 09:03 의정활동 의견 수렴을 위한 관계자 간담회 비용 지출      195,000   카드     ㈜토다코리아        15",
+        "user_date_place_purpose_party_amount_category": "의회운영위원장   2026-05-29   충남실비         의회사무처 주요 현안사항 논의를 위한 집행부 관계자와의 오찬      9        380,000   신용카드   의회운영",
+        "date_time_place_purpose_party_amount_simple": "2026.01.06   12:13      국진                    언론 관계자 간담               8    175,000   카드",
+        "user_date_payment_purpose_place_time_amount": "의장    2026.04.01   신용카드    주요 현안사항 논의 및 오찬 간담회                 이가네면옥   12:26:00   의회운영업무추진비    124,000    5",
+        "date_time_user_purpose_amount_party_place": "2026-01-02   12:15:08   의장           2026년도 시무식 행사에 따른 급식 제공           317,100   16     용바위식당외 1     카드",
         "generic_text_row": " 1              2026.04.01.     12:40        네이버                      의원실 내방객 접대용 간식 구매          22,000         신용카드",
     }
 
@@ -53,6 +57,54 @@ def test_pdf_text_parser_uses_earlier_grammar_when_multiple_patterns_match() -> 
     assert result.rows[0].place_text == "김삼보"
 
 
+def test_pdf_text_parser_selects_central_state_grammars() -> None:
+    line_grammars, whole_text_grammars = build_default_grammars()
+    samples = [
+        (
+            "central_state_purpose_place_amount",
+            "경찰청 범죄예방대응국장",
+            "2026-04-06 성매매광고차단시스템 개선 사전검토     커피빈코리아 순화점      46,000       6명     카드",
+            "커피빈코리아 순화점",
+            46000,
+        ),
+        (
+            "central_state_amount_place_purpose",
+            "통일부",
+            "2026-04-02   12:44    178,000        해초가           간담회 개최     4",
+            "해초가",
+            178000,
+        ),
+        (
+            "central_state_place_purpose_amount",
+            "보건복지부",
+            "2026-03-03           도마              업무홍보 관련 협의      400,000     14",
+            "도마",
+            400000,
+        ),
+        (
+            "central_state_user_place_purpose_amount",
+            "보건복지부",
+            "대변인 2026-01-06 11:35 한화커넥트 (주)     출입기자단 간담회     71,000 4 카드",
+            "한화커넥트 (주)",
+            71000,
+        ),
+    ]
+
+    for expected_grammar, department, text, place_text, amount in samples:
+        result = parse_pdf_text_with_diagnostics(
+            text,
+            fallback_department=department,
+            line_grammars=line_grammars,
+            whole_text_grammars=whole_text_grammars,
+        )
+
+        winners = {diag.grammar_name for diag in result.diagnostics if diag.row_count > 0}
+        assert winners == {expected_grammar}
+        assert len(result.rows) == 1
+        assert result.rows[0].place_text == place_text
+        assert result.rows[0].amount == amount
+
+
 def test_pdf_text_parser_uses_whole_text_fallback_only_when_line_parsing_fails() -> None:
     line_grammars, whole_text_grammars = build_default_grammars()
     layout_text = """
@@ -81,6 +133,127 @@ def test_pdf_text_parser_uses_whole_text_fallback_only_when_line_parsing_fails()
     assert fallback_winner["segmented_office"].row_count == 0
     assert fallback_winner["user_place_purpose_layout"].failed_reason is None
     assert result.rows[0].place_text == "㈜장수마늘 보쌈"
+
+
+def test_pdf_text_parser_handles_columnar_ocr_sections() -> None:
+    line_grammars, whole_text_grammars = build_default_grammars()
+    columnar_text = """
+2026년 1/4분기 의회운영 업무추진(의장) 집행 내역
+사용일자
+2026.01.06. 11:23
+2026.01.07. 17:52
+집행목적
+동해안6개시군의회 의장협의회 정례회 개최에 따른 기념품 구입
+동해안6개시군의회 의장협의회 정례회 참석자 급식
+인원/수량
+9개
+21명
+금액(원)
+351,000
+760,000
+사용처
+참자연영농조합법인
+동해안7번지
+주소
+양양군 양양읍 포월새말길 41-42
+양양군 손양면 선사유적로
+결재방법
+카드
+카드
+"""
+
+    result = parse_pdf_text_with_diagnostics(
+        columnar_text,
+        fallback_department="양양군의회",
+        line_grammars=line_grammars,
+        whole_text_grammars=whole_text_grammars,
+    )
+
+    assert len(result.rows) == 2
+    assert result.rows[0].place_text == "참자연영농조합법인(양양군 양양읍 포월새말길 41-42)"
+    assert result.rows[0].amount == 351000
+    assert result.rows[0].user_text == "양양군의회 9명"
+    assert result.rows[1].place_text == "동해안7번지(양양군 손양면 선사유적로)"
+
+
+def test_pdf_text_parser_handles_generic_columnar_ocr_sections_without_address() -> None:
+    line_grammars, whole_text_grammars = build_default_grammars()
+    columnar_text = """
+2025년 3/4분기 의회운영 업무추진(의장) 집행 내역
+사용일자
+2025.07.07. 12:19
+2025.07.08. 16:35
+집행목적
+업무추진 유관기관 간담회 급식
+현장근무자 격려품 구입
+인원/수량
+12명
+1식
+금액(원)
+210,000
+433,680
+사용처
+소나무집약초백숙
+양양농협하나로마트
+결재방법
+카드
+카드
+"""
+
+    result = parse_pdf_text_with_diagnostics(
+        columnar_text,
+        fallback_department="양양군의회",
+        line_grammars=line_grammars,
+        whole_text_grammars=whole_text_grammars,
+    )
+
+    assert len(result.rows) == 2
+    assert result.rows[0].place_text == "소나무집약초백숙"
+    assert result.rows[0].amount == 210000
+    assert result.rows[0].user_text == "양양군의회 12명"
+    assert result.rows[1].place_text == "양양농협하나로마트"
+
+
+def test_pdf_text_parser_handles_gangwon_columnar_ocr_variants() -> None:
+    line_grammars, whole_text_grammars = build_default_grammars()
+    columnar_text = """
+※ 비목 : 의회운영업무추진비(205-06)
+사용자
+예산결산특별위원장
+예산결산특별위원장
+예산결산특별위원회 위원장 업무추진비 사용 내역[2026년 4월)
+사용일자
+2026. 4. 1.
+2026. 4. 1.
+사용처
+하주골
+해신탕능이마을
+계
+제344회 임시회 예산결산특별위원회 오찬 간담
+제344회 임시회 예산결산특별위원회 만찬 간담
+금액(원)
+570,000
+505,000
+인원(수량)
+19
+16
+결제방법
+카드결제
+카드결제
+"""
+
+    result = parse_pdf_text_with_diagnostics(
+        columnar_text,
+        fallback_department="강원특별자치도의회",
+        line_grammars=line_grammars,
+        whole_text_grammars=whole_text_grammars,
+    )
+
+    assert len(result.rows) == 2
+    assert result.rows[0].place_text == "하주골"
+    assert result.rows[0].amount == 570000
+    assert result.rows[0].user_text == "강원특별자치도의회 19명"
+    assert result.rows[1].place_text == "해신탕능이마을"
 
 
 def test_pdf_text_parser_reports_failures_when_no_text_matches() -> None:
