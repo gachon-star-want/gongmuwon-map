@@ -360,16 +360,16 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 610
+    assert output["summary"]["verified_in_code"] == 612
     assert output["summary"]["pending"] == 0
     assert output["summary"]["legal_hold"] == 101
     assert output["summary"]["source_not_found"] == 85
     assert output["summary"]["no_recent_data"] == 1311
     assert output["summary"]["pdf_vision_hold"] == 35
-    assert output["summary"]["adapter_hold"] == 60
+    assert output["summary"]["adapter_hold"] == 58
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 257
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 259
     assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 101
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
@@ -400,7 +400,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 610
+    assert output["summary"]["verified_in_code"] == 612
     assert "entries" not in output
 
 

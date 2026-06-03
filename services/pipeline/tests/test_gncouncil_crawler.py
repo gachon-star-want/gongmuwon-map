@@ -1,6 +1,8 @@
 from datetime import date
 from urllib.parse import parse_qs, urlsplit
 
+import pytest
+
 import public_officer_pipeline.crawler.gncouncil as gncouncil
 from public_officer_pipeline.crawler.gncouncil import (
     CouncilAttachmentCrawler,
@@ -97,6 +99,58 @@ def test_council_attachment_crawler_uses_pattern_user_agent(monkeypatch) -> None
 
     assert crawler.user_agent == "Mozilla/5.0 (compatible; PublicOfficerMapBot/0.1)"
     assert captured["headers"]["User-Agent"] == crawler.user_agent
+
+
+@pytest.mark.asyncio
+async def test_council_attachment_crawler_respects_source_pattern_max_posts() -> None:
+    class Response:
+        headers: dict[str, str] = {"content-type": "text/html"}
+
+        @property
+        def content(self) -> bytes:
+            return self.text.encode()
+
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class Client:
+        async def get(self, _url: str, **_kwargs) -> Response:
+            return Response(
+                """
+                <table><tbody>
+                  <tr><td>1</td><td><a href="/view/1">2026년 5월 업무추진비</a></td><td>부서</td><td>2026-06-02</td><td><a href="/download/1.xlsx">업무추진비.xlsx</a></td></tr>
+                  <tr><td>2</td><td><a href="/view/2">2026년 5월 업무추진비</a></td><td>부서</td><td>2026-06-02</td><td><a href="/download/2.xlsx">업무추진비.xlsx</a></td></tr>
+                  <tr><td>3</td><td><a href="/view/3">2026년 5월 업무추진비</a></td><td>부서</td><td>2026-06-02</td><td><a href="/download/3.xlsx">업무추진비.xlsx</a></td></tr>
+                </tbody></table>
+                """
+            )
+
+        async def aclose(self) -> None:
+            return None
+
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="남구청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.AUTONOMOUS_GU,
+            parent_region="부산광역시",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://example.test/list",
+                "fileKinds": ["xlsx"],
+                "maxPosts": 2,
+            },
+        ),
+        client=Client(),
+    )
+
+    refs = await crawler.list_posts(date(2025, 6, 1), limit_pages=1, max_posts=5)
+
+    assert len(refs) == 2
 
 
 def test_council_attachment_crawler_extracts_cost_xlsx_refs_from_title_attribute() -> None:

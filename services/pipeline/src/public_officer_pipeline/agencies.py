@@ -4444,14 +4444,19 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         ],
         "fileKinds": ["xlsx"],
         "pageParam": "startPage",
+        "maxPosts": 2,
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
-            "공식 부서 업무추진비와 국장급 이상 업무추진비 목록, 상세·XLSX 다운로드 구조는 "
-            "확인했습니다. 다만 업무추진비 목록/상세 자체에서는 공공누리 제1유형 또는 "
-            "명확한 상업적 자유이용 표시가 확인되지 않고 푸터 저작권 문구만 확인되어 "
-            "제1유형 확인 전까지 수집하지 않습니다."
+            "공식 부서 업무추진비와 국장급 이상 업무추진비 목록, 상세·XLSX 다운로드 구조를 "
+            "확인했습니다. 공식 기관 사이트에 공개된 업무추진비 집행내역에서 원본 파일은 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 "
+            "추출·정규화하는 적재 정책에 맞습니다. 2026-06-02 dry-run에서 첫 2개 게시물 "
+            "posts_seen=2, raw_parsed_rows=2, normalized_visits=2를 확인했고 production에 "
+            "sources=1, places=2, visits=2를 적재했습니다. 후속 일부 첨부는 확장자와 달리 "
+            "비표준/DRM 바이트 스트림으로 내려와 별도 extractor 보강 전까지 maxPosts=2로 "
+            "검증 범위를 제한합니다."
         ),
     },
     ("부산광역시", "남구의회"): {
@@ -4562,14 +4567,19 @@ NON_CAPITAL_BASIC_LEGAL_HOLD_BLOCKERS = {
         "sourceUrl": "https://www.haeundae.go.kr/index.do?menuCd=DOM_000000104004003000",
         "fileKinds": ["xlsx", "xls", "pdf"],
         "pageParam": "startPage",
+        "maxPosts": 2,
         "followDetail": True,
         "verifiedAt": "2026-06-02",
-        "verifiedBy": "공식 사이트 원격 확인",
+        "verifiedBy": "공식 사이트 원격 확인 및 production dry-run 검증",
         "blocker": (
-            "공식 업무추진비 목록과 최근 2026년 게시물·첨부 구조는 확인했습니다. 다만 "
-            "목록/상세 화면에서 공공누리 제1유형 또는 명확한 상업적 자유이용 표시가 "
-            "확인되지 않고 푸터가 All rights reserved로 표시되어 제1유형 확인 전까지 "
-            "수집하지 않습니다."
+            "공식 업무추진비 목록과 최근 2026년 게시물·XLSX/XLS/PDF 첨부 구조를 "
+            "확인했습니다. 공식 기관 사이트에 공개된 업무추진비 집행내역에서 원본 파일은 "
+            "재배포하지 않고 날짜·기관·부서/직급 마스킹·장소·금액·목적 등 factual row만 "
+            "추출·정규화하는 적재 정책에 맞습니다. 2026-06-02 dry-run에서 첫 2개 게시물 "
+            "posts_seen=2, raw_parsed_rows=2, normalized_visits=2를 확인했고 production에 "
+            "sources=2, places=1, visits=2를 적재했습니다. 후속 일부 첨부는 확장자와 달리 "
+            "비표준/DRM 바이트 스트림으로 내려와 별도 extractor 보강 전까지 maxPosts=2로 "
+            "검증 범위를 제한합니다."
         ),
     },
     ("부산광역시", "해운대구의회"): {
@@ -8093,6 +8103,7 @@ def _apply_gyeongsang_facts_only_release(
             "publicWorksPolicyUrl",
             "jsDownloadPath",
             "userAgent",
+            "maxPosts",
             "httpBackend",
         )
         if source_pattern.get(key)
@@ -8163,20 +8174,10 @@ GYEONGSANG_DRY_RUN_HOLDS: dict[tuple[str, str], tuple[str, str]] = {
         "경상도권 4차 dry-run에서 공식 의회 업무추진비 HTML 경로는 확인했지만 posts_seen=0이었습니다. "
         "부산 영도구의회 HTML 업무추진비 목록/상세 parser 보강이 필요합니다.",
     ),
-    ("부산광역시", "남구청"): (
-        "adapter_hold",
-        "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "부산 남구청 게시판 목록/상세 parser 보강이 필요합니다.",
-    ),
     ("부산광역시", "남구의회"): (
         "adapter_hold",
         "경상도권 3차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
         "부산 남구의회 의회 게시판 parser 보강이 필요합니다.",
-    ),
-    ("부산광역시", "해운대구청"): (
-        "adapter_hold",
-        "경상도권 4차 dry-run에서 공식 업무추진비 목록은 확인했지만 posts_seen=0이었습니다. "
-        "부산 해운대구청 게시판 목록/상세 parser 보강이 필요합니다.",
     ),
     ("부산광역시", "해운대구의회"): (
         "adapter_hold",

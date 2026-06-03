@@ -40,6 +40,7 @@ class AttachmentBoardPattern(SourcePattern):
     pageParam: str = "page"
     pageUnitParam: str | None = None
     rowsPerPage: int = 10
+    maxPosts: int | None = None
     jsDownloadPath: str | None = None
     userAgent: str | None = None
     referer: str | None = None
