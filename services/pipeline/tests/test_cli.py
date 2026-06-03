@@ -159,9 +159,15 @@ class _FakeResolver:
 async def test_extract_detail_rows_dispatches_hwp(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_extract_hwp_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
+    def fake_extract_hwp_rows(
+        content: bytes,
+        *,
+        fallback_department: str,
+        source_title: str | None = None,
+    ) -> list[ParsedExpenseRow]:
         captured["content"] = content
         captured["fallback_department"] = fallback_department
+        captured["source_title"] = source_title
         return _fake_row_extractor(
             PostDetail(
                 agency_id=Agency().id,
@@ -195,7 +201,11 @@ async def test_extract_detail_rows_dispatches_hwp(monkeypatch: pytest.MonkeyPatc
     )
 
     assert len(rows) == 1
-    assert captured == {"content": b"hwp", "fallback_department": "정부법무공단"}
+    assert captured == {
+        "content": b"hwp",
+        "fallback_department": "정부법무공단",
+        "source_title": "HWP",
+    }
 
 
 @pytest.mark.asyncio
@@ -350,16 +360,16 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 605
+    assert output["summary"]["verified_in_code"] == 612
     assert output["summary"]["pending"] == 0
     assert output["summary"]["legal_hold"] == 101
-    assert output["summary"]["source_not_found"] == 86
+    assert output["summary"]["source_not_found"] == 85
     assert output["summary"]["no_recent_data"] == 1311
     assert output["summary"]["pdf_vision_hold"] == 35
-    assert output["summary"]["adapter_hold"] == 64
+    assert output["summary"]["adapter_hold"] == 58
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 252
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 259
     assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 101
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
@@ -390,7 +400,7 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 605
+    assert output["summary"]["verified_in_code"] == 612
     assert "entries" not in output
 
 

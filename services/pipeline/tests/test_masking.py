@@ -84,6 +84,28 @@ def test_institutional_elected_rank_subject_is_not_representative() -> None:
     assert result["party_size"] == 5
 
 
+def test_staff_masking_strips_institutional_elected_rank_from_department() -> None:
+    agency = Agency(
+        name="전라남도 나주시청",
+        short_name="나주시청",
+        gov_tier=GovTier.BASIC,
+        branch=GovBranch.ADMIN,
+        jurisdiction_type=JurisdictionType.SI,
+        parent_region="전라남도",
+        sub_region="나주시",
+    )
+    result = mask_user_text(
+        "1 890명",
+        fallback_department="나주시청 시장",
+        agency=agency,
+    )
+
+    assert result["representative"] is None
+    assert result["rank_label"] == "5급 이하"
+    assert result["department_name"] == "나주시청 외"
+    assert result["party_size"] == 890
+
+
 def test_deterministic_normalizer_adds_seoul_district_hint_for_gu_department() -> None:
     visits = deterministic_normalize_rows(
         agency_id=agency_uuid("성동구:office"),

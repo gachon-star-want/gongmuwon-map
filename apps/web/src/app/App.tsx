@@ -8,25 +8,19 @@ const staticPaths = new Set(['/about', '/privacy', '/terms', '/disclaimer', '/le
 
 export function App(): ReactElement {
   const path = window.location.pathname;
+  
+  let content: ReactElement;
   if (staticPaths.has(path)) {
-    return (
-      <>
-        <StaticPage path={path} />
-        <Analytics />
-      </>
-    );
+    content = <StaticPage path={path} />;
+  } else if (path === '/community') {
+    content = <CommunityPage />;
+  } else {
+    content = <PlaceExplorer />;
   }
-  if (path === '/community') {
-    return (
-      <>
-        <CommunityPage />
-        <Analytics />
-      </>
-    );
-  }
+  
   return (
     <>
-      <PlaceExplorer />
+      {content}
       <Analytics />
     </>
   );

@@ -24,12 +24,13 @@ DEFAULT_USER_AGENT = (
     "PublicOfficerMapBot/0.1 "
     "(operator: wylee0806@naver.com; public-interest archive)"
 )
-SUPPORTED_FILE_KINDS = {"pdf", "hwp", "xls", "xlsx", "hwpx"}
+SUPPORTED_FILE_KINDS = {"pdf", "hwp", "xls", "xlsx", "hwpx", "zip"}
 EXPENSE_KEYWORDS = ("업무추진비", "업추비", "시책추진비")
 DOWNLOAD_HREF_PARTS = (
     "/site/main/file/download/",
     "/bbs/FileDownLoadProc.do",
     "/board/news/download.do",
+    "/boardDown.do",
     "/board/download.",
     "/download/",
     "/download.do",
@@ -60,6 +61,7 @@ DOWNLOAD_HREF_PARTS = (
     "/comm/getFile",
     "/common/file/download.do",
     "/common/fileDown.do",
+    "/common/file_download/",
     "/other/file_down.do",
     "/portal/cmmn/file/fileDown.do",
     "/shareEtc/download_utf.asp",
@@ -68,8 +70,12 @@ DOWNLOAD_HREF_PARTS = (
     "/board/download.",
     "/boardFileDown.ac",
     "/board_download.do",
+    "/bbs/download.do",
+    "bbs/download.do",
     "/programs/board/download.do",
     "/common/download.php",
+    "common/download.php",
+    "download.php",
     "/cmm/fms/FileDown.do",
     "/cmm/fms/FileWebDown.do",
     "/egf/bp/common/front/",
@@ -119,17 +125,22 @@ class CouncilAttachmentCrawler:
         self.fallback_file_kind = pattern.defaultFileKind or (
             next(iter(self.file_kinds)) if len(self.file_kinds) == 1 else ""
         )
+        self.http_backend = pattern.httpBackend or ""
         self.user_agent = pattern.userAgent or DEFAULT_USER_AGENT
         self.referer = pattern.referer or pattern.listUrl
         headers = {"User-Agent": self.user_agent}
         if self.referer:
             headers["Referer"] = self.referer
-        self._client = client or create_http_client(
-            timeout=DEFAULT_TIMEOUT,
-            headers=headers,
-            follow_redirects=True,
-        )
+        client_kwargs = {
+            "timeout": DEFAULT_TIMEOUT,
+            "headers": headers,
+            "follow_redirects": True,
+        }
+        if self.http_backend:
+            client_kwargs["backend"] = self.http_backend
+        self._client = client or create_http_client(**client_kwargs)
         self._owns_client = client is None
+        self._download_referers: dict[str, str] = {}
 
     async def aclose(self) -> None:
         if self._owns_client:
@@ -183,9 +194,40 @@ class CouncilAttachmentCrawler:
         return list(refs.values())
 
     async def fetch_post(self, ref: PostRef) -> PostDetail:
-        response = await self._client.get(ref.url, headers={"Referer": self.list_url})
+        download_url = ref.url
+        referer = self._download_referers.get(ref.url, self.list_url)
+        if ref.url in self._download_referers:
+            fresh_url = await self._fresh_detail_download_url(ref, referer)
+            if fresh_url:
+                download_url = fresh_url
+                referer = self._download_referers.get(fresh_url, referer)
+                ref = ref.model_copy(update={"url": fresh_url})
+        response = await self._client.get(
+            download_url,
+            headers={"Referer": referer},
+        )
         response.raise_for_status()
         return post_detail_from_artifact(artifact_from_response(ref, response))
+
+    async def _fresh_detail_download_url(self, ref: PostRef, referer: str) -> str:
+        response = await self._client.get(referer, headers={"Referer": self.list_url})
+        response.raise_for_status()
+        fresh_refs = self._parse_detail_downloads(
+            _response_text(response),
+            PostRef(
+                agency_id=ref.agency_id,
+                url=referer,
+                title=ref.title,
+                published_at=ref.published_at,
+                department_name=ref.department_name,
+                file_kind=ref.file_kind,
+            ),
+        )
+        ref_identity = _download_identity(ref.url)
+        for fresh_ref in fresh_refs:
+            if _download_identity(fresh_ref.url) == ref_identity:
+                return fresh_ref.url
+        return ""
 
     def _parse_list(self, html: str) -> list[PostRef]:
         tree = HTMLParser(html)
@@ -194,7 +236,7 @@ class CouncilAttachmentCrawler:
         seen_urls: set[str] = set()
         for row in tree.css("tbody tr"):
             cells = row.css("th,td")
-            if len(cells) < 4:
+            if len(cells) < 2:
                 continue
             title = _clean_title(_normalize_spaces(cells[1].text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
@@ -840,6 +882,7 @@ class CouncilAttachmentCrawler:
                 href = gunwi_page_href
             if not href or _is_placeholder_href(href):
                 continue
+            href = _strip_path_jsessionid(href)
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -860,6 +903,7 @@ class CouncilAttachmentCrawler:
             href = anchor.attributes.get("href", "")
             if not href or not _is_detail_href_for_list(href, self.list_url):
                 continue
+            href = _strip_path_jsessionid(href)
             url = urljoin(self.list_url, href)
             if url in seen:
                 continue
@@ -907,6 +951,7 @@ class CouncilAttachmentCrawler:
             if url in seen_urls:
                 continue
             seen_urls.add(url)
+            self._download_referers[url] = detail.url
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -932,6 +977,12 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
     href = download.attributes.get("href", "") or ""
     onclick = download.attributes.get("onclick", "") or ""
     trigger = f"{onclick} {href}"
+    window_open = re.search(
+        r"window\.open\(\s*['\"](?P<url>[^'\"]+)['\"]",
+        trigger,
+    )
+    if window_open and _is_window_open_download_candidate(window_open.group("url")):
+        return window_open.group("url")
     js_download = re.search(
         r"yhLib\.file\.download\('(?P<attach_id>[^']+)'\s*,\s*'(?P<file_sn>[^']+)'",
         onclick,
@@ -1016,7 +1067,21 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
         return "/programs/board/download.do?" + urlencode(
             {"parm_file_uid": open_download_files.group("file_uid")}
         )
+    zip_download = re.search(r"fn_zipDownload\(['\"](?P<attach_id>[^'\"]+)['\"]\)", trigger)
+    if zip_download:
+        return "/cmm/fms/zipDownload.do?" + urlencode(
+            {
+                "atchFileIdStr": zip_download.group("attach_id"),
+                "zipFileName": "zipDownload.zip",
+            }
+        )
     return href
+
+
+def _strip_path_jsessionid(href: str) -> str:
+    parts = urlsplit(href)
+    path = re.sub(r";jsessionid=[^/?#]+", "", parts.path, flags=re.IGNORECASE)
+    return urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
 
 
 def _hidden_form_query(tree: HTMLParser, form_id: str) -> dict[str, str]:
@@ -1073,6 +1138,9 @@ def _detail_title_cell(cells) -> Any | None:
 
 
 def _filename_from_download_link(download) -> str:
+    trigger = f"{download.attributes.get('onclick', '')} {download.attributes.get('href', '')}"
+    if "fn_zipDownload" in trigger:
+        return "zipDownload.zip"
     candidates = [
         download.text(separator=" ", strip=True) or "",
         download.attributes.get("title") or "",
@@ -1237,6 +1305,8 @@ def _looks_like_expense(value: str) -> bool:
 
 
 def _download_looks_like_expense(*, title: str, filename: str) -> bool:
+    if filename.lower().endswith(".zip"):
+        return _looks_like_expense(title)
     if filename and _looks_like_expense(filename):
         return True
     if filename and not _looks_like_uninformative_file_label(filename):
@@ -1260,9 +1330,27 @@ def _is_download_href(href: str) -> bool:
     if "mode=d" in lowered and "file_id=" in lowered:
         return True
     return any(part.lower() in lowered for part in DOWNLOAD_HREF_PARTS) or re.search(
-        r"\.(?:pdf|xls|xlsx|hwpx)(?:$|[?#&])",
+        r"\.(?:pdf|hwp|xls|xlsx|hwpx|zip)(?:$|[?#&])",
         lowered,
     ) is not None
+
+
+def _is_window_open_download_candidate(href: str) -> bool:
+    if not href:
+        return False
+    lowered = href.lower()
+    if any(
+        marker in lowered
+        for marker in (
+            "downloadview.do",
+            "pre_viewer.php",
+            "synap",
+            "convert.jsp",
+            "viewer",
+        )
+    ):
+        return False
+    return _is_download_href(href) or "file_download" in lowered or _file_kind(href) != ""
 
 
 def _is_detail_href(href: str) -> bool:
@@ -1330,6 +1418,7 @@ def _looks_like_uninformative_file_label(filename: str) -> bool:
         "첨부파일 다운로드",
         "파일",
         "파일 다운로드",
+        "파일이 여러개 있음",
         "공개내역 파일",
         "바로보기",
     } or _looks_like_generic_file_label(filename)
@@ -1341,8 +1430,9 @@ def _file_kind_priority(file_kind: str) -> int:
         "xls": 1,
         "html": 2,
         "hwpx": 3,
-        "pdf": 4,
-        "hwp": 5,
+        "zip": 4,
+        "pdf": 5,
+        "hwp": 6,
     }.get(file_kind, 9)
 
 
@@ -1364,6 +1454,16 @@ def _url_with_page(
     if page_unit_param and rows_per_page:
         query[page_unit_param] = str(rows_per_page)
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _download_identity(url: str) -> str:
+    parts = urlsplit(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if key.lower() not in {"pkey", "token", "key"}
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ""))
 
 
 def _response_text(response: Any) -> str:

@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from public_officer_pipeline.models import Agency
 
-ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html")
-FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html"]
+ALLOWED_FILE_KINDS = ("pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip")
+FileKind = Literal["pdf", "hwp", "hwpx", "xls", "xlsx", "html", "zip"]
 
 
 class SourcePatternError(ValueError):
@@ -44,6 +44,7 @@ class AttachmentBoardPattern(SourcePattern):
     jsDownloadPath: str | None = None
     userAgent: str | None = None
     referer: str | None = None
+    httpBackend: Literal["auto", "httpx", "curl"] | None = None
 
     @field_validator("fileKinds", mode="before")
     @classmethod

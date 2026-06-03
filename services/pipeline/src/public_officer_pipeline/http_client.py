@@ -259,6 +259,8 @@ class _CurlClient(AsyncHttpClient):
         self._doh_url = doh_url
         self._max_download_bytes = max_download_bytes
         self._compressed = compressed
+        self._cookie_directory = tempfile.TemporaryDirectory()
+        self._cookie_path = Path(self._cookie_directory.name) / "cookies.txt"
 
     async def get(
         self,
@@ -277,6 +279,10 @@ class _CurlClient(AsyncHttpClient):
                 "curl",
                 "-sS",
                 "--http1.1",
+                "-b",
+                str(self._cookie_path),
+                "-c",
+                str(self._cookie_path),
                 "-D",
                 str(header_path),
                 "-o",
@@ -352,7 +358,7 @@ class _CurlClient(AsyncHttpClient):
         )
 
     async def aclose(self) -> None:
-        return None
+        self._cookie_directory.cleanup()
 
 
 class _AdaptiveHttpClient(AsyncHttpClient):
@@ -409,11 +415,12 @@ def create_http_client(
     timeout: httpx.Timeout,
     headers: dict[str, str],
     follow_redirects: bool,
+    backend: str | None = None,
 ) -> AsyncHttpClient:
-    backend = os.getenv("PIPELINE_HTTP_BACKEND", "auto").strip().lower()
-    if backend not in Backend:
-        backend = "auto"
-    if backend == "curl":
+    selected_backend = (backend or os.getenv("PIPELINE_HTTP_BACKEND", "auto")).strip().lower()
+    if selected_backend not in Backend:
+        selected_backend = "auto"
+    if selected_backend == "curl":
         doh_url = os.getenv("PIPELINE_CURL_DOH_URL", "").strip() or None
         return _CurlClient(
             timeout=_resolve_timeout_seconds(timeout),
@@ -421,6 +428,6 @@ def create_http_client(
             follow_redirects=follow_redirects,
             doh_url=doh_url,
         )
-    if backend == "httpx":
+    if selected_backend == "httpx":
         return _HttpxClient(timeout=timeout, headers=headers, follow_redirects=follow_redirects)
     return _AdaptiveHttpClient(timeout=timeout, headers=headers, follow_redirects=follow_redirects)

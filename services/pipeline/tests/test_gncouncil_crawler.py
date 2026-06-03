@@ -7,6 +7,7 @@ import public_officer_pipeline.crawler.gncouncil as gncouncil
 from public_officer_pipeline.crawler.gncouncil import (
     CouncilAttachmentCrawler,
     GangnamCouncilCrawler,
+    _download_identity,
     _url_with_page,
 )
 from public_officer_pipeline.models import Agency, GovTier, GovBranch, JurisdictionType, PostRef
@@ -57,6 +58,14 @@ def test_url_with_page_supports_custom_pagination_params() -> None:
     assert url == (
         "https://www.jungnang.go.kr/portal/bbs/list/B0000143.do"
         "?menuNo=200432&pageIndex=2&pageUnit=10"
+    )
+
+
+def test_download_identity_ignores_volatile_file_tokens() -> None:
+    assert _download_identity(
+        "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320/a.pdf?pkey=old"
+    ) == _download_identity(
+        "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320/a.pdf?pkey=new"
     )
 
 
@@ -218,6 +227,88 @@ def test_attachment_crawler_extracts_current_detail_download_page() -> None:
     )
     assert refs[0].published_at == date(2025, 8, 6)
     assert refs[0].file_kind == "pdf"
+
+
+def test_attachment_crawler_extracts_window_open_file_download_from_detail() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="나주시청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.SI,
+            parent_region="전라남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.naju.go.kr/www/open_data/budget/expense/group_expense",
+                "fileKinds": ["pdf"],
+            },
+        )
+    )
+
+    refs = crawler._parse_detail_downloads(
+        """
+        <h1>2026년 4월 시장(권한대행) 업무추진비 집행내역</h1>
+        <button type="button"
+          onclick="window.open('/ybscript.io/common/file_download/604998/297320/%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84.pdf?pkey=abc', '_blank')">
+          업무추진비.pdf
+        </button>
+        """,
+        PostRef(
+            agency_id=crawler.agency.id,
+            url="https://www.naju.go.kr/www/open_data/budget/expense/group_expense?idx=604998&mode=view",
+            title="2026년 4월 시장(권한대행) 업무추진비 집행내역",
+            published_at=date(2026, 5, 12),
+            department_name="나주시청 시장",
+        ),
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320/"
+        "%EC%97%85%EB%AC%B4%EC%B6%94%EC%A7%84%EB%B9%84.pdf?pkey=abc"
+    )
+    assert refs[0].file_kind == "pdf"
+    assert crawler._download_referers[refs[0].url] == (
+        "https://www.naju.go.kr/www/open_data/budget/expense/group_expense?idx=604998&mode=view"
+    )
+
+
+def test_attachment_crawler_extracts_hwp_refs() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="전라남도청",
+            gov_tier=GovTier.REGIONAL,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.PROVINCE,
+            parent_region="전라남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.jeonnam.go.kr/M1925005/boardList.do?menuId=jeonnam0302050100",
+                "fileKinds": ["hwp"],
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>1</td>
+            <td><a href="/M1925005/boardView.do?seq=1929757">도지사 업무추진비 집행내역('26년 2월)</a></td>
+            <td>대변인</td>
+            <td>2026-03-19</td>
+            <td><a href="/boardDown.do?boardId=M1925005&amp;seq=1929757&amp;fileLinkTp=F&amp;fileLinkSeq=1">도지사 업무추진비 집행내역.hwp</a></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].url == (
+        "https://www.jeonnam.go.kr/boardDown.do"
+        "?boardId=M1925005&seq=1929757&fileLinkTp=F&fileLinkSeq=1"
+    )
+    assert refs[0].file_kind == "hwp"
 
 
 def test_attachment_crawler_extracts_egf_direct_download_rows() -> None:
@@ -3077,6 +3168,46 @@ def test_attachment_crawler_extracts_configured_php_file_downloads() -> None:
     assert refs[0].file_kind == "xlsx"
 
 
+def test_attachment_crawler_extracts_zip_download_refs() -> None:
+    crawler = CouncilAttachmentCrawler(
+        Agency(
+            short_name="홍성군청",
+            gov_tier=GovTier.BASIC,
+            branch=GovBranch.ADMIN,
+            jurisdiction_type=JurisdictionType.GUN,
+            parent_region="충청남도",
+            source_pattern={
+                "adapter": "attachment_board",
+                "listUrl": "https://www.hongseong.go.kr/bbs/BBSMSTR_000000000811/list.do",
+                "fileKinds": ["zip"],
+                "defaultFileKind": "zip",
+                "followDetail": False,
+            },
+        )
+    )
+
+    refs = crawler._parse_list(
+        """
+        <table><tbody>
+          <tr>
+            <td>9</td>
+            <td><a href="/bbs/BBSMSTR_000000000811/view.do?nttId=1">2026년 1분기 업무추진비 집행내역</a></td>
+            <td>홍성군청</td>
+            <td>2026-04-01</td>
+            <td><a href="#download" onclick="fn_zipDownload('FILE_000000000139686')">파일이 여러개 있음</a></td>
+          </tr>
+        </tbody></table>
+        """
+    )
+
+    assert len(refs) == 1
+    assert refs[0].file_kind == "zip"
+    assert refs[0].url == (
+        "https://www.hongseong.go.kr/cmm/fms/zipDownload.do?"
+        "atchFileIdStr=FILE_000000000139686&zipFileName=zipDownload.zip"
+    )
+
+
 def test_attachment_crawler_extracts_miryang_board_detail_and_file_web_downloads() -> None:
     crawler = CouncilAttachmentCrawler(
         Agency(
@@ -3120,7 +3251,7 @@ def test_attachment_crawler_extracts_miryang_board_detail_and_file_web_downloads
 
     assert len(details) == 1
     assert details[0].url == (
-        "https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do;jsessionid=ABC.was1"
+        "https://www.miryang.go.kr/twn/bbs/selectBoardDetail.do"
         "?mnNo=3040000&owd=sammun&bbsId=BBSMSTR_000000085910&nttId=191938&pageIndex=1"
     )
 

@@ -43,7 +43,7 @@ CREATE TABLE public.sources (
   url text NOT NULL,
   title text,
   published_at date,
-  file_kind text CHECK (file_kind IN ('html', 'pdf', 'hwp', 'hwpx', 'xls', 'xlsx')),
+  file_kind text CHECK (file_kind IN ('html', 'pdf', 'hwp', 'hwpx', 'xls', 'xlsx', 'zip')),
   storage_path text,
   fetched_at timestamptz NOT NULL DEFAULT now(),
   hash_sha256 text NOT NULL,
