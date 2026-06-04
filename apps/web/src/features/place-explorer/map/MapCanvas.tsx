@@ -137,6 +137,7 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
       onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], level);
     };
     kakao.maps.event.addListener(map, 'idle', fireBounds);
+    fireBounds();
   }, [kakaoReady]);
 
   useEffect(() => {
@@ -152,10 +153,18 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
         setUserLocation(location);
         map.setLevel(USER_LOCATION_LEVEL);
         map.setCenter(new kakao.maps.LatLng(location.latitude, location.longitude));
+        const bounds = map.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], USER_LOCATION_LEVEL);
       },
       () => {
         map.setLevel(DEFAULT_MAP_LEVEL);
         map.setCenter(new kakao.maps.LatLng(SEOUL_CENTER.latitude, SEOUL_CENTER.longitude));
+        const bounds = map.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], DEFAULT_MAP_LEVEL);
       },
       { enableHighAccuracy: true, maximumAge: 300000, timeout: 5000 },
     );
