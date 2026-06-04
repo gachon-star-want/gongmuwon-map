@@ -37,15 +37,10 @@ class KakaoResolver:
         # Load agency coordinates
         import json
         self.agency_coordinates = {}
-        coords_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+        coords_path = Path(__file__).parent / "agency_coordinates.json"
         if coords_path.exists():
             with open(coords_path, "r", encoding="utf-8") as f:
                 self.agency_coordinates = json.load(f)
-        else:
-            alt_path = Path(__file__).parent / "agency_coordinates.json"
-            if alt_path.exists():
-                with open(alt_path, "r", encoding="utf-8") as f:
-                    self.agency_coordinates = json.load(f)
 
     async def resolve(self, place: PlaceRaw, agency: Agency | None = None) -> ResolvedPlace:
         # Cache key definition

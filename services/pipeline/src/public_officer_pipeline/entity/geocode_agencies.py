@@ -5,8 +5,15 @@ import psycopg
 import httpx
 from pathlib import Path
 
+def find_project_root() -> Path:
+    current = Path(__file__).resolve().parent
+    for parent in [current] + list(current.parents):
+        if (parent / ".git").exists() or (parent / "package.json").exists():
+            return parent
+    return Path.cwd()
+
 def load_env():
-    env_path = Path("/Users/lee_wonyoung/developer/public_officer_map/.env.local")
+    env_path = find_project_root() / ".env.local"
     env_vars = {}
     if env_path.exists():
         with open(env_path, "r", encoding="utf-8") as f:
@@ -121,7 +128,7 @@ def main():
                 
     print(f"Fetched {len(agencies)} agencies.")
     
-    output_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+    output_path = Path(__file__).parent / "agency_coordinates.json"
     
     results = {}
     if output_path.exists():

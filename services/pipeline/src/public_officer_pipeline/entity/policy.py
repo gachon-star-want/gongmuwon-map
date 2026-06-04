@@ -14,15 +14,10 @@ from public_officer_pipeline.models import PlaceRaw, ResolvedPlace, Agency, GovT
 # Load agency coordinates
 _AGENCY_COORDINATES: dict[str, dict[str, Any]] = {}
 try:
-    _coords_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+    _coords_path = Path(__file__).parent / "agency_coordinates.json"
     if _coords_path.exists():
         with open(_coords_path, "r", encoding="utf-8") as _f:
             _AGENCY_COORDINATES = json.load(_f)
-    else:
-        _alt_path = Path(__file__).parent / "agency_coordinates.json"
-        if _alt_path.exists():
-            with open(_alt_path, "r", encoding="utf-8") as _f:
-                _AGENCY_COORDINATES = json.load(_f)
 except Exception:
     pass
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from uuid import UUID
 
 def test_agency_coordinates_exist_and_are_valid():
-    json_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+    json_path = Path(__file__).resolve().parent.parent / "src" / "public_officer_pipeline" / "entity" / "agency_coordinates.json"
     
     # 1. Verify file exists
     assert json_path.exists(), f"Coordinates file {json_path} does not exist"
