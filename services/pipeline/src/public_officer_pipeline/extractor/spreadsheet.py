@@ -14,6 +14,7 @@ from selectolax.parser import HTMLParser
 from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 from public_officer_pipeline.models import ParsedExpenseRow
+from public_officer_pipeline.extractor.text_utils import normalize_spaces
 
 
 HEADER_ALIASES = {
@@ -320,7 +321,7 @@ def _html_table_rows(content: bytes) -> list[list[list[str]]]:
         rows: list[list[str]] = []
         for tr in table.css("tr"):
             row_values = _trim_trailing_empty_cells(
-                [_clean(cell.text(separator=" ", strip=True)) for cell in tr.css("th,td")]
+                [normalize_spaces(cell.text(separator=" ", strip=True)) for cell in tr.css("th,td")]
             )
             if not any(row_values):
                 continue
@@ -413,7 +414,7 @@ def _extract_department(rows: list[list[str]]) -> str | None:
         text = " ".join(cell for cell in row if cell)
         match = DEPARTMENT_RE.search(text)
         if match:
-            return _clean(match.group("department"))
+            return normalize_spaces(match.group("department"))
     return None
 
 
@@ -494,9 +495,9 @@ def _parse_row(
     amount_is_thousands: bool = False,
 ) -> ParsedExpenseRow | None:
     item = {
-        mapped_headers[index]: _clean(value)
+        mapped_headers[index]: normalize_spaces(value)
         for index, value in enumerate(raw_row[: len(mapped_headers)])
-        if mapped_headers[index] and _clean(value)
+        if mapped_headers[index] and normalize_spaces(value)
     }
     place_text = item.get("place_text") or item.get("purpose") or item.get("expense_category")
     if not item.get("used_date") or not place_text or not item.get("amount"):
@@ -568,7 +569,7 @@ def _row_date_text(
         return used_date
 
     year, sheet_month_value = sheet_month
-    next_value = _clean(raw_row[date_index + 1]) if date_index + 1 < len(raw_row) else ""
+    next_value = normalize_spaces(raw_row[date_index + 1]) if date_index + 1 < len(raw_row) else ""
     if re.fullmatch(r"\d{1,2}", next_value):
         first = int(used_date)
         day = int(next_value)
@@ -598,5 +599,3 @@ def _stringify(value: Any) -> str:
     return str(value)
 
 
-def _clean(value: str) -> str:
-    return re.sub(r"\s+", " ", value or "").strip()

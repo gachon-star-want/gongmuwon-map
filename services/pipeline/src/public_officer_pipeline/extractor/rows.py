@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from public_officer_pipeline.legal.visibility import sanitize_raw_excerpt
 from public_officer_pipeline.models import ParsedExpenseRow
+from public_officer_pipeline.extractor.text_utils import normalize_spaces
 
 
 _SHORT_YEAR_DATE_RE = re.compile(
@@ -55,7 +56,7 @@ def _build_expense_row(
     fallback_department: str,
     address_separator: str = "(",
 ) -> ParsedExpenseRow | None:
-    department_name = _clean(fields.department_name or fallback_department) or "서울시본청"
+    department_name = normalize_spaces(fields.department_name or fallback_department) or "서울시본청"
     used_at = fields.used_at
     if used_at is None:
         used_at = parse_used_at(fields.date_text, fields.time_text)
@@ -80,7 +81,7 @@ def _build_expense_row(
     if not place_text:
         return None
 
-    user_text = _clean(fields.user_text)
+    user_text = normalize_spaces(fields.user_text)
     party_size = parse_party_size(fields.party_size)
     if user_text and party_size:
         user_text = f"{user_text} {party_size}명"
@@ -88,7 +89,7 @@ def _build_expense_row(
         # Keep old behavior for callers that intentionally set no user text by design.
         user_text = None
 
-    raw_excerpt = " | ".join(value for value in (_clean(value) for value in fields.raw_values) if value)
+    raw_excerpt = " | ".join(value for value in (normalize_spaces(value) for value in fields.raw_values) if value)
     if raw_excerpt:
         raw_excerpt = sanitize_raw_excerpt(raw_excerpt)
 
@@ -96,11 +97,11 @@ def _build_expense_row(
         department_name=department_name,
         used_at=used_at,
         place_text=place_text,
-        purpose=_clean(fields.purpose),
+        purpose=normalize_spaces(fields.purpose),
         amount=amount,
         user_text=user_text,
-        payment_method=_clean(fields.payment_method),
-        expense_category=_clean(fields.expense_category),
+        payment_method=normalize_spaces(fields.payment_method),
+        expense_category=normalize_spaces(fields.expense_category),
         raw_excerpt=raw_excerpt,
     )
 
@@ -129,7 +130,7 @@ def parse_used_at(date_text: str | None, time_text: str | None) -> datetime | No
     if date_text is None:
         return None
     if isinstance(date_text, str):
-        date_value = _clean(date_text)
+        date_value = normalize_spaces(date_text)
     else:
         date_value = str(date_text)
     if not date_value:
@@ -157,9 +158,9 @@ def format_place_text(
     place_text: str | None = None,
     address_separator: str = "(",
 ) -> str | None:
-    explicit_place = _clean(place_text)
-    normalized_name = _clean(name)
-    normalized_address = _clean(address) or _clean(address_hint)
+    explicit_place = normalize_spaces(place_text)
+    normalized_name = normalize_spaces(name)
+    normalized_address = normalize_spaces(address) or normalize_spaces(address_hint)
 
     if explicit_place and (("(" in explicit_place or "（" in explicit_place) or not normalized_name):
         return explicit_place
@@ -175,7 +176,7 @@ def format_place_text(
 def _extract_time_text(time_text: str | None) -> str | None:
     if not time_text:
         return None
-    compact = _clean(time_text)
+    compact = normalize_spaces(time_text)
     if not compact:
         return None
     match = _VALID_TIME_RE.search(compact)
@@ -232,6 +233,3 @@ def _extract_time_from_text(value: str | None) -> str | None:
         return None
 
 
-def _clean(value: str | None) -> str | None:
-    cleaned = re.sub(r"\s+", " ", value or "").strip()
-    return cleaned or None

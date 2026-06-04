@@ -12,6 +12,7 @@ from public_officer_pipeline.agencies import SEOUL_AGENCIES
 from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
 from public_officer_pipeline.models import Agency, PostDetail, PostRef
 from public_officer_pipeline.http_client import create_http_client
+from public_officer_pipeline.crawler.date_utils import parse_crawler_date
 
 
 LIST_URL = "https://www.gangnam.go.kr/board/B_000673/list.do"
@@ -79,7 +80,7 @@ class GangnamExpenseCrawler:
             if not href:
                 continue
             department = " ".join(cells[3].text(separator=" ", strip=True).split())
-            published_at = _parse_date(cells[4].text(separator=" ", strip=True))
+            published_at = parse_crawler_date(cells[4].text(separator=" ", strip=True))
             refs.append(
                 PostRef(
                     agency_id=self.agency.id,
@@ -91,13 +92,6 @@ class GangnamExpenseCrawler:
                 )
             )
         return refs
-
-
-def _parse_date(value: str) -> date | None:
-    try:
-        return date.fromisoformat(value.strip())
-    except ValueError:
-        return None
 
 
 def _file_kind(content_disposition: str) -> str:

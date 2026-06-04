@@ -9,6 +9,7 @@ import httpx
 from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
 from public_officer_pipeline.models import Agency, PostDetail, PostRef
 from public_officer_pipeline.source_pattern import AlioItemDisclosurePattern, parse_source_pattern
+from public_officer_pipeline.crawler.file_kind import detect_file_kind
 
 
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
@@ -63,7 +64,7 @@ class AlioItemDisclosureCrawler:
         published_at = _date_from_disclosure_no(disclosure_no)
         refs: list[PostRef] = []
         for file_no, filename in _parse_files(str(row.get("files") or "")):
-            file_kind = _file_kind(filename)
+            file_kind = detect_file_kind(filename)
             if file_kind not in self.file_kinds:
                 continue
             file_year = _file_year(filename)
@@ -93,7 +94,7 @@ class AlioItemDisclosureCrawler:
             filename = str(item.get("filename") or "").strip()
             if not file_no or not disclosure_no or not filename:
                 continue
-            file_kind = _file_kind(filename)
+            file_kind = detect_file_kind(filename)
             if file_kind not in self.file_kinds:
                 continue
             file_year = _file_year(filename)
@@ -157,9 +158,6 @@ def _parse_files(value: str) -> list[tuple[str, str]]:
     return files
 
 
-def _file_kind(filename: str) -> str:
-    match = re.search(r"\.([a-zA-Z0-9]+)\s*$", filename)
-    return match.group(1).lower() if match else "html"
 
 
 def _file_year(filename: str) -> int | None:

@@ -9,6 +9,7 @@ from public_officer_pipeline.extractor.hwpx import extract_hwpx_rows
 from public_officer_pipeline.extractor.pdf_vision import extract_pdf_rows_with_vision
 from public_officer_pipeline.extractor.spreadsheet import extract_spreadsheet_rows
 from public_officer_pipeline.models import ParsedExpenseRow, PipelineConfigError
+from public_officer_pipeline.crawler.file_kind import detect_file_kind
 
 
 SUPPORTED_ARCHIVE_KINDS = ("xlsx", "xls", "hwpx", "hwp", "pdf")
@@ -32,11 +33,11 @@ def extract_zip_rows(
     with zipfile.ZipFile(BytesIO(content)) as archive:
         for member in sorted(
             archive.infolist(),
-            key=lambda item: (_archive_kind_priority(_file_kind(item.filename)), item.filename),
+            key=lambda item: (_archive_kind_priority(detect_file_kind(item.filename)), item.filename),
         ):
             if member.is_dir():
                 continue
-            file_kind = _file_kind(member.filename)
+            file_kind = detect_file_kind(member.filename)
             if file_kind not in SUPPORTED_ARCHIVE_KINDS:
                 continue
             guards.ensure_size_at_most(
@@ -86,13 +87,6 @@ def _extract_member_rows(
         )
     return []
 
-
-def _file_kind(filename: str) -> str:
-    lowered = filename.lower()
-    for file_kind in SUPPORTED_ARCHIVE_KINDS:
-        if lowered.endswith(f".{file_kind}"):
-            return file_kind
-    return ""
 
 
 def _archive_kind_priority(file_kind: str) -> int:

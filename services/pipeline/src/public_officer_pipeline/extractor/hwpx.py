@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.extractor.spreadsheet import extract_grid_rows
 from public_officer_pipeline.models import ParsedExpenseRow
+from public_officer_pipeline.extractor.text_utils import normalize_spaces
 
 
 HWPX_SECTION_RE = re.compile(r"^Contents/section\d+\.xml$")
@@ -55,7 +56,7 @@ def _extract_document_department(sections: list[ElementTree.Element]) -> str | N
     for text in paragraphs:
         match = DEPARTMENT_HINT_RE.search(text)
         if match:
-            return _normalize_spaces(match.group("department"))
+            return normalize_spaces(match.group("department"))
     return None
 
 
@@ -108,7 +109,7 @@ def _cell_col_span(cell: ElementTree.Element) -> int:
 
 def _node_text(node: ElementTree.Element) -> str:
     values = [text for child in node.iter() if _local_name(child.tag) == "t" for text in [child.text or ""]]
-    return _normalize_spaces(" ".join(values))
+    return normalize_spaces(" ".join(values))
 
 
 def _local_name(tag: str) -> str:
@@ -121,7 +122,3 @@ def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
         if value:
             last_non_empty = index
     return row_values[: last_non_empty + 1]
-
-
-def _normalize_spaces(value: str) -> str:
-    return " ".join(value.split())

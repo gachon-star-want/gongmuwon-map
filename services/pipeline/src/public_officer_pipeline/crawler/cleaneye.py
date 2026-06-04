@@ -12,6 +12,7 @@ from public_officer_pipeline import document_guards as guards
 from public_officer_pipeline.artifact import artifact_from_response, post_detail_from_artifact
 from public_officer_pipeline.models import Agency, PostDetail, PostRef
 from public_officer_pipeline.source_pattern import CleanEyeOwnerWorkCostPattern, parse_source_pattern
+from public_officer_pipeline.crawler.file_kind import detect_file_kind
 
 
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
@@ -97,7 +98,7 @@ class CleanEyeOwnerWorkCostCrawler:
         filename = str(row.get("filename") or "").strip()
         upload_filename = str(row.get("saveFileName") or "").strip()
         file_path = str(row.get("filePath") or "").strip()
-        file_kind = _file_kind(filename or upload_filename)
+        file_kind = detect_file_kind(filename or upload_filename)
         if file_kind not in self.file_kinds:
             return None
         if not filename or not upload_filename or not file_path:
@@ -159,11 +160,6 @@ def _parse_json_list_q(html: str) -> list[dict[str, Any]]:
     except (SyntaxError, ValueError, json.JSONDecodeError):
         return []
     return data if isinstance(data, list) else []
-
-
-def _file_kind(filename: str) -> str:
-    match = re.search(r"\.([a-zA-Z0-9]+)\s*$", filename)
-    return match.group(1).lower() if match else "html"
 
 
 def _file_year(row: dict[str, Any], *, filename: str, upload_filename: str) -> int | None:
