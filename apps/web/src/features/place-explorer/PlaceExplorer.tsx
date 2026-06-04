@@ -18,7 +18,6 @@ import { useDisclosure } from '@mantine/hooks';
 import {
   AlertTriangle,
   Building2,
-  Check,
   FileText,
   Filter,
   Info,
@@ -43,9 +42,11 @@ import {
   searchPlaces as searchPlacesApi,
   setPlaceReaction as setPlaceReactionApi,
 } from './publicData';
-import { gradeLabel, shortRegionLabel, sortPlaces } from './format';
+import { shortRegionLabel, sortPlaces } from './format';
 import {
+  allGrades,
   defaultGrades,
+  isDefaultGradeFilter,
   normalizeQueryState,
   parseQueryState,
   resolveExplorerPathname,
@@ -61,13 +62,11 @@ import { submitClosureReport, submitTakedownRequest } from './forms/reportFlows'
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
-import { SponsorAd } from '../ads/SponsorAd';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import mascotLogo from '../../assets/officer-mascot-logo.png';
 import './styles.css';
 
 const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외';
-const gradeOptions = ['★★★', '★★', '✦', '★'] as const;
 const sortOptions: { value: SortMode; label: string }[] = [
   { value: 'score', label: '추천순' },
   { value: 'recent', label: '최근 방문순' },
@@ -145,17 +144,17 @@ export function PlaceExplorer() {
 
   const resultLabel = useMemo(() => {
     const count = listedPlaces.length.toLocaleString('ko-KR');
-    if (!hasActiveSearchFilter && !closedVisible && queryState.grade.join(',') === defaultGrades.join(',')) return `${count}곳`;
+    if (!hasActiveSearchFilter && !closedVisible && isDefaultGradeFilter(queryState.grade)) return `${count}곳`;
     const parts = [];
     if (queryState.q) parts.push(`"${queryState.q}"`);
     if (queryState.region.length) parts.push(`${queryState.region.length}개 자치구`);
-    if (queryState.grade.join(',') !== defaultGrades.join(',')) parts.push(`${queryState.grade.length}개 등급`);
+    if (!isDefaultGradeFilter(queryState.grade)) parts.push(queryState.grade.join(',') === allGrades.join(',') ? '전체 등급' : '등급 필터');
     if (closedVisible) parts.push('폐업 포함');
     return `${parts.join(' · ')} 결과 ${count}곳`;
   }, [closedVisible, hasActiveSearchFilter, listedPlaces.length, queryState.grade, queryState.q, queryState.region.length]);
   const listError = hasActiveSearchFilter ? searchError : null;
   const listLoading = hasActiveSearchFilter ? searchLoading : false;
-  const hasActiveFilter = hasActiveSearchFilter || closedVisible || queryState.grade.join(',') !== defaultGrades.join(',');
+  const hasActiveFilter = hasActiveSearchFilter || closedVisible || !isDefaultGradeFilter(queryState.grade);
 
   useEffect(() => {
     const onPopState = () => {
@@ -530,7 +529,6 @@ export function PlaceExplorer() {
             onReset={resetFilters}
             onRetry={retrySearch}
           />
-          <AdSlot />
         </aside>
       ) : null}
 
@@ -555,12 +553,6 @@ export function PlaceExplorer() {
         </aside>
       ) : null}
 
-      {!selectedPlace && mobileMode === 'map' ? (
-        <aside className="map-ad-rail desktop-layer" aria-label="광고">
-          <SponsorAd variant="rail" />
-        </aside>
-      ) : null}
-
       {selectedPlace ? (
         <aside className="detail-drawer desktop-layer" aria-label="식당 상세">
           <PlaceDetails
@@ -574,7 +566,6 @@ export function PlaceExplorer() {
             onReact={toggleReaction}
             isAuthenticated={Boolean(currentUser)}
           />
-          <AdSlot />
         </aside>
       ) : null}
 
@@ -769,6 +760,7 @@ function FloatingSearchFilter({
   onLogin: () => void;
   onLogout: () => void;
 }) {
+  const publicPickSelected = isDefaultGradeFilter(selectedGrades);
   return (
     <div className="floating-search">
       <a className="brand-mark" href="/" aria-label="공무원맵 홈">
@@ -796,25 +788,16 @@ function FloatingSearchFilter({
         maxDropdownHeight={260}
       />
       <div className="desktop-action-cluster">
-        <div className="grade-chip-group" aria-label="등급 필터">
-          {gradeOptions.map((grade) => {
-            const selected = selectedGrades.includes(grade);
-            return (
-              <button
-                className="filter-chip"
-                data-active={selected}
-                key={grade}
-                type="button"
-                onClick={() => {
-                  if (selected && selectedGrades.length === 1) return;
-                  onGradesChange(selected ? selectedGrades.filter((item) => item !== grade) : [...selectedGrades, grade]);
-                }}
-              >
-                {selected ? <Check size={13} aria-hidden /> : null}
-                {gradeLabel(grade)}
-              </button>
-            );
-          })}
+        <div className="grade-chip-group" aria-label="추천 필터">
+          <button
+            className="filter-chip public-pick-chip"
+            data-active={publicPickSelected}
+            type="button"
+            aria-pressed={publicPickSelected}
+            onClick={() => onGradesChange(publicPickSelected ? allGrades : defaultGrades)}
+          >
+            공무원픽
+          </button>
         </div>
         <Select
           aria-label="정렬"
@@ -917,10 +900,6 @@ function BottomNav({
       )}
     </nav>
   );
-}
-
-function AdSlot() {
-  return <SponsorAd />;
 }
 
 function initialMobileMode(state: PlaceQueryState): MobileMode {

@@ -857,8 +857,8 @@
 
 .floating-search {
   box-sizing: border-box;
-  width: max-content;
-  max-width: calc(100vw - 470px);
+  width: fit-content;
+  max-width: min(1120px, calc(100vw - 430px));
   padding: 7px;
   border-color: rgba(216, 225, 235, 0.92);
   border-radius: 18px;
@@ -926,6 +926,9 @@
 }
 
 .desktop-action-cluster {
+  flex: 1 1 430px;
+  min-width: 0;
+  flex-wrap: wrap;
   margin-left: 0;
   padding: 4px;
   border: 1px solid rgba(222, 230, 239, 0.9);
@@ -990,6 +993,10 @@
   flex: 0 0 auto;
   border-radius: 11px;
   font-weight: 800;
+}
+
+.public-pick-chip {
+  min-width: 86px;
 }
 
 .list-sheet {

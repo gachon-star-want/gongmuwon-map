@@ -1,9 +1,7 @@
 import { ActionIcon, Button, Checkbox, MultiSelect, SegmentedControl } from '@mantine/core';
-import { Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { Grade, SortMode } from '../types';
-import { gradeLabel } from '../format';
-
-const gradeOptions = ['★★★', '★★', '✦', '★'] as const;
+import { allGrades, defaultGrades, isDefaultGradeFilter } from '../queryState';
 
 type MobileFilterPanelProps = {
   regions: { label: string; value: string }[];
@@ -32,6 +30,7 @@ export function MobileFilterPanel({
   onReset,
   onClose,
 }: MobileFilterPanelProps) {
+  const publicPickSelected = isDefaultGradeFilter(selectedGrades);
   return (
     <div className="mobile-panel">
       <div className="mobile-panel-head">
@@ -44,26 +43,17 @@ export function MobileFilterPanel({
       </div>
       <MultiSelect data={regions} label="자치구" value={selectedRegions} onChange={onRegionsChange} searchable clearable />
       <div>
-        <div className="panel-label">등급</div>
+        <div className="panel-label">추천 신호</div>
         <div className="grade-chip-group mobile-grade-group">
-          {gradeOptions.map((grade) => {
-            const selected = selectedGrades.includes(grade);
-            return (
-              <button
-                className="filter-chip"
-                data-active={selected}
-                key={grade}
-                type="button"
-                onClick={() => {
-                  if (selected && selectedGrades.length === 1) return;
-                  onGradesChange(selected ? selectedGrades.filter((item) => item !== grade) : [...selectedGrades, grade]);
-                }}
-              >
-                {selected ? <Check size={13} aria-hidden /> : null}
-                {gradeLabel(grade)}
-              </button>
-            );
-          })}
+          <button
+            className="filter-chip public-pick-chip"
+            data-active={publicPickSelected}
+            type="button"
+            aria-pressed={publicPickSelected}
+            onClick={() => onGradesChange(publicPickSelected ? allGrades : defaultGrades)}
+          >
+            공무원픽
+          </button>
         </div>
       </div>
       <SegmentedControl

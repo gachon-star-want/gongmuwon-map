@@ -5,7 +5,6 @@ import { MobileFilterPanel } from './MobileFilterPanel';
 import { MobileInfoPanel } from './MobileInfoPanel';
 import { PlaceDetails } from './PlaceDetails';
 import { PlaceList } from './PlaceList';
-import { SponsorAd } from '../../ads/SponsorAd';
 
 export type MobileMode = 'map' | 'list' | 'filter' | 'info' | 'detail';
 export type SheetSize = 'peek' | 'mid' | 'full';
@@ -102,7 +101,6 @@ export function BottomSheet({
             onReact={onReact}
             isAuthenticated={isAuthenticated}
           />
-          <AdSlot />
         </>
       ) : null}
       {activeMode === 'list' ? (
@@ -118,7 +116,6 @@ export function BottomSheet({
             onReset={onReset}
             onRetry={onRetry}
           />
-          <AdSlot />
         </>
       ) : null}
       {activeMode === 'filter' ? (
@@ -139,8 +136,4 @@ export function BottomSheet({
       {activeMode === 'info' ? <MobileInfoPanel /> : null}
     </section>
   );
-}
-
-function AdSlot() {
-  return <SponsorAd />;
 }
