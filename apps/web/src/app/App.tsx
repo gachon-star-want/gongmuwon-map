@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { ErrorBoundary } from '../shared/ErrorBoundary';
 import { CommunityPage } from '../features/community/CommunityPage';
 import { PlaceExplorer } from '../features/place-explorer/PlaceExplorer';
 import { StaticPage } from './staticPages';
@@ -20,7 +21,7 @@ export function App(): ReactElement {
   
   return (
     <>
-      {content}
+      <ErrorBoundary key={path}>{content}</ErrorBoundary>
       <Analytics />
     </>
   );

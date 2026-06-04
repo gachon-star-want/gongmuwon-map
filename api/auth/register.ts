@@ -44,6 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await createSession(res, rows[0].id);
     sendJson(res, 201, { user: rows[0] });
   } catch (error) {
+    console.error('register:', error);
     if ((error as { code?: string }).code === '23505') {
       sendJson(res, 409, { error: 'handle_taken' });
       return;

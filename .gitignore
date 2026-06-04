@@ -2,7 +2,10 @@
 .env
 .env.*
 !.env.example
-.vercel/
+.neon
+memory.md
+anomaly_visits.json
+anomaly_places.json
 node_modules/
 dist/
 coverage/
@@ -15,6 +18,4 @@ __pycache__/
 services/pipeline/**/pipeline_state.db
 supabase/.branches/
 supabase/.temp/
-.vercel
 .gstack/
-.env*

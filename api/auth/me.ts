@@ -17,7 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   try {
     sendJson(res, 200, { user: await getCurrentUser(req) });
-  } catch {
+  } catch (error) {
+    console.error('me:', error);
     sendJson(res, 500, { error: 'internal_error' });
   }
 }

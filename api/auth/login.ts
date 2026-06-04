@@ -48,7 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await writeQuery('UPDATE public.app_users SET last_login_at = now() WHERE id = $1', [user.id]);
     await createSession(res, user.id);
     sendJson(res, 200, { user: { id: user.id, handle: user.handle, role: user.role, created_at: user.created_at } });
-  } catch {
+  } catch (error) {
+    console.error('login:', error);
     sendJson(res, 500, { error: 'internal_error' });
   }
 }

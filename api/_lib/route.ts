@@ -150,7 +150,8 @@ export function publicReadRoute(handler: (ctx: RouteContext) => Promise<unknown>
       }
       const [status, body] = parseRouteResponse(result);
       sendJson(res, status, body, status < 400 ? cache : false, true);
-    } catch {
+    } catch (error) {
+      console.error('publicReadRoute:', error);
       sendJson(res, 500, { error: 'internal_error' }, false, true);
     }
   };
@@ -169,7 +170,8 @@ export function privateWriteRoute(handler: (ctx: RouteContext) => Promise<unknow
       }
       const [status, body] = parseRouteResponse(result);
       sendPrivateJson(res, status, body);
-    } catch {
+    } catch (error) {
+      console.error('privateWriteRoute:', error);
       sendPrivateJson(res, 500, { error: 'internal_error' });
     }
   };

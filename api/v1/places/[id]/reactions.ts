@@ -136,7 +136,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS');
     sendNoStoreJson(res, 405, { error: 'method_not_allowed' });
-  } catch {
+  } catch (error) {
+    console.error('placeReactions:', error);
     sendNoStoreJson(res, 500, { error: 'internal_error' });
   }
 }
