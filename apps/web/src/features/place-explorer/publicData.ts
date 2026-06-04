@@ -7,11 +7,17 @@ function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
 
-export async function loadPlaces(query: Pick<PlaceQueryState, 'grade'>): Promise<Place[]> {
+export async function loadPlaces(
+  query: Pick<PlaceQueryState, 'grade'>,
+  bbox?: [number, number, number, number],
+): Promise<Place[]> {
   const params = new URLSearchParams({
     grade: query.grade.join(','),
-    limit: '500',
+    limit: bbox ? '300' : '500',
   });
+  if (bbox) {
+    params.set('bbox', bbox.join(','));
+  }
   const response = await fetch(apiUrl(`/api/v1/places?${params.toString()}`));
   if (!response.ok) throw new Error(`places ${response.status}`);
   return (await response.json()) as Place[];

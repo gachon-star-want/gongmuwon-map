@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionIcon,
   Button,
@@ -107,6 +107,8 @@ export function PlaceExplorer() {
   const [reportOpened, report] = useDisclosure(false);
   const [closureOpened, closure] = useDisclosure(false);
   const [authOpened, auth] = useDisclosure(false);
+  const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null);
+  const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const regionOptions = useMemo(() => {
     const fromApi = regions.map((region) => ({ label: region.label, value: region.region }));
@@ -188,7 +190,7 @@ export function PlaceExplorer() {
 
   useEffect(() => {
     void loadPlaces();
-  }, [queryState.grade]);
+  }, [queryState.grade, mapBbox]);
 
   useEffect(() => {
     void loadRegions();
@@ -266,7 +268,7 @@ export function PlaceExplorer() {
   async function loadPlaces() {
     setError(null);
     try {
-      setPlaces(await loadPlacesApi({ grade: queryState.grade }));
+      setPlaces(await loadPlacesApi({ grade: queryState.grade }, mapBbox ?? undefined));
     } catch {
       setError('데이터를 불러오지 못했습니다.');
     }
@@ -447,6 +449,12 @@ export function PlaceExplorer() {
         onSelect={selectPlace}
         onBlankClick={() => {
           if (selectedPlace) clearSelected();
+        }}
+        onBoundsChange={(bbox) => {
+          if (bboxDebounceRef.current) clearTimeout(bboxDebounceRef.current);
+          bboxDebounceRef.current = setTimeout(() => {
+            setMapBbox(bbox);
+          }, 400);
         }}
       />
 
