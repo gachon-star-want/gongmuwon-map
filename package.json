@@ -29,7 +29,7 @@
     "build": "npm --workspace apps/web run build",
     "test:web": "npm --workspace apps/web run test",
     "test:pipeline": "uv run --project services/pipeline pytest",
-    "test:api": "node_modules/.bin/vitest run --root . api/_lib/*.test.ts",
+    "test:api": "vitest run --root . api/_lib/*.test.ts",
     "check:public-contracts": "node scripts/verify-public-route-contracts.mjs",
     "audit:markers": "node scripts/audit-markers.mjs",
     "remediate:markers": "node scripts/remediate-marker-audit.mjs",
