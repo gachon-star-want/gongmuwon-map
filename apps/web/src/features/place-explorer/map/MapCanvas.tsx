@@ -228,27 +228,29 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
       const selected = selectedPlace?.id === place.id;
       marker.setImage(createMarkerImage(kakao, place, selected));
       marker.setZIndex(selected ? 30 : 10);
-      if (selected && place.latitude && place.longitude && mapInstanceRef.current) {
-        mapInstanceRef.current.panTo(new kakao.maps.LatLng(place.latitude, place.longitude));
-        
-        if (window.innerWidth > 767) {
-          setTimeout(() => {
-            if (!mapInstanceRef.current) return;
-            let offset = 0;
-            if (desktopListOpen && selectedPlace) {
-              offset = 380;
-            } else if (desktopListOpen) {
-              offset = 180;
-            } else if (selectedPlace) {
-              offset = 200;
-            }
-            if (offset > 0) {
-              mapInstanceRef.current.panBy(offset, 0);
-            }
-          }, 50);
-        }
-      }
     });
+  }, [kakaoReady, selectedPlace?.id, places]);
+
+  useEffect(() => {
+    if (!kakaoReady || !mapInstanceRef.current || !selectedPlace || !selectedPlace.latitude || !selectedPlace.longitude) return;
+    const kakao = window.kakao;
+    const position = new kakao.maps.LatLng(selectedPlace.latitude, selectedPlace.longitude);
+    mapInstanceRef.current.panTo(position);
+    
+    if (window.innerWidth > 767) {
+      setTimeout(() => {
+        if (!mapInstanceRef.current) return;
+        let offset = 0;
+        if (desktopListOpen) {
+          offset = 380;
+        } else {
+          offset = 200;
+        }
+        if (offset > 0) {
+          mapInstanceRef.current.panBy(offset, 0);
+        }
+      }, 50);
+    }
   }, [kakaoReady, selectedPlace?.id, desktopListOpen]);
 
   if (!KAKAO_JS_KEY || kakaoFailed) {
