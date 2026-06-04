@@ -45,6 +45,15 @@ export function stringParam(value: unknown) {
   return typeof raw === 'string' ? raw : undefined;
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function uuidParam(value: unknown) {
+  const raw = stringParam(value);
+  if (raw === undefined) return undefined;
+  const candidate = raw.trim();
+  return UUID_PATTERN.test(candidate) ? candidate : null;
+}
+
 export function parseBody(req: VercelRequest) {
   if (typeof req.body === 'string') {
     return req.body ? JSON.parse(req.body) : {};

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { writeQuery } from './db';
 import { _resetRateLimiterForTest } from './rate-limit';
 import loginHandler from '../auth/login';
+import logoutHandler from '../auth/logout';
 import registerHandler from '../auth/register';
 import communityPostsHandler from '../community/posts';
 import communityCommentsHandler from '../community/posts/[id]/comments';
@@ -181,6 +182,23 @@ describe('turnstile-protected write routes', () => {
         method: 'POST',
         headers: untrustedWriteHeaders,
         ...request,
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toEqual({ error: 'forbidden' });
+    expect(mockedWriteQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejects logout from an untrusted Origin before deleting the session', async () => {
+    const res = mockResponse();
+    await logoutHandler(
+      {
+        method: 'POST',
+        query: {},
+        headers: untrustedWriteHeaders,
+        body: {},
       } as never,
       res as never,
     );

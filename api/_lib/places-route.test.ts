@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import handler from '../v1/places';
+import placeByIdHandler from '../v1/places/[id]';
 import { readQuery } from './db';
 
 vi.mock('./db', () => ({
@@ -83,5 +84,35 @@ describe('/api/v1/places', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toEqual({ error: 'invalid_bbox' });
     expect(readQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('/api/v1/places/[id]', () => {
+  beforeEach(() => {
+    vi.mocked(readQuery).mockReset();
+    vi.mocked(readQuery).mockResolvedValue({ rows: [] } as never);
+  });
+
+  it('rejects malformed UUID ids before querying the database', async () => {
+    const res = mockResponse();
+    await placeByIdHandler({ method: 'GET', query: { id: 'not-a-uuid' }, headers: {} } as never, res as never);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'invalid_place_id' });
+    expect(readQuery).not.toHaveBeenCalled();
+  });
+
+  it('selects an explicit public detail column list', async () => {
+    const res = mockResponse();
+    await placeByIdHandler(
+      { method: 'GET', query: { id: '11111111-1111-1111-1111-111111111111' }, headers: {} } as never,
+      res as never,
+    );
+
+    const [sql] = vi.mocked(readQuery).mock.calls[0];
+    expect(sql).not.toContain('SELECT *');
+    expect(sql).toContain('id, name, road_address');
+    expect(sql).not.toContain('valid_place');
+    expect(sql).not.toContain('chain_brand');
   });
 });

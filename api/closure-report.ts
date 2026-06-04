@@ -1,5 +1,5 @@
 import { writeQuery } from './_lib/db';
-import { parseBody, reporterFingerprint } from './_lib/http';
+import { parseBody, reporterFingerprint, uuidParam } from './_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from './_lib/rate-limit';
 import { privateWriteRoute } from './_lib/route';
 import { turnstileTokenFromBody, verifyTurnstileToken } from './_lib/turnstile';
@@ -13,9 +13,12 @@ export default privateWriteRoute(async function handler({ req, res }) {
   if (turnstile.ok === false) {
     return { status: turnstile.status, body: { error: turnstile.error } };
   }
-  const placeId = String(body.place_id || '');
-  if (!placeId) {
+  const placeId = uuidParam(body.place_id);
+  if (placeId === undefined) {
     return { status: 400, body: { error: 'missing_place_id' } };
+  }
+  if (placeId === null) {
+    return { status: 400, body: { error: 'invalid_place_id' } };
   }
 
   const fp = reporterFingerprint(req);

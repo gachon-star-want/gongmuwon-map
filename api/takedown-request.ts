@@ -1,5 +1,5 @@
 import { writeQuery } from './_lib/db';
-import { parseBody } from './_lib/http';
+import { parseBody, uuidParam } from './_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from './_lib/rate-limit';
 import { privateWriteRoute } from './_lib/route';
 import { turnstileTokenFromBody, verifyTurnstileToken } from './_lib/turnstile';
@@ -13,7 +13,7 @@ export default privateWriteRoute(async function handler({ req, res }) {
   if (turnstile.ok === false) {
     return { status: turnstile.status, body: { error: turnstile.error } };
   }
-  const placeId = String(body.place_id || '');
+  const placeId = uuidParam(body.place_id);
   const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 2000) : '';
   const email = typeof body.email === 'string' ? body.email.trim().slice(0, 320) : '';
   if (!placeId || reason.length < 50 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

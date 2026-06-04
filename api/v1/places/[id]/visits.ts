@@ -1,11 +1,14 @@
 import { readQuery } from '../../../_lib/db';
 import { publicReadRoute } from '../../../_lib/route';
-import { numberParam, stringParam } from '../../../_lib/http';
+import { numberParam, uuidParam } from '../../../_lib/http';
 
 export default publicReadRoute(async function handler({ req }) {
-  const id = stringParam(req.query.id);
-  if (!id) {
+  const id = uuidParam(req.query.id);
+  if (id === undefined) {
     return { status: 400, body: { error: 'missing_place_id' } };
+  }
+  if (id === null) {
+    return { status: 400, body: { error: 'invalid_place_id' } };
   }
   const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);
   const { rows } = await readQuery(

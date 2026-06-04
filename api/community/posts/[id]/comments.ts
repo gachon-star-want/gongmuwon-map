@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery, writeQuery } from '../../../_lib/db';
-import { parseBody, sendJson, stringParam } from '../../../_lib/http';
+import { parseBody, sendJson, uuidParam } from '../../../_lib/http';
 import { getCurrentUser } from '../../../_lib/auth';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
 import { guardPrivateWriteRoute } from '../../../_lib/route';
@@ -16,9 +16,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const postId = stringParam(req.query.id);
-    if (!postId) {
+    const postId = uuidParam(req.query.id);
+    if (postId === undefined) {
       sendJson(res, 400, { error: 'missing_post_id' });
+      return;
+    }
+    if (postId === null) {
+      sendJson(res, 400, { error: 'invalid_post_id' });
       return;
     }
 
