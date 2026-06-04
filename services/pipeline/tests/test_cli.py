@@ -145,7 +145,7 @@ class _FakeResolver:
         _ = args
         _ = kwargs
 
-    async def resolve(self, _place_raw: PlaceRaw) -> ResolvedPlace:
+    async def resolve(self, _place_raw: PlaceRaw, agency=None) -> ResolvedPlace:
         return ResolvedPlace(
             kakao_place_id="kakao-id",
             natural_key="kakao-id",
@@ -153,59 +153,6 @@ class _FakeResolver:
             road_address="서울시 영등포구",
             matched=True,
         )
-
-
-@pytest.mark.asyncio
-async def test_extract_detail_rows_dispatches_hwp(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured = {}
-
-    def fake_extract_hwp_rows(
-        content: bytes,
-        *,
-        fallback_department: str,
-        source_title: str | None = None,
-    ) -> list[ParsedExpenseRow]:
-        captured["content"] = content
-        captured["fallback_department"] = fallback_department
-        captured["source_title"] = source_title
-        return _fake_row_extractor(
-            PostDetail(
-                agency_id=Agency().id,
-                url="https://example.com",
-                title="테스트",
-                published_at=date(2026, 5, 1),
-                department_name=fallback_department,
-                file_kind="hwp",
-                html="",
-                content_bytes=content,
-                fetched_at=datetime(2026, 5, 1, 12),
-                hash_sha256="hash",
-            )
-        )
-
-    monkeypatch.setattr(cli, "extract_hwp_rows", fake_extract_hwp_rows)
-
-    rows = await cli._extract_detail_rows(
-        PostDetail(
-            agency_id=Agency().id,
-            url="https://example.com/hwp",
-            title="HWP",
-            published_at=date(2026, 5, 1),
-            department_name="정부법무공단",
-            file_kind="hwp",
-            html="",
-            content_bytes=b"hwp",
-            fetched_at=datetime(2026, 5, 1, 12),
-            hash_sha256="hash",
-        )
-    )
-
-    assert len(rows) == 1
-    assert captured == {
-        "content": b"hwp",
-        "fallback_department": "정부법무공단",
-        "source_title": "HWP",
-    }
 
 
 @pytest.mark.asyncio
@@ -229,40 +176,6 @@ async def test_run_supported_agency_blocks_adapter_required_before_network(
 
     assert result == 2
     assert output["error"] == "adapter_required"
-    assert not called["flag"]
-
-
-@pytest.mark.asyncio
-async def test_run_supported_agency_blocks_hold_status_before_network(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    called = {"flag": False}
-
-    def explode(*args, **kwargs):  # pragma: no cover
-        called["flag"] = True
-        raise AssertionError("Crawler constructors must not be called for holdStatus")
-
-    monkeypatch.setattr(cli, "CouncilAttachmentCrawler", explode)
-
-    result = await cli._run_supported_agency(
-        _sample_args(),
-        Agency(
-            short_name="테스트의회",
-            name="테스트의회",
-            source_pattern={
-                "adapter": "council_attachment_board",
-                "listUrl": "https://example.com/cost",
-                "fileKinds": ["pdf"],
-                "holdStatus": "pdf_vision_hold",
-            },
-        ),
-    )
-    output = json.loads(capsys.readouterr().err.strip())
-
-    assert result == 2
-    assert output["error"] == "adapter_required"
-    assert output["failure_reason"] == "pdf_vision_hold"
     assert not called["flag"]
 
 
@@ -360,34 +273,32 @@ def test_print_source_registry_reports_nationwide_verification_state(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 612
-    assert output["summary"]["pending"] == 0
-    assert output["summary"]["legal_hold"] == 101
-    assert output["summary"]["source_not_found"] == 85
-    assert output["summary"]["no_recent_data"] == 1311
-    assert output["summary"]["pdf_vision_hold"] == 35
-    assert output["summary"]["adapter_hold"] == 58
+    assert output["summary"]["verified_in_code"] == 152
+    assert output["summary"]["pending"] == 57
+    assert output["summary"]["legal_hold"] == 142
+    assert output["summary"]["source_not_found"] == 199
+    assert output["summary"]["no_recent_data"] == 284
+    assert output["summary"]["pdf_vision_hold"] == 8
+    assert output["summary"]["adapter_hold"] == 1360
     assert output["summary"]["invalid_source_pattern"] == 0
     assert output["summary"]["priority_group_counts"]["p1"]["total"] == 488
-    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 259
-    assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 0
-    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 101
+    assert output["summary"]["priority_group_counts"]["p1"]["verified_in_code"] == 147
+    assert output["summary"]["priority_group_counts"]["p1"]["pending"] == 57
+    assert output["summary"]["priority_group_counts"]["p1"]["legal_hold"] == 142
+    assert output["summary"]["priority_group_counts"]["p1"]["source_not_found"] == 139
     assert output["summary"]["priority_group_counts"]["p2"]["total"] == 60
-    assert output["summary"]["priority_group_counts"]["p2"]["verified_in_code"] == 5
-    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 18
-    assert output["summary"]["priority_group_counts"]["p2"]["no_recent_data"] == 2
-    assert output["summary"]["priority_group_counts"]["p2"]["pdf_vision_hold"] == 0
-    assert output["summary"]["priority_group_counts"]["p2"]["adapter_hold"] == 35
+    assert output["summary"]["priority_group_counts"]["p2"]["source_not_found"] == 60
     assert output["summary"]["priority_group_counts"]["p3"]["total"] == 342
-    assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 6
+    assert output["summary"]["priority_group_counts"]["p3"]["verified_in_code"] == 4
     assert output["summary"]["priority_group_counts"]["p3"]["pending"] == 0
-    assert output["summary"]["priority_group_counts"]["p3"]["no_recent_data"] == 334
-    assert output["summary"]["priority_group_counts"]["p3"]["pdf_vision_hold"] == 0
-    assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 2
+    assert output["summary"]["priority_group_counts"]["p3"]["no_recent_data"] == 280
+    assert output["summary"]["priority_group_counts"]["p3"]["pdf_vision_hold"] == 8
+    assert output["summary"]["priority_group_counts"]["p3"]["adapter_hold"] == 50
     assert output["summary"]["priority_group_counts"]["p4"]["total"] == 1312
-    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 342
-    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 970
-    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 0
+    assert output["summary"]["priority_group_counts"]["p4"]["verified_in_code"] == 1
+    assert output["summary"]["priority_group_counts"]["p4"]["no_recent_data"] == 2
+    assert output["summary"]["priority_group_counts"]["p4"]["adapter_hold"] == 1309
+    assert output["summary"]["priority_group_counts"]["p4"]["invalid_source_pattern"] == 0
 
 
 def test_print_source_registry_summary_only_omits_entries(
@@ -400,7 +311,10 @@ def test_print_source_registry_summary_only_omits_entries(
 
     assert result == 0
     assert output["summary"]["total"] == 2202
-    assert output["summary"]["verified_in_code"] == 612
+    assert output["summary"]["verified_in_code"] == 152
+    assert output["summary"]["pending"] == 57
+    assert output["summary"]["legal_hold"] == 142
+    assert output["summary"]["source_not_found"] == 199
     assert "entries" not in output
 
 

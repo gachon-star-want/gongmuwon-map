@@ -53,7 +53,7 @@ class _FakeResolver:
     def __init__(self) -> None:
         self.calls: list[str] = []
 
-    async def resolve(self, place_raw: PlaceRaw) -> ResolvedPlace:
+    async def resolve(self, place_raw: PlaceRaw, agency=None) -> ResolvedPlace:
         self.calls.append(place_raw.model_dump_json())
         return ResolvedPlace(
             kakao_place_id="kakao-id",

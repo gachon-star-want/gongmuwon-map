@@ -26,7 +26,6 @@ HEADER_ALIASES = {
     "승인일시": "used_date",
     "사용일시": "used_date",
     "집행일시": "used_date",
-    "결의일자": "used_date",
     "일시": "used_date",
     "일자": "used_date",
     "일": "used_date",
@@ -54,8 +53,6 @@ HEADER_ALIASES = {
     "상호": "place_text",
     "상호명": "place_text",
     "업소명": "place_text",
-    "지급처": "place_text",
-    "지급처명": "place_text",
     "주소": "address_hint",
     "집행처주소": "address_hint",
     "가맹점주소": "address_hint",
@@ -77,7 +74,6 @@ HEADER_ALIASES = {
     "금액": "amount",
     "집행금액": "amount",
     "집행액": "amount",
-    "지급액": "amount",
     "사용금액": "amount",
     "승인금액": "amount",
     "지출액": "amount",
@@ -91,17 +87,13 @@ HEADER_ALIASES = {
     "비목": "expense_category",
     "세목": "expense_category",
     "업무추진비종류": "expense_category",
-    "재원": "expense_category",
     "제목": "expense_category",
     "사용액": "amount",
 }
 
 DEPARTMENT_RE = re.compile(r"부서명\s*[:：]\s*(?P<department>.+)")
 SHEET_MONTH_RE = re.compile(r"(?P<year>20\d{2})\s*(?:년|[./-])\s*(?P<month>\d{1,2})\s*월?")
-THOUSAND_UNIT_RE = re.compile(
-    r"단위\s*[:：]?\s*천\s*원|금액\s*[（(]\s*천\s*원\s*[)）]|"
-    r"집행금액\s*[（(]\s*천\s*원\s*[)）]|지출금액\s*[（(]\s*천\s*원\s*[)）]"
-)
+THOUSAND_UNIT_RE = re.compile(r"단위\s*[:：]?\s*천\s*원|금액\s*[（(]\s*천\s*원\s*[)）]|집행금액\s*[（(]\s*천\s*원\s*[)）]")
 
 
 def extract_spreadsheet_rows(content: bytes, *, fallback_department: str) -> list[ParsedExpenseRow]:
@@ -187,39 +179,23 @@ def _workbook_rows(content: bytes) -> list[list[list[str]]]:
 
 def _trim_trailing_empty_cells(row_values: list[str]) -> list[str]:
     last_non_empty = -1
-    non_empty_count = 0
     for index, value in enumerate(row_values):
         if value:
             last_non_empty = index
-            non_empty_count += 1
-    trimmed = row_values[: last_non_empty + 1]
-    if (
-        len(trimmed) > guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET
-        and non_empty_count <= guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET
-    ):
-        return trimmed[: guards.MAX_SPREADSHEET_COLUMNS_PER_SHEET]
-    return trimmed
+    return row_values[: last_non_empty + 1]
 
 
 def _load_xlsx_workbook(content: bytes):
-    repaired = content
-    for _ in range(3):
-        try:
-            return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
-        except TypeError as exc:
-            updated = _repair_xlsx_for_openpyxl_type_error(repaired, str(exc))
-            if updated == repaired:
-                raise
-            repaired = updated
-    return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
-
-
-def _repair_xlsx_for_openpyxl_type_error(content: bytes, message: str) -> bytes:
-    if "_NamedCellStyle" in message and "name should be" in message:
-        return _repair_xlsx_missing_cell_style_names(content)
-    if "StringProperty" in message and "name should be" in message:
-        return _repair_xlsx_missing_custom_property_names(content)
-    return content
+    try:
+        return load_workbook(BytesIO(content), data_only=True, read_only=True)
+    except TypeError as exc:
+        message = str(exc)
+        if "_NamedCellStyle" not in message or "name should be" not in message:
+            raise
+        repaired = _repair_xlsx_missing_cell_style_names(content)
+        if repaired == content:
+            raise
+        return load_workbook(BytesIO(repaired), data_only=True, read_only=True)
 
 
 def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
@@ -235,45 +211,6 @@ def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
                 data = repaired_styles if item.filename == "xl/styles.xml" else source.read(item.filename)
                 target.writestr(item, data)
     return output.getvalue()
-
-
-def _repair_xlsx_missing_custom_property_names(content: bytes) -> bytes:
-    with zipfile.ZipFile(BytesIO(content)) as source:
-        if "docProps/custom.xml" not in source.namelist():
-            return content
-        repaired_props = _repair_custom_xml_missing_property_names(
-            source.read("docProps/custom.xml")
-        )
-        if repaired_props is None:
-            return content
-        output = BytesIO()
-        with zipfile.ZipFile(output, "w") as target:
-            for item in source.infolist():
-                data = repaired_props if item.filename == "docProps/custom.xml" else source.read(item.filename)
-                target.writestr(item, data)
-    return output.getvalue()
-
-
-def _repair_custom_xml_missing_property_names(custom_xml: bytes) -> bytes | None:
-    try:
-        root = ElementTree.fromstring(custom_xml)
-    except ElementTree.ParseError:
-        return None
-
-    namespace = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else ""
-    property_tag = f"{{{namespace}}}property" if namespace else "property"
-    existing_names = {element.attrib["name"] for element in root.iter(property_tag) if element.attrib.get("name")}
-    repaired = False
-    for index, element in enumerate(root.iter(property_tag), start=1):
-        if element.attrib.get("name"):
-            continue
-        name = _unique_cell_style_name(f"Recovered Custom Property {index}", existing_names)
-        element.set("name", name)
-        existing_names.add(name)
-        repaired = True
-    if not repaired:
-        return None
-    return ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
 def _repair_styles_xml_missing_cell_style_names(styles_xml: bytes) -> bytes | None:
@@ -324,37 +261,20 @@ def _xls_workbook_rows(content: bytes) -> list[list[list[str]]]:
     worksheets: list[list[list[str]]] = []
     total_cells = 0
     for worksheet in workbook.sheets()[: guards.MAX_SPREADSHEET_SHEETS]:
+        total_cells = _ensure_declared_sheet_bounds(
+            sheet_name=worksheet.name,
+            rows=worksheet.nrows,
+            columns=worksheet.ncols,
+            current_total_cells=total_cells,
+        )
         rows: list[list[str]] = []
-        non_empty_row_count = 0
-        empty_run = 0
         for row_index in range(worksheet.nrows):
-            row_values = _trim_trailing_empty_cells(
+            rows.append(
                 [
-                    _stringify(
-                        _xls_cell_value(worksheet.cell(row_index, column_index), workbook.datemode)
-                    )
+                    _stringify(_xls_cell_value(worksheet.cell(row_index, column_index), workbook.datemode))
                     for column_index in range(worksheet.ncols)
                 ]
             )
-            if not any(row_values):
-                empty_run += 1
-                if rows and empty_run >= guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
-                    break
-                continue
-            empty_run = 0
-            non_empty_row_count += 1
-            if non_empty_row_count > guards.MAX_SPREADSHEET_ROWS_PER_SHEET:
-                raise guards.DocumentProcessingLimitError(
-                    f"spreadsheet sheet {worksheet.name!r} rows count exceeds limit of "
-                    f"{guards.MAX_SPREADSHEET_ROWS_PER_SHEET}"
-                )
-            total_cells += _checked_row_width(
-                sheet_name=worksheet.name,
-                row_index=non_empty_row_count,
-                width=len(row_values),
-                current_total_cells=total_cells,
-            )
-            rows.append(row_values)
         worksheets.append(rows)
     return worksheets
 
@@ -536,9 +456,6 @@ def _disambiguate_headers(raw_headers: list[str], mapped_headers: list[str | Non
         mapped[execution_type_indexes[-1]] = "payment_method"
     elif len(execution_type_indexes) == 1:
         mapped[execution_type_indexes[0]] = "purpose"
-    if "지급처1" in compact and "지급처2" in compact:
-        mapped[compact.index("지급처1")] = "address_hint"
-        mapped[compact.index("지급처2")] = "place_text"
     return mapped
 
 

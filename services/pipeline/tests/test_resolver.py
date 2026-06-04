@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 
 from public_officer_pipeline.entity import (
     DefaultPlaceResolutionPolicy,
@@ -9,7 +10,7 @@ from public_officer_pipeline.entity import (
     natural_key,
     road_address_part,
 )
-from public_officer_pipeline.models import PlaceRaw
+from public_officer_pipeline.models import PlaceRaw, Agency, GovTier
 
 
 def test_normalize_name_removes_company_noise() -> None:
@@ -122,3 +123,124 @@ def test_non_food_kakao_document_is_not_restaurant_like() -> None:
 
     assert resolved.valid_place is True
     assert resolved.is_restaurant_like is False
+
+
+def test_policy_validate_candidate_distance_rejection() -> None:
+    from uuid import UUID
+    policy = DefaultPlaceResolutionPolicy()
+    
+    # 서울특별시청 is at 37.566824, 126.978652
+    agency = Agency(
+        id=UUID("00000000-0000-0000-0000-000000000001"),
+        name="서울특별시청",
+        gov_tier=GovTier.REGIONAL,
+    )
+    
+    # 1. Close candidate (e.g., 5km away, within 50km)
+    # Let's say coordinates: 37.56, 126.97 (about 1km away)
+    place = PlaceRaw(name="식당")
+    doc_close = {
+        "place_name": "식당",
+        "x": "126.97",
+        "y": "37.56",
+    }
+    assert policy.validate_candidate(place, doc_close, agency=agency) is True
+    
+    # 2. Far candidate (> 50km away, e.g. Busan: 35.1796, 129.0756)
+    doc_far = {
+        "place_name": "식당",
+        "x": "129.0756",
+        "y": "35.1796",
+    }
+    assert policy.validate_candidate(place, doc_far, agency=agency) is False
+    
+    # 3. Exception: Agency is national/constitutional
+    national_agency = Agency(
+        id=UUID("00000000-0000-0000-0000-000000000001"),
+        name="서울특별시청",
+        gov_tier=GovTier.NATIONAL,
+    )
+    assert policy.validate_candidate(place, doc_far, agency=national_agency) is True
+    
+    # 4. Exception: Candidate is a large chain brand
+    chain_doc_far = {
+        "place_name": "스타벅스 부산점",
+        "x": "129.0756",
+        "y": "35.1796",
+    }
+    assert policy.validate_candidate(place, chain_doc_far, agency=agency) is True
+
+
+@pytest.mark.asyncio
+async def test_resolver_resolve_uses_coordinates_and_falls_back(tmp_path: Path) -> None:
+    from unittest.mock import AsyncMock, MagicMock, patch
+    from uuid import UUID
+    
+    resolver = KakaoResolver(
+        kakao_rest_key="mock_key",
+        allow_unmatched_fallback=True,
+        cache_path=tmp_path / "test_cache.db",
+    )
+    
+    agency = Agency(
+        id=UUID("00000000-0000-0000-0000-000000000001"),
+        name="서울특별시청",
+        gov_tier=GovTier.REGIONAL,
+    )
+    
+    place = PlaceRaw(name="반가안동국시")
+    
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+        mock_response_address = MagicMock()
+        mock_response_address.json.return_value = {"documents": []}
+        
+        mock_response_kakao_coords = MagicMock()
+        mock_response_kakao_coords.json.return_value = {"documents": []}
+        
+        mock_response_kakao_fallback = MagicMock()
+        mock_response_kakao_fallback.json.return_value = {
+            "documents": [
+                {
+                    "id": "123",
+                    "place_name": "반가안동국시",
+                    "category_group_code": "FD6",
+                    "x": "126.978",
+                    "y": "37.5665",
+                }
+            ]
+        }
+        
+        def get_side_effect(url, **kwargs):
+            params = kwargs.get("params", {})
+            if "address.json" in url:
+                return mock_response_address
+            elif "keyword.json" in url:
+                if "x" in params:
+                    return mock_response_kakao_coords
+                else:
+                    return mock_response_kakao_fallback
+            return MagicMock()
+            
+        mock_get.side_effect = get_side_effect
+        
+        resolved = await resolver.resolve(place, agency=agency)
+        
+        assert resolved.matched is True
+        assert resolved.kakao_place_id == "123"
+        
+        coords_call_found = False
+        fallback_call_found = False
+        for call in mock_get.call_args_list:
+            args, kwargs = call
+            url = args[0]
+            params = kwargs.get("params", {})
+            if "keyword.json" in url:
+                if "x" in params and "y" in params and params.get("radius") == 20000:
+                    coords_call_found = True
+                    assert float(params["y"]) == 37.56682420267543
+                    assert float(params["x"]) == 126.978652258823
+                elif "x" not in params:
+                    fallback_call_found = True
+                    
+        assert coords_call_found is True
+        assert fallback_call_found is True

@@ -193,7 +193,7 @@ class PipelineRunner:
                             post_resolved[key] = resolved_by_place_key[key]
                             continue
                         _mark_stage(stats, "resolve_places")
-                        resolved = await self.resolver.resolve(visit.place_raw)
+                        resolved = await self.resolver.resolve(visit.place_raw, agency=agency)
                         resolved_by_place_key[key] = resolved
                         post_resolved[key] = resolved
 
