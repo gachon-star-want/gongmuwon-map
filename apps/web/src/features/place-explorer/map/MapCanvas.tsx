@@ -134,7 +134,8 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
       const level = map.getLevel();
-      onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], level);
+      const bbox: [number, number, number, number] = [sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()];
+      onBoundsChangeRef.current?.(bbox, level);
     };
     kakao.maps.event.addListener(map, 'idle', fireBounds);
     fireBounds();
@@ -156,7 +157,8 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
         const bounds = map.getBounds();
         const sw = bounds.getSouthWest();
         const ne = bounds.getNorthEast();
-        onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], USER_LOCATION_LEVEL);
+        const bbox: [number, number, number, number] = [sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()];
+        onBoundsChangeRef.current?.(bbox, USER_LOCATION_LEVEL);
       },
       () => {
         map.setLevel(DEFAULT_MAP_LEVEL);
@@ -164,7 +166,8 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
         const bounds = map.getBounds();
         const sw = bounds.getSouthWest();
         const ne = bounds.getNorthEast();
-        onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], DEFAULT_MAP_LEVEL);
+        const bbox: [number, number, number, number] = [sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()];
+        onBoundsChangeRef.current?.(bbox, DEFAULT_MAP_LEVEL);
       },
       { enableHighAccuracy: true, maximumAge: 300000, timeout: 5000 },
     );

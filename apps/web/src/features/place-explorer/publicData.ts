@@ -10,6 +10,7 @@ function apiUrl(path: string) {
 export async function loadPlaces(
   query: Pick<PlaceQueryState, 'grade'>,
   bbox?: [number, number, number, number],
+  signal?: AbortSignal,
 ): Promise<Place[]> {
   const params = new URLSearchParams({
     grade: query.grade.join(','),
@@ -18,7 +19,9 @@ export async function loadPlaces(
   if (bbox) {
     params.set('bbox', bbox.join(','));
   }
-  const response = await fetch(apiUrl(`/api/v1/places?${params.toString()}`));
+  const response = await fetch(apiUrl(`/api/v1/places?${params.toString()}`), {
+    ...(signal ? { signal } : {}),
+  } as RequestInit);
   if (!response.ok) throw new Error(`places ${response.status}`);
   return (await response.json()) as Place[];
 }

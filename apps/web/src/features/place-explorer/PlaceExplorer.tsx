@@ -190,7 +190,9 @@ export function PlaceExplorer() {
   }, [searchDraft]);
 
   useEffect(() => {
-    void loadPlaces();
+    const controller = new AbortController();
+    void loadPlaces(controller.signal);
+    return () => controller.abort();
   }, [queryState.grade, mapBbox]);
 
   useEffect(() => {
@@ -274,12 +276,15 @@ export function PlaceExplorer() {
     });
   }
 
-  async function loadPlaces() {
+  async function loadPlaces(signal?: AbortSignal) {
     setError(null);
     try {
-      setPlaces(await loadPlacesApi({ grade: queryState.grade }, mapBbox ?? undefined));
-    } catch {
-      setError('데이터를 불러오지 못했습니다.');
+      const result = await loadPlacesApi({ grade: queryState.grade }, mapBbox ?? undefined, signal);
+      setPlaces(result);
+    } catch (err) {
+      if ((err as DOMException).name !== 'AbortError') {
+        setError('데이터를 불러오지 못했습니다.');
+      }
     }
   }
 
