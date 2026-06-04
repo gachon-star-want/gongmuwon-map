@@ -706,6 +706,23 @@
   padding: 14px;
 }
 
+.bottom-sheet .detail-header-wrapper {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.bottom-sheet .detail-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: brightness(0.85);
+}
+
 .mobile-panel {
   display: grid;
   gap: 14px;
@@ -1103,8 +1120,9 @@
 .detail-cover-image {
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
+  object-position: center;
+  display: block;
   filter: brightness(0.85);
   transition: transform 0.3s ease;
 }

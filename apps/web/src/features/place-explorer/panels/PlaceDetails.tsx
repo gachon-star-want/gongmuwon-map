@@ -64,7 +64,12 @@ export function PlaceDetails({
   return (
     <>
       <div className="detail-header-wrapper">
-        <div className="detail-cover-image" style={{ backgroundImage: `url(${getCategoryImageUrl(place.category)})` }} />
+        <img
+          className="detail-cover-image"
+          src={getCategoryImageUrl(place.category)}
+          alt={`${place.category ?? '음식'} 카테고리 이미지`}
+          loading="eager"
+        />
         <Group justify="space-between" wrap="nowrap" className="detail-header">
           <Group gap={6}>
             <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
