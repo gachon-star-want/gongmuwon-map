@@ -12,6 +12,18 @@
     "@types/pg": "^8.15.6",
     "@vercel/node": "^5.5.17"
   },
+  "overrides": {
+    "undici": "^6.24.0",
+    "path-to-regexp": "^6.3.0",
+    "ajv": "^8.18.0",
+    "smol-toml": "^1.6.1",
+    "@ts-morph/common": {
+      "minimatch": "^3.0.5"
+    },
+    "@vercel/python-analysis": {
+      "minimatch": "^10.2.3"
+    }
+  },
   "scripts": {
     "dev": "npm --workspace apps/web run dev",
     "build": "npm --workspace apps/web run build",
