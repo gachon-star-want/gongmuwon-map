@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-7-646cff?logo=vite&logoColor=fff)](https://vite.dev/)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-000?logo=vercel&logoColor=fff)](https://vercel.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/License-PolyForm%20Shield-blue.svg)](LICENSE)
 
 전국 지자체가 법령에 따라 공개하는 업무추진비 집행내역을 수집하고 정제해, 공무원이 자주 방문한 식당을 지도에서 확인하는 시민 서비스입니다.
 
@@ -130,6 +130,6 @@ cp .env.example .env
 
 ## 라이선스
 
-소스 코드는 [MIT License](LICENSE)로 배포합니다.
+소스 코드는 [PolyForm Shield License 1.0.0](LICENSE)로 배포합니다. 비상업적 이용, 내부 사용, 연구 목적으로 자유롭게 사용 가능하며, 경쟁 제품을 제공하는 상업적 이용은 금지됩니다.
 
-공공기관 원문 자료, 수집 데이터, 지도 타일, 제3자 API 응답은 각 제공자의 이용 조건과 공공누리 출처 표기 정책을 따르며 MIT 라이선스 대상이 아닙니다.
+공공기관 원문 자료, 수집 데이터, 지도 타일, 제3자 API 응답은 각 제공자의 이용 조건과 공공누리 출처 표기 정책을 따르며 본 라이선스 대상이 아닙니다.
