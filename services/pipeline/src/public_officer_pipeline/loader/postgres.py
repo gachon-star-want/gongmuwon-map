@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import os
 from datetime import date
 from pathlib import Path
@@ -7,6 +8,7 @@ from typing import Any
 from uuid import UUID
 
 import psycopg
+from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
@@ -18,6 +20,43 @@ from public_officer_pipeline.models import (
 )
 from public_officer_pipeline.pipeline.batch import LoadBatch, place_resolution_key
 from public_officer_pipeline.legal.visibility import validate_normalized_visits
+
+_pools: dict[str, AsyncConnectionPool] = {}
+
+
+async def _get_or_create_pool(database_url: str) -> AsyncConnectionPool:
+    if database_url not in _pools:
+        pool_max_size = int(os.getenv("DB_POOL_MAX_SIZE", "5"))
+        pool = AsyncConnectionPool(
+            database_url,
+            min_size=1,
+            max_size=pool_max_size,
+            kwargs={"row_factory": dict_row},
+        )
+        await pool.open()
+        _pools[database_url] = pool
+    return _pools[database_url]
+
+
+async def _close_all_pools() -> None:
+    for pool in list(_pools.values()):
+        await pool.close()
+    _pools.clear()
+
+
+def _atexit_close_pools() -> None:
+    import asyncio as _asyncio
+
+    try:
+        loop = _asyncio.get_event_loop()
+        if loop.is_running():
+            return
+        loop.run_until_complete(_close_all_pools())
+    except Exception:
+        pass
+
+
+atexit.register(_atexit_close_pools)
 
 
 class PostgresLoader:
@@ -31,10 +70,8 @@ class PostgresLoader:
         batch: LoadBatch,
     ) -> tuple[int, int, int]:
         visits = validate_normalized_visits(batch.visits, agency=batch.agency)
-        async with await psycopg.AsyncConnection.connect(
-            self.database_url,
-            row_factory=dict_row,
-        ) as conn:
+        pool = await _get_or_create_pool(self.database_url)
+        async with pool.connection() as conn:
             async with conn.transaction():
                 await self._upsert_agency(conn, batch.agency)
                 source_id = await self._upsert_source(
@@ -72,14 +109,16 @@ class PostgresLoader:
         return 1, len(place_ids), len(visit_ids)
 
     async def seed_agencies(self, agencies: list[Agency]) -> int:
-        async with await psycopg.AsyncConnection.connect(
-            self.database_url,
-            row_factory=dict_row,
-        ) as conn:
+        pool = await _get_or_create_pool(self.database_url)
+        async with pool.connection() as conn:
             async with conn.transaction():
                 for agency in agencies:
                     await self._upsert_agency(conn, agency)
         return len(agencies)
+
+    @classmethod
+    async def close(cls) -> None:
+        await _close_all_pools()
 
     async def _upsert_agency(self, conn: psycopg.AsyncConnection[Any], agency: Agency) -> UUID:
         row = await self._fetch_one(

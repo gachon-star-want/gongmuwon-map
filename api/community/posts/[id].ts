@@ -39,7 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     sendJson(res, 200, rows[0], false, true);
-  } catch {
+  } catch (error) {
+    console.error('communityPostDetail:', error);
     sendJson(res, 500, { error: 'internal_error' });
   }
 }

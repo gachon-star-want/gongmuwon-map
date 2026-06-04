@@ -1147,9 +1147,26 @@ def _classify_failure_reason(
     return "unknown"
 
 
+_REDACTABLE_ENV_KEYS = (
+    "ANTHROPIC_API_KEY",
+    "DATABASE_URL",
+    "DATABASE_URL_READONLY",
+    "DATABASE_URL_STAGING",
+    "GEMINI_API_KEY",
+    "KAKAO_REST_KEY",
+    "OPENAI_API_KEY",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_STAGING_ACCESS_KEY_ID",
+    "R2_STAGING_SECRET_ACCESS_KEY",
+    "RESEND_API_KEY",
+    "STAGING_DATABASE_URL",
+)
+
+
 def _safe_error_message(payload: dict[str, object]) -> str:
     message = str(payload.get("message") or payload.get("reason") or payload.get("error") or "")
-    for env_name in ("DATABASE_URL", "DATABASE_URL_READONLY", "DATABASE_URL_STAGING", "STAGING_DATABASE_URL"):
+    for env_name in _REDACTABLE_ENV_KEYS:
         secret = os.getenv(env_name)
         if secret:
             message = message.replace(secret, "[redacted]")

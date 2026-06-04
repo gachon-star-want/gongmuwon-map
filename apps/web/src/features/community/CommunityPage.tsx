@@ -5,6 +5,7 @@ import mascotLogo from '../../assets/officer-mascot-logo.png';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
+import { ErrorBoundary } from '../../shared/ErrorBoundary';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import {
   createComment,
@@ -200,6 +201,7 @@ export function CommunityPage() {
   }
 
   return (
+    <ErrorBoundary>
     <main className="community-shell">
       <header className="community-topbar">
         <a className="community-brand" href="/">
@@ -427,5 +429,6 @@ export function CommunityPage() {
       </section>
       <AuthModal opened={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={setUser} />
     </main>
+    </ErrorBoundary>
   );
 }

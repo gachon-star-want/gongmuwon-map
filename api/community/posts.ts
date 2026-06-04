@@ -80,7 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS');
     sendJson(res, 405, { error: 'method_not_allowed' });
-  } catch {
+  } catch (error) {
+    console.error('communityPosts:', error);
     sendJson(res, 500, { error: 'internal_error' });
   }
 }
