@@ -19,7 +19,7 @@ DEFAULT_USER_AGENT = (
     "PublicOfficerMapBot/0.1 "
     "(operator: wylee0806@naver.com; public-interest archive)"
 )
-JSON_LIST_RE = re.compile(r"var\s+jsonListQ\s*=\s*(?P<literal>'(?:\\.|[^'])*')\s*;", re.DOTALL)
+JSON_LIST_RE = re.compile(r"var\s+jsonListQ\s*=\s*(?P<literal>'(?:\\.|[^'\\])*')\s*;", re.DOTALL)
 
 
 class CleanEyeOwnerWorkCostCrawler:
