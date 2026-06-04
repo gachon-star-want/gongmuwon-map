@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getCurrentUser } from '../_lib/auth';
 import { sendJson } from '../_lib/http';
+import { RATE_LIMIT_POLICIES, applyRateLimit } from '../_lib/rate-limit';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
@@ -13,6 +14,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (method !== 'GET') {
     res.setHeader('Allow', 'GET, HEAD, OPTIONS');
     sendJson(res, 405, { error: 'method_not_allowed' });
+    return;
+  }
+  if (!applyRateLimit(req, res, RATE_LIMIT_POLICIES.authMe)) {
     return;
   }
   try {

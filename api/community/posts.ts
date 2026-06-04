@@ -72,7 +72,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (method === 'GET') {
-      await handleGet(req, res);
+  const limit = Math.min(Math.max(numberParam(req.query.limit, 30), 1), 50);
+  const category = cleanCategory(stringParam(req.query.category));
+  const values: unknown[] = [limit, category ?? null];
+  const { rows } = await readQuery(
+    `
+    SELECT id, category, title, body, author_handle, comment_count, created_at, updated_at, last_comment_at
+    FROM public.community_posts_public
+    WHERE ($2::text IS NULL OR category = $2::text)
+    ORDER BY COALESCE(last_comment_at, created_at) DESC, created_at DESC
+    LIMIT $1
+  `,
+    values,
+  );
       return;
     }
 
