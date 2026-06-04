@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { reporterFingerprint, requireCronSecret } from './http';
+import { reporterFingerprint, requireCronSecret, uuidParam } from './http';
 
 type MockResponse = {
   headers: Map<string, unknown>;
@@ -77,6 +77,18 @@ describe('reporterFingerprint', () => {
     const second = reporterFingerprint(mockRequest({ 'x-forwarded-for': '203.0.113.10', 'user-agent': 'Browser B' }));
 
     expect(first).not.toBe(second);
+  });
+});
+
+describe('uuidParam', () => {
+  it('accepts canonical UUID values', () => {
+    expect(uuidParam('11111111-1111-4111-8111-111111111111')).toBe('11111111-1111-4111-8111-111111111111');
+  });
+
+  it('distinguishes missing and malformed UUID values', () => {
+    expect(uuidParam(undefined)).toBeUndefined();
+    expect(uuidParam('not-a-uuid')).toBeNull();
+    expect(uuidParam(['not-a-uuid'])).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { writeQuery } from '../../../_lib/db';
 import { getCurrentUser } from '../../../_lib/auth';
-import { parseBody, sendJson, stringParam } from '../../../_lib/http';
+import { parseBody, sendJson, uuidParam } from '../../../_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
 import { isAllowedPrivateOrigin } from '../../../_lib/route';
 
@@ -78,9 +78,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const placeId = stringParam(req.query.id);
-    if (!placeId) {
+    const placeId = uuidParam(req.query.id);
+    if (placeId === undefined) {
       sendNoStoreJson(res, 400, { error: 'missing_place_id' });
+      return;
+    }
+    if (placeId === null) {
+      sendNoStoreJson(res, 400, { error: 'invalid_place_id' });
       return;
     }
     if (method === 'GET') {

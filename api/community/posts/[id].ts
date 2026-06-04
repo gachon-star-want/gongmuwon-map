@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readQuery } from '../../_lib/db';
-import { sendJson, stringParam } from '../../_lib/http';
+import { sendJson, uuidParam } from '../../_lib/http';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method === 'HEAD' ? 'GET' : req.method;
@@ -16,9 +16,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   try {
-    const id = stringParam(req.query.id);
-    if (!id) {
+    const id = uuidParam(req.query.id);
+    if (id === undefined) {
       sendJson(res, 400, { error: 'missing_post_id' });
+      return;
+    }
+    if (id === null) {
+      sendJson(res, 400, { error: 'invalid_post_id' });
       return;
     }
     const { rows } = await readQuery(
@@ -39,4 +43,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sendJson(res, 500, { error: 'internal_error' });
   }
 }
-

@@ -60,6 +60,7 @@ function mockResponse(): MockResponse {
 const mockedWriteQuery = vi.mocked(writeQuery);
 const mockedGetCurrentUser = vi.mocked(getCurrentUser);
 const sameOriginHeaders = { origin: 'http://site.example.com', host: 'site.example.com' };
+const placeId = '11111111-1111-1111-1111-111111111111';
 
 describe('reactions route cache policy', () => {
   beforeEach(() => {
@@ -75,7 +76,7 @@ describe('reactions route cache policy', () => {
       .mockResolvedValueOnce({ rows: [{ reaction: 'like' }] } as never);
 
     const res = mockResponse();
-    await reactionsHandler({ method: 'GET', query: { id: 'place-1' }, headers: {} } as never, res as never);
+    await reactionsHandler({ method: 'GET', query: { id: placeId }, headers: {} } as never, res as never);
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
@@ -92,7 +93,7 @@ describe('reactions route cache policy', () => {
 
     const res = mockResponse();
     await reactionsHandler(
-      { method: 'POST', query: { id: 'place-1' }, headers: sameOriginHeaders, body: { reaction: 'dislike' } } as never,
+      { method: 'POST', query: { id: placeId }, headers: sameOriginHeaders, body: { reaction: 'dislike' } } as never,
       res as never,
     );
 
@@ -107,7 +108,7 @@ describe('reactions route cache policy', () => {
 
     const res = mockResponse();
     await reactionsHandler(
-      { method: 'POST', query: { id: 'place-1' }, headers: sameOriginHeaders, body: { reaction: 'like' } } as never,
+      { method: 'POST', query: { id: placeId }, headers: sameOriginHeaders, body: { reaction: 'like' } } as never,
       res as never,
     );
 
@@ -119,7 +120,7 @@ describe('reactions route cache policy', () => {
 
   it('keeps OPTIONS support and no-store policy', async () => {
     const res = mockResponse();
-    await reactionsHandler({ method: 'OPTIONS', query: { id: 'place-1' }, headers: {} } as never, res as never);
+    await reactionsHandler({ method: 'OPTIONS', query: { id: placeId }, headers: {} } as never, res as never);
 
     expect(res.statusCode).toBe(204);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store');
@@ -133,7 +134,7 @@ describe('reactions route cache policy', () => {
     await reactionsHandler(
       {
         method: 'OPTIONS',
-        query: { id: 'place-1' },
+        query: { id: placeId },
         headers: { ...sameOriginHeaders, 'access-control-request-method': 'POST' },
       } as never,
       res as never,
@@ -150,7 +151,7 @@ describe('reactions route cache policy', () => {
     await reactionsHandler(
       {
         method: 'OPTIONS',
-        query: { id: 'place-1' },
+        query: { id: placeId },
         headers: {
           origin: 'https://evil.example',
           host: 'site.example.com',
@@ -168,7 +169,7 @@ describe('reactions route cache policy', () => {
     await reactionsHandler(
       {
         method: 'POST',
-        query: { id: 'place-1' },
+        query: { id: placeId },
         headers: { origin: 'https://evil.example', host: 'site.example.com' },
         body: { reaction: 'like' },
       } as never,
@@ -184,7 +185,7 @@ describe('reactions route cache policy', () => {
   it('returns 405 for invalid methods with no-store', async () => {
     mockedGetCurrentUser.mockResolvedValue(null);
     const res = mockResponse();
-    await reactionsHandler({ method: 'DELETE', query: { id: 'place-1' }, headers: {} } as never, res as never);
+    await reactionsHandler({ method: 'DELETE', query: { id: placeId }, headers: {} } as never, res as never);
 
     expect(res.statusCode).toBe(405);
     expect(res.getHeader('Allow')).toBe('GET, HEAD, POST, OPTIONS');
@@ -196,7 +197,7 @@ describe('reactions route cache policy', () => {
     mockedGetCurrentUser.mockResolvedValue({ id: 'user-1' } as never);
     const req = {
       method: 'POST',
-      query: { id: 'place-1' },
+      query: { id: placeId },
       headers: {
         ...sameOriginHeaders,
         'x-forwarded-for': '203.0.113.44, 10.0.0.1',
@@ -230,7 +231,7 @@ describe('reactions route cache policy', () => {
     await reactionsHandler(
       {
         method: 'GET',
-        query: { id: 'place-1' },
+        query: { id: placeId },
         headers: { 'x-forwarded-for': '203.0.113.44, 10.0.0.1', 'user-agent': 'vitest-agent' },
       } as never,
       getRes as never,
