@@ -12,6 +12,7 @@ type MapCanvasProps = {
   onSelect: (place: Place) => void;
   onBlankClick: () => void;
   onBoundsChange?: (bbox: [number, number, number, number], level: number) => void;
+  desktopListOpen?: boolean;
 };
 
 type MarkerEntry = {
@@ -28,7 +29,7 @@ type Coordinates = {
 const DEFAULT_MAP_LEVEL = 5;
 const USER_LOCATION_LEVEL = 4;
 
-export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBoundsChange }: MapCanvasProps) {
+export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBoundsChange, desktopListOpen = true }: MapCanvasProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const clustererRef = useRef<any>(null);
@@ -217,9 +218,26 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
       marker.setZIndex(selected ? 30 : 10);
       if (selected && place.latitude && place.longitude && mapInstanceRef.current) {
         mapInstanceRef.current.panTo(new kakao.maps.LatLng(place.latitude, place.longitude));
+        
+        if (window.innerWidth > 767) {
+          setTimeout(() => {
+            if (!mapInstanceRef.current) return;
+            let offset = 0;
+            if (desktopListOpen && selectedPlace) {
+              offset = 380;
+            } else if (desktopListOpen) {
+              offset = 180;
+            } else if (selectedPlace) {
+              offset = 200;
+            }
+            if (offset > 0) {
+              mapInstanceRef.current.panBy(offset, 0);
+            }
+          }, 50);
+        }
       }
     });
-  }, [kakaoReady, selectedPlace?.id]);
+  }, [kakaoReady, selectedPlace?.id, desktopListOpen]);
 
   if (!KAKAO_JS_KEY || kakaoFailed) {
     return <FallbackMap places={places} selectedId={selectedPlace?.id} onSelect={onSelect} />;

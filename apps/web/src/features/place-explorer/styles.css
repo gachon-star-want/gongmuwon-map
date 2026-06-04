@@ -683,19 +683,23 @@
   display: grid;
   flex: 0 0 auto;
   width: 100%;
-  height: 28px;
+  height: 48px;
   place-items: center;
   border: 0;
   border-bottom: 1px solid #edf0f3;
   background: transparent;
   color: #64748b;
   cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bottom-sheet .detail-content,
 .bottom-sheet .mobile-panel,
 .bottom-sheet .sheet-content {
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bottom-sheet .detail-content {
@@ -852,6 +856,11 @@
   right: 20px;
   z-index: 150;
   max-width: none;
+  pointer-events: none;
+}
+
+.desktop-controls > * {
+  pointer-events: auto;
 }
 
 .floating-search {
@@ -1054,7 +1063,7 @@
 
 .detail-drawer {
   top: 86px;
-  right: 20px;
+  right: -460px;
   bottom: auto;
   left: auto;
   width: 420px;
@@ -1068,10 +1077,18 @@
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  pointer-events: none;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 
-.detail-drawer.list-open {
+.detail-drawer.active {
+  right: 20px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detail-drawer.active.list-open {
   right: 432px;
 }
 
@@ -1092,7 +1109,7 @@
   transition: transform 0.3s ease;
 }
 
-.detail-drawer:hover .detail-cover-image {
+.detail-header-wrapper:hover .detail-cover-image {
   transform: scale(1.05);
 }
 
@@ -1124,6 +1141,9 @@
 
 .detail-content {
   padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
 
 .detail-title h2 {
   font-size: 25px;
@@ -1323,8 +1343,8 @@
 
   .mobile-search {
     top: calc(env(safe-area-inset-top, 0px) + 10px);
-    right: 12px;
-    left: 12px;
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
     z-index: 100;
     display: block;
   }
@@ -1338,7 +1358,7 @@
 
   .bottom-sheet {
     right: 0;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     left: 0;
     display: flex;
     border-radius: 18px 18px 0 0;
@@ -1346,19 +1366,19 @@
 
   .bottom-nav {
     display: grid;
-    right: 8px;
-    bottom: 8px;
-    left: 8px;
+    right: calc(8px + env(safe-area-inset-right, 0px));
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    left: calc(8px + env(safe-area-inset-left, 0px));
     width: auto;
     min-width: 0;
-    min-height: calc(64px + env(safe-area-inset-bottom, 0px));
+    min-height: 64px;
     transform: none;
   }
 
   .source-pill {
-    right: 12px;
+    right: calc(12px + env(safe-area-inset-right, 0px));
     bottom: calc(82px + env(safe-area-inset-bottom, 0px));
-    left: 12px;
+    left: calc(12px + env(safe-area-inset-left, 0px));
     max-width: none;
     justify-content: center;
     font-size: 11px;

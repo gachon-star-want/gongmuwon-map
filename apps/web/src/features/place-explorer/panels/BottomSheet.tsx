@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { Grade, Place, PlaceReactionSummary, SortMode, Visit } from '../types';
 
@@ -27,6 +28,7 @@ type BottomSheetProps = {
   selectedGrades: Grade[];
   sort: SortMode;
   closedVisible: boolean;
+  hidden?: boolean;
   onSizeChange: (size: SheetSize) => void;
   onSelect: (place: Place) => void;
   onCloseDetail: () => void;
@@ -61,6 +63,7 @@ export function BottomSheet({
   selectedGrades,
   sort,
   closedVisible,
+  hidden = false,
   onSizeChange,
   onSelect,
   onCloseDetail,
@@ -76,7 +79,36 @@ export function BottomSheet({
   onReact,
   isAuthenticated,
 }: BottomSheetProps) {
-  if (mode === 'map' && !selectedPlace) return null;
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - touchStartY.current;
+
+    // Swipe Down (아래로 쓸어내림)
+    if (diffY > 60) {
+      touchStartY.current = null;
+      if (size === 'full') onSizeChange('mid');
+      else if (size === 'mid') onSizeChange('peek');
+    }
+    // Swipe Up (위로 쓸어올림)
+    else if (diffY < -60) {
+      touchStartY.current = null;
+      if (size === 'peek') onSizeChange('mid');
+      else if (size === 'mid') onSizeChange('full');
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartY.current = null;
+  };
+
+  if (hidden || (mode === 'map' && !selectedPlace)) return null;
   const activeMode = selectedPlace && mode === 'map' ? 'detail' : mode;
   return (
     <section className="bottom-sheet" data-mode={activeMode} data-size={size} aria-label="모바일 하단 시트">
@@ -84,7 +116,13 @@ export function BottomSheet({
         className="sheet-handle"
         type="button"
         aria-label="시트 크기 변경"
-        onClick={() => onSizeChange(size === 'full' ? 'mid' : 'full')}
+        onClick={() => {
+          if (size === 'full') onSizeChange('mid');
+          else if (size === 'mid') onSizeChange('peek');
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <ChevronDown size={16} aria-hidden />
       </button>
