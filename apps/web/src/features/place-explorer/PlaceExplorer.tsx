@@ -82,6 +82,7 @@ export function PlaceExplorer() {
   const [searchPlaces, setSearchPlaces] = useState<Place[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [lastPlace, setLastPlace] = useState<Place | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [reactions, setReactions] = useState<PlaceReactionSummary | null>(null);
   const [reactionPending, setReactionPending] = useState(false);
@@ -229,6 +230,7 @@ export function PlaceExplorer() {
       setReactions(null);
       return;
     }
+    setLastPlace(selectedPlace);
     void loadVisits(selectedPlace.id);
     void loadPlaceReactions(selectedPlace.id);
   }, [selectedPlace]);
@@ -236,6 +238,13 @@ export function PlaceExplorer() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        (event.target as HTMLElement).isContentEditable
+      ) {
+        return;
+      }
       if (reportOpened || closureOpened) return;
       if (selectedPlace) {
         clearSelected();
@@ -456,6 +465,7 @@ export function PlaceExplorer() {
             setMapBbox(bbox);
           }, 400);
         }}
+        desktopListOpen={desktopListOpen}
       />
 
       <section className="desktop-controls" aria-label="검색과 필터">
@@ -561,10 +571,10 @@ export function PlaceExplorer() {
         </aside>
       ) : null}
 
-      {selectedPlace ? (
-        <aside className={`detail-drawer desktop-layer ${desktopListOpen ? 'list-open' : ''}`} aria-label="식당 상세">
+      <aside className={`detail-drawer desktop-layer ${selectedPlace ? 'active' : ''} ${desktopListOpen ? 'list-open' : ''}`} aria-label="식당 상세">
+        {lastPlace ? (
           <PlaceDetails
-            place={selectedPlace}
+            place={lastPlace}
             visits={visits}
             onClose={() => clearSelected()}
             onReport={report.open}
@@ -574,8 +584,8 @@ export function PlaceExplorer() {
             onReact={toggleReaction}
             isAuthenticated={Boolean(currentUser)}
           />
-        </aside>
-      ) : null}
+        ) : null}
+      </aside>
 
       <BottomSheet
         mode={mobileMode}
@@ -612,11 +622,14 @@ export function PlaceExplorer() {
         onClosureReport={closure.open}
         onReact={toggleReaction}
         isAuthenticated={Boolean(currentUser)}
+        hidden={reportOpened || closureOpened || authOpened}
       />
 
-      <SourcePill sheetOpen={mobileMode !== 'map' || Boolean(selectedPlace)} />
+      <SourcePill sheetOpen={(mobileMode !== 'map' || Boolean(selectedPlace)) && !(reportOpened || closureOpened || authOpened)} />
 
-      <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
+      {!(reportOpened || closureOpened || authOpened) ? (
+        <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
+      ) : null}
 
       <AuthModal opened={authOpened} onClose={auth.close} onAuthenticated={setCurrentUser} />
 
