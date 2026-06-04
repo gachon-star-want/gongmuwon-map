@@ -308,35 +308,34 @@
 
 .grade-dot {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 26px;
   place-content: center;
   align-self: center;
-  border: 2px solid #fff;
   border-radius: 999px;
-  box-shadow: 0 9px 20px rgba(15, 23, 42, 0.24);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0;
+  letter-spacing: -0.3px;
   white-space: nowrap;
 }
 
 .grade-top {
-  background: #ef4444;
+  background: #dc2626;
 }
 
 .grade-good {
-  background: #f59e0b;
+  background: #ea580c;
 }
 
 .grade-neutral {
-  background: #6b7280;
+  background: #4f46e5;
 }
 
 .grade-new {
-  background: #3b82f6;
+  background: #0891b2;
 }
 
 .grade-badge {
@@ -1047,9 +1046,10 @@
 }
 
 .grade-dot {
-  width: 42px;
-  height: 42px;
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.18);
+  width: 46px;
+  height: 28px;
+  font-size: 12px;
+  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.18);
 }
 
 .detail-drawer {
