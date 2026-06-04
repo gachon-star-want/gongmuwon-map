@@ -30,6 +30,7 @@ type ApplyRateLimitOptions = {
 export const RATE_LIMIT_POLICIES = {
   authLogin: { id: 'auth.login.post', limit: 10, windowMs: 60 * 1000 },
   authRegister: { id: 'auth.register.post', limit: 5, windowMs: 60 * 60 * 1000 },
+  authMe: { id: 'auth.me.get', limit: 30, windowMs: 60 * 1000 },
   takedownRequest: { id: 'takedown-request.post', limit: 5, windowMs: 60 * 60 * 1000 },
   closureReport: { id: 'closure-report.post', limit: 20, windowMs: 60 * 60 * 1000 },
   communityPosts: { id: 'community.posts.post', limit: 10, windowMs: 60 * 60 * 1000 },

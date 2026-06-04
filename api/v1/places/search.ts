@@ -31,6 +31,12 @@ function orderBy(sort: string) {
   return 'name_prefix_match DESC, p.score DESC NULLS LAST, p.last_visit_at DESC NULLS LAST';
 }
 
+const ORDER_CLAUSES: Record<string, string> = {
+  score: orderBy('score'),
+  recent: orderBy('recent'),
+  visits: orderBy('visits'),
+};
+
 export default publicReadRoute(async function handler({ req }) {
   const q = stringParam(req.query.q)?.trim() || null;
   const regions = splitList(stringParam(req.query.region));
@@ -104,7 +110,7 @@ export default publicReadRoute(async function handler({ req }) {
       visit_count_12m, unique_department_count_12m, unique_agency_count_12m,
       avg_amount_per_person, matched_fields
     FROM ranked p
-    ORDER BY ${orderBy(sort)}
+    ORDER BY ${ORDER_CLAUSES[sort] ?? ORDER_CLAUSES.score}
     LIMIT $1
     `,
     values,
