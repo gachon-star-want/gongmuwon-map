@@ -19,6 +19,8 @@
     "test:pipeline": "uv run --project services/pipeline pytest",
     "test:api": "node_modules/.bin/vitest run --root . api/_lib/*.test.ts",
     "check:public-contracts": "node scripts/verify-public-route-contracts.mjs",
+    "audit:markers": "node scripts/audit-markers.mjs",
+    "remediate:markers": "node scripts/remediate-marker-audit.mjs",
     "report:db-baseline": "node scripts/report-db-baseline.mjs",
     "report:nationwide-verification": "node scripts/build-nationwide-verification-report.mjs"
   }

@@ -6,8 +6,25 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any
 
+import json
+from pathlib import Path
 from public_officer_pipeline.entity.geohash import encode_geohash
-from public_officer_pipeline.models import PlaceRaw, ResolvedPlace
+from public_officer_pipeline.models import PlaceRaw, ResolvedPlace, Agency, GovTier
+
+# Load agency coordinates
+_AGENCY_COORDINATES: dict[str, dict[str, Any]] = {}
+try:
+    _coords_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+    if _coords_path.exists():
+        with open(_coords_path, "r", encoding="utf-8") as _f:
+            _AGENCY_COORDINATES = json.load(_f)
+    else:
+        _alt_path = Path(__file__).parent / "agency_coordinates.json"
+        if _alt_path.exists():
+            with open(_alt_path, "r", encoding="utf-8") as _f:
+                _AGENCY_COORDINATES = json.load(_f)
+except Exception:
+    pass
 
 _SEOUL_REGION_RE = re.compile(r"(서울(?:특별시)?|서울)\s+([가-힣]+[구군시])")
 _GYEONGGI_REGION_RE = re.compile(r"(경기(?:도)?|경기도)\s+([가-힣]+[시군구])")
@@ -229,7 +246,7 @@ class PlaceResolutionPolicy(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def validate_candidate(self, place: PlaceRaw, document: dict[str, Any]) -> bool:
+    def validate_candidate(self, place: PlaceRaw, document: dict[str, Any], agency: Agency | None = None) -> bool:
         raise NotImplementedError
 
     @abstractmethod
@@ -272,7 +289,7 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
         food_docs = [document for document in documents if document.get("category_group_code") == "FD6"]
         return (food_docs or documents)[0]
 
-    def validate_candidate(self, place: PlaceRaw, document: dict[str, Any]) -> bool:
+    def validate_candidate(self, place: PlaceRaw, document: dict[str, Any], agency: Agency | None = None) -> bool:
         validation_latitude = _to_float(document.get("_validation_latitude"))
         validation_longitude = _to_float(document.get("_validation_longitude"))
         if self.source_coordinates and (validation_latitude is None or validation_longitude is None):
@@ -281,6 +298,27 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
 
         road_address, jibun_address = _extract_document_address(document)
         candidate_part = road_address_part(road_address or jibun_address)
+
+        # Distance verification when address_hint is missing/empty and agency coords are available
+        if not place.address_hint and agency:
+            agency_data = _AGENCY_COORDINATES.get(str(agency.id))
+            if agency_data:
+                agency_lat = _to_float(agency_data.get("latitude"))
+                agency_lon = _to_float(agency_data.get("longitude"))
+                if agency_lat is not None and agency_lon is not None:
+                    candidate_latitude, candidate_longitude = _extract_document_coordinates(document)
+                    if candidate_latitude is not None and candidate_longitude is not None:
+                        distance = _haversine_meters(
+                            agency_lat, agency_lon, candidate_latitude, candidate_longitude
+                        )
+                        if distance > 50000.0:
+                            is_national_or_constitutional = agency.gov_tier in (
+                                GovTier.NATIONAL,
+                                GovTier.CONSTITUTIONAL,
+                            )
+                            is_large_chain = classify_large_chain_brand(document.get("place_name")) is not None
+                            if not (is_national_or_constitutional or is_large_chain):
+                                return False
 
         if validation_latitude is not None and validation_longitude is not None:
             candidate_latitude, candidate_longitude = _extract_document_coordinates(document)

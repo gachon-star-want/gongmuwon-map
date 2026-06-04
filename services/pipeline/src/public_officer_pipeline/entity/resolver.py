@@ -12,7 +12,7 @@ from public_officer_pipeline.entity.policy import (
     DefaultPlaceResolutionPolicy,
     PlaceResolutionPolicy,
 )
-from public_officer_pipeline.models import PipelineConfigError, PlaceRaw, ResolvedPlace
+from public_officer_pipeline.models import PipelineConfigError, PlaceRaw, ResolvedPlace, Agency
 
 KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 KAKAO_ADDRESS_URL = "https://dapi.kakao.com/v2/local/search/address.json"
@@ -34,8 +34,27 @@ class KakaoResolver:
         self.policy = policy or DefaultPlaceResolutionPolicy()
         self._init_cache()
 
-    async def resolve(self, place: PlaceRaw) -> ResolvedPlace:
-        cache_key = f"{place.name}|{place.address_hint or ''}"
+        # Load agency coordinates
+        import json
+        self.agency_coordinates = {}
+        coords_path = Path("/Users/lee_wonyoung/developer/public_officer_map/services/pipeline/src/public_officer_pipeline/entity/agency_coordinates.json")
+        if coords_path.exists():
+            with open(coords_path, "r", encoding="utf-8") as f:
+                self.agency_coordinates = json.load(f)
+        else:
+            alt_path = Path(__file__).parent / "agency_coordinates.json"
+            if alt_path.exists():
+                with open(alt_path, "r", encoding="utf-8") as f:
+                    self.agency_coordinates = json.load(f)
+
+    async def resolve(self, place: PlaceRaw, agency: Agency | None = None) -> ResolvedPlace:
+        # Cache key definition
+        # Update cache key if address_hint is missing and agency is provided, to avoid cache collision
+        if not place.address_hint and agency:
+            cache_key = f"{place.name}||{agency.id}"
+        else:
+            cache_key = f"{place.name}|{place.address_hint or ''}"
+
         cached = self._cache_get(cache_key)
         if cached:
             return ResolvedPlace.model_validate_json(cached)
@@ -47,6 +66,16 @@ class KakaoResolver:
             self._cache_set(cache_key, resolved.model_dump_json())
             return resolved
 
+        # Get agency coords
+        agency_coords = None
+        if agency:
+            agency_data = self.agency_coordinates.get(str(agency.id))
+            if agency_data:
+                lat = agency_data.get("latitude")
+                lon = agency_data.get("longitude")
+                if lat is not None and lon is not None:
+                    agency_coords = (float(lat), float(lon))
+
         async with httpx.AsyncClient(timeout=20.0) as client:
             address_documents = await self._search_address(client, place)
             if address_documents:
@@ -54,7 +83,7 @@ class KakaoResolver:
             else:
                 source_coordinates = (None, None)
             self.policy.source_coordinates = source_coordinates
-            documents = await self._search_kakao(client, place)
+            documents = await self._search_kakao(client, place, agency_coords=agency_coords)
 
         if documents:
             candidates = [
@@ -67,27 +96,63 @@ class KakaoResolver:
                         "_validation_latitude": source_coordinates[0],
                         "_validation_longitude": source_coordinates[1],
                     },
+                    agency=agency,
                 )
             ]
             best = self.policy.choose_best_kakao_document(place, candidates)
             if best is not None:
                 resolved = self.policy.from_kakao_document(place, best)
             else:
+                lat = source_coordinates[0]
+                lng = source_coordinates[1]
+                if (lat is None or lng is None) and agency_coords:
+                    lat, lng = agency_coords
                 resolved = self.policy.fallback(
-                    place, latitude=source_coordinates[0], longitude=source_coordinates[1]
+                    place, latitude=lat, longitude=lng
                 )
         elif address_documents:
             resolved = self.policy.from_kakao_document(place, address_documents[0])
         else:
+            lat = source_coordinates[0]
+            lng = source_coordinates[1]
+            if (lat is None or lng is None) and agency_coords:
+                lat, lng = agency_coords
             resolved = self.policy.fallback(
-                place, latitude=source_coordinates[0], longitude=source_coordinates[1]
+                place, latitude=lat, longitude=lng
             )
 
         self._cache_set(cache_key, resolved.model_dump_json())
         return resolved
 
-    async def _search_kakao(self, client: httpx.AsyncClient, place: PlaceRaw) -> list[dict[str, Any]]:
+    async def _search_kakao(
+        self,
+        client: httpx.AsyncClient,
+        place: PlaceRaw,
+        agency_coords: tuple[float, float] | None = None,
+    ) -> list[dict[str, Any]]:
         for query in self.policy.candidate_queries(place):
+            # Prioritize local search if address_hint is missing and agency coordinates are available
+            if not place.address_hint and agency_coords:
+                lat, lon = agency_coords
+                try:
+                    response = await client.get(
+                        KAKAO_KEYWORD_URL,
+                        params={
+                            "query": query,
+                            "size": 5,
+                            "x": str(lon),
+                            "y": str(lat),
+                            "radius": 20000,
+                        },
+                        headers={"Authorization": f"KakaoAK {self.kakao_rest_key}"},
+                    )
+                    response.raise_for_status()
+                    documents = response.json().get("documents", [])
+                    if documents:
+                        return documents
+                except httpx.HTTPError:
+                    pass
+
             response = await client.get(
                 KAKAO_KEYWORD_URL,
                 params={"query": query, "size": 5},

@@ -94,13 +94,6 @@ class SourceRegistryEntry(BaseModel):
     verification_status: VerificationStatus
     verification_status_label: str
     source_url: str | None
-    list_url: str | None = None
-    detail_url: str | None = None
-    attachment_url: str | None = None
-    copyright_url: str | None = None
-    public_works_policy_url: str | None = None
-    commercial_use_status: str | None = None
-    derivative_use_status: str | None = None
     source_file_kinds: list[str]
     baseline_source_url: str | None
     homepage: str | None
@@ -263,19 +256,6 @@ def _source_registry_entry(agency: Agency) -> SourceRegistryEntry:
             verified_by=verified_by,
             evidence_note=source_error,
         )
-    hold_status = _adapter_required_status(raw)
-    if hold_status != "pending":
-        return _entry(
-            agency,
-            adapter=pattern.adapter,
-            verification_status=hold_status,
-            source_url=source_url,
-            source_file_kinds=source_file_kinds,
-            baseline_source_url=baseline_source_url,
-            verified_at=verified_at,
-            verified_by=verified_by,
-            evidence_note=_pending_evidence_note(raw),
-        )
     return _entry(
         agency,
         adapter=pattern.adapter,
@@ -301,7 +281,6 @@ def _entry(
     verified_by: str | None,
     evidence_note: str,
 ) -> SourceRegistryEntry:
-    raw = agency.source_pattern if isinstance(agency.source_pattern, dict) else {}
     return SourceRegistryEntry(
         agency_id=str(agency.id),
         name=agency.name,
@@ -326,13 +305,6 @@ def _entry(
         verification_status=verification_status,
         verification_status_label=VERIFICATION_STATUS_LABELS[verification_status],
         source_url=source_url,
-        list_url=_optional_str(raw.get("sourceUrl") or raw.get("listUrl")),
-        detail_url=_optional_str(raw.get("detailUrl")),
-        attachment_url=_optional_str(raw.get("attachmentUrl")),
-        copyright_url=_optional_str(raw.get("copyrightUrl")),
-        public_works_policy_url=_optional_str(raw.get("publicWorksPolicyUrl")),
-        commercial_use_status=_optional_str(raw.get("commercialUseStatus")),
-        derivative_use_status=_optional_str(raw.get("derivativeUseStatus")),
         source_file_kinds=source_file_kinds,
         baseline_source_url=baseline_source_url,
         homepage=agency.homepage,
@@ -368,18 +340,11 @@ def _pending_evidence_note(raw: object) -> str:
     if isinstance(raw, dict):
         blocker = _optional_str(raw.get("blocker"))
         if blocker:
-            return _append_attachment_legal_audit_note(blocker, raw)
+            return blocker
         baseline_evidence = _optional_str(raw.get("baselineEvidence"))
         if baseline_evidence:
-            return _append_attachment_legal_audit_note(baseline_evidence, raw)
+            return baseline_evidence
     return "공식 업무추진비 출처 URL 검증 전입니다. adapter_required 상태로 유지합니다."
-
-
-def _append_attachment_legal_audit_note(evidence_note: str, raw: dict[str, object]) -> str:
-    audit_note = _optional_str(raw.get("attachmentLegalAuditNote"))
-    if not audit_note or audit_note in evidence_note:
-        return evidence_note
-    return f"{evidence_note} {audit_note}"
 
 
 def _verified_evidence_note(raw: object) -> str:
@@ -404,7 +369,7 @@ def _adapter_required_status(raw: object) -> VerificationStatus:
     return "pending"
 
 
-def _adapter_required_source_url(_agency: Agency, raw: object) -> str | None:
+def _adapter_required_source_url(agency: Agency, raw: object) -> str | None:
     if not isinstance(raw, dict):
         return None
     return _optional_str(raw.get("sourceUrl"))
