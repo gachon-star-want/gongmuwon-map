@@ -16,6 +16,9 @@ from public_officer_pipeline.source_pattern import (
     AttachmentBoardPattern,
     parse_source_pattern,
 )
+from public_officer_pipeline.crawler.file_kind import detect_file_kind
+from public_officer_pipeline.crawler.date_utils import parse_crawler_date
+from public_officer_pipeline.extractor.text_utils import normalize_spaces
 
 
 DEFAULT_LIST_URL = "https://www.gncouncil.go.kr/kr/noticeBBS.do"
@@ -24,7 +27,7 @@ DEFAULT_USER_AGENT = (
     "PublicOfficerMapBot/0.1 "
     "(operator: wylee0806@naver.com; public-interest archive)"
 )
-SUPPORTED_FILE_KINDS = {"pdf", "hwp", "xls", "xlsx", "hwpx", "zip"}
+
 EXPENSE_KEYWORDS = ("업무추진비", "업추비", "시책추진비")
 DOWNLOAD_HREF_PARTS = (
     "/site/main/file/download/",
@@ -98,7 +101,6 @@ DOWNLOAD_HREF_PARTS = (
     "mode=download",
 )
 DATE_RE = re.compile(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})")
-KOREAN_DATE_RE = re.compile(r"(20\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일")
 
 
 class CouncilAttachmentCrawler:
@@ -239,7 +241,7 @@ class CouncilAttachmentCrawler:
             cells = row.css("th,td")
             if len(cells) < 2:
                 continue
-            title = _clean_title(_normalize_spaces(cells[1].text(separator=" ", strip=True)))
+            title = _clean_title(normalize_spaces(cells[1].text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
                 continue
             published_at = _find_date(cells)
@@ -297,7 +299,7 @@ class CouncilAttachmentCrawler:
             if not header_row:
                 continue
             headers = [
-                re.sub(r"\s+", "", _normalize_spaces(header.text(separator=" ", strip=True)))
+                re.sub(r"\s+", "", normalize_spaces(header.text(separator=" ", strip=True)))
                 for header in header_row.css("th")
             ]
             title_index = _column_index(headers, "제목", "업무명", "공개일자")
@@ -310,17 +312,17 @@ class CouncilAttachmentCrawler:
                 cells = row.css("th,td")
                 if len(cells) <= max(title_index, file_index):
                     continue
-                title = _clean_title(_normalize_spaces(cells[title_index].text(separator=" ", strip=True)))
+                title = _clean_title(normalize_spaces(cells[title_index].text(separator=" ", strip=True)))
                 if not _looks_like_expense(title):
                     continue
                 published_at = (
-                    _parse_date(cells[date_index].text(separator=" ", strip=True))
+                    parse_crawler_date(cells[date_index].text(separator=" ", strip=True))
                     if date_index is not None and date_index < len(cells)
                     else _find_date(cells)
                 )
                 department = ""
                 if department_index is not None and department_index < len(cells):
-                    department = _normalize_spaces(cells[department_index].text(separator=" ", strip=True))
+                    department = normalize_spaces(cells[department_index].text(separator=" ", strip=True))
                 download_scope = cells[file_index]
                 row_links = (
                     row.css("a[href]")
@@ -367,7 +369,7 @@ class CouncilAttachmentCrawler:
             header_row = table.css_first("thead tr") or table.css_first("tr")
             if not header_row:
                 continue
-            headers = [_normalize_spaces(header.text(separator=" ", strip=True)) for header in header_row.css("th")]
+            headers = [normalize_spaces(header.text(separator=" ", strip=True)) for header in header_row.css("th")]
             compact_headers = [re.sub(r"\s+", "", header) for header in headers]
             if not {"년도", "월", "작성부서", "파일"}.issubset(set(compact_headers)):
                 continue
@@ -376,7 +378,7 @@ class CouncilAttachmentCrawler:
                 if len(cells) < len(headers):
                     continue
                 fields = {
-                    compact_headers[index]: _normalize_spaces(cells[index].text(separator=" ", strip=True))
+                    compact_headers[index]: normalize_spaces(cells[index].text(separator=" ", strip=True))
                     for index in range(min(len(headers), len(cells)))
                 }
                 year = fields.get("년도", "")
@@ -386,7 +388,7 @@ class CouncilAttachmentCrawler:
                 if not (year and month and department):
                     continue
                 title = f"{year}년 {month.zfill(2)}월 {department} {category} 업무추진비 공개내역".strip()
-                published_at = _parse_date(fields.get("작성일", "") or fields.get("등록일", ""))
+                published_at = parse_crawler_date(fields.get("작성일", "") or fields.get("등록일", ""))
                 for download in row.css("a[href]"):
                     href = _download_href_from_anchor(download, self.js_download_path)
                     if not href or not _is_download_href(href):
@@ -394,12 +396,12 @@ class CouncilAttachmentCrawler:
                     filename = _filename_from_download_link(download)
                     file_kind = (
                         _file_kind_from_download(download, filename)
-                        or _file_kind(href)
+                        or detect_file_kind(href)
                         or self.fallback_file_kind
                     )
                     if file_kind not in self.file_kinds:
                         continue
-                    filename_kind = _file_kind(filename)
+                    filename_kind = detect_file_kind(filename)
                     display_filename = (
                         filename
                         if filename
@@ -429,11 +431,11 @@ class CouncilAttachmentCrawler:
             values_by_column: dict[str, list[str]] = {}
             cells_by_column: dict[str, list[Any]] = {}
             for cell in cells:
-                column = _normalize_spaces(cell.attributes.get("data-column", ""))
+                column = normalize_spaces(cell.attributes.get("data-column", ""))
                 if not column:
                     continue
                 values_by_column.setdefault(column, []).append(
-                    _normalize_spaces(cell.text(separator=" ", strip=True))
+                    normalize_spaces(cell.text(separator=" ", strip=True))
                 )
                 cells_by_column.setdefault(column, []).append(cell)
             year_values = values_by_column.get("연도", [])
@@ -453,7 +455,7 @@ class CouncilAttachmentCrawler:
             if not (year and month and department):
                 continue
             title = f"{year}년 {month.zfill(2)}월 {department} 업무추진비 공개내역"
-            published_at = _parse_date(" ".join(values_by_column.get("작성일", [])))
+            published_at = parse_crawler_date(" ".join(values_by_column.get("작성일", [])))
             download_cells = cells_by_column.get("첨부파일", []) + cells_by_column.get("사용내역", [])
             download_links = []
             for cell in download_cells:
@@ -465,7 +467,7 @@ class CouncilAttachmentCrawler:
                 filename = _filename_from_download_link(download)
                 file_kind = (
                     _file_kind_from_download(download, filename)
-                    or _file_kind(href)
+                    or detect_file_kind(href)
                     or self.fallback_file_kind
                 )
                 if file_kind not in self.file_kinds:
@@ -473,7 +475,7 @@ class CouncilAttachmentCrawler:
                 display_filename = (
                     filename
                     if filename
-                    and _file_kind(filename) == file_kind
+                    and detect_file_kind(filename) == file_kind
                     and not _looks_like_uninformative_file_label(filename)
                     else f"{department} 업무추진비.{file_kind}"
                 )
@@ -503,8 +505,8 @@ class CouncilAttachmentCrawler:
             for item in listing.css("li"):
                 label_node = item.css_first("span")
                 value_node = item.css_first("em")
-                label = _normalize_spaces(label_node.text(separator=" ", strip=True)) if label_node else ""
-                value = _normalize_spaces(value_node.text(separator=" ", strip=True)) if value_node else ""
+                label = normalize_spaces(label_node.text(separator=" ", strip=True)) if label_node else ""
+                value = normalize_spaces(value_node.text(separator=" ", strip=True)) if value_node else ""
                 if label:
                     fields[label] = value
             year = fields.get("년도", "")
@@ -514,7 +516,7 @@ class CouncilAttachmentCrawler:
             if not (year and month and department):
                 continue
             title = f"{year}년 {month}월 {department} {category} 업무추진비 공개내역".strip()
-            published_at = _parse_date(fields.get("작성일", ""))
+            published_at = parse_crawler_date(fields.get("작성일", ""))
             for download in listing.css("a[href]"):
                 href = download.attributes.get("href", "")
                 if not href or not _is_download_href(href):
@@ -548,18 +550,18 @@ class CouncilAttachmentCrawler:
             title_node = title_parent.css_first("a[href]")
             if not title_node:
                 continue
-            title = _clean_title(_normalize_spaces(title_node.text(separator=" ", strip=True)))
+            title = _clean_title(normalize_spaces(title_node.text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
                 continue
-            published_at = _parse_date(
-                _normalize_spaces(
+            published_at = parse_crawler_date(
+                normalize_spaces(
                     (item.css_first(".writer_info .center") or item.css_first("li.center") or item).text(
                         separator=" ",
                         strip=True,
                     )
                 )
             )
-            writer = _normalize_spaces(
+            writer = normalize_spaces(
                 (item.css_first(".writer_info .writer") or item.css_first("li.writer") or item).text(
                     separator=" ",
                     strip=True,
@@ -601,7 +603,7 @@ class CouncilAttachmentCrawler:
             or tree.css_first("h1")
         )
         title = (
-            _clean_title(_normalize_spaces(title_node.text(separator=" ", strip=True)))
+            _clean_title(normalize_spaces(title_node.text(separator=" ", strip=True)))
             if title_node
             else ""
         )
@@ -610,7 +612,7 @@ class CouncilAttachmentCrawler:
 
         published_at = None
         for item in tree.css(".board-post-meta-text, .skinTb-date, time"):
-            published_at = _parse_date(item.text(separator=" ", strip=True))
+            published_at = parse_crawler_date(item.text(separator=" ", strip=True))
             if published_at:
                 break
 
@@ -621,7 +623,7 @@ class CouncilAttachmentCrawler:
             if not href or not _is_download_href(href):
                 continue
             filename = _filename_from_download_link(download)
-            file_kind = _file_kind(filename) or _file_kind(href) or _file_kind_from_download(download, filename)
+            file_kind = detect_file_kind(filename) or detect_file_kind(href) or _file_kind_from_download(download, filename)
             if (
                 file_kind not in self.file_kinds
                 or not _download_looks_like_expense(title=title, filename=filename)
@@ -669,13 +671,13 @@ class CouncilAttachmentCrawler:
             if not detail_date:
                 continue
             title = _clean_title(
-                _normalize_spaces(
+                normalize_spaces(
                     (row.css_first("a[href]") or cells[-2]).text(separator=" ", strip=True)
                 )
             )
             if not _looks_like_expense(title):
                 continue
-            published_at = _parse_date(detail_date.group("date")) or _find_date(cells)
+            published_at = parse_crawler_date(detail_date.group("date")) or _find_date(cells)
             parts = urlsplit(self.list_url)
             query = dict(parse_qsl(parts.query, keep_blank_values=True))
             query["useDe"] = detail_date.group("date")
@@ -708,7 +710,7 @@ class CouncilAttachmentCrawler:
             title_cell = _detail_title_cell(cells)
             if title_cell is None:
                 continue
-            title = _clean_title(_normalize_spaces(title_cell.text(separator=" ", strip=True)))
+            title = _clean_title(normalize_spaces(title_cell.text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
                 continue
             anchor = title_cell.css_first("a[href]")
@@ -898,7 +900,7 @@ class CouncilAttachmentCrawler:
             return refs
         seen: set[str] = set()
         for anchor in tree.css("a[href]"):
-            title = _clean_title(_normalize_spaces(anchor.text(separator=" ", strip=True)))
+            title = _clean_title(normalize_spaces(anchor.text(separator=" ", strip=True)))
             if not _looks_like_expense(title):
                 continue
             href = anchor.attributes.get("href", "")
@@ -911,7 +913,7 @@ class CouncilAttachmentCrawler:
             row = anchor
             while row is not None and getattr(row, "tag", "") != "tr":
                 row = row.parent
-            published_at = _parse_date(anchor.parent.text(separator=" ", strip=True)) if anchor.parent else None
+            published_at = parse_crawler_date(anchor.parent.text(separator=" ", strip=True)) if anchor.parent else None
             if row is not None:
                 published_at = _find_date(row.css("th,td")) or published_at
             refs.append(
@@ -938,8 +940,8 @@ class CouncilAttachmentCrawler:
                 continue
             filename = _filename_from_download_link(download)
             file_kind = (
-                _file_kind(filename)
-                or _file_kind(href)
+                detect_file_kind(filename)
+                or detect_file_kind(href)
                 or _file_kind_from_download(download, filename)
                 or self.fallback_file_kind
             )
@@ -1029,8 +1031,8 @@ def _download_href_from_anchor(download, js_download_path: str = "") -> str:
     )
     if path_file_download and (
         "/" in path_file_download.group("file_path")
-        or _file_kind(path_file_download.group("file_path"))
-        or _file_kind(path_file_download.group("file_name"))
+        or detect_file_kind(path_file_download.group("file_path"))
+        or detect_file_kind(path_file_download.group("file_name"))
     ):
         return "/cmm/Download.do?" + urlencode(
             {
@@ -1126,7 +1128,7 @@ def _gunwi_page_detail_href(href: str) -> str:
 
 def _detail_title_cell(cells) -> Any | None:
     for cell in cells:
-        title = _clean_title(_normalize_spaces(cell.text(separator=" ", strip=True)))
+        title = _clean_title(normalize_spaces(cell.text(separator=" ", strip=True)))
         if _looks_like_expense(title) and cell.css_first("a[href]"):
             return cell
     if len(cells) > 1:
@@ -1147,7 +1149,7 @@ def _filename_from_download_link(download) -> str:
         candidates.append(image.attributes.get("alt") or "")
     normalized_candidates = []
     for candidate in candidates:
-        normalized = _normalize_spaces(candidate)
+        normalized = normalize_spaces(candidate)
         if not normalized:
             continue
         if "파일 내려받기" in normalized:
@@ -1158,12 +1160,12 @@ def _filename_from_download_link(download) -> str:
         for _ in range(3):
             if not parent:
                 break
-            parent_text = _normalize_spaces(parent.text(separator=" ", strip=True)).strip(" '\"")
+            parent_text = normalize_spaces(parent.text(separator=" ", strip=True)).strip(" '\"")
             if parent_text and len(parent_text) <= 500:
                 normalized_candidates.append(parent_text)
             parent = parent.parent
     for candidate in normalized_candidates:
-        if _file_kind(candidate) or _looks_like_expense(candidate):
+        if detect_file_kind(candidate) or _looks_like_expense(candidate):
             return candidate
     if normalized_candidates:
         return normalized_candidates[0]
@@ -1216,7 +1218,7 @@ def _department_from_filename(filename: str, agency_short_name: str = "강남구
 
 def _department_from_cells(cells, agency_short_name: str) -> str | None:
     for cell in cells[2:-1]:
-        text = _normalize_spaces(cell.text(separator=" ", strip=True))
+        text = normalize_spaces(cell.text(separator=" ", strip=True))
         if not text or DATE_RE.search(text) or re.fullmatch(r"\d+", text):
             continue
         if _looks_like_department_fragment(text):
@@ -1246,54 +1248,19 @@ def _looks_like_department_fragment(value: str) -> bool:
     return bool(re.search(r"(담당관|전문위원|구청장|부구청장|국장|과|팀|국|동|소|센터|실)$", compact))
 
 
-def _parse_date(value: str) -> date | None:
-    match = DATE_RE.search(value.strip())
-    if match:
-        year, month, day = (int(part) for part in match.groups())
-        return date(year, month, day)
-    match = KOREAN_DATE_RE.search(value.strip())
-    if match:
-        year, month, day = (int(part) for part in match.groups())
-        return date(year, month, day)
-    try:
-        return date.fromisoformat(value.strip())
-    except ValueError:
-        return None
-
-
 def _find_date(cells) -> date | None:
     for cell in cells:
-        parsed = _parse_date(cell.text(separator=" ", strip=True))
+        parsed = parse_crawler_date(cell.text(separator=" ", strip=True))
         if parsed:
             return parsed
     return None
 
 
-def _file_kind(filename: str | None) -> str:
-    lowered = (filename or "").lower()
-    normalized = _normalize_spaces(filename or "").lower()
-    if "excel" in normalized or "엑셀" in normalized:
-        return "xlsx"
-    if "hwpx" in normalized:
-        return "hwpx"
-    if "한글" in normalized or re.search(r"\bhwp\b|\.hwp(?:\b|[^\w])", normalized):
-        return "hwp"
-    for file_kind in SUPPORTED_FILE_KINDS:
-        if (
-            re.search(rf"\.{file_kind}(?:\b|[^\w])", lowered)
-            or f"{file_kind}파일" in lowered
-            or re.search(rf"\b{file_kind}\s*파일\b", lowered)
-            or re.search(rf"\b{file_kind}\s*첨부파일\b", lowered)
-        ):
-            return file_kind
-    return ""
-
-
 def _file_kind_from_download(download, filename: str) -> str:
     return (
-        _file_kind(filename)
-        or _file_kind(download.attributes.get("href", ""))
-        or _file_kind(download.attributes.get("title", ""))
+        detect_file_kind(filename)
+        or detect_file_kind(download.attributes.get("href", ""))
+        or detect_file_kind(download.attributes.get("title", ""))
     )
 
 
@@ -1347,7 +1314,7 @@ def _is_window_open_download_candidate(href: str) -> bool:
         )
     ):
         return False
-    return _is_download_href(href) or "file_download" in lowered or _file_kind(href) != ""
+    return _is_download_href(href) or "file_download" in lowered or detect_file_kind(href) != ""
 
 
 def _is_detail_href(href: str) -> bool:
@@ -1397,7 +1364,7 @@ def _is_placeholder_href(href: str) -> bool:
 
 
 def _looks_like_generic_file_label(filename: str) -> bool:
-    normalized = _normalize_spaces(filename).lower()
+    normalized = normalize_spaces(filename).lower()
     return bool(
         re.fullmatch(
             r"(?:pdf|xls|xlsx|hwpx)\s*(?:(?:첨부)?파일\s*)?(?:첨부|다운로드|미리보기)",
@@ -1407,7 +1374,7 @@ def _looks_like_generic_file_label(filename: str) -> bool:
 
 
 def _looks_like_uninformative_file_label(filename: str) -> bool:
-    normalized = _normalize_spaces(filename).lower()
+    normalized = normalize_spaces(filename).lower()
     return normalized in {
         "다운로드",
         "내려받기",
@@ -1473,7 +1440,3 @@ def _response_text(response: Any) -> str:
 
 def _clean_title(value: str) -> str:
     return re.sub(r"(?:\s+(?:NEW|새글|첨부파일))+$", "", value).strip()
-
-
-def _normalize_spaces(value: str) -> str:
-    return " ".join(value.split())

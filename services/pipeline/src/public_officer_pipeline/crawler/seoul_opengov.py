@@ -15,12 +15,12 @@ from public_officer_pipeline.source_pattern import (
     SeoulOpenGovPattern,
     parse_source_pattern,
 )
+from public_officer_pipeline.crawler.date_utils import parse_crawler_date
 
 
 LIST_URL = "https://opengov.seoul.go.kr/expense/list"
 DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 EXPENSE_LINK_RE = re.compile(r"/expense/(\d+)(?:\b|$)")
-DATE_RE = re.compile(r"(20\d{2})[.-](\d{1,2})[.-](\d{1,2})")
 
 
 class SeoulOpenGovCrawler:
@@ -104,16 +104,8 @@ class SeoulOpenGovCrawler:
                     agency_id=self.agency.id,
                     url=url,
                     title=title,
-                    published_at=_extract_date(row_text),
+                    published_at=parse_crawler_date(row_text),
                 )
             )
             seen.add(url)
         return refs
-
-
-def _extract_date(text: str) -> date | None:
-    match = DATE_RE.search(text)
-    if not match:
-        return None
-    year, month, day = (int(part) for part in match.groups())
-    return date(year, month, day)

@@ -7,6 +7,7 @@ from selectolax.parser import HTMLParser, Node
 
 from public_officer_pipeline.extractor.rows import RawExpenseFields, build_expense_row
 from public_officer_pipeline.models import ParsedExpenseRow
+from public_officer_pipeline.extractor.text_utils import normalize_spaces
 
 
 HEADER_ALIASES = {
@@ -64,7 +65,7 @@ def extract_expense_rows(html: str, fallback_date: date | None = None) -> list[P
         table_rows = _extract_table_rows(table)
         if not table_rows:
             continue
-        headers = [_clean(cell) for cell in table_rows[0]]
+        headers = [normalize_spaces(cell) for cell in table_rows[0]]
         mapped_headers = [_map_header(header) for header in headers]
         if ("used_at" not in mapped_headers and fallback_date is None) or "place_text" not in mapped_headers:
             continue
@@ -72,7 +73,7 @@ def extract_expense_rows(html: str, fallback_date: date | None = None) -> list[P
             if len(raw_row) < len(headers):
                 raw_row = [*raw_row, *[""] * (len(headers) - len(raw_row))]
             item = {
-                mapped_headers[index]: _clean(value)
+                mapped_headers[index]: normalize_spaces(value)
                 for index, value in enumerate(raw_row[: len(mapped_headers)])
                 if mapped_headers[index]
             }
@@ -91,11 +92,11 @@ def _extract_key_value_table(table: Node) -> dict[str, str]:
         for index, header_cell in enumerate(headers):
             if index >= len(values):
                 break
-            header = _clean(header_cell.text(separator=" ", strip=True))
+            header = normalize_spaces(header_cell.text(separator=" ", strip=True))
             mapped = _map_header(header)
             if not mapped:
                 continue
-            value = _clean(values[index].text(separator=" ", strip=True))
+            value = normalize_spaces(values[index].text(separator=" ", strip=True))
             if value:
                 item[mapped] = value
     if "used_at" in item and "place_text" in item and ("amount" in item or "amount_thousand" in item):
@@ -143,11 +144,9 @@ def _parse_row(item: dict[str, str], raw_row: list[str]) -> ParsedExpenseRow | N
             user_text=user_text,
             payment_method=item.get("payment_method") or None,
             expense_category=item.get("expense_category") or None,
-            raw_values=[value for value in raw_row if _clean(value)],
+            raw_values=[value for value in raw_row if normalize_spaces(value)],
         ),
         fallback_department=item.get("department_name") or "서울시본청",
     )
 
 
-def _clean(value: str) -> str:
-    return re.sub(r"\s+", " ", value or "").strip()

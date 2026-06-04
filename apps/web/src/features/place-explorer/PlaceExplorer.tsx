@@ -2,34 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActionIcon,
   Button,
-  Checkbox,
-  Group,
   Modal,
-  MultiSelect,
   Radio,
   Select,
   Stack,
   Text,
   Textarea,
   TextInput,
-  Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   AlertTriangle,
-  Building2,
   FileText,
-  Filter,
-  Info,
-  List,
-  LogIn,
-  MapPin,
-  MessageCircle,
   RefreshCw,
-  RotateCcw,
   Search,
-  ShieldCheck,
-  UserRound,
   X,
 } from 'lucide-react';
 import type { Grade, Place, PlaceReactionSummary, Region, SortMode, Visit } from './types';
@@ -58,20 +44,17 @@ import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
 import { PlaceList } from './panels/PlaceList';
 import { MobileFilterPanel } from './panels/MobileFilterPanel';
-import { submitClosureReport, submitTakedownRequest } from './forms/reportFlows';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
-import mascotLogo from '../../assets/officer-mascot-logo.png';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useReportFlow } from './hooks/useReportFlow';
+import { FloatingSearchFilter } from './panels/SearchFilterBar';
+import { SourcePill } from './panels/SourcePill';
+import { BottomNav } from './panels/BottomNav';
 import './styles.css';
 
-const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외';
-const sortOptions: { value: SortMode; label: string }[] = [
-  { value: 'score', label: '추천순' },
-  { value: 'recent', label: '최근 방문순' },
-  { value: 'visits', label: '방문 많은순' },
-];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function PlaceExplorer() {
@@ -95,18 +78,6 @@ export function PlaceExplorer() {
   const [desktopListOpen, setDesktopListOpen] = useState(true);
   const [mobileMode, setMobileMode] = useState<MobileMode>(() => initialMobileMode(initialQuery));
   const [sheetSize, setSheetSize] = useState<SheetSize>(() => (initialQuery.placeId ? 'full' : 'mid'));
-  const [closureReason, setClosureReason] = useState<string | null>('방문해보니 폐업');
-  const [requestCategory, setRequestCategory] = useState('식당 정보 오류');
-  const [requestReason, setRequestReason] = useState('');
-  const [requestEmail, setRequestEmail] = useState('');
-  const [closureState, setClosureState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
-  const [requestState, setRequestState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
-  const [closureTurnstileToken, setClosureTurnstileToken] = useState<string | null>(null);
-  const [requestTurnstileToken, setRequestTurnstileToken] = useState<string | null>(null);
-  const [closureTurnstileReset, setClosureTurnstileReset] = useState(0);
-  const [requestTurnstileReset, setRequestTurnstileReset] = useState(0);
-  const [reportOpened, report] = useDisclosure(false);
-  const [closureOpened, closure] = useDisclosure(false);
   const [authOpened, auth] = useDisclosure(false);
   const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null);
   const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,6 +129,42 @@ export function PlaceExplorer() {
   const listError = hasActiveSearchFilter ? searchError : null;
   const listLoading = hasActiveSearchFilter ? searchLoading : false;
   const hasActiveFilter = hasActiveSearchFilter || closedVisible || !isDefaultGradeFilter(queryState.grade);
+
+  const {
+    isClosureModalOpen,
+    setIsClosureModalOpen,
+    isTakedownModalOpen,
+    setIsTakedownModalOpen,
+    closureReason,
+    setClosureReason,
+    reportForm,
+    setReportForm,
+    closureState,
+    requestState,
+    closureTurnstileToken,
+    setClosureTurnstileToken,
+    requestTurnstileToken,
+    setRequestTurnstileToken,
+    closureTurnstileReset,
+    requestTurnstileReset,
+    submitClosureReport: submitClosureReportForm,
+    submitTakedownRequestForm,
+    resetTakedownForm,
+    resetClosureForm,
+  } = useReportFlow({
+    selectedPlace,
+    onAfterClosureReport: async () => {
+      await loadPlaces();
+      await loadSearchPlaces(new AbortController());
+    },
+    onAfterTakedownRequest: (placeId) => {
+      setPlaces((current) => current.filter((place) => place.id !== placeId));
+      setSearchPlaces((current) => current.filter((place) => place.id !== placeId));
+      clearSelected('replace');
+    },
+  });
+
+  const isModalOpen = isTakedownModalOpen || isClosureModalOpen || authOpened;
 
   useEffect(() => {
     const onPopState = () => {
@@ -237,32 +244,15 @@ export function PlaceExplorer() {
     void loadPlaceReactions(selectedPlace.id);
   }, [selectedPlace]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        (event.target as HTMLElement).isContentEditable
-      ) {
-        return;
-      }
-      if (reportOpened || closureOpened) return;
-      if (selectedPlace) {
-        clearSelected();
-        return;
-      }
-      if (desktopListOpen) {
-        setDesktopListOpen(false);
-        return;
-      }
-      if (mobileMode !== 'map') {
-        setMobileMode('map');
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [closureOpened, desktopListOpen, mobileMode, reportOpened, selectedPlace]);
+  useKeyboardShortcuts({
+    isModalOpen,
+    hasSelection: Boolean(selectedPlace),
+    isDesktopListOpen: desktopListOpen,
+    isMobilePanelOpen: mobileMode !== 'map',
+    onClearSelection: () => clearSelected(),
+    onCloseDesktopList: () => setDesktopListOpen(false),
+    onCloseMobilePanel: () => setMobileMode('map'),
+  });
 
   function updateQueryState(patch: Partial<PlaceQueryState>, mode: 'push' | 'replace' = 'push') {
     setQueryState((current) => {
@@ -403,58 +393,6 @@ export function PlaceExplorer() {
     }
   }
 
-  async function submitClosureReportForm() {
-    if (!selectedPlace) return;
-    if (!closureTurnstileToken) {
-      setClosureState('error');
-      return;
-    }
-    setClosureState('submitting');
-    try {
-      await submitClosureReport({
-        placeId: selectedPlace.id,
-        note: closureReason ?? 'web-ui-report',
-        turnstileToken: closureTurnstileToken,
-      });
-      setClosureState('done');
-      setClosureTurnstileToken(null);
-      await loadPlaces();
-      await loadSearchPlaces(new AbortController());
-    } catch {
-      setClosureState('error');
-      setClosureTurnstileToken(null);
-      setClosureTurnstileReset((value) => value + 1);
-    }
-  }
-
-  async function submitTakedownRequestForm() {
-    if (!selectedPlace) return;
-    if (!requestTurnstileToken) {
-      setRequestState('error');
-      return;
-    }
-    setRequestState('submitting');
-    const hiddenPlaceId = selectedPlace.id;
-    try {
-      const email = requestEmail.trim();
-      await submitTakedownRequest({
-        placeId: selectedPlace.id,
-        reason: `${requestCategory}: ${requestReason.trim()}`,
-        email,
-        turnstileToken: requestTurnstileToken,
-      });
-      setRequestState('done');
-      setRequestTurnstileToken(null);
-      setPlaces((current) => current.filter((place) => place.id !== hiddenPlaceId));
-      setSearchPlaces((current) => current.filter((place) => place.id !== hiddenPlaceId));
-      clearSelected('replace');
-    } catch {
-      setRequestState('error');
-      setRequestTurnstileToken(null);
-      setRequestTurnstileReset((value) => value + 1);
-    }
-  }
-
   return (
     <main className="map-experience" aria-label="공무원맵 홈">
       <MapCanvas
@@ -582,8 +520,8 @@ export function PlaceExplorer() {
             place={lastPlace}
             visits={visits}
             onClose={() => clearSelected()}
-            onReport={report.open}
-            onClosureReport={closure.open}
+            onReport={() => setIsTakedownModalOpen(true)}
+            onClosureReport={() => setIsClosureModalOpen(true)}
             reactions={reactions}
             reactionPending={reactionPending}
             onReact={toggleReaction}
@@ -623,31 +561,26 @@ export function PlaceExplorer() {
           setMobileMode('map');
           setSheetSize('mid');
         }}
-        onReport={report.open}
-        onClosureReport={closure.open}
+        onReport={() => setIsTakedownModalOpen(true)}
+        onClosureReport={() => setIsClosureModalOpen(true)}
         onReact={toggleReaction}
         isAuthenticated={Boolean(currentUser)}
-        hidden={reportOpened || closureOpened || authOpened}
+        hidden={isModalOpen}
       />
 
-      <SourcePill sheetOpen={(mobileMode !== 'map' || Boolean(selectedPlace)) && !(reportOpened || closureOpened || authOpened)} />
+      <SourcePill sheetOpen={(mobileMode !== 'map' || Boolean(selectedPlace)) && !isModalOpen} />
 
-      {!(reportOpened || closureOpened || authOpened) ? (
+      {!isModalOpen ? (
         <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
       ) : null}
 
       <AuthModal opened={authOpened} onClose={auth.close} onAuthenticated={setCurrentUser} />
 
       <Modal
-        opened={reportOpened}
+        opened={isTakedownModalOpen}
         onClose={() => {
-          report.close();
-          setRequestCategory('식당 정보 오류');
-          setRequestReason('');
-          setRequestEmail('');
-          setRequestState('idle');
-          setRequestTurnstileToken(null);
-          setRequestTurnstileReset((value) => value + 1);
+          resetTakedownForm();
+          setIsTakedownModalOpen(false);
         }}
         title="정보 수정·삭제 요청"
         centered
@@ -658,7 +591,11 @@ export function PlaceExplorer() {
             접수 즉시 임시 비공개 처리 후 72시간 내 검토합니다.
           </Text>
           <TextInput label="식당" value={selectedPlace?.name ?? ''} readOnly />
-          <Radio.Group label="사유" value={requestCategory} onChange={setRequestCategory}>
+          <Radio.Group
+            label="사유"
+            value={reportForm.category}
+            onChange={(val) => setReportForm((prev) => ({ ...prev, category: val }))}
+          >
             <Stack gap={6} mt="xs">
               {['식당 정보 오류', '방문 기록 오류', '본인·소속 정보 노출 우려', '기타'].map((reason) => (
                 <Radio key={reason} value={reason} label={reason} />
@@ -670,15 +607,15 @@ export function PlaceExplorer() {
             description="50자 이상 입력해주세요."
             placeholder="정정할 내용이나 삭제 요청 사유를 구체적으로 적어주세요."
             minRows={4}
-            value={requestReason}
-            onChange={(event) => setRequestReason(event.currentTarget.value)}
+            value={reportForm.reason}
+            onChange={(event) => setReportForm((prev) => ({ ...prev, reason: event.currentTarget.value }))}
           />
           <TextInput
             label="이메일"
             placeholder="회신 받을 주소"
             required
-            value={requestEmail}
-            onChange={(event) => setRequestEmail(event.currentTarget.value)}
+            value={reportForm.email}
+            onChange={(event) => setReportForm((prev) => ({ ...prev, email: event.currentTarget.value }))}
           />
           <TurnstileWidget
             action="takedown_request"
@@ -688,7 +625,7 @@ export function PlaceExplorer() {
           <Button
             leftSection={<FileText size={16} />}
             loading={requestState === 'submitting'}
-            disabled={!selectedPlace || requestReason.trim().length < 50 || !EMAIL_PATTERN.test(requestEmail.trim()) || !requestTurnstileToken}
+            disabled={!selectedPlace || reportForm.reason.trim().length < 50 || !EMAIL_PATTERN.test(reportForm.email.trim()) || !requestTurnstileToken}
             onClick={() => void submitTakedownRequestForm()}
           >
             접수
@@ -703,13 +640,10 @@ export function PlaceExplorer() {
       </Modal>
 
       <Modal
-        opened={closureOpened}
+        opened={isClosureModalOpen}
         onClose={() => {
-          closure.close();
-          setClosureReason('방문해보니 폐업');
-          setClosureState('idle');
-          setClosureTurnstileToken(null);
-          setClosureTurnstileReset((value) => value + 1);
+          resetClosureForm();
+          setIsClosureModalOpen(false);
         }}
         title="폐업 신고"
         centered
@@ -748,183 +682,6 @@ export function PlaceExplorer() {
         </Stack>
       </Modal>
     </main>
-  );
-}
-
-function FloatingSearchFilter({
-  regions,
-  selectedRegions,
-  onRegionsChange,
-  selectedGrades,
-  onGradesChange,
-  sort,
-  onSortChange,
-  closedVisible,
-  onClosedVisibleChange,
-  onListToggle,
-  onFilterOpen,
-  onReset,
-  regionLoading,
-  currentUser,
-  onLogin,
-  onLogout,
-}: {
-  regions: { label: string; value: string }[];
-  selectedRegions: string[];
-  onRegionsChange: (value: string[]) => void;
-  selectedGrades: Grade[];
-  onGradesChange: (value: Grade[]) => void;
-  sort: SortMode;
-  onSortChange: (value: SortMode) => void;
-  closedVisible: boolean;
-  onClosedVisibleChange: (value: boolean) => void;
-  onListToggle: () => void;
-  onFilterOpen: () => void;
-  onReset: () => void;
-  regionLoading: boolean;
-  currentUser: CurrentUser | null;
-  onLogin: () => void;
-  onLogout: () => void;
-}) {
-  const publicPickSelected = isDefaultGradeFilter(selectedGrades);
-  return (
-    <div className="floating-search">
-      <a className="brand-mark" href="/" aria-label="공무원맵 홈">
-        <img src={mascotLogo} alt="" aria-hidden />
-        <span>공무원맵</span>
-      </a>
-      <nav className="map-mode-tabs" aria-label="화면 전환">
-        <a href="/" data-active="true">
-          <MapPin size={16} aria-hidden />
-          지도
-        </a>
-        <a href="/community">
-          <MessageCircle size={16} aria-hidden />
-          커뮤니티
-        </a>
-      </nav>
-      <MultiSelect
-        className="region-select"
-        data={regions}
-        placeholder={regionLoading ? '자치구 로딩' : '자치구'}
-        value={selectedRegions}
-        onChange={onRegionsChange}
-        searchable
-        clearable
-        maxDropdownHeight={260}
-      />
-      <div className="desktop-action-cluster">
-        <div className="grade-chip-group" aria-label="추천 필터">
-          <button
-            className="filter-chip public-pick-chip"
-            data-active={publicPickSelected}
-            type="button"
-            aria-pressed={publicPickSelected}
-            onClick={() => onGradesChange(publicPickSelected ? allGrades : defaultGrades)}
-          >
-            공무원픽
-          </button>
-        </div>
-        <Select
-          aria-label="정렬"
-          className="sort-select"
-          value={sort}
-          onChange={(value) => value && onSortChange(value as SortMode)}
-          data={sortOptions}
-          allowDeselect={false}
-        />
-        <Checkbox
-          className="desktop-closed-toggle"
-          label="폐업 포함"
-          checked={closedVisible}
-          onChange={(event) => onClosedVisibleChange(event.currentTarget.checked)}
-        />
-        <div className="toolbar-icon-group">
-          <Tooltip label="목록 열기">
-            <ActionIcon variant="filled" aria-label="목록 열기" onClick={onListToggle}>
-              <List size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="필터 열기">
-            <ActionIcon variant="light" aria-label="필터 열기" onClick={onFilterOpen}>
-              <Filter size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="필터 초기화">
-            <ActionIcon variant="light" aria-label="필터 초기화" onClick={onReset}>
-              <RotateCcw size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="서비스 정보">
-            <ActionIcon component="a" href="/about" target="_blank" rel="noopener noreferrer" variant="light" aria-label="서비스 정보">
-              <Info size={18} />
-            </ActionIcon>
-          </Tooltip>
-          {currentUser ? (
-            <Tooltip label="로그아웃">
-              <Button className="account-chip" variant="light" leftSection={<UserRound size={15} />} onClick={onLogout}>
-                {currentUser.handle}
-              </Button>
-            </Tooltip>
-          ) : (
-            <Button className="account-chip" variant="light" leftSection={<LogIn size={15} />} onClick={onLogin}>
-              로그인
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SourcePill({ sheetOpen = false }: { sheetOpen?: boolean }) {
-  return (
-    <a className="source-pill" data-sheet-open={sheetOpen} href="/legal">
-      <ShieldCheck size={14} aria-hidden />
-      <span>{SOURCE_NOTICE}</span>
-    </a>
-  );
-}
-
-function BottomNav({
-  mode,
-  onChange,
-  hasSelection,
-}: {
-  mode: MobileMode;
-  onChange: (mode: MobileMode) => void;
-  hasSelection: boolean;
-}) {
-  return (
-    <nav className="bottom-nav" aria-label="주요 메뉴">
-      <button type="button" data-active={mode === 'map'} onClick={() => onChange('map')}>
-        <MapPin size={18} aria-hidden />
-        지도
-      </button>
-      <button type="button" data-active={mode === 'list'} onClick={() => onChange('list')}>
-        <List size={18} aria-hidden />
-        목록
-      </button>
-      <button type="button" data-active={mode === 'filter'} onClick={() => onChange('filter')}>
-        <Filter size={18} aria-hidden />
-        필터
-      </button>
-      <a href="/community" className="bottom-nav-link">
-        <MessageCircle size={18} aria-hidden />
-        커뮤니티
-      </a>
-      {hasSelection ? (
-        <button type="button" data-active={mode === 'detail'} onClick={() => onChange('detail')}>
-          <Building2 size={18} aria-hidden />
-          상세
-        </button>
-      ) : (
-        <a href="/about" target="_blank" rel="noopener noreferrer" className="bottom-nav-link">
-          <Info size={18} aria-hidden />
-          정보
-        </a>
-      )}
-    </nav>
   );
 }
 

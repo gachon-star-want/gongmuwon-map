@@ -22,6 +22,33 @@ import apiTakedownRequest from './takedown-request';
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
+type RouteEntry = { handler: ApiHandler; hasId?: boolean };
+
+const routeTable: [string[], RouteEntry][] = [
+  [['community', 'posts'], { handler: apiCommunityPosts }],
+  [['community', 'posts', ':id', 'comments'], { handler: apiCommunityPostComments, hasId: true }],
+
+  [['auth', 'login'], { handler: apiAuthLogin }],
+  [['auth', 'logout'], { handler: apiAuthLogout }],
+  [['auth', 'me'], { handler: apiAuthMe }],
+  [['auth', 'register'], { handler: apiAuthRegister }],
+
+  [['v1', 'agencies'], { handler: apiAgencies }],
+  [['v1', 'agencies', ':id'], { handler: apiAgencyById, hasId: true }],
+  [['v1', 'places', 'search'], { handler: apiPlacesSearch }],
+  [['v1', 'places'], { handler: apiPlaces }],
+  [['v1', 'places', ':id', 'reactions'], { handler: apiPlaceReactions, hasId: true }],
+  [['v1', 'places', ':id', 'visits'], { handler: apiPlaceVisits, hasId: true }],
+  [['v1', 'places', ':id'], { handler: apiPlacesById, hasId: true }],
+  [['v1', 'regions'], { handler: apiRegions }],
+  [['v1', 'stats', 'summary'], { handler: apiStatsSummary }],
+
+  [['sitemap'], { handler: apiSitemap }],
+  [['cron', 'recompute-grades'], { handler: apiCronRecomputeGrades }],
+  [['closure-report'], { handler: apiClosureReport }],
+  [['takedown-request'], { handler: apiTakedownRequest }],
+];
+
 export function withId(handler: ApiHandler, req: VercelRequest, res: VercelResponse, id: string) {
   const originalQuery = req.query;
   req.query = { ...originalQuery, id };
@@ -37,90 +64,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const routedPath = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
   const segments = (routedPath ?? pathname.replace(/^\/api\/?/, '')).split('/').filter(Boolean);
 
-  if (segments[0] === 'community') {
-    if (segments[1] === 'posts' && segments.length === 2) {
-      await apiCommunityPosts(req, res);
-      return;
-    }
-    if (segments[1] === 'posts' && segments[2] && segments[3] === 'comments' && segments.length === 4) {
-      await withId(apiCommunityPostComments, req, res, segments[2]);
-      return;
-    }
-  }
+  for (const [pattern, { handler: routeHandler, hasId }] of routeTable) {
+    if (pattern.length !== segments.length) continue;
 
-  if (segments[0] === 'auth') {
-    if (segments[1] === 'login' && segments.length === 2) {
-      await apiAuthLogin(req, res);
-      return;
-    }
-    if (segments[1] === 'logout' && segments.length === 2) {
-      await apiAuthLogout(req, res);
-      return;
-    }
-    if (segments[1] === 'me' && segments.length === 2) {
-      await apiAuthMe(req, res);
-      return;
-    }
-    if (segments[1] === 'register' && segments.length === 2) {
-      await apiAuthRegister(req, res);
-      return;
-    }
-  }
+    let match = true;
+    let idValue: string | undefined;
 
-  if (segments[0] === 'v1') {
-    if (segments[1] === 'agencies' && segments.length === 2) {
-      await apiAgencies(req, res);
-      return;
+    for (let i = 0; i < pattern.length; i++) {
+      if (pattern[i] === ':id') {
+        idValue = segments[i];
+      } else if (pattern[i] !== segments[i]) {
+        match = false;
+        break;
+      }
     }
-    if (segments[1] === 'agencies' && segments.length === 3) {
-      await withId(apiAgencyById, req, res, segments[2]);
-      return;
-    }
-    if (segments[1] === 'places' && segments[2] === 'search' && segments.length === 3) {
-      await apiPlacesSearch(req, res);
-      return;
-    }
-    if (segments[1] === 'places' && segments.length === 2) {
-      await apiPlaces(req, res);
-      return;
-    }
-    if (segments[1] === 'places' && segments[2] && segments[3] === 'reactions' && segments.length === 4) {
-      await withId(apiPlaceReactions, req, res, segments[2]);
-      return;
-    }
-    if (segments[1] === 'places' && segments[2] && segments[3] === 'visits' && segments.length === 4) {
-      await withId(apiPlaceVisits, req, res, segments[2]);
-      return;
-    }
-    if (segments[1] === 'places' && segments.length === 3) {
-      await withId(apiPlacesById, req, res, segments[2]);
-      return;
-    }
-    if (segments[1] === 'regions' && segments.length === 2) {
-      await apiRegions(req, res);
-      return;
-    }
-    if (segments[1] === 'stats' && segments[2] === 'summary' && segments.length === 3) {
-      await apiStatsSummary(req, res);
-      return;
-    }
-  }
 
-  if (segments[0] === 'sitemap' && segments.length === 1) {
-    await apiSitemap(req, res);
-    return;
-  }
-  if (segments[0] === 'cron' && segments[1] === 'recompute-grades' && segments.length === 2) {
-    await apiCronRecomputeGrades(req, res);
-    return;
-  }
-  if (segments[0] === 'closure-report' && segments.length === 1) {
-    await apiClosureReport(req, res);
-    return;
-  }
-  if (segments[0] === 'takedown-request' && segments.length === 1) {
-    await apiTakedownRequest(req, res);
-    return;
+    if (match) {
+      if (hasId) {
+        await withId(routeHandler, req, res, idValue!);
+      } else {
+        await routeHandler(req, res);
+      }
+      return;
+    }
   }
 
   sendJson(res, 404, { error: 'not_found' });

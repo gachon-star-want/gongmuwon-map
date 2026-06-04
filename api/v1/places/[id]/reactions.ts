@@ -3,7 +3,7 @@ import { writeQuery } from '../../../_lib/db';
 import { getCurrentUser } from '../../../_lib/auth';
 import { parseBody, sendJson, uuidParam } from '../../../_lib/http';
 import { RATE_LIMIT_POLICIES, applyRateLimit } from '../../../_lib/rate-limit';
-import { isAllowedPrivateOrigin } from '../../../_lib/route';
+import { headerValue, isAllowedPrivateOrigin } from '../../../_lib/cors';
 
 type Reaction = 'like' | 'dislike';
 const REACTIONS_CACHE_CONTROL = 'private, no-store';
@@ -12,16 +12,8 @@ function sendNoStoreJson(res: VercelResponse, status: number, body: unknown, cor
   sendJson(res, status, body, REACTIONS_CACHE_CONTROL, cors);
 }
 
-function headerValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function requestOrigin(req: VercelRequest) {
-  return headerValue(req.headers.origin);
-}
-
 function setPrivateCors(req: VercelRequest, res: VercelResponse) {
-  const origin = requestOrigin(req);
+  const origin = headerValue(req.headers.origin);
   res.setHeader('Vary', 'Origin');
   if (!isAllowedPrivateOrigin(req, origin)) {
     return false;
