@@ -52,12 +52,6 @@ function compareDates(a: string | null, b: string | null) {
   return (a ? Date.parse(a) : 0) - (b ? Date.parse(b) : 0);
 }
 
-export function markerSize(grade: Grade) {
-  if (grade === '★★★') return 34;
-  if (grade === '★★') return 30;
-  return 26;
-}
-
 export function gradeColor(grade: Grade) {
   if (grade === '★★★') return '#dc2626'; // 강렬한 레드
   if (grade === '★★') return '#ea580c'; // 선명한 오렌지

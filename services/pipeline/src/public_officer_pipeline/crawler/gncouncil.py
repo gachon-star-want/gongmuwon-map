@@ -970,10 +970,6 @@ class CouncilAttachmentCrawler:
         return _sort_download_refs(refs)
 
 
-class GangnamCouncilCrawler(CouncilAttachmentCrawler):
-    pass
-
-
 def _download_href_from_anchor(download, js_download_path: str = "") -> str:
     href = download.attributes.get("href", "") or ""
     onclick = download.attributes.get("onclick", "") or ""

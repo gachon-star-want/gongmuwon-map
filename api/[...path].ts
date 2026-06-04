@@ -5,7 +5,6 @@ import apiAuthLogout from './auth/logout';
 import apiAuthMe from './auth/me';
 import apiAuthRegister from './auth/register';
 import apiCommunityPosts from './community/posts';
-import apiCommunityPostById from './community/posts/[id]';
 import apiCommunityPostComments from './community/posts/[id]/comments';
 import apiClosureReport from './closure-report';
 import apiCronRecomputeGrades from './cron/recompute-grades';
@@ -41,10 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (segments[0] === 'community') {
     if (segments[1] === 'posts' && segments.length === 2) {
       await apiCommunityPosts(req, res);
-      return;
-    }
-    if (segments[1] === 'posts' && segments.length === 3) {
-      await withId(apiCommunityPostById, req, res, segments[2]);
       return;
     }
     if (segments[1] === 'posts' && segments[2] && segments[3] === 'comments' && segments.length === 4) {
