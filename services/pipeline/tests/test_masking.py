@@ -8,7 +8,6 @@ from public_officer_pipeline.legal.visibility import (
     allowed_elected_ranks_for_agency,
     sanitize_raw_excerpt,
     validate_normalized_visit,
-    validate_seoul_normalized_visit,
 )
 from public_officer_pipeline.models import (
     Agency,
@@ -286,7 +285,7 @@ def _agency(parent_region: str, jurisdiction_type: JurisdictionType = Jurisdicti
 def test_legal_visibility_allows_elected_representative_in_seoul() -> None:
     visit = _visit(rank_label="구의원", representative="박영희", raw_excerpt="의안 검토 간담회")
 
-    validated = validate_seoul_normalized_visit(visit)
+    validated = validate_normalized_visit(visit, agency=_agency("서울특별시"))
 
     assert validated.representative == "박영희"
 

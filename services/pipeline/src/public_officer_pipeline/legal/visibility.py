@@ -107,14 +107,6 @@ def validate_normalized_visits(visits: list[NormalizedVisit], *, agency: Agency)
     return [validate_normalized_visit(visit, agency=agency) for visit in visits]
 
 
-def validate_seoul_normalized_visit(visit: NormalizedVisit) -> NormalizedVisit:
-    return validate_normalized_visit(visit, agency=Agency())
-
-
-def validate_seoul_normalized_visits(visits: list[NormalizedVisit]) -> list[NormalizedVisit]:
-    return validate_normalized_visits(visits, agency=Agency())
-
-
 def _mask_name_rank_pairs(value: str) -> str:
     return _PERSON_NAME_WITH_RANK_RE.sub(_name_rank_replacement, value).strip()
 

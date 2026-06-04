@@ -6,14 +6,13 @@ import pytest
 import public_officer_pipeline.crawler.gncouncil as gncouncil
 from public_officer_pipeline.crawler.gncouncil import (
     CouncilAttachmentCrawler,
-    GangnamCouncilCrawler,
     _url_with_page,
 )
 from public_officer_pipeline.models import Agency, GovTier, GovBranch, JurisdictionType, PostRef
 
 
 def test_gncouncil_crawler_extracts_pdf_refs() -> None:
-    crawler = GangnamCouncilCrawler()
+    crawler = CouncilAttachmentCrawler()
 
     refs = crawler._parse_list(
         """

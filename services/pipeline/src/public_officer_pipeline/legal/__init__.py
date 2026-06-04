@@ -5,8 +5,6 @@ from .visibility import (
     ELECTED_RANKS,
     allowed_elected_ranks_for_agency,
     LegalVisibilityError,
-    validate_seoul_normalized_visit,
-    validate_seoul_normalized_visits,
     sanitize_raw_excerpt,
     validate_normalized_visit,
     validate_normalized_visits,
@@ -22,6 +20,4 @@ __all__ = [
     "sanitize_raw_excerpt",
     "validate_normalized_visit",
     "validate_normalized_visits",
-    "validate_seoul_normalized_visit",
-    "validate_seoul_normalized_visits",
 ]
