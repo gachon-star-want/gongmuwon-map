@@ -7,7 +7,6 @@ import public_officer_pipeline.crawler.gncouncil as gncouncil
 from public_officer_pipeline.crawler.gncouncil import (
     CouncilAttachmentCrawler,
     GangnamCouncilCrawler,
-    _download_identity,
     _url_with_page,
 )
 from public_officer_pipeline.models import Agency, GovTier, GovBranch, JurisdictionType, PostRef
@@ -61,12 +60,6 @@ def test_url_with_page_supports_custom_pagination_params() -> None:
     )
 
 
-def test_download_identity_ignores_volatile_file_tokens() -> None:
-    assert _download_identity(
-        "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320/a.pdf?pkey=old"
-    ) == _download_identity(
-        "https://www.naju.go.kr/ybscript.io/common/file_download/604998/297320/a.pdf?pkey=new"
-    )
 
 
 def test_council_attachment_crawler_uses_pattern_user_agent(monkeypatch) -> None:

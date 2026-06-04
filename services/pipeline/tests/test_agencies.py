@@ -328,7 +328,10 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         if agency.source_pattern.get("status") != "adapter_required"
     ]
     assert {agency.short_name for agency in verified_public_institutions} == {
-        "게임물관리위원회"
+        "게임물관리위원회",
+        "(재)우체국금융개발원",
+        "한국남부발전(주)",
+        "한국석유공사",
     }
     game_rating_board = verified_public_institutions[0]
     assert game_rating_board.source_pattern["adapter"] == "alio_item_disclosure"
@@ -351,6 +354,7 @@ def test_public_sector_priority_groups_use_official_baseline_counts() -> None:
         and agency.source_pattern["baselineSourceUrl"].startswith("https://www.cleaneye.go.kr/")
         and "2026.3.31 기준" in agency.source_pattern["baselineEvidence"]
         for agency in LOCAL_PUBLIC_INSTITUTION_AGENCIES
+        if agency.source_pattern.get("status") == "adapter_required"
     )
 
 

@@ -147,7 +147,6 @@ def main():
     with httpx.Client(timeout=15.0) as client:
         for idx, agency in enumerate(agencies, 1):
             agency_id = agency["id"]
-            name = agency["name"]
             
             # If already geocoded and has lat/lng, skip
             if agency_id in results and results[agency_id].get("latitude") and results[agency_id].get("longitude"):
@@ -167,7 +166,7 @@ def main():
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
         
-    print(f"\nProcessing Complete.")
+    print("\nProcessing Complete.")
     print(f"Total agencies processed: {len(agencies)}")
     print(f"Geocoded successfully: {len(results)}")
     print(f"Newly geocoded: {updated_count}")

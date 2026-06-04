@@ -81,7 +81,7 @@ describe('format helpers', () => {
   it('formatDate and labels map', () => {
     expect(formatDate('2026-05-20T14:10:00.000Z')).toBe('2026.05.20');
     expect(gradeLabel('★★★')).toBe('강추');
-    expect(markerLabel('★')).toBe('1★');
+    expect(markerLabel('★')).toBe('일반');
     expect(gradeClass('✦')).toBe('new');
     expect(shortRegionLabel('서울 강남구')).toBe('강남구');
     expect(shortRegionLabel('경기 수원시')).toBe('수원시');

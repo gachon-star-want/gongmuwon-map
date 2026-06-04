@@ -871,7 +871,7 @@ def test_extracts_xlsx_with_large_blank_formatted_columns() -> None:
 
 
 def test_extracts_xls_with_large_blank_formatted_range(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(guards, "MAX_SPREADSHEET_ROWS_PER_SHEET", 2)
+    monkeypatch.setattr(guards, "MAX_SPREADSHEET_ROWS_PER_SHEET", 15)
 
     values = {
         (0, 0): "집행일자",

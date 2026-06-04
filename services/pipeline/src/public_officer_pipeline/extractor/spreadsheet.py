@@ -190,7 +190,7 @@ def _load_xlsx_workbook(content: bytes):
         return load_workbook(BytesIO(content), data_only=True, read_only=True)
     except TypeError as exc:
         message = str(exc)
-        if "_NamedCellStyle" not in message or "name should be" not in message:
+        if "name should be" not in message:
             raise
         repaired = _repair_xlsx_missing_cell_style_names(content)
         if repaired == content:
@@ -200,17 +200,43 @@ def _load_xlsx_workbook(content: bytes):
 
 def _repair_xlsx_missing_cell_style_names(content: bytes) -> bytes:
     with zipfile.ZipFile(BytesIO(content)) as source:
-        if "xl/styles.xml" not in source.namelist():
-            return content
-        repaired_styles = _repair_styles_xml_missing_cell_style_names(source.read("xl/styles.xml"))
-        if repaired_styles is None:
+        filenames = source.namelist()
+        repaired_styles = None
+        repaired_custom = None
+        if "xl/styles.xml" in filenames:
+            repaired_styles = _repair_styles_xml_missing_cell_style_names(source.read("xl/styles.xml"))
+        if "docProps/custom.xml" in filenames:
+            repaired_custom = _repair_custom_xml_missing_property_names(source.read("docProps/custom.xml"))
+        if repaired_styles is None and repaired_custom is None:
             return content
         output = BytesIO()
         with zipfile.ZipFile(output, "w") as target:
             for item in source.infolist():
-                data = repaired_styles if item.filename == "xl/styles.xml" else source.read(item.filename)
+                if item.filename == "xl/styles.xml" and repaired_styles is not None:
+                    data = repaired_styles
+                elif item.filename == "docProps/custom.xml" and repaired_custom is not None:
+                    data = repaired_custom
+                else:
+                    data = source.read(item.filename)
                 target.writestr(item, data)
     return output.getvalue()
+
+
+def _repair_custom_xml_missing_property_names(custom_xml: bytes) -> bytes | None:
+    try:
+        root = ElementTree.fromstring(custom_xml)
+    except ElementTree.ParseError:
+        return None
+    namespace = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else ""
+    property_tag = f"{{{namespace}}}property" if namespace else "property"
+    repaired = False
+    for index, element in enumerate(root.iter(property_tag), start=1):
+        if not element.attrib.get("name"):
+            element.set("name", f"RecoveredProperty_{index}")
+            repaired = True
+    if not repaired:
+        return None
+    return ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
 def _repair_styles_xml_missing_cell_style_names(styles_xml: bytes) -> bytes | None:
