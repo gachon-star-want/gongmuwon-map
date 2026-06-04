@@ -11,6 +11,7 @@ type MapCanvasProps = {
   selectedPlace: Place | null;
   onSelect: (place: Place) => void;
   onBlankClick: () => void;
+  onBoundsChange?: (bbox: [number, number, number, number], level: number) => void;
 };
 
 type MarkerEntry = {
@@ -27,7 +28,7 @@ type Coordinates = {
 const DEFAULT_MAP_LEVEL = 5;
 const USER_LOCATION_LEVEL = 4;
 
-export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: MapCanvasProps) {
+export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBoundsChange }: MapCanvasProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const clustererRef = useRef<any>(null);
@@ -35,6 +36,7 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
   const userMarkerRef = useRef<any>(null);
   const onSelectRef = useRef(onSelect);
   const onBlankClickRef = useRef(onBlankClick);
+  const onBoundsChangeRef = useRef(onBoundsChange);
   const hasRequestedLocationRef = useRef(false);
   const [kakaoReady, setKakaoReady] = useState(false);
   const [kakaoFailed, setKakaoFailed] = useState(false);
@@ -44,7 +46,8 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
   useEffect(() => {
     onSelectRef.current = onSelect;
     onBlankClickRef.current = onBlankClick;
-  }, [onBlankClick, onSelect]);
+    onBoundsChangeRef.current = onBoundsChange;
+  }, [onBlankClick, onBoundsChange, onSelect]);
 
   useEffect(() => {
     if (!KAKAO_JS_KEY) return;
@@ -121,6 +124,15 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
     kakao.maps.event.addListener(map, 'click', () => {
       onBlankClickRef.current();
     });
+    // Fire bounds on every idle (pan/zoom end)
+    const fireBounds = () => {
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      const level = map.getLevel();
+      onBoundsChangeRef.current?.([sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()], level);
+    };
+    kakao.maps.event.addListener(map, 'idle', fireBounds);
   }, [kakaoReady]);
 
   useEffect(() => {

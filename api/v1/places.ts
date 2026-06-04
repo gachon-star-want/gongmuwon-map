@@ -22,7 +22,7 @@ function parseBbox(raw?: string) {
 
 export default publicReadRoute(async function handler({ req }) {
   const bbox = parseBbox(stringParam(req.query.bbox));
-  const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 500);
+  const limit = Math.min(Math.max(numberParam(req.query.limit, 100), 1), 1000);
   const grades = parseGrades(stringParam(req.query.grade));
 
   if (bbox === null) {
