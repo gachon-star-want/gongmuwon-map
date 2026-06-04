@@ -19,16 +19,26 @@ type MarkerEntry = {
   listener: () => void;
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+const DEFAULT_MAP_LEVEL = 5;
+const USER_LOCATION_LEVEL = 4;
+
 export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: MapCanvasProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const clustererRef = useRef<any>(null);
   const markersRef = useRef<MarkerEntry[]>([]);
+  const userMarkerRef = useRef<any>(null);
   const onSelectRef = useRef(onSelect);
   const onBlankClickRef = useRef(onBlankClick);
-  const hasFitBoundsRef = useRef(false);
+  const hasRequestedLocationRef = useRef(false);
   const [kakaoReady, setKakaoReady] = useState(false);
   const [kakaoFailed, setKakaoFailed] = useState(false);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY as string | undefined;
 
   useEffect(() => {
@@ -55,7 +65,7 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
     if (!kakaoReady || !mapRef.current || mapInstanceRef.current) return;
     const kakao = window.kakao;
     const center = new kakao.maps.LatLng(SEOUL_CENTER.latitude, SEOUL_CENTER.longitude);
-    const map = new kakao.maps.Map(mapRef.current, { center, level: 8 });
+    const map = new kakao.maps.Map(mapRef.current, { center, level: DEFAULT_MAP_LEVEL });
     const clusterer = new kakao.maps.MarkerClusterer({
       map,
       averageCenter: true,
@@ -114,9 +124,30 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
   }, [kakaoReady]);
 
   useEffect(() => {
-    if (!kakaoReady || !mapInstanceRef.current || !clustererRef.current) return;
+    if (!kakaoReady || !mapInstanceRef.current || hasRequestedLocationRef.current) return;
+    hasRequestedLocationRef.current = true;
+    if (!navigator.geolocation) return;
+
     const kakao = window.kakao;
     const map = mapInstanceRef.current;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const location = { latitude: coords.latitude, longitude: coords.longitude };
+        setUserLocation(location);
+        map.setLevel(USER_LOCATION_LEVEL);
+        map.setCenter(new kakao.maps.LatLng(location.latitude, location.longitude));
+      },
+      () => {
+        map.setLevel(DEFAULT_MAP_LEVEL);
+        map.setCenter(new kakao.maps.LatLng(SEOUL_CENTER.latitude, SEOUL_CENTER.longitude));
+      },
+      { enableHighAccuracy: true, maximumAge: 300000, timeout: 5000 },
+    );
+  }, [kakaoReady]);
+
+  useEffect(() => {
+    if (!kakaoReady || !mapInstanceRef.current || !clustererRef.current) return;
+    const kakao = window.kakao;
     const clusterer = clustererRef.current;
 
     clusterer.clear();
@@ -126,12 +157,10 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
     });
     markersRef.current = [];
 
-    const bounds = new kakao.maps.LatLngBounds();
     const entries = places
       .filter((place) => place.latitude && place.longitude)
       .map((place) => {
         const position = new kakao.maps.LatLng(place.latitude, place.longitude);
-        bounds.extend(position);
         const marker = new kakao.maps.Marker({
           position,
           title: markerAccessibleName(place),
@@ -145,14 +174,24 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
 
     markersRef.current = entries;
     clusterer.addMarkers(entries.map((entry) => entry.marker));
-    if (entries.length > 1 && (!hasFitBoundsRef.current || places.length < 20)) {
-      map.setBounds(bounds);
-      hasFitBoundsRef.current = true;
-    } else if (entries.length === 1 && !hasFitBoundsRef.current) {
-      map.setCenter(entries[0].marker.getPosition());
-      hasFitBoundsRef.current = true;
-    }
   }, [kakaoReady, places, selectedPlace?.id]);
+
+  useEffect(() => {
+    if (!kakaoReady || !mapInstanceRef.current || !userLocation) return;
+    const kakao = window.kakao;
+    const position = new kakao.maps.LatLng(userLocation.latitude, userLocation.longitude);
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setPosition(position);
+      return;
+    }
+    userMarkerRef.current = new kakao.maps.Marker({
+      map: mapInstanceRef.current,
+      position,
+      title: '현재 위치',
+      image: createCurrentLocationImage(kakao),
+      zIndex: 50,
+    });
+  }, [kakaoReady, userLocation]);
 
   useEffect(() => {
     if (!kakaoReady) return;
@@ -176,4 +215,17 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick }: Map
 
 function markerAccessibleName(place: Place) {
   return `${gradeLabel(place.grade)} 등급, ${place.name}, ${shortRegionLabel(place.road_address_part ?? '지역 미상')}`;
+}
+
+function createCurrentLocationImage(kakao: any) {
+  const size = 26;
+  const svg = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${size / 2}" cy="${size / 2}" r="10" fill="#2563eb" fill-opacity="0.18"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="6" fill="#2563eb" stroke="#fff" stroke-width="3"/>
+    </svg>
+  `);
+  return new kakao.maps.MarkerImage(`data:image/svg+xml;charset=utf-8,${svg}`, new kakao.maps.Size(size, size), {
+    offset: new kakao.maps.Point(size / 2, size / 2),
+  });
 }
