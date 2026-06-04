@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import atexit
 import os
-import sqlite3
 import time
 from pathlib import Path
 from typing import Any
 
+import aiosqlite
 import httpx
 
 from public_officer_pipeline.entity.policy import (
@@ -32,7 +33,8 @@ class KakaoResolver:
         self.allow_unmatched_fallback = allow_unmatched_fallback
         self.cache_path = cache_path or Path("services/pipeline/pipeline_state.db")
         self.policy = policy or DefaultPlaceResolutionPolicy()
-        self._init_cache()
+        self._cache_db: aiosqlite.Connection | None = None
+        self._http_client = httpx.AsyncClient(timeout=20.0)
 
         # Load agency coordinates
         import json
@@ -50,7 +52,7 @@ class KakaoResolver:
         else:
             cache_key = f"{place.name}|{place.address_hint or ''}"
 
-        cached = self._cache_get(cache_key)
+        cached = await self._cache_get(cache_key)
         if cached:
             return ResolvedPlace.model_validate_json(cached)
 
@@ -58,7 +60,7 @@ class KakaoResolver:
             if not self.allow_unmatched_fallback:
                 raise PipelineConfigError("KAKAO_REST_KEY is required for place resolution")
             resolved = self._fallback(place, None, None)
-            self._cache_set(cache_key, resolved.model_dump_json())
+            await self._cache_set(cache_key, resolved.model_dump_json())
             return resolved
 
         # Get agency coords
@@ -71,14 +73,13 @@ class KakaoResolver:
                 if lat is not None and lon is not None:
                     agency_coords = (float(lat), float(lon))
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            address_documents = await self._search_address(client, place)
-            if address_documents:
-                source_coordinates = self._extract_document_coordinates(address_documents[0])
-            else:
-                source_coordinates = (None, None)
-            self.policy.source_coordinates = source_coordinates
-            documents = await self._search_kakao(client, place, agency_coords=agency_coords)
+        address_documents = await self._search_address(place)
+        if address_documents:
+            source_coordinates = self._extract_document_coordinates(address_documents[0])
+        else:
+            source_coordinates = (None, None)
+        self.policy.source_coordinates = source_coordinates
+        documents = await self._search_kakao(place, agency_coords=agency_coords)
 
         if documents:
             candidates = [
@@ -116,12 +117,11 @@ class KakaoResolver:
                 place, latitude=lat, longitude=lng
             )
 
-        self._cache_set(cache_key, resolved.model_dump_json())
+        await self._cache_set(cache_key, resolved.model_dump_json())
         return resolved
 
     async def _search_kakao(
         self,
-        client: httpx.AsyncClient,
         place: PlaceRaw,
         agency_coords: tuple[float, float] | None = None,
     ) -> list[dict[str, Any]]:
@@ -130,7 +130,7 @@ class KakaoResolver:
             if not place.address_hint and agency_coords:
                 lat, lon = agency_coords
                 try:
-                    response = await client.get(
+                    response = await self._http_client.get(
                         KAKAO_KEYWORD_URL,
                         params={
                             "query": query,
@@ -148,7 +148,7 @@ class KakaoResolver:
                 except httpx.HTTPError:
                     pass
 
-            response = await client.get(
+            response = await self._http_client.get(
                 KAKAO_KEYWORD_URL,
                 params={"query": query, "size": 5},
                 headers={"Authorization": f"KakaoAK {self.kakao_rest_key}"},
@@ -159,10 +159,10 @@ class KakaoResolver:
                 return documents
         return []
 
-    async def _search_address(self, client: httpx.AsyncClient, place: PlaceRaw) -> list[dict[str, Any]]:
+    async def _search_address(self, place: PlaceRaw) -> list[dict[str, Any]]:
         if not place.address_hint:
             return []
-        response = await client.get(
+        response = await self._http_client.get(
             KAKAO_ADDRESS_URL,
             params={"query": place.address_hint, "size": 1},
             headers={"Authorization": f"KakaoAK {self.kakao_rest_key}"},
@@ -199,47 +199,59 @@ class KakaoResolver:
                 pass
         return (None, None)
 
-    def _init_cache(self) -> None:
+    async def _ensure_cache(self) -> None:
+        if self._cache_db is not None:
+            return
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(self.cache_path) as con:
-            con.execute(
-                "CREATE TABLE IF NOT EXISTS kakao_cache (cache_key TEXT PRIMARY KEY, payload TEXT NOT NULL)"
-            )
-            existing_columns = {
-                row[1]
-                for row in con.execute("PRAGMA table_info(kakao_cache)").fetchall()
-            }
-            if "created_at" not in existing_columns:
-                con.execute("ALTER TABLE kakao_cache ADD COLUMN created_at INTEGER")
+        self._cache_db = await aiosqlite.connect(str(self.cache_path))
+        await self._cache_db.execute(
+            "CREATE TABLE IF NOT EXISTS kakao_cache (cache_key TEXT PRIMARY KEY, payload TEXT NOT NULL)"
+        )
+        cursor = await self._cache_db.execute("PRAGMA table_info(kakao_cache)")
+        rows = await cursor.fetchall()
+        existing_columns = {row[1] for row in rows}
+        if "created_at" not in existing_columns:
+            await self._cache_db.execute("ALTER TABLE kakao_cache ADD COLUMN created_at INTEGER")
+        await self._cache_db.commit()
 
-    def _cache_get(self, cache_key: str) -> str | None:
-        with sqlite3.connect(self.cache_path) as con:
-            row = con.execute(
-                "SELECT payload, created_at FROM kakao_cache WHERE cache_key = ?", (cache_key,)
-            ).fetchone()
-            if not row:
-                return None
+    async def _cache_get(self, cache_key: str) -> str | None:
+        await self._ensure_cache()
+        cursor = await self._cache_db.execute(
+            "SELECT payload, created_at FROM kakao_cache WHERE cache_key = ?", (cache_key,)
+        )
+        row = await cursor.fetchone()
+        if not row:
+            return None
 
-            payload, created_at = row
-            if created_at is None:
-                con.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
-                return None
+        payload, created_at = row
+        if created_at is None:
+            await self._cache_db.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
+            await self._cache_db.commit()
+            return None
 
-            if self._cache_expired(int(created_at)):
-                con.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
-                return None
-            return payload
+        if self._cache_expired(int(created_at)):
+            await self._cache_db.execute("DELETE FROM kakao_cache WHERE cache_key = ?", (cache_key,))
+            await self._cache_db.commit()
+            return None
+        return payload
 
     def _cache_expired(self, created_at: int) -> bool:
         return (self._now_ts() - created_at) >= KAKAO_CACHE_TTL_SECONDS
 
-    def _cache_set(self, cache_key: str, payload: str) -> None:
-        with sqlite3.connect(self.cache_path) as con:
-            con.execute(
-                "INSERT INTO kakao_cache (cache_key, payload, created_at) VALUES (?, ?, ?) "
-                "ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at",
-                (cache_key, payload, self._now_ts()),
-            )
+    async def _cache_set(self, cache_key: str, payload: str) -> None:
+        await self._ensure_cache()
+        await self._cache_db.execute(
+            "INSERT INTO kakao_cache (cache_key, payload, created_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at",
+            (cache_key, payload, self._now_ts()),
+        )
+        await self._cache_db.commit()
 
     def _now_ts(self) -> int:
         return int(time.time())
+
+    async def close(self) -> None:
+        await self._http_client.aclose()
+        if self._cache_db is not None:
+            await self._cache_db.close()
+            self._cache_db = None

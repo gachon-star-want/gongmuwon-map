@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
+import logging
 import os
 import re
 import subprocess
@@ -14,6 +15,15 @@ from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 import httpx
 
 from public_officer_pipeline import document_guards as guards
+
+
+logger = logging.getLogger(__name__)
+RETRYABLE_STATUSES: frozenset[int] = frozenset({429, 502, 503, 504})
+RETRYABLE_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    httpx.ConnectError,
+    httpx.TimeoutException,
+    httpx.NetworkError,
+)
 
 
 Backend = {"auto", "httpx", "curl"}
@@ -185,9 +195,13 @@ class _HttpxClient(AsyncHttpClient):
         follow_redirects: bool,
         max_download_bytes: int = guards.MAX_DOCUMENT_DOWNLOAD_BYTES,
         transport: httpx.AsyncBaseTransport | None = None,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> None:
         self._headers = headers
         self._max_download_bytes = max_download_bytes
+        self._max_retries = max_retries
+        self._retry_delay = retry_delay
         self._client = httpx.AsyncClient(
             timeout=timeout,
             headers=headers,
@@ -203,40 +217,66 @@ class _HttpxClient(AsyncHttpClient):
         headers: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> SimpleHttpResponse:
-        async with self._client.stream(
-            "GET",
-            url,
-            params=params,
-            headers=_merge_headers(self._headers, headers),
-            **kwargs,
-        ) as response:
-            response_headers = dict(response.headers)
-            guards.ensure_content_length_at_most(
-                response_headers,
-                max_bytes=self._max_download_bytes,
-                subject="downloaded document",
-            )
-            chunks: list[bytes] = []
-            total_size = 0
-            async for chunk in response.aiter_bytes():
-                total_size += len(chunk)
-                guards.ensure_size_at_most(
-                    size=total_size,
-                    max_bytes=self._max_download_bytes,
-                    subject="downloaded document body",
+        last_exception: Exception | None = None
+        for attempt in range(self._max_retries + 1):
+            try:
+                async with self._client.stream(
+                    "GET",
+                    url,
+                    params=params,
+                    headers=_merge_headers(self._headers, headers),
+                    **kwargs,
+                ) as response:
+                    response_headers = dict(response.headers)
+                    guards.ensure_content_length_at_most(
+                        response_headers,
+                        max_bytes=self._max_download_bytes,
+                        subject="downloaded document",
+                    )
+                    chunks: list[bytes] = []
+                    total_size = 0
+                    async for chunk in response.aiter_bytes():
+                        total_size += len(chunk)
+                        guards.ensure_size_at_most(
+                            size=total_size,
+                            max_bytes=self._max_download_bytes,
+                            subject="downloaded document body",
+                        )
+                        chunks.append(chunk)
+                    content = b"".join(chunks)
+                    text = _decode_response_text(content, response_headers)
+                    status_code = response.status_code
+                    response_url = str(response.url)
+
+                if status_code in RETRYABLE_STATUSES and attempt < self._max_retries:
+                    delay = self._retry_delay * (2 ** attempt)
+                    logger.warning(
+                        "HTTP %d from %s, retrying in %.1fs (attempt %d/%d)",
+                        status_code, url, delay, attempt + 1, self._max_retries,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                return SimpleHttpResponse(
+                    status_code=status_code,
+                    text=text,
+                    content=content,
+                    headers=response_headers,
+                    url=response_url,
                 )
-                chunks.append(chunk)
-            content = b"".join(chunks)
-            text = _decode_response_text(content, response_headers)
-            status_code = response.status_code
-            response_url = str(response.url)
-        return SimpleHttpResponse(
-            status_code=status_code,
-            text=text,
-            content=content,
-            headers=response_headers,
-            url=response_url,
-        )
+            except RETRYABLE_EXCEPTIONS as exc:
+                last_exception = exc
+                if attempt < self._max_retries:
+                    delay = self._retry_delay * (2 ** attempt)
+                    logger.warning(
+                        "%s from %s, retrying in %.1fs (attempt %d/%d)",
+                        type(exc).__name__, url, delay, attempt + 1, self._max_retries,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+
+        raise last_exception  # type: ignore[misc]
 
     async def aclose(self) -> None:
         await self._client.aclose()

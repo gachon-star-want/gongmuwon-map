@@ -43,26 +43,30 @@ def test_choose_best_prefers_fd6_category() -> None:
     assert best == documents[1]
 
 
-def test_cache_hit_and_ttl_refresh_behavior(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_cache_hit_and_ttl_refresh_behavior(tmp_path: Path) -> None:
     cache_path = tmp_path / "cache.db"
     resolver = KakaoResolver(
         kakao_rest_key="test",
         allow_unmatched_fallback=True,
         cache_path=cache_path,
     )
-    place = PlaceRaw(name="반가안동국시", address_hint="서울 중구 서소문로")
-    cache_key = f"{place.name}|{place.address_hint or ''}"
+    try:
+        place = PlaceRaw(name="반가안동국시", address_hint="서울 중구 서소문로")
+        cache_key = f"{place.name}|{place.address_hint or ''}"
 
-    assert resolver._cache_get(cache_key) is None
-    payload = (
-        resolver.policy.fallback(place, latitude=37.5665, longitude=126.978).model_dump_json()
-    )
-    resolver._cache_set(cache_key, payload)
-    assert resolver._cache_get(cache_key) == payload
+        assert await resolver._cache_get(cache_key) is None
+        payload = (
+            resolver.policy.fallback(place, latitude=37.5665, longitude=126.978).model_dump_json()
+        )
+        await resolver._cache_set(cache_key, payload)
+        assert await resolver._cache_get(cache_key) == payload
 
-    base_time = resolver._now_ts()
-    resolver._now_ts = lambda: base_time + 60 * 60 * 24 * 8
-    assert resolver._cache_get(cache_key) is None
+        base_time = resolver._now_ts()
+        resolver._now_ts = lambda: base_time + 60 * 60 * 24 * 8
+        assert await resolver._cache_get(cache_key) is None
+    finally:
+        await resolver.close()
 
 
 def test_policy_uses_fallback_key_with_coordinates_when_address_coordinates_exist() -> None:
@@ -244,3 +248,5 @@ async def test_resolver_resolve_uses_coordinates_and_falls_back(tmp_path: Path) 
                     
         assert coords_call_found is True
         assert fallback_call_found is True
+
+    await resolver.close()
