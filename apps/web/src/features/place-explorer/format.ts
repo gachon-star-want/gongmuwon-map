@@ -29,10 +29,10 @@ export function gradeLabel(grade: string): string {
 }
 
 export function markerLabel(grade: string): string {
-  if (grade === '★★★') return '3★';
-  if (grade === '★★') return '2★';
-  if (grade === '★') return '1★';
-  return 'NEW';
+  if (grade === '★★★') return '강추';
+  if (grade === '★★') return '추천';
+  if (grade === '★') return '일반';
+  return '신규';
 }
 
 export function gradeClass(grade: string): string {
@@ -59,8 +59,8 @@ export function markerSize(grade: Grade) {
 }
 
 export function gradeColor(grade: Grade) {
-  if (grade === '★★★') return '#ef4444';
-  if (grade === '★★') return '#f59e0b';
-  if (grade === '★') return '#6b7280';
-  return '#3b82f6';
+  if (grade === '★★★') return '#dc2626'; // 강렬한 레드
+  if (grade === '★★') return '#ea580c'; // 선명한 오렌지
+  if (grade === '★') return '#4f46e5'; // 인디고 (그레이보다 구분됨)
+  return '#0891b2'; // 시안 (신규)
 }
