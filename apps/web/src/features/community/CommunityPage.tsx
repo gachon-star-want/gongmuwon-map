@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Group, Loader, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { LogIn, MapPin, MessageCircle, Plus, Send, UserRound } from 'lucide-react';
 import mascotLogo from '../../assets/officer-mascot-logo.png';
-import { SponsorAd } from '../ads/SponsorAd';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
@@ -231,7 +230,6 @@ export function CommunityPage() {
       <section className="community-layout">
         <aside className="community-rank">
           <Text fw={800}>소통방</Text>
-          <SponsorAd variant="rail" />
         </aside>
 
         <section className="community-board" aria-label="커뮤니티 게시글">

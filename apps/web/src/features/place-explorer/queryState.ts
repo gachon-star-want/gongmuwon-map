@@ -1,8 +1,9 @@
 import type { Grade, SortMode } from './types';
 
 export const defaultGrades: Grade[] = ['★★★', '★★', '✦'];
+export const allGrades: Grade[] = ['★★★', '★★', '✦', '★'];
 
-const GRADE_OPTIONS = new Set<Grade>(['★★★', '★★', '★', '✦']);
+const GRADE_OPTIONS = new Set<Grade>(allGrades);
 const PLACE_DETAIL_PATH_PREFIX = '/r/';
 const UUID_PLACE_ID_PATTERN = /([0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})$/;
 
@@ -69,6 +70,10 @@ export function serializeQueryState(state: PlaceQueryState) {
   if (state.placeId) params.set('place', state.placeId);
   const query = params.toString();
   return query ? `?${query}` : '';
+}
+
+export function isDefaultGradeFilter(grades: Grade[]) {
+  return grades.join(',') === defaultGrades.join(',');
 }
 
 function parseSort(raw: RawSortMode): SortMode {
