@@ -17,6 +17,35 @@ type PlaceDetailsProps = {
   isAuthenticated?: boolean;
 };
 
+function getCategoryImageUrl(category: string | null): string {
+  if (!category) {
+    return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80';
+  }
+  const cat = category.toLowerCase();
+  if (cat.includes('카페') || cat.includes('커피') || cat.includes('디저트') || cat.includes('제과')) {
+    return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('일식') || cat.includes('초밥') || cat.includes('회') || cat.includes('스시') || cat.includes('사시미')) {
+    return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('중식') || cat.includes('중국') || cat.includes('짜장') || cat.includes('짬뽕')) {
+    return 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('고기') || cat.includes('갈비') || cat.includes('삼겹살') || cat.includes('육류') || cat.includes('곱창')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('피자') || cat.includes('파스타') || cat.includes('양식') || cat.includes('이탈리안')) {
+    return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('분식') || cat.includes('떡볶이') || cat.includes('순대') || cat.includes('김밥') || cat.includes('라면') || cat.includes('우동')) {
+    return 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&w=600&q=80';
+  }
+  if (cat.includes('한식') || cat.includes('찌개') || cat.includes('국밥') || cat.includes('탕') || cat.includes('정식') || cat.includes('낙지') || cat.includes('쌈밥')) {
+    return 'https://images.unsplash.com/photo-1608039755401-742074f0548d?auto=format&fit=crop&w=600&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80';
+}
+
 export function PlaceDetails({
   place,
   visits,
@@ -33,26 +62,30 @@ export function PlaceDetails({
     ? '좋아요/싫어요는 공식 기록과 분리된 커뮤니티 참고 신호입니다.'
     : '로그인 후 좋아요/싫어요 반응을 남길 수 있으며, 공식 데이터와 분리된 참고 신호입니다.';
   return (
-    <div className="detail-content">
-      <Group justify="space-between" wrap="nowrap" className="detail-header">
-        <Group gap={6}>
-          <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
-          {place.is_closed ? <Badge color="gray">폐업</Badge> : null}
-          {!place.is_closed && place.closure_report_count > 0 ? (
-            <Badge color="yellow">폐업 제보 {place.closure_report_count}건</Badge>
-          ) : null}
+    <>
+      <div className="detail-header-wrapper">
+        <div className="detail-cover-image" style={{ backgroundImage: `url(${getCategoryImageUrl(place.category)})` }} />
+        <Group justify="space-between" wrap="nowrap" className="detail-header">
+          <Group gap={6}>
+            <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
+            {place.is_closed ? <Badge color="gray">폐업</Badge> : null}
+            {!place.is_closed && place.closure_report_count > 0 ? (
+              <Badge color="yellow">폐업 제보 {place.closure_report_count}건</Badge>
+            ) : null}
+          </Group>
+          <ActionIcon variant="subtle" aria-label="상세 닫기" onClick={onClose}>
+            <X size={18} />
+          </ActionIcon>
         </Group>
-        <ActionIcon variant="subtle" aria-label="상세 닫기" onClick={onClose}>
-          <X size={18} />
-        </ActionIcon>
-      </Group>
+      </div>
 
-      {place.closure_report_count > 0 && !place.is_closed ? (
-        <div className="warning-banner">
-          <AlertTriangle size={16} aria-hidden />
-          폐업 제보 {place.closure_report_count}건 - 방문 전 확인 권장
-        </div>
-      ) : null}
+      <div className="detail-content">
+        {place.closure_report_count > 0 && !place.is_closed ? (
+          <div className="warning-banner" style={{ marginTop: 0, marginBottom: 16 }}>
+            <AlertTriangle size={16} aria-hidden />
+            폐업 제보 {place.closure_report_count}건 - 방문 전 확인 권장
+          </div>
+        ) : null}
 
       <section className="detail-section detail-title">
         <Title order={2}>{place.name}</Title>
@@ -192,5 +225,6 @@ export function PlaceDetails({
         </Button>
       </section>
     </div>
+  </>
   );
 }

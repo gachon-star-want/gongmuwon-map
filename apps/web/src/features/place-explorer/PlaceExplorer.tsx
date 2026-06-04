@@ -562,7 +562,7 @@ export function PlaceExplorer() {
       ) : null}
 
       {selectedPlace ? (
-        <aside className="detail-drawer desktop-layer" aria-label="식당 상세">
+        <aside className={`detail-drawer desktop-layer ${desktopListOpen ? 'list-open' : ''}`} aria-label="식당 상세">
           <PlaceDetails
             place={selectedPlace}
             visits={visits}
