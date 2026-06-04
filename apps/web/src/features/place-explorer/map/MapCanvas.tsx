@@ -234,22 +234,21 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
   useEffect(() => {
     if (!kakaoReady || !mapInstanceRef.current || !selectedPlace || !selectedPlace.latitude || !selectedPlace.longitude) return;
     const kakao = window.kakao;
+    const map = mapInstanceRef.current;
     const position = new kakao.maps.LatLng(selectedPlace.latitude, selectedPlace.longitude);
-    mapInstanceRef.current.panTo(position);
-    
+
     if (window.innerWidth > 767) {
-      setTimeout(() => {
-        if (!mapInstanceRef.current) return;
-        let offset = 0;
-        if (desktopListOpen) {
-          offset = 380;
-        } else {
-          offset = 200;
-        }
-        if (offset > 0) {
-          mapInstanceRef.current.panBy(offset, 0);
-        }
-      }, 50);
+      // On desktop, calculate the desired center accounting for the right-side detail panel.
+      // The detail panel covers ~420px on the right.  We shift the map center so
+      // the selected marker appears roughly in the visible area to the left of the panel.
+      const proj = map.getProjection();
+      const containerPoint = proj.containerPointFromCoords(position);
+      const offset = desktopListOpen ? 190 : 210;
+      const adjustedPoint = new kakao.maps.Point(containerPoint.x + offset, containerPoint.y);
+      const adjustedCoords = proj.coordsFromContainerPoint(adjustedPoint);
+      map.panTo(adjustedCoords);
+    } else {
+      map.panTo(position);
     }
   }, [kakaoReady, selectedPlace?.id, desktopListOpen]);
 
