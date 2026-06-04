@@ -13,6 +13,7 @@ dependencies = [
   "selectolax>=0.4.4",
   "xlrd>=2.0.1",
   "olefile>=0.47",
+  "aiosqlite>=0.20.0",
 ]
 
 [dependency-groups]

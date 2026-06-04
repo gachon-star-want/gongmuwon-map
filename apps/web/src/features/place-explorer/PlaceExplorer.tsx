@@ -82,6 +82,12 @@ export function PlaceExplorer() {
   const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null);
   const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (bboxDebounceRef.current) clearTimeout(bboxDebounceRef.current);
+    };
+  }, []);
+
   const regionOptions = useMemo(() => {
     const fromApi = regions.map((region) => ({ label: region.label, value: region.region }));
     if (fromApi.length) return fromApi;
@@ -91,7 +97,10 @@ export function PlaceExplorer() {
   }, [places, regions]);
 
   const hasActiveSearchFilter = Boolean(queryState.q || queryState.region.length);
-  const activeResultPlaces = hasActiveSearchFilter ? searchPlaces : places;
+  const activeResultPlaces = useMemo(
+    () => hasActiveSearchFilter ? searchPlaces : places,
+    [hasActiveSearchFilter, searchPlaces, places],
+  );
 
   const visibleResultPlaces = useMemo(() => {
     const normalizedQuery = queryState.q.trim().toLowerCase();
@@ -213,10 +222,14 @@ export function PlaceExplorer() {
   }, []);
 
   useEffect(() => {
+    if (!hasActiveSearchFilter) {
+      setSearchPlaces([]);
+      return;
+    }
     const controller = new AbortController();
     void loadSearchPlaces(controller);
     return () => controller.abort();
-  }, [queryState.grade, queryState.q, queryState.region, queryState.sort]);
+  }, [hasActiveSearchFilter, queryState.grade, queryState.q, queryState.region, queryState.sort]);
 
   useEffect(() => {
     if (!queryState.placeId) {
