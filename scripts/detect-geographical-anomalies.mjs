@@ -151,9 +151,10 @@ async function main() {
 
     console.log(`Total unique anomaly places: ${anomalyPlacesList.length}`);
 
+    const outputDir = process.argv[2] || '.';
     // 결과를 JSON 파일로 쓰기
-    fs.writeFileSync('anomaly_visits.json', JSON.stringify(anomalies, null, 2), 'utf8');
-    fs.writeFileSync('anomaly_places.json', JSON.stringify(anomalyPlacesList, null, 2), 'utf8');
+    fs.writeFileSync(path.join(outputDir, 'anomaly_visits.json'), JSON.stringify(anomalies, null, 2), 'utf8');
+    fs.writeFileSync(path.join(outputDir, 'anomaly_places.json'), JSON.stringify(anomalyPlacesList, null, 2), 'utf8');
     
     // 간략 리포트 출력
     console.log('\nTop 20 Geographical Anomalies (by Unique Place):');

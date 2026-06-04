@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { Pool } from 'pg';
 
 const KAKAO_KEYWORD_URL = 'https://dapi.kakao.com/v2/local/search/keyword.json';
-const DEFAULT_OUTPUT_ROOT = '/private/tmp/public-officer-marker-audit';
-const DEFAULT_CACHE_DIR = '/private/tmp/public-officer-marker-audit-cache';
+const DEFAULT_OUTPUT_ROOT = path.join(os.tmpdir(), 'public-officer-marker-audit');
+const DEFAULT_CACHE_DIR = path.join(os.tmpdir(), 'public-officer-marker-audit-cache');
 const SOURCE_NOTICE = '공공누리 제1유형 · 출처: 서울특별시 정보소통광장 외 지자체·의회 공식 공개자료';
 
 function usage() {
