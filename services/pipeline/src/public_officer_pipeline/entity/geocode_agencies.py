@@ -153,17 +153,14 @@ def main():
             if agency_id in results and results[agency_id].get("latitude") and results[agency_id].get("longitude"):
                 continue
                 
-            # codeql[py/clear-text-logging-sensitive-data]
-            print(f"[{idx}/{len(agencies)}] Geocoding: {name} ({agency_id})...")
+            print(f"[{idx}/{len(agencies)}] Geocoding agency record...")
             coord = geocode_agency(client, headers, agency)
             if coord:
                 results[agency_id] = coord
-                # codeql[py/clear-text-logging-sensitive-data]
-                print(f"  Success: {coord['name']} -> ({coord['latitude']}, {coord['longitude']})")
+                print("  Success: coordinates stored")
                 updated_count += 1
             else:
-                # codeql[py/clear-text-logging-sensitive-data]
-                print(f"  Failed: {name}")
+                print("  Failed: geocoding unsuccessful")
                 failed_agencies.append(agency)
                 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -176,10 +173,9 @@ def main():
     print(f"Newly geocoded: {updated_count}")
     print(f"Failed: {len(failed_agencies)}")
     if failed_agencies:
-        print("Failed agencies list:")
-        for fa in failed_agencies:
-            # codeql[py/clear-text-logging-sensitive-data]
-            print(f"  - {fa['name']} (ID: {fa['id']})")
+        print("Failed agencies list: [redacted]")
+        for _ in failed_agencies:
+            print("  - agency record redacted")
 
 if __name__ == "__main__":
     main()
