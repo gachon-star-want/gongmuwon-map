@@ -5,7 +5,7 @@ export type MapBounds = {
   maxLongitude: number;
 };
 
-export const SEOUL_CENTER = { latitude: 37.5665, longitude: 126.978 };
+export const SEOUL_CENTER = { latitude: 37.5662952, longitude: 126.9779451 };
 export const KOREA_BOUNDS: MapBounds = {
   minLatitude: 33,
   minLongitude: 124,
