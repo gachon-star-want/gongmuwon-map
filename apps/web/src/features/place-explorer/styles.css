@@ -1053,28 +1053,77 @@
 }
 
 .detail-drawer {
-  top: 94px;
-  right: auto;
+  top: 86px;
+  right: 20px;
   bottom: auto;
-  left: 50%;
-  width: min(560px, calc(100vw - 430px));
-  min-width: 430px;
-  max-height: calc(100dvh - 158px);
+  left: auto;
+  width: 420px;
+  min-width: auto;
+  max-height: calc(100dvh - 114px);
   border-color: rgba(218, 226, 236, 0.95);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 22px 60px rgba(15, 23, 42, 0.22);
-  transform: translateX(-22%);
+  transform: none;
   backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.detail-drawer.list-open {
+  right: 432px;
+}
+
+.detail-header-wrapper {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.detail-cover-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.85);
+  transition: transform 0.3s ease;
+}
+
+.detail-drawer:hover .detail-cover-image {
+  transform: scale(1.05);
+}
+
+.detail-header {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 10;
+  margin-bottom: 0 !important;
+}
+
+.detail-header .grade-badge {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.detail-header .mantine-ActionIcon-root {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  color: #1a1a1a;
+  border: none;
+}
+
+.detail-header .mantine-ActionIcon-root:hover {
+  background: rgba(255, 255, 255, 1);
 }
 
 .detail-content {
   padding: 20px;
-}
-
-.detail-header {
-  margin-bottom: 10px;
-}
 
 .detail-title h2 {
   font-size: 25px;
