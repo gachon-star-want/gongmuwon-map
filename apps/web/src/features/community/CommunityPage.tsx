@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Group, Loader, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { LogIn, MapPin, MessageCircle, Plus, Send, UserRound } from 'lucide-react';
-import mascotLogo from '../../assets/officer-mascot-logo.png';
+import { LogIn, Plus, Send, UserRound } from 'lucide-react';
 import { AuthModal } from '../auth/AuthModal';
 import type { CurrentUser } from '../auth/authApi';
 import { getCurrentUser, logout } from '../auth/authApi';
@@ -203,32 +202,6 @@ export function CommunityPage() {
   return (
     <ErrorBoundary>
     <main className="community-shell">
-      <header className="community-topbar">
-        <a className="community-brand" href="/">
-          <img src={mascotLogo} alt="" aria-hidden />
-          <span>공무원맵</span>
-        </a>
-        <nav>
-          <a href="/">
-            <MapPin size={16} aria-hidden />
-            지도
-          </a>
-          <a href="/community" data-active="true">
-            <MessageCircle size={16} aria-hidden />
-            커뮤니티
-          </a>
-        </nav>
-        {user ? (
-          <Button variant="light" leftSection={<UserRound size={16} />} onClick={() => void logout().then(() => setUser(null))}>
-            {user.handle}
-          </Button>
-        ) : (
-          <Button leftSection={<LogIn size={16} />} onClick={() => setAuthOpen(true)}>
-            로그인
-          </Button>
-        )}
-      </header>
-
       <section className="community-layout">
         <aside className="community-rank">
           <Text fw={800}>소통방</Text>
@@ -239,12 +212,23 @@ export function CommunityPage() {
             <div>
               <Title order={1}>커뮤니티</Title>
             </div>
-            <Select
-              w={130}
-              value={category}
-              onChange={(value) => setCategory((value as CommunityCategory | 'all') ?? 'all')}
-              data={categories}
-            />
+            <Group gap="xs">
+              {user ? (
+                <Button size="xs" variant="light" leftSection={<UserRound size={14} />} onClick={() => void logout().then(() => setUser(null))}>
+                  {user.handle}
+                </Button>
+              ) : (
+                <Button size="xs" leftSection={<LogIn size={14} />} onClick={() => setAuthOpen(true)}>
+                  로그인
+                </Button>
+              )}
+              <Select
+                w={130}
+                value={category}
+                onChange={(value) => setCategory((value as CommunityCategory | 'all') ?? 'all')}
+                data={categories}
+              />
+            </Group>
           </Group>
 
           <section className="community-composer">

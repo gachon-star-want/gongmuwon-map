@@ -1,74 +1,16 @@
 .community-shell {
-  min-height: 100dvh;
-  overflow: hidden;
-  background: #e8eef3;
-  color: #172033;
-}
-
-.community-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: grid;
-  grid-template-columns: max-content 1fr max-content;
-  align-items: center;
-  gap: 18px;
-  height: 72px;
-  padding: 12px clamp(16px, 4vw, 56px);
-  border-bottom: 1px solid #dce4ed;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(18px);
-}
-
-.community-brand,
-.community-topbar nav,
-.community-topbar nav a {
-  display: inline-flex;
-  align-items: center;
-}
-
-.community-brand {
-  gap: 9px;
-  color: #172033;
-  font-size: 18px;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.community-brand img {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #d7e5f4;
-  border-radius: 999px;
-  object-fit: cover;
-}
-
-.community-topbar nav {
-  gap: 8px;
-}
-
-.community-topbar nav a {
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 13px;
-  border-radius: 12px;
-  color: #536176;
-  font-size: 14px;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.community-topbar nav a[data-active='true'] {
-  background: #182235;
-  color: #fff;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  height: 100%;
 }
 
 .community-layout {
   display: grid;
   grid-template-columns: minmax(210px, 280px) minmax(440px, 720px) minmax(320px, 480px);
   gap: 22px;
-  height: calc(100dvh - 72px);
-  padding: 22px clamp(16px, 4vw, 56px);
+  height: 100%;
+  padding: 16px;
 }
 
 .community-rank,
@@ -76,9 +18,9 @@
 .community-detail {
   min-height: 0;
   overflow: hidden auto;
-  border: 1px solid #dfe7ef;
+  border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--color-surface);
   box-shadow: 0 18px 44px rgba(28, 39, 58, 0.1);
 }
 
@@ -96,7 +38,7 @@
 
 .community-board-head {
   padding: 18px 18px 12px;
-  border-bottom: 1px solid #e7edf4;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .community-board h1,
@@ -109,8 +51,8 @@
   display: grid;
   gap: 10px;
   padding: 14px 18px;
-  border-bottom: 1px solid #e7edf4;
-  background: #fbfdff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 
 .community-auth-inline {
@@ -132,7 +74,7 @@
 .community-state-loading {
   grid-template-columns: auto auto;
   align-items: center;
-  color: #5b6779;
+  color: var(--color-text-secondary);
 }
 
 .community-state-error {
@@ -162,8 +104,8 @@
 
 .community-post-row:hover,
 .community-post-row[data-active='true'] {
-  border-color: #d9e3ee;
-  background: #f6f9fc;
+  border-color: var(--color-border);
+  background: var(--color-surface-3);
 }
 
 .community-post-row strong,
@@ -179,7 +121,7 @@
 
 .community-post-row span {
   grid-column: 2;
-  color: #69778a;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -191,7 +133,7 @@
   display: grid;
   gap: 8px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e7edf4;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .community-post-body {
@@ -201,18 +143,18 @@
 
 .community-comments {
   padding-top: 14px;
-  border-top: 1px solid #e7edf4;
+  border-top: 1px solid var(--color-border);
 }
 
 .community-comment {
   display: grid;
   gap: 3px;
   padding: 11px 0;
-  border-bottom: 1px solid #edf2f7;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .community-comment span {
-  color: #748196;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -226,26 +168,26 @@
   gap: 10px;
   margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid #e7edf4;
+  border-top: 1px solid var(--color-border);
 }
 
 .sponsor-ad {
   display: grid;
   gap: 7px;
   padding: 14px;
-  border: 1px solid #dfe7ef;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #f6f9fc;
-  color: #243247;
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
   text-decoration: none;
 }
 
 .sponsor-ad span {
   width: max-content;
   padding: 2px 7px;
-  border: 1px solid #ccd8e6;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 900;
 }
@@ -255,7 +197,7 @@
   line-height: 1.35;
 }
 
-@media (max-width: 1160px) {
+@media (max-width: 1023px) {
   .community-layout {
     grid-template-columns: minmax(0, 1fr);
     overflow-y: auto;
@@ -272,18 +214,7 @@
 }
 
 @media (max-width: 767px) {
-  .community-shell {
-    overflow: auto;
-  }
-
-  .community-topbar {
-    grid-template-columns: 1fr;
-    height: auto;
-    gap: 10px;
-  }
-
   .community-layout {
-    height: auto;
     padding: 12px;
   }
 }

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActionIcon,
   Button,
   Modal,
   Radio,
@@ -15,8 +14,6 @@ import {
   AlertTriangle,
   FileText,
   RefreshCw,
-  Search,
-  X,
 } from 'lucide-react';
 import type { Grade, Place, PlaceReactionSummary, Region, SortMode, Visit } from './types';
 import {
@@ -39,6 +36,7 @@ import {
   serializeQueryState,
   type PlaceQueryState,
 } from './queryState';
+import { createPortal } from 'react-dom';
 import { BottomSheet, type MobileMode, type SheetSize } from './panels/BottomSheet';
 import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
@@ -50,7 +48,8 @@ import { getCurrentUser, logout } from '../auth/authApi';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useReportFlow } from './hooks/useReportFlow';
-import { FloatingSearchFilter } from './panels/SearchFilterBar';
+import { PanelSearchBar } from './panels/PanelSearchBar';
+import { PanelFilterBar } from './panels/PanelFilterBar';
 import { SourcePill } from './panels/SourcePill';
 import { BottomNav } from './panels/BottomNav';
 import './styles.css';
@@ -406,8 +405,10 @@ export function PlaceExplorer() {
     }
   }
 
-  return (
-    <main className="map-experience" aria-label="공무원맵 홈">
+  const mapAreaEl = document.getElementById('map-area');
+
+  const mapOverlays = (
+    <>
       <MapCanvas
         places={visibleMapPlaces}
         selectedPlace={selectedPlace}
@@ -424,57 +425,6 @@ export function PlaceExplorer() {
         desktopListOpen={desktopListOpen}
       />
 
-      <section className="desktop-controls" aria-label="검색과 필터">
-        <FloatingSearchFilter
-          regions={regionOptions}
-          selectedRegions={queryState.region}
-          onRegionsChange={(region) => {
-            setDesktopListOpen(true);
-            updateQueryState({ region });
-          }}
-          selectedGrades={queryState.grade}
-          onGradesChange={(grade) => updateQueryState({ grade })}
-          sort={queryState.sort}
-          onSortChange={(sort) => updateQueryState({ sort })}
-          closedVisible={closedVisible}
-          onClosedVisibleChange={setClosedVisible}
-          onListToggle={() => {
-            setMobileMode('map');
-            setDesktopListOpen((current) => !current);
-          }}
-          onFilterOpen={() => {
-            setDesktopListOpen(false);
-            setMobileMode('filter');
-            setSheetSize('full');
-          }}
-          onReset={resetFilters}
-          regionLoading={regionLoading}
-          currentUser={currentUser}
-          onLogin={auth.open}
-          onLogout={() =>
-            void logout()
-              .then(() => setCurrentUser(null))
-              .catch(() => setCurrentUser(null))
-          }
-        />
-      </section>
-
-      <section className="mobile-search" aria-label="모바일 검색">
-        <TextInput
-          leftSection={<Search size={16} />}
-          placeholder="식당명, 자치구, 부서 검색"
-          value={searchDraft}
-          onChange={(event) => setSearchDraft(event.currentTarget.value)}
-          rightSection={
-            searchDraft ? (
-              <ActionIcon variant="subtle" aria-label="검색 지우기" onClick={() => setSearchDraft('')}>
-                <X size={14} />
-              </ActionIcon>
-            ) : null
-          }
-        />
-      </section>
-
       {error ? (
         <div className="map-status map-status-error" role="alert">
           <Text size="sm">{error}</Text>
@@ -482,49 +432,6 @@ export function PlaceExplorer() {
             다시 시도
           </Button>
         </div>
-      ) : null}
-
-      {desktopListOpen || mobileMode === 'list' ? (
-        <aside className="list-sheet desktop-layer" aria-label="검색 결과 목록">
-          <PlaceList
-            places={listedPlaces}
-            selectedId={selectedPlace?.id}
-            loading={listLoading}
-            error={listError}
-            resultLabel={resultLabel}
-            hasActiveFilter={hasActiveFilter}
-            query={searchDraft}
-            onQueryChange={setSearchDraft}
-            onSelect={selectPlace}
-            onClose={() => {
-              setDesktopListOpen(false);
-              setMobileMode((current) => (current === 'list' ? 'map' : current));
-            }}
-            onReset={resetFilters}
-            onRetry={retrySearch}
-          />
-        </aside>
-      ) : null}
-
-      {mobileMode === 'filter' ? (
-        <aside className="utility-sheet desktop-layer" aria-label="필터">
-          <MobileFilterPanel
-            regions={regionOptions}
-            selectedRegions={queryState.region}
-            selectedGrades={queryState.grade}
-            sort={queryState.sort}
-            closedVisible={closedVisible}
-            onRegionsChange={(region) => updateQueryState({ region })}
-            onGradesChange={(grade) => updateQueryState({ grade })}
-            onSortChange={(sort) => updateQueryState({ sort })}
-            onClosedVisibleChange={setClosedVisible}
-            onReset={resetFilters}
-            onClose={() => {
-              setMobileMode('map');
-              setSheetSize('mid');
-            }}
-          />
-        </aside>
       ) : null}
 
       <aside className={`detail-drawer desktop-layer ${selectedPlace ? 'active' : ''} ${desktopListOpen ? 'list-open' : ''}`} aria-label="식당 상세">
@@ -586,6 +493,96 @@ export function PlaceExplorer() {
       {!isModalOpen ? (
         <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
       ) : null}
+    </>
+  );
+
+  return (
+    <>
+      {/* Panel content — flows into AppShell's .panel-body */}
+      <PanelSearchBar value={searchDraft} onChange={setSearchDraft} />
+      <PanelFilterBar
+        regions={regionOptions}
+        selectedRegions={queryState.region}
+        onRegionsChange={(region) => {
+          setDesktopListOpen(true);
+          updateQueryState({ region });
+        }}
+        selectedGrades={queryState.grade}
+        onGradesChange={(grade) => updateQueryState({ grade })}
+        sort={queryState.sort}
+        onSortChange={(sort) => updateQueryState({ sort })}
+        closedVisible={closedVisible}
+        onClosedVisibleChange={setClosedVisible}
+        onListToggle={() => {
+          setMobileMode('map');
+          setDesktopListOpen((current) => !current);
+        }}
+        onFilterOpen={() => {
+          setDesktopListOpen(false);
+          setMobileMode('filter');
+          setSheetSize('full');
+        }}
+        onReset={resetFilters}
+        regionLoading={regionLoading}
+        currentUser={currentUser}
+        onLogin={auth.open}
+        onLogout={() =>
+          void logout()
+            .then(() => setCurrentUser(null))
+            .catch(() => setCurrentUser(null))
+        }
+      />
+
+      <div className="panel-result-label">
+        <span>{resultLabel}</span>
+      </div>
+
+      {desktopListOpen || mobileMode === 'list' ? (
+        <PlaceList
+          places={listedPlaces}
+          selectedId={selectedPlace?.id}
+          loading={listLoading}
+          error={listError}
+          resultLabel={resultLabel}
+          hasActiveFilter={hasActiveFilter}
+          query={searchDraft}
+          onQueryChange={setSearchDraft}
+          onSelect={selectPlace}
+          onClose={() => {
+            setDesktopListOpen(false);
+            setMobileMode((current) => (current === 'list' ? 'map' : current));
+          }}
+          onReset={resetFilters}
+          onRetry={retrySearch}
+        />
+      ) : null}
+
+      {mobileMode === 'filter' ? (
+        <MobileFilterPanel
+          regions={regionOptions}
+          selectedRegions={queryState.region}
+          selectedGrades={queryState.grade}
+          sort={queryState.sort}
+          closedVisible={closedVisible}
+          onRegionsChange={(region) => updateQueryState({ region })}
+          onGradesChange={(grade) => updateQueryState({ grade })}
+          onSortChange={(sort) => updateQueryState({ sort })}
+          onClosedVisibleChange={setClosedVisible}
+          onReset={resetFilters}
+          onClose={() => {
+            setMobileMode('map');
+            setSheetSize('mid');
+          }}
+        />
+      ) : null}
+
+      {/* Map content portaled to #map-area */}
+      {mapAreaEl ? createPortal(
+        <div className="map-area-content">
+          {mapOverlays}
+        </div>,
+        mapAreaEl,
+      ) : mapOverlays}
 
       <AuthModal opened={authOpened} onClose={auth.close} onAuthenticated={setCurrentUser} />
 
@@ -694,7 +691,7 @@ export function PlaceExplorer() {
           ) : null}
         </Stack>
       </Modal>
-    </main>
+    </>
   );
 }
 

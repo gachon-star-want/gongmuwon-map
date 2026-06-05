@@ -1,7 +1,9 @@
-import { ActionIcon, Button, Loader, Group, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Button, Group, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
 import { RefreshCw, RotateCcw, Search, X } from 'lucide-react';
 import type { Place } from '../types';
-import { formatDate, gradeClass, markerLabel } from '../format';
+import { AdSlot, shouldShowAd } from './AdSlot';
+import { PlaceCard } from './PlaceCard';
+import { SkeletonCard } from './SkeletonCard';
 
 type PlaceListProps = {
   places: Place[];
@@ -65,9 +67,11 @@ export function PlaceList({
         </div>
       ) : null}
       {loading ? (
-        <div className="sheet-empty">
-          <Loader size="sm" />
-        </div>
+        <Stack gap={0}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </Stack>
       ) : error ? (
         <div className="sheet-empty" role="alert">
           <Text fw={700}>목록을 불러오지 못했습니다.</Text>
@@ -92,24 +96,16 @@ export function PlaceList({
               </Button>
             ) : null}
           </div>
-          <Stack gap={6} p="xs">
-            {places.map((place) => (
-              <button
-                className="place-row"
-                data-active={place.id === selectedId}
-                key={place.id}
-                type="button"
-                onClick={() => onSelect(place)}
-              >
-                <span className={`grade-dot grade-${gradeClass(place.grade)}`}>{markerLabel(place.grade)}</span>
-                <span className="place-row-body">
-                  <strong>{place.name}</strong>
-                  <small>{place.road_address ?? place.road_address_part ?? '주소 확인 중'}</small>
-                  <span>
-                    {place.visit_count_12m ?? 0}회 · 최근 {formatDate(place.last_visit_at) ?? '확인 중'}
-                  </span>
-                </span>
-              </button>
+          <Stack gap={0}>
+            {places.map((place, index) => (
+              <div key={place.id}>
+                <PlaceCard
+                  place={place}
+                  isSelected={place.id === selectedId}
+                  onClick={() => onSelect(place)}
+                />
+                {shouldShowAd(index) ? <AdSlot /> : null}
+              </div>
             ))}
           </Stack>
         </ScrollArea>

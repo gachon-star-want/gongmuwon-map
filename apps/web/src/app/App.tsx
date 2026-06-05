@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
+import { AppShell } from './AppShell';
 import { CommunityPage } from '../features/community/CommunityPage';
 import { PlaceExplorer } from '../features/place-explorer/PlaceExplorer';
 import { StaticPage } from './staticPages';
@@ -10,18 +11,22 @@ const staticPaths = new Set(['/about', '/privacy', '/terms', '/disclaimer', '/le
 export function App(): ReactElement {
   const path = window.location.pathname;
   
-  let content: ReactElement;
   if (staticPaths.has(path)) {
-    content = <StaticPage path={path} />;
-  } else if (path === '/community') {
-    content = <CommunityPage />;
-  } else {
-    content = <PlaceExplorer />;
+    return (
+      <>
+        <ErrorBoundary key={path}><StaticPage path={path} /></ErrorBoundary>
+        <Analytics />
+      </>
+    );
   }
   
   return (
     <>
-      <ErrorBoundary key={path}>{content}</ErrorBoundary>
+      <AppShell>
+        <ErrorBoundary key={path}>
+          {path === '/community' ? <CommunityPage /> : <PlaceExplorer />}
+        </ErrorBoundary>
+      </AppShell>
       <Analytics />
     </>
   );

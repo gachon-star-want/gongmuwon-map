@@ -20,6 +20,8 @@ export type Place = {
   unique_agency_count_12m?: number | null;
   avg_amount_per_person?: number | null;
   matched_fields?: string[];
+  photo_url?: string | null;
+  menu_items?: string[] | null;
 };
 
 export type Visit = {
