@@ -36,7 +36,6 @@ import {
   serializeQueryState,
   type PlaceQueryState,
 } from './queryState';
-import { createPortal } from 'react-dom';
 import { BottomSheet, type MobileMode, type SheetSize } from './panels/BottomSheet';
 import { MapCanvas } from './map/MapCanvas';
 import { PlaceDetails } from './panels/PlaceDetails';
@@ -437,8 +436,6 @@ export function PlaceExplorer() {
     }
   }
 
-  const mapAreaEl = document.getElementById('map-area');
-
   const mapOverlays = (
     <>
       <div className="map-search-wrap">
@@ -552,31 +549,31 @@ export function PlaceExplorer() {
   );
 
   return (
-    <>
-      <div className="panel-result-label">
-        <span>{resultLabel}</span>
-      </div>
+    <div className="map-area-content">
+      {mapOverlays}
 
       {desktopListOpen || mobileMode === 'list' ? (
-        <PlaceList
-          places={listedPlaces}
-          selectedId={selectedPlace?.id}
-          loading={listLoading}
-          error={listError}
-          resultLabel={resultLabel}
-          hasActiveFilter={hasActiveFilter}
-          query={searchDraft}
-          onQueryChange={setSearchDraft}
-          onSelect={selectPlace}
-          onClose={() => {
-            setDesktopListOpen(false);
-            setMobileMode((current) => (current === 'list' ? 'map' : current));
-          }}
-          onReset={resetFilters}
-          onRetry={retrySearch}
-          showSearch={false}
-          showHeader={false}
-        />
+        <aside className="list-sheet desktop-layer" aria-label="식당 목록">
+          <PlaceList
+            places={listedPlaces}
+            selectedId={selectedPlace?.id}
+            loading={listLoading}
+            error={listError}
+            resultLabel={resultLabel}
+            hasActiveFilter={hasActiveFilter}
+            query={searchDraft}
+            onQueryChange={setSearchDraft}
+            onSelect={selectPlace}
+            onClose={() => {
+              setDesktopListOpen(false);
+              setMobileMode((current) => (current === 'list' ? 'map' : current));
+            }}
+            onReset={resetFilters}
+            onRetry={retrySearch}
+            showSearch={false}
+            showHeader={false}
+          />
+        </aside>
       ) : null}
 
       {mobileMode === 'filter' ? (
@@ -597,14 +594,6 @@ export function PlaceExplorer() {
           }}
         />
       ) : null}
-
-      {/* Map content portaled to #map-area */}
-      {mapAreaEl ? createPortal(
-        <div className="map-area-content">
-          {mapOverlays}
-        </div>,
-        mapAreaEl,
-      ) : mapOverlays}
 
       <AuthModal opened={authOpened} onClose={auth.close} onAuthenticated={setCurrentUser} />
 
@@ -713,7 +702,7 @@ export function PlaceExplorer() {
           ) : null}
         </Stack>
       </Modal>
-    </>
+    </div>
   );
 }
 
