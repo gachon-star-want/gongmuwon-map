@@ -28,6 +28,23 @@ function visitSummary(visit: Visit) {
   return [visit.department_name, visit.rank_label, visit.purpose].filter(Boolean).join(' · ');
 }
 
+function getFallbackImage(category: string | null) {
+  const cat = (category ?? '').toLowerCase();
+  if (cat.includes('카페') || cat.includes('커피') || cat.includes('제과') || cat.includes('디저트')) {
+    return 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('일식') || cat.includes('초밥') || cat.includes('회') || cat.includes('돈까스')) {
+    return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('고기') || cat.includes('갈비') || cat.includes('삼겹살') || cat.includes('곱창')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('중식') || cat.includes('짜장') || cat.includes('짬뽕')) {
+    return 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80';
+}
+
 export function PlaceDetails({
   place,
   visits,
@@ -39,10 +56,35 @@ export function PlaceDetails({
   const firstSourceUrl = visits
     .map((visit) => safeExternalUrl(visit.source_url))
     .find((url): url is string => Boolean(url));
+  const bannerImage = place.photo_url || getFallbackImage(place.category);
 
   return (
     <>
-      <div className="detail-header-wrapper">
+      <div className="detail-photo-banner" style={{ position: 'relative', height: 160, overflow: 'hidden', flexShrink: 0 }}>
+        <img
+          src={bannerImage}
+          alt={place.name}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)',
+          zIndex: 1
+        }} />
+        <ActionIcon
+          variant="filled"
+          color="rgba(0,0,0,0.45)"
+          radius="xl"
+          onClick={onClose}
+          style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, backdropFilter: 'blur(4px)', border: 'none' }}
+          aria-label="상세 닫기"
+        >
+          <X size={18} color="#fff" />
+        </ActionIcon>
+      </div>
+
+      <div className="detail-header-wrapper" style={{ marginTop: 0 }}>
         <Group justify="space-between" wrap="nowrap" className="detail-header">
           <Group gap={6} wrap="wrap">
             <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
@@ -52,9 +94,6 @@ export function PlaceDetails({
               <Badge color="yellow">폐업 제보 {place.closure_report_count}건</Badge>
             ) : null}
           </Group>
-          <ActionIcon variant="subtle" aria-label="상세 닫기" onClick={onClose}>
-            <X size={18} />
-          </ActionIcon>
         </Group>
 
         <section className="detail-title">

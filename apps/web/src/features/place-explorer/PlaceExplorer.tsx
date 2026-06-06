@@ -559,6 +559,8 @@ export function PlaceExplorer() {
           }}
           onReset={resetFilters}
           onRetry={retrySearch}
+          showSearch={false}
+          showHeader={false}
         />
       ) : null}
 
