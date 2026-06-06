@@ -86,6 +86,15 @@ def test_placeholder_place_names_are_not_valid_place_candidates() -> None:
 def test_policy_classifies_large_national_chain_candidates() -> None:
     assert classify_large_chain_brand("스타벅스 코리아") == "스타벅스"
     assert classify_large_chain_brand("파리바게뜨 종로구청점") == "파리바게뜨"
+    assert classify_large_chain_brand("뚜레쥬르 은평구청점") == "뚜레쥬르"
+    assert classify_large_chain_brand("BBQ치킨 길동역점") == "BBQ"
+    assert classify_large_chain_brand("BHC치킨 명동점") == "BHC"
+    assert classify_large_chain_brand("교촌치킨 염창점") == "교촌치킨"
+    assert classify_large_chain_brand("네네치킨 앤 봉구스밥버거 부안점") == "네네치킨"
+    assert classify_large_chain_brand("굽네치킨 여주점") == "굽네치킨"
+    assert classify_large_chain_brand("아웃백스테이크하우스 미아점") == "아웃백"
+    assert classify_large_chain_brand("도미노피자 역삼점") == "도미노피자"
+    assert classify_large_chain_brand("본죽 등촌역점") == "본죽"
     assert classify_large_chain_brand("동네식당") is None
 
 
