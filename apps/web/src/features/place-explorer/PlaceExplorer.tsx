@@ -43,8 +43,8 @@ import { PlaceDetails } from './panels/PlaceDetails';
 import { PlaceList } from './panels/PlaceList';
 import { MobileFilterPanel } from './panels/MobileFilterPanel';
 import { AuthModal } from '../auth/AuthModal';
-import type { CurrentUser } from '../auth/authApi';
-import { getCurrentUser, logout } from '../auth/authApi';
+import type { AuthStateChangeDetail, CurrentUser } from '../auth/authApi';
+import { AUTH_STATE_CHANGE_EVENT, getCurrentUser, logout } from '../auth/authApi';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useReportFlow } from './hooks/useReportFlow';
@@ -232,6 +232,12 @@ export function PlaceExplorer() {
     void getCurrentUser()
       .then(setCurrentUser)
       .catch(() => setCurrentUser(null));
+
+    const onAuthStateChange = (event: Event) => {
+      setCurrentUser((event as CustomEvent<AuthStateChangeDetail>).detail.user);
+    };
+    window.addEventListener(AUTH_STATE_CHANGE_EVENT, onAuthStateChange);
+    return () => window.removeEventListener(AUTH_STATE_CHANGE_EVENT, onAuthStateChange);
   }, []);
 
   useEffect(() => {

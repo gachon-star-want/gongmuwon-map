@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Group, Loader, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { LogIn, Plus, Send, UserRound } from 'lucide-react';
 import { AuthModal } from '../auth/AuthModal';
-import type { CurrentUser } from '../auth/authApi';
-import { getCurrentUser, logout } from '../auth/authApi';
+import type { AuthStateChangeDetail, CurrentUser } from '../auth/authApi';
+import { AUTH_STATE_CHANGE_EVENT, getCurrentUser, logout } from '../auth/authApi';
 import { ErrorBoundary } from '../../shared/ErrorBoundary';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import {
@@ -73,6 +73,12 @@ export function CommunityPage() {
 
   useEffect(() => {
     void getCurrentUser().then(setUser).catch(() => setUser(null));
+
+    const onAuthStateChange = (event: Event) => {
+      setUser((event as CustomEvent<AuthStateChangeDetail>).detail.user);
+    };
+    window.addEventListener(AUTH_STATE_CHANGE_EVENT, onAuthStateChange);
+    return () => window.removeEventListener(AUTH_STATE_CHANGE_EVENT, onAuthStateChange);
   }, []);
 
   useEffect(() => {

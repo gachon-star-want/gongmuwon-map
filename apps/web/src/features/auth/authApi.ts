@@ -5,6 +5,12 @@ export type CurrentUser = {
   created_at: string;
 };
 
+export const AUTH_STATE_CHANGE_EVENT = 'public-officer-map:auth-state-change';
+
+export type AuthStateChangeDetail = {
+  user: CurrentUser | null;
+};
+
 type AuthResponse = {
   user: CurrentUser | null;
   error?: string;
@@ -31,13 +37,27 @@ export async function getCurrentUser() {
 }
 
 export async function login(handle: string, password: string, turnstileToken: string) {
-  return (await authFetch('/api/auth/login', { handle, password, turnstile_token: turnstileToken })).user;
+  const user = (await authFetch('/api/auth/login', { handle, password, turnstile_token: turnstileToken })).user;
+  notifyAuthStateChange(user);
+  return user;
 }
 
 export async function register(handle: string, password: string, turnstileToken: string) {
-  return (await authFetch('/api/auth/register', { handle, password, turnstile_token: turnstileToken })).user;
+  const user = (await authFetch('/api/auth/register', { handle, password, turnstile_token: turnstileToken })).user;
+  notifyAuthStateChange(user);
+  return user;
 }
 
 export async function logout() {
   await authFetch('/api/auth/logout', {});
+  notifyAuthStateChange(null);
+}
+
+export function notifyAuthStateChange(user: CurrentUser | null) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<AuthStateChangeDetail>(AUTH_STATE_CHANGE_EVENT, {
+      detail: { user },
+    }),
+  );
 }
