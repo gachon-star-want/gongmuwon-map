@@ -80,4 +80,4 @@ export default publicReadRoute(async function handler({ req }) {
     items,
     source_notice: SOURCE_NOTICE,
   };
-}, { cache: 'public, s-maxage=1800, stale-while-revalidate=3600' });
+}, { cache: 'public, s-maxage=86400, stale-while-revalidate=604800' });

@@ -121,4 +121,4 @@ export default publicReadRoute(async function handler({ req }) {
     next_cursor: null,
     source_notice: SOURCE_NOTICE,
   };
-}, { cache: true });
+}, { cache: 'public, s-maxage=1800, stale-while-revalidate=86400' });

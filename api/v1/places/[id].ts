@@ -27,4 +27,4 @@ export default publicReadRoute(async function handler({ req }) {
     return { status: 404, body: { error: 'not_found' } };
   }
   return rows[0];
-}, { cache: true });
+}, { cache: 'public, s-maxage=3600, stale-while-revalidate=86400' });
