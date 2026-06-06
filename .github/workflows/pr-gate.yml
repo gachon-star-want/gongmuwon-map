@@ -1,0 +1,105 @@
+name: PR Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  repo-safety:
+    name: repo-safety
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whitespace
+        run: git diff --check "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}"
+
+      - name: Block committed env files
+        run: |
+          set -euo pipefail
+          changed_env_files="$(
+            git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" |
+              awk '
+                {
+                  n = split($0, parts, "/");
+                  base = parts[n];
+                  if (base ~ /^\.env($|\.)/ && base != ".env.example") print $0;
+                }
+              '
+          )"
+
+          if [ -n "$changed_env_files" ]; then
+            echo "Do not commit local environment files:"
+            echo "$changed_env_files"
+            exit 1
+          fi
+
+      - name: Scan for obvious secret literals
+        run: |
+          set -euo pipefail
+          if git grep -nE 'postgresql://[^[:space:]]+:[^[:space:]]+@|npg_[A-Za-z0-9]{8,}|gho_[A-Za-z0-9_]{20,}' -- ':!.env.example' ':!.github/workflows/pr-gate.yml'; then
+            echo "Potential secret literal found in tracked files."
+            exit 1
+          fi
+
+  web-build:
+    name: web-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  web-test:
+    name: web-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run web tests
+        run: npm run test:web
+
+  public-contracts:
+    name: public-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public route contracts
+        run: npm run check:public-contracts
