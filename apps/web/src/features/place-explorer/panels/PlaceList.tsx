@@ -1,7 +1,6 @@
 import { ActionIcon, Button, Group, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
 import { RefreshCw, RotateCcw, Search, X } from 'lucide-react';
 import type { Place } from '../types';
-import { AdSlot, shouldShowAd } from './AdSlot';
 import { PlaceCard } from './PlaceCard';
 import { SkeletonCard } from './SkeletonCard';
 
@@ -110,7 +109,6 @@ export function PlaceList({
                   isSelected={place.id === selectedId}
                   onClick={() => onSelect(place)}
                 />
-                {shouldShowAd(index) ? <AdSlot /> : null}
               </div>
             ))}
           </Stack>
