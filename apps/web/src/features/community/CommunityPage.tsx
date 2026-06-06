@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Group, Loader, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { LogIn, Plus, Send, UserRound } from 'lucide-react';
+import { LogIn, MapPin, MessageCircle, Plus, Send, UserRound } from 'lucide-react';
 import { AuthModal } from '../auth/AuthModal';
 import type { AuthStateChangeDetail, CurrentUser } from '../auth/authApi';
 import { AUTH_STATE_CHANGE_EVENT, getCurrentUser, logout } from '../auth/authApi';
 import { ErrorBoundary } from '../../shared/ErrorBoundary';
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
+import mascotLogo from '../../assets/officer-mascot-logo.png';
 import {
   createComment,
   createPost,
@@ -207,7 +208,39 @@ export function CommunityPage() {
 
   return (
     <ErrorBoundary>
-    <main className="community-shell">
+    <main className="community-page">
+      <header className="community-topbar">
+        <a className="community-brand" href="/" aria-label="공무원맵 홈">
+          <img src={mascotLogo} alt="" aria-hidden />
+          <span>공무원맵</span>
+        </a>
+        <nav className="community-topnav" aria-label="페이지 탐색">
+          <a href="/" className="community-topnav-tab">
+            <MapPin size={16} aria-hidden />
+            지도
+          </a>
+          <a href="/community" className="community-topnav-tab" data-active="true" aria-current="page">
+            <MessageCircle size={16} aria-hidden />
+            커뮤니티
+          </a>
+        </nav>
+        <div className="community-topbar-auth">
+          {user ? (
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<UserRound size={14} />}
+              onClick={() => void logout().then(() => setUser(null)).catch(() => setUser(null))}
+            >
+              {user.handle}
+            </Button>
+          ) : (
+            <Button size="xs" leftSection={<LogIn size={14} />} onClick={() => setAuthOpen(true)}>
+              로그인
+            </Button>
+          )}
+        </div>
+      </header>
       <section className="community-layout">
         <aside className="community-rank">
           <Text fw={800}>소통방</Text>
@@ -219,15 +252,6 @@ export function CommunityPage() {
               <Title order={1}>커뮤니티</Title>
             </div>
             <Group gap="xs">
-              {user ? (
-                <Button size="xs" variant="light" leftSection={<UserRound size={14} />} onClick={() => void logout().then(() => setUser(null))}>
-                  {user.handle}
-                </Button>
-              ) : (
-                <Button size="xs" leftSection={<LogIn size={14} />} onClick={() => setAuthOpen(true)}>
-                  로그인
-                </Button>
-              )}
               <Select
                 w={130}
                 value={category}

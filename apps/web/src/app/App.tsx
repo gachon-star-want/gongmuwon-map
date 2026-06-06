@@ -19,12 +19,21 @@ export function App(): ReactElement {
       </>
     );
   }
+
+  if (path === '/community') {
+    return (
+      <>
+        <ErrorBoundary key={path}><CommunityPage /></ErrorBoundary>
+        <Analytics />
+      </>
+    );
+  }
   
   return (
     <>
       <AppShell>
         <ErrorBoundary key={path}>
-          {path === '/community' ? <CommunityPage /> : <PlaceExplorer />}
+          <PlaceExplorer />
         </ErrorBoundary>
       </AppShell>
       <Analytics />

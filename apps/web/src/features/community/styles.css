@@ -1,15 +1,83 @@
-.community-shell {
+.community-page {
   display: grid;
-  grid-template-rows: 1fr;
+  grid-template-rows: 64px minmax(0, 1fr);
+  width: 100vw;
+  height: 100dvh;
   overflow: hidden;
-  height: 100%;
+  background: var(--color-surface-2);
+}
+
+.community-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.community-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--color-brand);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.community-brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.community-topnav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.community-topnav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.community-topnav-tab:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text-primary);
+}
+
+.community-topnav-tab[data-active='true'] {
+  background: var(--color-brand);
+  color: var(--color-text-inverse);
+}
+
+.community-topbar-auth {
+  flex: 0 0 auto;
 }
 
 .community-layout {
   display: grid;
   grid-template-columns: minmax(210px, 280px) minmax(440px, 720px) minmax(320px, 480px);
   gap: 22px;
-  height: 100%;
+  min-height: 0;
   padding: 16px;
 }
 
@@ -198,6 +266,10 @@
 }
 
 @media (max-width: 1023px) {
+  .community-page {
+    overflow: hidden;
+  }
+
   .community-layout {
     grid-template-columns: minmax(0, 1fr);
     overflow-y: auto;
@@ -214,6 +286,28 @@
 }
 
 @media (max-width: 767px) {
+  .community-topbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .community-brand {
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .community-brand img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .community-topnav-tab {
+    gap: 4px;
+    height: 36px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
   .community-layout {
     padding: 12px;
   }
