@@ -35,23 +35,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
-      <div className="left-panel">
-        <PanelHeader
-          activePage={activePage}
-          currentUser={currentUser}
-          onLogin={() => setAuthOpen(true)}
-          onLogout={() =>
-            void logout()
-              .then(() => setCurrentUser(null))
-              .catch(() => setCurrentUser(null))
-          }
-        />
-        <div className="panel-body">
-          {children}
+      {!(isHome || isMap) ? (
+        <div className="left-panel">
+          <PanelHeader
+            activePage={activePage}
+            currentUser={currentUser}
+            onLogin={() => setAuthOpen(true)}
+            onLogout={() =>
+              void logout()
+                .then(() => setCurrentUser(null))
+                .catch(() => setCurrentUser(null))
+            }
+          />
+          <div className="panel-body">
+            {children}
+          </div>
         </div>
-      </div>
-      {(isHome || isMap) && (
-        <main className="map-area" id="map-area" aria-label="지도" />
+      ) : (
+        <main className="map-area" id="map-area" aria-label="지도">
+          {children}
+        </main>
       )}
       <AuthModal opened={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={setCurrentUser} />
     </div>
