@@ -57,7 +57,10 @@ import './styles.css';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function PlaceExplorer() {
-  const initialQuery = parseQueryState();
+  const initialQuery = useMemo(() => {
+    const parsed = parseQueryState();
+    return { ...parsed, placeId: null };
+  }, []);
   const [queryState, setQueryState] = useState<PlaceQueryState>(() => initialQuery);
   const [searchDraft, setSearchDraft] = useState(() => initialQuery.q);
   const [places, setPlaces] = useState<Place[]>([]);
@@ -76,10 +79,21 @@ export function PlaceExplorer() {
   const [closedVisible, setClosedVisible] = useState(false);
   const [desktopListOpen, setDesktopListOpen] = useState(true);
   const [mobileMode, setMobileMode] = useState<MobileMode>(() => initialMobileMode(initialQuery));
-  const [sheetSize, setSheetSize] = useState<SheetSize>(() => (initialQuery.placeId ? 'full' : 'mid'));
+  const [sheetSize, setSheetSize] = useState<SheetSize>('mid');
   const [authOpened, auth] = useDisclosure(false);
   const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null);
   const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // 첫 진입 시 URL에 place 파라미터가 있다면 제거하여 상세 카드가 뜨지 않도록 처리
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('place')) {
+      params.delete('place');
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -368,7 +382,6 @@ export function PlaceExplorer() {
 
   function selectPlace(place: Place) {
     setSelectedPlace(place);
-    setDesktopListOpen(false);
     setMobileMode('detail');
     setSheetSize('mid');
     updateQueryState({ placeId: place.id });
@@ -442,10 +455,6 @@ export function PlaceExplorer() {
             onClose={() => clearSelected()}
             onReport={() => setIsTakedownModalOpen(true)}
             onClosureReport={() => setIsClosureModalOpen(true)}
-            reactions={reactions}
-            reactionPending={reactionPending}
-            onReact={toggleReaction}
-            isAuthenticated={Boolean(currentUser)}
           />
         ) : null}
       </aside>
@@ -457,8 +466,6 @@ export function PlaceExplorer() {
         places={listedPlaces}
         selectedId={selectedPlace?.id}
         visits={visits}
-        reactions={reactions}
-        reactionPending={reactionPending}
         loading={listLoading}
         error={listError}
         resultLabel={resultLabel}
@@ -483,8 +490,6 @@ export function PlaceExplorer() {
         }}
         onReport={() => setIsTakedownModalOpen(true)}
         onClosureReport={() => setIsClosureModalOpen(true)}
-        onReact={toggleReaction}
-        isAuthenticated={Boolean(currentUser)}
         hidden={isModalOpen}
       />
 

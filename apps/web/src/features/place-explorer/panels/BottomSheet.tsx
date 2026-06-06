@@ -17,8 +17,6 @@ type BottomSheetProps = {
   places: Place[];
   selectedId?: string;
   visits: Visit[];
-  reactions?: PlaceReactionSummary | null;
-  reactionPending?: boolean;
   loading: boolean;
   error?: string | null;
   resultLabel?: string;
@@ -41,8 +39,6 @@ type BottomSheetProps = {
   onCloseFilter: () => void;
   onReport: () => void;
   onClosureReport: () => void;
-  onReact?: (reaction: 'like' | 'dislike') => void;
-  isAuthenticated?: boolean;
 };
 
 export function BottomSheet({
@@ -52,8 +48,6 @@ export function BottomSheet({
   places,
   selectedId,
   visits,
-  reactions,
-  reactionPending,
   loading,
   error,
   resultLabel,
@@ -76,8 +70,6 @@ export function BottomSheet({
   onCloseFilter,
   onReport,
   onClosureReport,
-  onReact,
-  isAuthenticated,
 }: BottomSheetProps) {
   const touchStartY = useRef<number | null>(null);
 
@@ -134,10 +126,6 @@ export function BottomSheet({
             onClose={onCloseDetail}
             onReport={onReport}
             onClosureReport={onClosureReport}
-            reactions={reactions}
-            reactionPending={reactionPending}
-            onReact={onReact}
-            isAuthenticated={isAuthenticated}
           />
         </>
       ) : null}

@@ -4,11 +4,9 @@ import {
   ExternalLink,
   FileText,
   Navigation,
-  ThumbsDown,
-  ThumbsUp,
   X,
 } from 'lucide-react';
-import type { Place, PlaceReactionSummary, Visit } from '../types';
+import type { Place, Visit } from '../types';
 import { formatDate, gradeClass, gradeLabel } from '../format';
 import { Metric } from './metric';
 import { safeExternalUrl } from '../../../shared/safeExternalUrl';
@@ -19,10 +17,6 @@ type PlaceDetailsProps = {
   onClose: () => void;
   onReport: () => void;
   onClosureReport: () => void;
-  reactions?: PlaceReactionSummary | null;
-  reactionPending?: boolean;
-  onReact?: (reaction: 'like' | 'dislike') => void;
-  isAuthenticated?: boolean;
 };
 
 function categoryLabel(category: string | null) {
@@ -40,18 +34,11 @@ export function PlaceDetails({
   onClose,
   onReport,
   onClosureReport,
-  reactions,
-  reactionPending,
-  onReact,
-  isAuthenticated = false,
 }: PlaceDetailsProps) {
   const kakaoUrl = `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
   const firstSourceUrl = visits
     .map((visit) => safeExternalUrl(visit.source_url))
     .find((url): url is string => Boolean(url));
-  const reactionHint = isAuthenticated
-    ? '좋아요/싫어요는 공식 기록과 분리된 커뮤니티 참고 신호입니다.'
-    : '로그인 후 좋아요/싫어요 반응을 남길 수 있으며, 공식 데이터와 분리된 참고 신호입니다.';
 
   return (
     <>
@@ -182,63 +169,6 @@ export function PlaceDetails({
           )}
         </section>
 
-        <section className="detail-section reaction-section" aria-labelledby="community-reaction-title">
-          <div className="section-headline">
-            <div>
-              <Text size="xs" className="section-kicker">
-                커뮤니티 반응
-              </Text>
-              <Text id="community-reaction-title" fw={800}>
-                참고용 반응
-              </Text>
-            </div>
-            <Badge size="sm" variant="light" color="gray">
-              로그인 사용자만 참여
-            </Badge>
-          </div>
-          <div className="reaction-actions">
-            <button
-              type="button"
-              data-active={reactions?.user_reaction === 'like'}
-              disabled={reactionPending}
-              onClick={() => onReact?.('like')}
-            >
-              <ThumbsUp size={17} aria-hidden />
-              좋아요
-              <strong>{reactions?.like_count ?? 0}</strong>
-            </button>
-            <button
-              type="button"
-              data-active={reactions?.user_reaction === 'dislike'}
-              disabled={reactionPending}
-              onClick={() => onReact?.('dislike')}
-            >
-              <ThumbsDown size={17} aria-hidden />
-              싫어요
-              <strong>{reactions?.dislike_count ?? 0}</strong>
-            </button>
-          </div>
-          <Text size="xs" c="dimmed" className="reaction-hint">
-            {reactionHint}
-          </Text>
-        </section>
-
-        <section className="detail-section detail-actions">
-          <div className="policy-cues">
-            <Text size="xs" fw={700}>
-              판단/신뢰 안내
-            </Text>
-            <Text size="xs">
-              점수·등급은 공공기록 통계(방문 수·부서 수)로만 산출되며, 맛집 평가·품질점수·비위 판단을 뜻하지 않습니다.
-            </Text>
-            <Text size="xs">
-              원문 링크는 R2 보관본이 아니라 공공기관이 공개한 원문 URL입니다.
-            </Text>
-            <Text size="xs">
-              정보 수정·삭제 요청은 즉시 임시 비공개 처리 후 운영자가 72시간 이내 검토합니다.
-            </Text>
-          </div>
-        </section>
       </div>
     </>
   );
