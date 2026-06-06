@@ -55,6 +55,7 @@ import { BottomNav } from './panels/BottomNav';
 import './styles.css';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SEARCH_DEBOUNCE_MS = 600;
 
 export function PlaceExplorer() {
   const initialQuery = useMemo(() => {
@@ -109,7 +110,10 @@ export function PlaceExplorer() {
       .map((region) => ({ label: shortRegionLabel(region), value: region }));
   }, [places, regions]);
 
-  const hasActiveSearchFilter = Boolean(queryState.q || queryState.region.length);
+  // 1글자 q 단독 검색은 remote search를 타지 않고 로컬 places 필터링으로 처리
+  const hasActiveSearchFilter = Boolean(
+    queryState.q.trim().length >= 2 || queryState.region.length > 0
+  );
   const activeResultPlaces = useMemo(
     () => hasActiveSearchFilter ? searchPlaces : places,
     [hasActiveSearchFilter, searchPlaces, places],
@@ -140,7 +144,7 @@ export function PlaceExplorer() {
 
   const resultLabel = useMemo(() => {
     const count = listedPlaces.length.toLocaleString('ko-KR');
-    if (!hasActiveSearchFilter && !closedVisible && isDefaultGradeFilter(queryState.grade)) return `${count}곳`;
+    if (!hasActiveSearchFilter && !closedVisible && isDefaultGradeFilter(queryState.grade) && !queryState.q) return `${count}곳`;
     const parts = [];
     if (queryState.q) parts.push(`"${queryState.q}"`);
     if (queryState.region.length) parts.push(`${queryState.region.length}개 자치구`);
@@ -214,7 +218,7 @@ export function PlaceExplorer() {
       if (nextQ) {
         setDesktopListOpen(true);
       }
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timeout);
   }, [searchDraft]);
 
@@ -318,7 +322,13 @@ export function PlaceExplorer() {
     setSearchError(null);
     setSearchPlaces([]);
     try {
-      const data = await searchPlacesApi(queryState, controller.signal);
+      // 1글자 이하의 q는 DB 쿼리 부하 최소화를 위해 remote API 요청 파라미터에서 제외하고,
+      // 받아온 자치구 등 결과 리스트에서 로컬 필터링하도록 우회 처리
+      const apiQuery = {
+        ...queryState,
+        q: queryState.q.trim().length >= 2 ? queryState.q : '',
+      };
+      const data = await searchPlacesApi(apiQuery, controller.signal);
       setSearchPlaces(data.items);
     } catch (err) {
       if ((err as DOMException).name !== 'AbortError') {

@@ -23,4 +23,4 @@ export default publicReadRoute(async function handler({ req }) {
     [id, limit],
   );
   return rows;
-}, { cache: true });
+}, { cache: 'public, s-maxage=3600, stale-while-revalidate=86400' });

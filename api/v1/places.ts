@@ -63,4 +63,4 @@ export default publicReadRoute(async function handler({ req }) {
   );
 
   return rows;
-}, { cache: true });
+}, { cache: 'public, s-maxage=1800, stale-while-revalidate=86400' });
