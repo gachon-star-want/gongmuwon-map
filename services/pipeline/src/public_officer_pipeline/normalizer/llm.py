@@ -58,7 +58,16 @@ Masking rules are mandatory:
 2. For appointed ranks such as {', '.join(_APPOINTED_RANK_LABELS)}, set representative to null.
 3. For 5급 이하 or staff groups, set rank_label to \"5급 이하\" and keep only department-level labels.
 4. Never output a private person's name except elected officials covered by rule 1.
-5. Return valid JSON only, with a top-level visits array.
+
+Extraction rules:
+5. For each visit's place_raw object, set name to the restaurant/place name.
+6. Set place_raw.address_hint to any location information found in place_text:
+   - Parenthetical addresses: "메가커피(대전 중구 은행로 54)" → address_hint: "대전 중구 은행로 54"
+   - Branch names with location suffix: "교촌치킨 염창점" → address_hint: "염창점"
+   - Any embedded address, road name, or district in the place text.
+   - If no address is found, set address_hint to null.
+
+7. Return valid JSON only, with a top-level visits array.
 """
 
 
