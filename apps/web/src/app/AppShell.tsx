@@ -33,6 +33,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_STATE_CHANGE_EVENT, onAuthStateChange);
   }, []);
 
+  if (isHome || isMap) {
+    return (
+      <div className="app-shell">
+        {children}
+        <main className="map-area" id="map-area" aria-label="지도" />
+        <AuthModal opened={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={setCurrentUser} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <div className="left-panel">
@@ -50,9 +60,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </div>
       </div>
-      {(isHome || isMap) && (
-        <main className="map-area" id="map-area" aria-label="지도" />
-      )}
       <AuthModal opened={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={setCurrentUser} />
     </div>
   );

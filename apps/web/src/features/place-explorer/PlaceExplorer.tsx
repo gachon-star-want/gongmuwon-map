@@ -509,6 +509,29 @@ export function PlaceExplorer() {
         ) : null}
       </aside>
 
+      {desktopListOpen && (
+        <div className="list-sheet desktop-layer">
+          <PlaceList
+            places={listedPlaces}
+            selectedId={selectedPlace?.id}
+            loading={listLoading}
+            error={listError}
+            resultLabel={resultLabel}
+            hasActiveFilter={hasActiveFilter}
+            query={searchDraft}
+            onQueryChange={setSearchDraft}
+            onSelect={selectPlace}
+            onClose={() => {
+              setDesktopListOpen(false);
+            }}
+            onReset={resetFilters}
+            onRetry={retrySearch}
+            showSearch={false}
+            showHeader={true}
+          />
+        </div>
+      )}
+
       <BottomSheet
         mode={mobileMode}
         size={sheetSize}
@@ -553,32 +576,6 @@ export function PlaceExplorer() {
 
   return (
     <>
-      <div className="panel-result-label">
-        <span>{resultLabel}</span>
-      </div>
-
-      {desktopListOpen || mobileMode === 'list' ? (
-        <PlaceList
-          places={listedPlaces}
-          selectedId={selectedPlace?.id}
-          loading={listLoading}
-          error={listError}
-          resultLabel={resultLabel}
-          hasActiveFilter={hasActiveFilter}
-          query={searchDraft}
-          onQueryChange={setSearchDraft}
-          onSelect={selectPlace}
-          onClose={() => {
-            setDesktopListOpen(false);
-            setMobileMode((current) => (current === 'list' ? 'map' : current));
-          }}
-          onReset={resetFilters}
-          onRetry={retrySearch}
-          showSearch={false}
-          showHeader={false}
-        />
-      ) : null}
-
       {mobileMode === 'filter' ? (
         <MobileFilterPanel
           regions={regionOptions}
