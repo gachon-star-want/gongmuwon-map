@@ -1,5 +1,6 @@
-import { MapPin } from 'lucide-react';
+import { Building2, CalendarDays, MapPin } from 'lucide-react';
 import type { Place } from '../types';
+import { formatDate } from '../format';
 import { GradeDot } from './GradeDot';
 
 interface PlaceCardProps {
@@ -9,6 +10,12 @@ interface PlaceCardProps {
 }
 
 export function PlaceCard({ place, isSelected, onClick }: PlaceCardProps) {
+  const category = place.category?.split('>').at(-1)?.trim() || place.category || '음식점';
+  const region = place.road_address_part || '지역 확인 중';
+  const visitCount = place.visit_count_12m ?? 0;
+  const departmentCount = place.unique_department_count_12m ?? 0;
+  const lastVisit = formatDate(place.last_visit_at);
+
   return (
     <button
       className="place-card"
@@ -16,41 +23,32 @@ export function PlaceCard({ place, isSelected, onClick }: PlaceCardProps) {
       onClick={onClick}
       type="button"
     >
-      <div className="place-card-thumb-wrap">
-        {place.photo_url ? (
-          <img
-            className="place-card-thumb"
-            src={place.photo_url}
-            alt={place.name}
-            loading="lazy"
-          />
-        ) : (
-          <div className="place-card-thumb place-card-thumb-empty" aria-hidden />
-        )}
+      <div className="place-card-grade" aria-hidden>
         <GradeDot grade={place.grade} />
       </div>
       <div className="place-card-body">
-        <div className="place-card-name">{place.name}</div>
-        {place.category && (
-          <div className="place-card-category">{place.category}</div>
-        )}
-        {place.unique_department_count_12m && place.unique_department_count_12m > 0 && (
-          <div className="place-card-dept">
-            <span className="dept-badge">
-              🏛 {place.unique_department_count_12m}개 부처 방문
-            </span>
-          </div>
-        )}
-        {place.menu_items && place.menu_items.length > 0 && (
-          <div className="place-card-menus">
-            {place.menu_items.slice(0, 2).map((m) => (
-              <span key={m} className="menu-tag">{m}</span>
-            ))}
-          </div>
-        )}
-        <div className="place-card-location">
-          <MapPin size={11} aria-hidden />
-          {place.road_address_part ?? ''}
+        <div className="place-card-mainline">
+          <span className="place-card-name">{place.name}</span>
+          {place.is_closed ? <span className="place-card-status">폐업</span> : null}
+        </div>
+        <div className="place-card-category">
+          {category}
+          <span aria-hidden>·</span>
+          {region}
+        </div>
+        <div className="place-card-stats" aria-label="최근 12개월 공식 방문 지표">
+          <span>
+            <Building2 size={12} aria-hidden />
+            {visitCount.toLocaleString('ko-KR')}회
+          </span>
+          <span>
+            <MapPin size={12} aria-hidden />
+            {departmentCount.toLocaleString('ko-KR')}개 부서
+          </span>
+          <span>
+            <CalendarDays size={12} aria-hidden />
+            {lastVisit ?? '최근 미확인'}
+          </span>
         </div>
       </div>
     </button>

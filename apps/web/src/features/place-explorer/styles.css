@@ -556,24 +556,7 @@
 }
 
 .bottom-sheet .detail-header-wrapper {
-  position: relative;
-  width: 100%;
-  height: 120px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.bottom-sheet .detail-header-emoji-watermark {
-  font-size: 80px;
-  right: -5px;
-  bottom: -15px;
-}
-
-.bottom-sheet .detail-header-category-label {
-  left: 12px;
-  bottom: 12px;
-  padding: 4px 10px;
-  font-size: 11px;
+  padding: 14px;
 }
 
 .mobile-panel {
@@ -781,73 +764,30 @@
 }
 
 .detail-header-wrapper {
-  position: relative;
-  width: 100%;
-  height: 160px;
   flex-shrink: 0;
-  overflow: hidden;
-}
-
-.detail-header-emoji-watermark {
-  position: absolute;
-  right: -10px;
-  bottom: -20px;
-  font-size: 110px;
-  opacity: 0.12;
-  user-select: none;
-  pointer-events: none;
-  line-height: 1;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.detail-header-wrapper:hover .detail-header-emoji-watermark {
-  transform: scale(1.1) rotate(8deg);
-}
-
-.detail-header-category-label {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 6px 12px;
-  border-radius: 20px;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px 18px 18px;
+  border-bottom: 1px solid #e6ecf3;
+  background: #fff;
 }
 
 .detail-header {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 10;
-  margin-bottom: 0 !important;
-}
-
-.detail-header .grade-badge {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  margin-bottom: 12px !important;
 }
 
 .detail-header .mantine-ActionIcon-root {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(4px);
-  border-radius: 999px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  color: #1a1a1a;
-  border: none;
+  color: #334155;
 }
 
-.detail-header .mantine-ActionIcon-root:hover {
-  background: rgba(255, 255, 255, 1);
+.detail-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.detail-primary-actions .mantine-Button-root {
+  min-height: 38px;
+  border-radius: 10px;
 }
 
 .detail-content {
@@ -868,7 +808,21 @@
 }
 
 .visit-row {
+  gap: 5px;
   padding: 12px 0;
+}
+
+.visit-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.visit-row-top span {
+  color: #657386;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .detail-actions .mantine-Button-root {
@@ -1046,5 +1000,9 @@
 
   .source-pill[data-sheet-open='true'] {
     display: none;
+  }
+
+  .detail-primary-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

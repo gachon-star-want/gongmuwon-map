@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css');
+
 :root {
   /* 브랜드 */
   --color-brand:         #1A2E5A;
@@ -155,6 +157,7 @@ button {
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
   view-transition-name: panel-header;
+  white-space: nowrap;
 }
 
 .panel-brand {
@@ -165,7 +168,7 @@ button {
   font-size: 17px;
   font-weight: 900;
   text-decoration: none;
-  letter-spacing: -0.3px;
+  letter-spacing: 0;
   flex-shrink: 0;
   view-transition-name: brand-logo;
 }
@@ -181,6 +184,7 @@ button {
   display: flex;
   gap: var(--space-1);
   flex: 1;
+  min-width: 0;
   justify-content: center;
 }
 
@@ -195,6 +199,7 @@ button {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
   transition: background var(--duration-base) var(--ease-standard),
               color var(--duration-base) var(--ease-standard);
 }
@@ -211,6 +216,7 @@ button {
 
 .panel-header-auth {
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .panel-auth-btn {
@@ -363,10 +369,12 @@ button {
 /* ── PlaceCard ──────────────────────────────── */
 .place-card {
   display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  min-height: 78px;
+  padding: 10px var(--space-4);
   border: none;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -385,39 +393,26 @@ button {
   box-shadow: inset 3px 0 0 var(--color-brand);
 }
 
-.place-card-thumb-wrap {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
-}
-
-.place-card-thumb {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--control-radius);
-  object-fit: cover;
-  background: var(--color-surface-3);
-  display: block;
-}
-
-.place-card-thumb-empty {
-  background:
-    linear-gradient(135deg, var(--color-surface-3) 0%, var(--color-surface-4) 100%);
-}
-
-.place-card-thumb-wrap .grade-dot {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
+.place-card-grade {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100%;
+  padding-top: 2px;
 }
 
 .place-card-body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
-  padding-top: 2px;
+}
+
+.place-card-mainline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .place-card-name {
@@ -430,14 +425,51 @@ button {
   white-space: nowrap;
 }
 
+.place-card-status {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
 .place-card-category {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 500;
   color: var(--color-text-muted);
 }
 
-.place-card-dept {
-  margin-top: 2px;
+.place-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.place-card-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-card-stats span:last-child {
+  color: var(--color-text-muted);
 }
 
 .dept-badge {
@@ -451,13 +483,6 @@ button {
   color: var(--color-accent-text);
   font-size: 11px;
   font-weight: 700;
-}
-
-.place-card-menus {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .menu-tag {
@@ -535,16 +560,18 @@ button {
 
 .skeleton-card {
   display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 78px;
+  padding: 10px var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
 
-.skeleton-thumb {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--control-radius);
+.skeleton-grade {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
 }
 
 .skeleton-body {
@@ -556,7 +583,7 @@ button {
 
 .skeleton-line-title  { height: 14px; width: 70%; }
 .skeleton-line-sub    { height: 11px; width: 45%; }
-.skeleton-line-badge  { height: 20px; width: 30%; }
+.skeleton-line-badge  { height: 11px; width: 78%; }
 
 /* ── 포커스 링 (Accessibility) ──────────── */
 :focus-visible {
@@ -591,6 +618,50 @@ button {
 /* ── 반응형 ──────────────────────────────── */
 @media (max-width: 1023px) {
   .left-panel { width: var(--panel-width-narrow); }
+
+  .panel-header {
+    gap: 5px;
+    padding: 0 8px;
+  }
+
+  .panel-brand {
+    gap: 5px;
+    font-size: 14px;
+  }
+
+  .panel-brand img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .panel-nav-tab {
+    gap: 3px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .panel-auth-btn {
+    gap: 3px;
+    padding: 0 7px;
+    font-size: 11px;
+  }
+
+  .place-card {
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-height: 82px;
+    padding: 10px 10px;
+  }
+
+  .skeleton-card {
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-height: 82px;
+    padding: 10px 10px;
+  }
+
+  .place-card-stats {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 767px) {
