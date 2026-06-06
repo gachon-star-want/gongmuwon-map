@@ -28,12 +28,12 @@ export function PanelHeader({ activePage, currentUser, onLogin, onLogout }: Pane
       </nav>
       <div className="panel-header-auth">
         {currentUser ? (
-          <button className="panel-auth-btn" onClick={onLogout}>
+          <button className="panel-auth-btn" onClick={onLogout} type="button">
             <UserRound size={14} />
             {currentUser.handle}
           </button>
         ) : (
-          <button className="panel-auth-btn" onClick={onLogin}>
+          <button className="panel-auth-btn" onClick={onLogin} type="button">
             <LogIn size={14} />
             로그인
           </button>
