@@ -135,18 +135,24 @@
 .community-state {
   display: grid;
   gap: 10px;
-  justify-items: start;
-  padding: 16px 12px;
+  place-content: center;
+  justify-items: center;
+  min-height: 220px;
+  padding: 24px;
+  text-align: center;
 }
 
 .community-state-loading {
-  grid-template-columns: auto auto;
-  align-items: center;
   color: var(--color-text-secondary);
 }
 
 .community-state-error {
   color: #7f1d1d;
+}
+
+.community-comments .community-state {
+  min-height: 120px;
+  padding: 16px;
 }
 
 .community-post-list {
