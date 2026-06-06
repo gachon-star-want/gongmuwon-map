@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_NvEyjh8zgnweRCz2OuKpna4gDeU1",
+  "orgId": "team_1yTeNsOL69GnB3vZzvdH3Ma8",
+  "projectName": "gongmuwon-map",
+  "settings": {
+    "createdAt": 1779589632439,
+    "framework": "services",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

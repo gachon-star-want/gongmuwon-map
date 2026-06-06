@@ -326,13 +326,11 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
                         distance = _haversine_meters(
                             agency_lat, agency_lon, candidate_latitude, candidate_longitude
                         )
-                        if distance > 50000.0:
-                            is_national_or_constitutional = agency.gov_tier in (
-                                GovTier.NATIONAL,
-                                GovTier.CONSTITUTIONAL,
-                            )
-                            is_large_chain = classify_large_chain_brand(document.get("place_name")) is not None
-                            if not (is_national_or_constitutional or is_large_chain):
+                        if agency.gov_tier in (GovTier.NATIONAL, GovTier.CONSTITUTIONAL):
+                            pass
+                        else:
+                            max_distance: float = 50000.0 if agency.gov_tier == GovTier.REGIONAL else 15000.0
+                            if distance > max_distance:
                                 return False
 
         if validation_latitude is not None and validation_longitude is not None:
