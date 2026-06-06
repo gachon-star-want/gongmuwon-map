@@ -358,6 +358,25 @@ jobs:
           echo "$status" > artifacts/nationwide/staging-baseline-after.exit
           exit "$status"
 
+      - name: Check region mismatch (CI 방어막)
+        continue-on-error: true
+        run: |
+          set +e
+          if [ -z "${DATABASE_URL_STAGING:-}${STAGING_DATABASE_URL:-}" ]; then
+            echo "Skipping region mismatch check: no staging DB URL"
+            exit 0
+          fi
+          db_url="${DATABASE_URL_STAGING:-$STAGING_DATABASE_URL}"
+          uv run --project services/pipeline python3 \
+            services/pipeline/scripts/check_region_mismatch.py \
+            --db-url "$db_url" \
+            --fail-on-mismatch
+          status=$?
+          if [ "$status" != "0" ]; then
+            echo "::warning title=Region Mismatch Detected::Some places are resolved to a different region than the agency. Run 'python3 services/pipeline/scripts/check_region_mismatch.py --db-url \$DATABASE_URL' to inspect."
+          fi
+          exit 0
+
       - name: Check public route contracts
         run: |
           set +e
