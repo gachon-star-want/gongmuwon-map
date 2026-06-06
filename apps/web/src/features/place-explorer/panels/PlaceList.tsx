@@ -18,6 +18,8 @@ type PlaceListProps = {
   onClose?: () => void;
   onReset: () => void;
   onRetry?: () => void;
+  showSearch?: boolean;
+  showHeader?: boolean;
 };
 
 export function PlaceList({
@@ -33,23 +35,27 @@ export function PlaceList({
   onClose,
   onReset,
   onRetry,
+  showSearch = true,
+  showHeader = true,
 }: PlaceListProps) {
   return (
     <div className="sheet-content">
-      <Group justify="space-between" wrap="nowrap" className="sheet-header">
-        <div>
-          <Text fw={800}>식당 목록</Text>
-          <Text size="xs" c="dimmed">
-            {loading ? '검색 중' : (resultLabel ?? `${places.length.toLocaleString('ko-KR')}곳`)}
-          </Text>
-        </div>
-        {onClose ? (
-          <ActionIcon variant="subtle" aria-label="목록 닫기" onClick={onClose}>
-            <X size={18} />
-          </ActionIcon>
-        ) : null}
-      </Group>
-      {onQueryChange ? (
+      {showHeader ? (
+        <Group justify="space-between" wrap="nowrap" className="sheet-header">
+          <div>
+            <Text fw={800}>식당 목록</Text>
+            <Text size="xs" c="dimmed">
+              {loading ? '검색 중' : (resultLabel ?? `${places.length.toLocaleString('ko-KR')}곳`)}
+            </Text>
+          </div>
+          {onClose ? (
+            <ActionIcon variant="subtle" aria-label="목록 닫기" onClick={onClose}>
+              <X size={18} />
+            </ActionIcon>
+          ) : null}
+        </Group>
+      ) : null}
+      {showSearch && onQueryChange ? (
         <div className="sheet-search">
           <TextInput
             leftSection={<Search size={16} />}
