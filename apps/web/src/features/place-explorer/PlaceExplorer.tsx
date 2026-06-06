@@ -219,6 +219,9 @@ export function PlaceExplorer() {
   }, [searchDraft]);
 
   useEffect(() => {
+    const hasKakaoKey = Boolean(import.meta.env.VITE_KAKAO_JS_KEY);
+    if (hasKakaoKey && !mapBbox) return;
+
     const controller = new AbortController();
     void loadPlaces(controller.signal);
     return () => controller.abort();
