@@ -48,7 +48,7 @@ jobs:
       - name: Scan for obvious secret literals
         run: |
           set -euo pipefail
-          if git grep -nE 'postgresql://[^[:space:]]+:[^[:space:]]+@|npg_[A-Za-z0-9]{8,}|gho_[A-Za-z0-9_]{20,}' -- ':!.env.example'; then
+          if git grep -nE 'postgresql://[^[:space:]]+:[^[:space:]]+@|npg_[A-Za-z0-9]{8,}|gho_[A-Za-z0-9_]{20,}' -- ':!.env.example' ':!.github/workflows/pr-gate.yml'; then
             echo "Potential secret literal found in tracked files."
             exit 1
           fi
