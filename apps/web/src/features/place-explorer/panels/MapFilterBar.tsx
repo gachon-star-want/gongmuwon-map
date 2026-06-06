@@ -1,5 +1,5 @@
-import { ActionIcon, Checkbox, MultiSelect, Select, Tooltip } from '@mantine/core';
-import { Filter, Info, List, LogIn, RotateCcw, UserRound } from 'lucide-react';
+import { ActionIcon, MultiSelect, Select, Tooltip } from '@mantine/core';
+import { List, LogIn, RotateCcw, UserRound } from 'lucide-react';
 import type { Grade, SortMode } from '../types';
 import { allGrades, defaultGrades, isDefaultGradeFilter } from '../queryState';
 import type { CurrentUser } from '../../auth/authApi';
@@ -10,7 +10,7 @@ const sortOptions: { value: SortMode; label: string }[] = [
   { value: 'visits', label: '방문 많은순' },
 ];
 
-interface PanelFilterBarProps {
+interface MapFilterBarProps {
   regions: { label: string; value: string }[];
   selectedRegions: string[];
   onRegionsChange: (value: string[]) => void;
@@ -21,7 +21,6 @@ interface PanelFilterBarProps {
   closedVisible: boolean;
   onClosedVisibleChange: (value: boolean) => void;
   onListToggle: () => void;
-  onFilterOpen: () => void;
   onReset: () => void;
   regionLoading: boolean;
   currentUser?: CurrentUser | null;
@@ -29,7 +28,7 @@ interface PanelFilterBarProps {
   onLogout?: () => void;
 }
 
-export function PanelFilterBar({
+export function MapFilterBar({
   regions,
   selectedRegions,
   onRegionsChange,
@@ -40,17 +39,23 @@ export function PanelFilterBar({
   closedVisible,
   onClosedVisibleChange,
   onListToggle,
-  onFilterOpen,
   onReset,
   regionLoading,
   currentUser,
   onLogin,
   onLogout,
-}: PanelFilterBarProps) {
+}: MapFilterBarProps) {
   const publicPickSelected = isDefaultGradeFilter(selectedGrades);
+  const isFilterActive =
+    selectedRegions.length > 0 ||
+    !publicPickSelected ||
+    sort !== 'score' ||
+    closedVisible;
+
   return (
-    <div className="panel-filter-bar">
+    <div className="map-filter-bar" role="toolbar" aria-label="지도 필터 도구">
       <MultiSelect
+        w={140}
         data={regions}
         placeholder={regionLoading ? '자치구 로딩' : '자치구'}
         value={selectedRegions}
@@ -59,6 +64,7 @@ export function PanelFilterBar({
         clearable
         maxDropdownHeight={260}
       />
+
       <button
         className="filter-chip"
         data-active={publicPickSelected}
@@ -68,49 +74,59 @@ export function PanelFilterBar({
       >
         공무원픽
       </button>
+
       <Select
+        w={120}
         aria-label="정렬"
         value={sort}
         onChange={(value) => value && onSortChange(value as SortMode)}
         data={sortOptions}
         allowDeselect={false}
       />
-      <Checkbox
-        label="폐업 포함"
-        checked={closedVisible}
-        onChange={(event) => onClosedVisibleChange(event.currentTarget.checked)}
-      />
-      <Tooltip label="목록 열기">
-        <ActionIcon variant="filled" aria-label="목록 열기" onClick={onListToggle}>
-          <List size={18} />
-        </ActionIcon>
+
+      <button
+        className="filter-chip"
+        data-active={closedVisible}
+        type="button"
+        aria-pressed={closedVisible}
+        onClick={() => onClosedVisibleChange(!closedVisible)}
+      >
+        폐업 포함
+      </button>
+
+      <Tooltip label="목록 열기/닫기">
+        <button
+          className="filter-chip"
+          type="button"
+          aria-label="목록 열기"
+          onClick={onListToggle}
+        >
+          <List size={15} />
+        </button>
       </Tooltip>
-      <Tooltip label="필터 열기">
-        <ActionIcon variant="light" aria-label="필터 열기" onClick={onFilterOpen}>
-          <Filter size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="필터 초기화">
-        <ActionIcon variant="light" aria-label="필터 초기화" onClick={onReset}>
-          <RotateCcw size={18} />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="서비스 정보">
-        <ActionIcon component="a" href="/about" target="_blank" rel="noopener noreferrer" variant="light" aria-label="서비스 정보">
-          <Info size={18} />
-        </ActionIcon>
-      </Tooltip>
+
+      {isFilterActive && (
+        <button
+          className="filter-reset-btn"
+          type="button"
+          onClick={onReset}
+        >
+          <RotateCcw size={13} />
+          <span>초기화</span>
+        </button>
+      )}
+
       {currentUser ? (
         <Tooltip label="로그아웃">
-          <button className="panel-auth-btn" onClick={onLogout} type="button">
-            <UserRound size={14} />
-            {currentUser.handle}
+          <button className="filter-chip" onClick={onLogout} type="button">
+            <UserRound size={13} />
+            <span>{currentUser.handle}</span>
           </button>
         </Tooltip>
       ) : onLogin ? (
-        <button className="panel-auth-btn" onClick={onLogin} type="button">
-          <LogIn size={14} />
-          로그인
+        <button className="filter-chip" onClick={onLogin} type="button">
+          <LogIn size={13} />
+          <span>로그인</span>
         </button>
       ) : null}
     </div>
