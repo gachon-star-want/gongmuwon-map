@@ -24,32 +24,6 @@ except Exception:
 _SEOUL_REGION_RE = re.compile(r"(서울(?:특별시)?|서울)\s+([가-힣]+[구군시])")
 _GYEONGGI_REGION_RE = re.compile(r"(경기(?:도)?|경기도)\s+([가-힣]+[시군구])")
 _INCHEON_REGION_RE = re.compile(r"(인천(?:광역시)?|인천)\s+([가-힣]+[시군구])")
-_KNOWN_REGIONS: dict[str, str] = {
-    "서울": "서울특별시", "서울특별시": "서울특별시",
-    "부산": "부산광역시", "부산광역시": "부산광역시",
-    "대구": "대구광역시", "대구광역시": "대구광역시",
-    "인천": "인천광역시", "인천광역시": "인천광역시",
-    "광주": "광주광역시", "광주광역시": "광주광역시",
-    "대전": "대전광역시", "대전광역시": "대전광역시",
-    "울산": "울산광역시", "울산광역시": "울산광역시",
-    "세종": "세종특별자치시", "세종특별자치시": "세종특별자치시",
-    "경기": "경기도", "경기도": "경기도",
-    "강원": "강원특별자치도", "강원도": "강원특별자치도", "강원특별자치도": "강원특별자치도",
-    "충북": "충청북도", "충청북도": "충청북도",
-    "충남": "충청남도", "충청남도": "충청남도",
-    "전북": "전라북도", "전라북도": "전라북도", "전북특별자치도": "전라북도",
-    "전남": "전라남도", "전라남도": "전라남도",
-    "경북": "경상북도", "경상북도": "경상북도",
-    "경남": "경상남도", "경상남도": "경상남도",
-    "제주": "제주특별자치도", "제주특별자치도": "제주특별자치도",
-}
-_NON_REGION_PARENTS = frozenset({
-    "문화체육관광부", "기후에너지환경부", "대통령실", "교육부", "행정안전부",
-    "국토교통부", "산업통상자원부", "보건복지부", "고용노동부", "법무부",
-    "기획재정부", "외교부", "과학기술정보통신부", "농림축산식품부", "중소벤처기업부",
-    "해양수산부", "환경부", "통일부", "국방부", "여성가족부", "국가보훈부",
-    "대한민국",
-})
 _PLACEHOLDER_PLACE_KEYS = {
     "unknown",
     "none",
@@ -358,15 +332,6 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
                             max_distance: float = 50000.0 if agency.gov_tier == GovTier.REGIONAL else 15000.0
                             if distance > max_distance:
                                 return False
-
-        # Region filter: reject when agency region != candidate region for local agencies
-        if agency and agency.parent_region and candidate_part:
-            if agency.parent_region not in _NON_REGION_PARENTS:
-                agency_region = _KNOWN_REGIONS.get(agency.parent_region)
-                candidate_prefix = candidate_part.split(maxsplit=1)[0] if candidate_part else None
-                candidate_region = _KNOWN_REGIONS.get(candidate_prefix) if candidate_prefix else None
-                if agency_region and candidate_region and agency_region != candidate_region:
-                    return False
 
         if validation_latitude is not None and validation_longitude is not None:
             candidate_latitude, candidate_longitude = _extract_document_coordinates(document)
