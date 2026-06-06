@@ -175,13 +175,13 @@ def test_policy_validate_candidate_distance_rejection() -> None:
     )
     assert policy.validate_candidate(place, doc_far, agency=national_agency) is True
     
-    # 4. Exception: Candidate is a large chain brand
+    # 4. Large chain candidate is no longer exempt from distance check
     chain_doc_far = {
         "place_name": "스타벅스 부산점",
         "x": "129.0756",
         "y": "35.1796",
     }
-    assert policy.validate_candidate(place, chain_doc_far, agency=agency) is True
+    assert policy.validate_candidate(place, chain_doc_far, agency=agency) is False
 
 
 @pytest.mark.asyncio
