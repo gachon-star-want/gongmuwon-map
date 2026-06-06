@@ -48,8 +48,8 @@ import { AUTH_STATE_CHANGE_EVENT, getCurrentUser, logout } from '../auth/authApi
 import { TurnstileWidget } from '../../shared/TurnstileWidget';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useReportFlow } from './hooks/useReportFlow';
-import { PanelSearchBar } from './panels/PanelSearchBar';
-import { PanelFilterBar } from './panels/PanelFilterBar';
+import { MapSearchBar } from './panels/MapSearchBar';
+import { MapFilterBar } from './panels/MapFilterBar';
 import { SourcePill } from './panels/SourcePill';
 import { BottomNav } from './panels/BottomNav';
 import './styles.css';
@@ -441,6 +441,37 @@ export function PlaceExplorer() {
 
   const mapOverlays = (
     <>
+      <div className="map-search-wrap">
+        <MapSearchBar value={searchDraft} onChange={setSearchDraft} />
+        <MapFilterBar
+          regions={regionOptions}
+          selectedRegions={queryState.region}
+          onRegionsChange={(region) => {
+            setDesktopListOpen(true);
+            updateQueryState({ region });
+          }}
+          selectedGrades={queryState.grade}
+          onGradesChange={(grade) => updateQueryState({ grade })}
+          sort={queryState.sort}
+          onSortChange={(sort) => updateQueryState({ sort })}
+          closedVisible={closedVisible}
+          onClosedVisibleChange={setClosedVisible}
+          onListToggle={() => {
+            setMobileMode('map');
+            setDesktopListOpen((current) => !current);
+          }}
+          onReset={resetFilters}
+          regionLoading={regionLoading}
+          currentUser={currentUser}
+          onLogin={auth.open}
+          onLogout={() =>
+            void logout()
+              .then(() => setCurrentUser(null))
+              .catch(() => setCurrentUser(null))
+          }
+        />
+      </div>
+
       <MapCanvas
         places={visibleMapPlaces}
         selectedPlace={selectedPlace}
@@ -522,41 +553,6 @@ export function PlaceExplorer() {
 
   return (
     <>
-      {/* Panel content — flows into AppShell's .panel-body */}
-      <PanelSearchBar value={searchDraft} onChange={setSearchDraft} />
-      <PanelFilterBar
-        regions={regionOptions}
-        selectedRegions={queryState.region}
-        onRegionsChange={(region) => {
-          setDesktopListOpen(true);
-          updateQueryState({ region });
-        }}
-        selectedGrades={queryState.grade}
-        onGradesChange={(grade) => updateQueryState({ grade })}
-        sort={queryState.sort}
-        onSortChange={(sort) => updateQueryState({ sort })}
-        closedVisible={closedVisible}
-        onClosedVisibleChange={setClosedVisible}
-        onListToggle={() => {
-          setMobileMode('map');
-          setDesktopListOpen((current) => !current);
-        }}
-        onFilterOpen={() => {
-          setDesktopListOpen(false);
-          setMobileMode('filter');
-          setSheetSize('full');
-        }}
-        onReset={resetFilters}
-        regionLoading={regionLoading}
-        currentUser={currentUser}
-        onLogin={auth.open}
-        onLogout={() =>
-          void logout()
-            .then(() => setCurrentUser(null))
-            .catch(() => setCurrentUser(null))
-        }
-      />
-
       <div className="panel-result-label">
         <span>{resultLabel}</span>
       </div>
