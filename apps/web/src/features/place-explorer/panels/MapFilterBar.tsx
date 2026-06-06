@@ -56,6 +56,32 @@ export function MapFilterBar({
     <div className="map-filter-bar" role="toolbar" aria-label="지도 필터 도구">
       <MultiSelect
         w={140}
+        size="xs"
+        style={{
+          '--input-height': '32px',
+          '--input-radius': '16px',
+        } as React.CSSProperties}
+        styles={{
+          input: {
+            border: '1.5px solid var(--color-border-mid)',
+            background: 'rgba(255, 255, 255, 0.98)',
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)',
+            paddingTop: '2px',
+            paddingBottom: '2px',
+            minHeight: '32px',
+          },
+          pill: {
+            margin: '1px 2px',
+            height: '22px',
+            fontSize: '11px',
+            fontWeight: 600,
+          }
+        }}
+        comboboxProps={{
+          transitionProps: { transition: 'pop', duration: 150 },
+          withinPortal: true,
+        }}
         data={regions}
         placeholder={regionLoading ? '자치구 로딩' : '자치구'}
         value={selectedRegions}
@@ -77,6 +103,23 @@ export function MapFilterBar({
 
       <Select
         w={120}
+        size="xs"
+        style={{
+          '--input-height': '32px',
+          '--input-radius': '16px',
+        } as React.CSSProperties}
+        styles={{
+          input: {
+            border: '1.5px solid var(--color-border-mid)',
+            background: 'rgba(255, 255, 255, 0.98)',
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)',
+          }
+        }}
+        comboboxProps={{
+          transitionProps: { transition: 'pop', duration: 150 },
+          withinPortal: true,
+        }}
         aria-label="정렬"
         value={sort}
         onChange={(value) => value && onSortChange(value as SortMode)}
