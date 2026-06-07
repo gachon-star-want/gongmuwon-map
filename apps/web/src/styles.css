@@ -450,6 +450,14 @@ button {
   color: var(--color-text-muted);
 }
 
+.place-card-category img,
+.food-category-badge-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
 .place-card-stats {
   display: flex;
   align-items: center;
