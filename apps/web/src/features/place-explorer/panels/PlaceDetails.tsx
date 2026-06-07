@@ -52,7 +52,16 @@ export function PlaceDetails({
   onReport,
   onClosureReport,
 }: PlaceDetailsProps) {
-  const kakaoUrl = `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+  const directionUrl = place.latitude && place.longitude
+    ? `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`
+    : `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+  const largeMapUrl = place.latitude && place.longitude
+    ? `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`
+    : `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+  const roadviewUrl = place.latitude && place.longitude
+    ? `https://map.kakao.com/link/roadview/${place.latitude},${place.longitude}`
+    : null;
+
   const firstSourceUrl = visits
     .map((visit) => safeExternalUrl(visit.source_url))
     .find((url): url is string => Boolean(url));
@@ -98,11 +107,41 @@ export function PlaceDetails({
 
         <section className="detail-title">
           <Title order={2}>{place.name}</Title>
-          <Text c="dimmed">{place.road_address ?? place.road_address_part ?? '주소 확인 중'}</Text>
+          <Group gap={8} align="center" wrap="wrap" style={{ marginTop: 4 }}>
+            <Text size="sm" c="dimmed">{place.road_address ?? place.road_address_part ?? '주소 확인 중'}</Text>
+            {roadviewUrl ? (
+              <Group gap={6} wrap="nowrap">
+                <Text size="xs" c="gray">·</Text>
+                <Text
+                  size="xs"
+                  c="blue"
+                  component="a"
+                  href={largeMapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none', fontWeight: 600 }}
+                >
+                  지도보기
+                </Text>
+                <Text size="xs" c="gray">·</Text>
+                <Text
+                  size="xs"
+                  c="blue"
+                  component="a"
+                  href={roadviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none', fontWeight: 600 }}
+                >
+                  로드뷰
+                </Text>
+              </Group>
+            ) : null}
+          </Group>
         </section>
 
         <div className="detail-primary-actions" aria-label="장소 액션">
-          <Button component="a" href={kakaoUrl} target="_blank" rel="noopener noreferrer" leftSection={<Navigation size={16} />}>
+          <Button component="a" href={directionUrl} target="_blank" rel="noopener noreferrer" leftSection={<Navigation size={16} />}>
             길찾기
           </Button>
           {firstSourceUrl ? (
