@@ -76,7 +76,7 @@ export function PlaceExplorer() {
   const [regionLoading, setRegionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [closedVisible, setClosedVisible] = useState(false);
-  const [desktopListOpen, setDesktopListOpen] = useState(true);
+  const [desktopListOpen, setDesktopListOpen] = useState(false);
   const [mobileMode, setMobileMode] = useState<MobileMode>(() => initialMobileMode(initialQuery));
   const [sheetSize, setSheetSize] = useState<SheetSize>('mid');
   const [authOpened, auth] = useDisclosure(false);
@@ -221,9 +221,6 @@ export function PlaceExplorer() {
         replaceUrlState(next);
         return next;
       });
-      if (nextQ) {
-        setDesktopListOpen(true);
-      }
     }, SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timeout);
   }, [searchDraft]);
@@ -431,11 +428,6 @@ export function PlaceExplorer() {
 
   function changeMobileMode(mode: MobileMode) {
     setMobileMode(mode);
-    if (mode === 'list') {
-      setDesktopListOpen(true);
-    } else if (mode === 'map' || mode === 'filter' || mode === 'info') {
-      setDesktopListOpen(false);
-    }
     if (mode === 'filter') {
       setSheetSize('full');
     } else {
@@ -451,7 +443,6 @@ export function PlaceExplorer() {
           regions={regionOptions}
           selectedRegions={queryState.region}
           onRegionsChange={(region) => {
-            setDesktopListOpen(true);
             updateQueryState({ region });
           }}
           selectedGrades={queryState.grade}
@@ -460,10 +451,6 @@ export function PlaceExplorer() {
           onSortChange={(sort) => updateQueryState({ sort })}
           closedVisible={closedVisible}
           onClosedVisibleChange={setClosedVisible}
-          onListToggle={() => {
-            setMobileMode('map');
-            setDesktopListOpen((current) => !current);
-          }}
           onReset={resetFilters}
           regionLoading={regionLoading}
           currentUser={currentUser}
@@ -557,29 +544,7 @@ export function PlaceExplorer() {
     <div className="map-area-content">
       {mapOverlays}
 
-      {desktopListOpen || mobileMode === 'list' ? (
-        <aside className="list-sheet desktop-layer" aria-label="식당 목록">
-          <PlaceList
-            places={listedPlaces}
-            selectedId={selectedPlace?.id}
-            loading={listLoading}
-            error={listError}
-            resultLabel={resultLabel}
-            hasActiveFilter={hasActiveFilter}
-            query={searchDraft}
-            onQueryChange={setSearchDraft}
-            onSelect={selectPlace}
-            onClose={() => {
-              setDesktopListOpen(false);
-              setMobileMode((current) => (current === 'list' ? 'map' : current));
-            }}
-            onReset={resetFilters}
-            onRetry={retrySearch}
-            showSearch={false}
-            showHeader={false}
-          />
-        </aside>
-      ) : null}
+      /* desktop list sheet removed */
 
       {mobileMode === 'filter' ? (
         <MobileFilterPanel

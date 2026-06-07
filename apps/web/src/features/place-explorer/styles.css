@@ -836,7 +836,8 @@
 /* ── Map Floating Search/Filter UI (Desktop/Mobile) ── */
 .map-search-wrap {
   position: absolute;
-  top: 96px;
+  bottom: 32px;
+  top: auto;
   left: 50%;
   transform: translateX(-50%);
   width: min(560px, calc(100vw - 32px)); /* 찌그러짐을 방지하고 양쪽 패널 아래로 자연스럽게 오버레이되도록 너비 고정 */
@@ -858,6 +859,7 @@
 @media (max-width: 767px) {
   .map-search-wrap {
     top: calc(env(safe-area-inset-top, 0px) + 12px);
+    bottom: auto;
     left: 12px;
     right: 12px;
     width: auto;
