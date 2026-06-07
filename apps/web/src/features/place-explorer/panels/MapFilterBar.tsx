@@ -1,5 +1,5 @@
 import { ActionIcon, MultiSelect, Select, Tooltip } from '@mantine/core';
-import { List, LogIn, RotateCcw, UserRound } from 'lucide-react';
+import { LogIn, RotateCcw, UserRound } from 'lucide-react';
 import type { Grade, SortMode } from '../types';
 import { allGrades, defaultGrades, isDefaultGradeFilter } from '../queryState';
 import type { CurrentUser } from '../../auth/authApi';
@@ -20,7 +20,6 @@ interface MapFilterBarProps {
   onSortChange: (value: SortMode) => void;
   closedVisible: boolean;
   onClosedVisibleChange: (value: boolean) => void;
-  onListToggle: () => void;
   onReset: () => void;
   regionLoading: boolean;
   currentUser?: CurrentUser | null;
@@ -38,7 +37,6 @@ export function MapFilterBar({
   onSortChange,
   closedVisible,
   onClosedVisibleChange,
-  onListToggle,
   onReset,
   regionLoading,
   currentUser,
@@ -136,17 +134,6 @@ export function MapFilterBar({
       >
         폐업 포함
       </button>
-
-      <Tooltip label="목록 열기/닫기">
-        <button
-          className="filter-chip"
-          type="button"
-          aria-label="목록 열기"
-          onClick={onListToggle}
-        >
-          <List size={15} />
-        </button>
-      </Tooltip>
 
       {isFilterActive && (
         <button
