@@ -20,11 +20,6 @@ type PlaceDetailsProps = {
   userLocation?: { latitude: number; longitude: number } | null;
 };
 
-function categoryLabel(category: string | null) {
-  if (!category) return '음식점';
-  return category.split('>').at(-1)?.trim() || category;
-}
-
 function visitSummary(visit: Visit) {
   return [visit.department_name, visit.rank_label, visit.purpose].filter(Boolean).join(' · ');
 }
@@ -101,7 +96,6 @@ export function PlaceDetails({
         <Group justify="space-between" wrap="nowrap" className="detail-header">
           <Group gap={6} wrap="wrap">
             <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
-            <Badge variant="light" color="gray">{categoryLabel(place.category)}</Badge>
             {place.is_closed ? <Badge color="gray">폐업</Badge> : null}
             {!place.is_closed && place.closure_report_count > 0 ? (
               <Badge color="yellow">폐업 제보 {place.closure_report_count}건</Badge>

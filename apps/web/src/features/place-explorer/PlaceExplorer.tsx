@@ -50,6 +50,7 @@ import { useReportFlow } from './hooks/useReportFlow';
 import { MapSearchBar } from './panels/MapSearchBar';
 import { MapFilterBar } from './panels/MapFilterBar';
 import { BottomNav } from './panels/BottomNav';
+import { classifyFoodCategory } from './foodCategories';
 import './styles.css';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -133,7 +134,8 @@ export function PlaceExplorer() {
       if (!queryState.grade.includes(place.grade)) return false;
       if (queryState.region.length && (!place.road_address_part || !queryState.region.includes(place.road_address_part))) return false;
       if (normalizedQuery) {
-        const haystack = `${place.name} ${place.road_address ?? ''} ${place.road_address_part ?? ''} ${place.category ?? ''}`.toLowerCase();
+        const foodCategory = classifyFoodCategory(place);
+        const haystack = `${place.name} ${place.road_address ?? ''} ${place.road_address_part ?? ''} ${place.category ?? ''} ${foodCategory.key} ${foodCategory.label}`.toLowerCase();
         if (!haystack.includes(normalizedQuery)) return false;
       }
       return true;

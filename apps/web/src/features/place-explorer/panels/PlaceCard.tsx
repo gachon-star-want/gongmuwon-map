@@ -2,6 +2,7 @@ import { Building2, CalendarDays, MapPin } from 'lucide-react';
 import type { Place } from '../types';
 import { formatDate } from '../format';
 import { GradeDot } from './GradeDot';
+import { classifyFoodCategory } from '../foodCategories';
 
 interface PlaceCardProps {
   place: Place;
@@ -10,7 +11,7 @@ interface PlaceCardProps {
 }
 
 export function PlaceCard({ place, isSelected, onClick }: PlaceCardProps) {
-  const category = place.category?.split('>').at(-1)?.trim() || place.category || '음식점';
+  const category = classifyFoodCategory(place);
   const region = place.road_address_part || '지역 확인 중';
   const visitCount = place.visit_count_12m ?? 0;
   const departmentCount = place.unique_department_count_12m ?? 0;
@@ -32,7 +33,8 @@ export function PlaceCard({ place, isSelected, onClick }: PlaceCardProps) {
           {place.is_closed ? <span className="place-card-status">폐업</span> : null}
         </div>
         <div className="place-card-category">
-          {category}
+          <img src={category.icon} alt="" aria-hidden />
+          {category.label}
           <span aria-hidden>·</span>
           {region}
         </div>
