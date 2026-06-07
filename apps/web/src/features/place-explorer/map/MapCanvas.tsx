@@ -13,6 +13,7 @@ type MapCanvasProps = {
   onBlankClick: () => void;
   onBoundsChange?: (bbox: [number, number, number, number], level: number) => void;
   desktopListOpen?: boolean;
+  onUserLocationChange?: (coords: { latitude: number; longitude: number }) => void;
 };
 
 type MarkerEntry = {
@@ -29,7 +30,7 @@ type Coordinates = {
 const DEFAULT_MAP_LEVEL = 5;
 const USER_LOCATION_LEVEL = 4;
 
-export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBoundsChange, desktopListOpen = true }: MapCanvasProps) {
+export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBoundsChange, desktopListOpen = true, onUserLocationChange }: MapCanvasProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
   const clustererRef = useRef<any>(null);
@@ -152,6 +153,7 @@ export function MapCanvas({ places, selectedPlace, onSelect, onBlankClick, onBou
       ({ coords }) => {
         const location = { latitude: coords.latitude, longitude: coords.longitude };
         setUserLocation(location);
+        onUserLocationChange?.(location);
         map.setLevel(USER_LOCATION_LEVEL);
         map.setCenter(new kakao.maps.LatLng(location.latitude, location.longitude));
         const bounds = map.getBounds();

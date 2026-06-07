@@ -82,6 +82,7 @@ export function PlaceExplorer() {
   const [authOpened, auth] = useDisclosure(false);
   const [mapBbox, setMapBbox] = useState<[number, number, number, number] | null>(null);
   const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -477,6 +478,7 @@ export function PlaceExplorer() {
           }, 400);
         }}
         desktopListOpen={desktopListOpen}
+        onUserLocationChange={setUserLocation}
       />
 
       {error ? (
@@ -496,6 +498,7 @@ export function PlaceExplorer() {
             onClose={() => clearSelected()}
             onReport={() => setIsTakedownModalOpen(true)}
             onClosureReport={() => setIsClosureModalOpen(true)}
+            userLocation={userLocation}
           />
         ) : null}
       </aside>
@@ -516,6 +519,7 @@ export function PlaceExplorer() {
         selectedGrades={queryState.grade}
         sort={queryState.sort}
         closedVisible={closedVisible}
+        userLocation={userLocation}
         onSizeChange={setSheetSize}
         onSelect={selectPlace}
         onCloseDetail={() => clearSelected()}

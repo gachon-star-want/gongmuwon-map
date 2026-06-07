@@ -27,6 +27,7 @@ type BottomSheetProps = {
   sort: SortMode;
   closedVisible: boolean;
   hidden?: boolean;
+  userLocation?: { latitude: number; longitude: number } | null;
   onSizeChange: (size: SheetSize) => void;
   onSelect: (place: Place) => void;
   onCloseDetail: () => void;
@@ -58,6 +59,7 @@ export function BottomSheet({
   sort,
   closedVisible,
   hidden = false,
+  userLocation,
   onSizeChange,
   onSelect,
   onCloseDetail,
@@ -126,6 +128,7 @@ export function BottomSheet({
             onClose={onCloseDetail}
             onReport={onReport}
             onClosureReport={onClosureReport}
+            userLocation={userLocation}
           />
         </>
       ) : null}
