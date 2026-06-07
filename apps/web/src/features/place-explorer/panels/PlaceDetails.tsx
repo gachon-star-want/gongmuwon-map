@@ -10,7 +10,6 @@ import type { Place, Visit } from '../types';
 import { formatDate, gradeClass, gradeLabel } from '../format';
 import { Metric } from './metric';
 import { safeExternalUrl } from '../../../shared/safeExternalUrl';
-import { classifyFoodCategory } from '../foodCategories';
 
 type PlaceDetailsProps = {
   place: Place;
@@ -52,7 +51,6 @@ export function PlaceDetails({
   const firstSourceUrl = visits
     .map((visit) => safeExternalUrl(visit.source_url))
     .find((url): url is string => Boolean(url));
-  const foodCategory = classifyFoodCategory(place);
   const bannerImage = place.photo_url || getFallbackImage(place.category);
 
   return (
@@ -85,9 +83,6 @@ export function PlaceDetails({
         <Group justify="space-between" wrap="nowrap" className="detail-header">
           <Group gap={6} wrap="wrap">
             <Badge className={`grade-badge grade-${gradeClass(place.grade)}`}>{gradeLabel(place.grade)}</Badge>
-            <Badge variant="light" color="gray" leftSection={<img className="food-category-badge-icon" src={foodCategory.icon} alt="" aria-hidden />}>
-              {foodCategory.label}
-            </Badge>
             {place.is_closed ? <Badge color="gray">폐업</Badge> : null}
             {!place.is_closed && place.closure_report_count > 0 ? (
               <Badge color="yellow">폐업 제보 {place.closure_report_count}건</Badge>
