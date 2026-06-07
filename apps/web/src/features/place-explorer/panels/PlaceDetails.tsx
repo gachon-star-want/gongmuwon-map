@@ -17,6 +17,7 @@ type PlaceDetailsProps = {
   onClose: () => void;
   onReport: () => void;
   onClosureReport: () => void;
+  userLocation?: { latitude: number; longitude: number } | null;
 };
 
 function categoryLabel(category: string | null) {
@@ -51,9 +52,12 @@ export function PlaceDetails({
   onClose,
   onReport,
   onClosureReport,
+  userLocation,
 }: PlaceDetailsProps) {
   const directionUrl = place.latitude && place.longitude
-    ? `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`
+    ? (userLocation
+        ? `https://map.kakao.com/link/from/내위치,${userLocation.latitude},${userLocation.longitude}/to/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`
+        : `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`)
     : `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
   const largeMapUrl = place.latitude && place.longitude
     ? `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.latitude},${place.longitude}`
