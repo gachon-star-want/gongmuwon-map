@@ -21,13 +21,13 @@ describe('queryState', () => {
   });
 
   it('round trips query state', () => {
-    const raw = parseQueryState('?q=카페&region=서울 강남구&grade=★★★,bad&sort=visits&place=abc');
+    const raw = parseQueryState('?q=카페&region=서울 강남구&grades=3&sort=visits&place=abc');
     const serialized = serializeQueryState(raw);
     expect(serialized).toContain('q=%EC%B9%B4%ED%8E%98');
     expect(serialized).toContain('region=%EC%84%9C%EC%9A%B8+%EA%B0%95%EB%82%A8%EA%B5%AC');
     expect(serialized).toContain('sort=visits');
     expect(serialized).toContain('place=abc');
-    expect(serialized).not.toContain('bad');
+    expect(serialized).toContain('grades=3');
     expect(raw.grade).toEqual(['★★★']);
   });
 
@@ -75,5 +75,34 @@ describe('queryState', () => {
       sort: 'score',
       placeId: 'p1',
     });
+  });
+
+  // 새 요구사항 테스트 추가
+  it('serializes default query to empty string', () => {
+    const state = parseQueryState('');
+    const serialized = serializeQueryState(state);
+    expect(serialized).toBe('');
+  });
+
+  it('serializes non-default grades to grades=3,2,pick or equivalent', () => {
+    const state = parseQueryState('?grades=3,pick');
+    const serialized = serializeQueryState(state);
+    expect(serialized).toBe('?grades=3%2Cpick');
+  });
+
+  it('parses old star-grade URLs successfully (backward compatibility)', () => {
+    const state = parseQueryState('?grade=★★★,✦');
+    expect(state.grade).toEqual(['★★★', '✦']);
+  });
+
+  it('ignores invalid grade values safely', () => {
+    const state = parseQueryState('?grades=3,bad,pick');
+    expect(state.grade).toEqual(['★★★', '✦']);
+  });
+
+  it('canonical default removes grade/grades param from URL', () => {
+    const state = parseQueryState('?grades=3,2,pick');
+    const serialized = serializeQueryState(state);
+    expect(serialized).toBe('');
   });
 });
