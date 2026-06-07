@@ -49,7 +49,6 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useReportFlow } from './hooks/useReportFlow';
 import { MapSearchBar } from './panels/MapSearchBar';
 import { MapFilterBar } from './panels/MapFilterBar';
-import { SourcePill } from './panels/SourcePill';
 import { BottomNav } from './panels/BottomNav';
 import './styles.css';
 
@@ -85,13 +84,21 @@ export function PlaceExplorer() {
   const bboxDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // 첫 진입 시 URL에 place 파라미터가 있다면 제거하여 상세 카드가 뜨지 않도록 처리
     const params = new URLSearchParams(window.location.search);
+    let changed = false;
     if (params.has('place')) {
       params.delete('place');
-      const newSearch = params.toString();
-      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}`;
-      window.history.replaceState(null, '', newUrl);
+      changed = true;
+    }
+
+    const parsedState = parseQueryState(window.location.search, window.location.pathname);
+    const serializedQuery = serializeQueryState(parsedState);
+    const currentPath = resolveExplorerPathname(window.location.pathname, parsedState);
+    const targetUrl = `${currentPath}${serializedQuery}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (currentUrl !== targetUrl || changed) {
+      window.history.replaceState(null, '', targetUrl);
     }
   }, []);
 
@@ -539,8 +546,6 @@ export function PlaceExplorer() {
         onClosureReport={() => setIsClosureModalOpen(true)}
         hidden={isModalOpen}
       />
-
-      <SourcePill sheetOpen={(mobileMode !== 'map' || Boolean(selectedPlace)) && !isModalOpen} />
 
       {!isModalOpen ? (
         <BottomNav mode={mobileMode} onChange={changeMobileMode} hasSelection={Boolean(selectedPlace)} />
