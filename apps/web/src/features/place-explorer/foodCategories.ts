@@ -81,6 +81,10 @@ export type FoodCategory = {
 
 const DEFAULT_CATEGORY: FoodCategoryKey = 'korean-set-meal';
 
+type FoodCategoryInput = Pick<Place, 'name' | 'category'> & {
+  menu_items?: readonly string[] | null;
+};
+
 const CATEGORY_KEYWORDS: Record<FoodCategoryKey, readonly string[]> = {
   'korean-set-meal': [
     '한식',
@@ -195,7 +199,7 @@ const PRIORITY: readonly FoodCategoryKey[] = [
   'korean-set-meal',
 ];
 
-function textForClassification(place: Pick<Place, 'name' | 'category' | 'menu_items'>) {
+function textForClassification(place: FoodCategoryInput) {
   return [
     place.name,
     place.category,
@@ -206,7 +210,7 @@ function textForClassification(place: Pick<Place, 'name' | 'category' | 'menu_it
     .toLowerCase();
 }
 
-export function classifyFoodCategory(place: Pick<Place, 'name' | 'category' | 'menu_items'>): FoodCategory {
+export function classifyFoodCategory(place: FoodCategoryInput): FoodCategory {
   const text = textForClassification(place);
   let bestKey: FoodCategoryKey = DEFAULT_CATEGORY;
   let bestScore = 0;
