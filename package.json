@@ -34,6 +34,8 @@
     "audit:markers": "node scripts/audit-markers.mjs",
     "remediate:markers": "node scripts/remediate-marker-audit.mjs",
     "report:db-baseline": "node scripts/report-db-baseline.mjs",
-    "report:nationwide-verification": "node scripts/build-nationwide-verification-report.mjs"
+    "report:nationwide-verification": "node scripts/build-nationwide-verification-report.mjs",
+    "backfill:r2-sources": "node scripts/backfill-r2-sources.mjs",
+    "backfill:nationwide": "node -e \"const { spawn } = require('child_process'); const fs = require('fs'); const readDotEnv = (p) => fs.existsSync(p) ? fs.readFileSync(p, 'utf8').split('\\n').reduce((env, l) => { const m = l.trim().match(/^([A-Z0-9_]+)=('|\\\")?(.*?)\\2$/); if (m) env[m[1]] = m[3]; return env; }, {}) : {}; const env = { ...process.env, ...readDotEnv('.env'), ...readDotEnv('.env.local'), PYTHONUNBUFFERED: '1' }; const child = spawn('uv', ['run', '--project', 'services/pipeline', 'public-officer-pipeline', 'run-agencies', '--scope', 'nationwide', '--since', '2024-01-01', '--allow-deterministic-normalizer', '--write-target', 'production', '--confirm-production-write', '--allow-production-write', '--production-gate-report=audit_results/marker-audit.md', '--concurrency', '6'], { env }); child.stdout.on('data', d => process.stdout.write(d)); child.stderr.on('data', d => process.stderr.write(d)); child.on('close', c => console.log('Exit:', c));\""
   }
 }
