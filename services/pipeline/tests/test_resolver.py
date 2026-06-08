@@ -259,3 +259,20 @@ async def test_resolver_resolve_uses_coordinates_and_falls_back(tmp_path: Path) 
         assert fallback_call_found is True
 
     await resolver.close()
+
+
+def test_policy_validate_candidate_name_similarity() -> None:
+    policy = DefaultPlaceResolutionPolicy()
+
+    # 1. Matches with common Korean characters should be accepted
+    place = PlaceRaw(name="반가안동국시")
+    doc_match = {"place_name": "반가안동국시 시청점"}
+    assert policy.validate_candidate(place, doc_match) is True
+
+    # 2. Matches with disjoint Korean characters should be rejected
+    doc_disjoint = {"place_name": "스타벅스 시청점"}
+    assert policy.validate_candidate(place, doc_disjoint) is False
+
+    # 3. Matches without Korean characters in one of the names should be accepted (pass-through)
+    doc_english = {"place_name": "McDonalds"}
+    assert policy.validate_candidate(place, doc_english) is True

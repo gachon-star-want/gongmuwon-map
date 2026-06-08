@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import handler from '../v1/places';
 import placeByIdHandler from '../v1/places/[id]';
+import searchHandler from '../v1/places/search';
 import { readQuery } from './db';
 
 vi.mock('./db', () => ({
@@ -114,5 +115,35 @@ describe('/api/v1/places/[id]', () => {
     expect(sql).toContain('id, name, road_address');
     expect(sql).not.toContain('valid_place');
     expect(sql).not.toContain('chain_brand');
+  });
+});
+
+describe('/api/v1/places/search', () => {
+  beforeEach(() => {
+    vi.mocked(readQuery).mockReset();
+    vi.mocked(readQuery).mockResolvedValue({ rows: [] } as never);
+  });
+
+  it('rejects queries shorter than 2 characters before querying the database', async () => {
+    const res = mockResponse();
+    await searchHandler(
+      { method: 'GET', query: { q: '가', grade: '★★★' }, headers: {} } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'query_too_short' });
+    expect(readQuery).not.toHaveBeenCalled();
+  });
+
+  it('accepts queries of 2 or more characters', async () => {
+    const res = mockResponse();
+    await searchHandler(
+      { method: 'GET', query: { q: '카페', grade: '★★★' }, headers: {} } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(readQuery).toHaveBeenCalledTimes(1);
   });
 });

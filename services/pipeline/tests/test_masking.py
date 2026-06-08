@@ -381,6 +381,9 @@ def test_sanitize_raw_excerpt_masks_obvious_name_rank_pairs() -> None:
     assert sanitize_raw_excerpt("박영희구청장 외 2명") == "○○구청장 외 2명"
     assert sanitize_raw_excerpt("김영희 주무관") == "○○ 주무관"
     assert sanitize_raw_excerpt("박철수 직원") == "○○ 직원"
+    assert sanitize_raw_excerpt("이동수 행정관") == "○○ 행정관"
+    assert sanitize_raw_excerpt("최영희 연구사") == "○○ 연구사"
+    assert sanitize_raw_excerpt("강민호 지도사") == "○○ 지도사"
 
 
 def test_department_name_with_name_rank_is_rejected() -> None:
