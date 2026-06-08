@@ -125,6 +125,13 @@ export async function loadPlaces(
 }
 
 export async function searchPlaces(query: PlaceQueryState, signal?: AbortSignal): Promise<SearchResponse> {
+  if (query.q !== null && query.q !== undefined && query.q.trim().length < 2) {
+    return {
+      items: [],
+      next_cursor: null,
+      source_notice: '',
+    };
+  }
   const params = new URLSearchParams({
     limit: '100',
     sort: query.sort,

@@ -43,6 +43,9 @@ APPOINTED_RANKS = (
     "동장",
     "주무관",
     "직원",
+    "행정관",
+    "연구사",
+    "지도사",
 )
 ELECTED_RANKS = ALLOWED_ELECTED_RANKS
 

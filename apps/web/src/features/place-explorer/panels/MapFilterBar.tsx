@@ -5,7 +5,7 @@ import { allGrades, defaultGrades, isDefaultGradeFilter } from '../queryState';
 import type { CurrentUser } from '../../auth/authApi';
 
 const sortOptions: { value: SortMode; label: string }[] = [
-  { value: 'score', label: '추천순' },
+  { value: 'score', label: '기본 순' },
   { value: 'recent', label: '최근 방문순' },
   { value: 'visits', label: '방문 많은순' },
 ];
@@ -96,7 +96,7 @@ export function MapFilterBar({
         aria-pressed={publicPickSelected}
         onClick={() => onGradesChange(publicPickSelected ? allGrades : defaultGrades)}
       >
-        공무원픽
+        다회 방문
       </button>
 
       <Select

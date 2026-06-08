@@ -627,7 +627,7 @@ export function PlaceExplorer() {
           >
             접수
           </Button>
-          {requestState === 'done' ? <Text size="sm">접수되었습니다.</Text> : null}
+          {requestState === 'done' ? <Text size="sm">접수되었습니다. 필요한 경우 임시 비공개 처리 후 72시간 내 검토합니다.</Text> : null}
           {requestState === 'error' ? (
             <Text size="sm" c="red">
               접수에 실패했습니다.

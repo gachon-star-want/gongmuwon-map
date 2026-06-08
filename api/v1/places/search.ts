@@ -47,6 +47,9 @@ export default publicReadRoute(async function handler({ req }) {
   if (!grades || !ALLOWED_SORTS.has(sort)) {
     return { status: 400, body: { error: 'invalid_query' } };
   }
+  if (q !== null && q.length < 2) {
+    return { status: 400, body: { error: 'query_too_short' } };
+  }
 
   const qPattern = q ? `%${q}%` : null;
   const qPrefix = q ? `${q}%` : null;

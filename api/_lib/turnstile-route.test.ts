@@ -13,6 +13,19 @@ vi.mock('./db', () => ({
   writeQuery: vi.fn(),
 }));
 
+vi.mock('./turnstile', () => ({
+  turnstileTokenFromBody: (body: any) => body?.turnstile_token ?? '',
+  verifyTurnstileToken: vi.fn(async (req, token, expectedAction) => {
+    if (!token) {
+      return { ok: false, status: 400, error: 'turnstile_required' };
+    }
+    if (token === 'invalid-token') {
+      return { ok: false, status: 403, error: 'turnstile_failed' };
+    }
+    return { ok: true };
+  }),
+}));
+
 type MockResponse = {
   headers: Map<string, unknown>;
   statusCode?: number;
@@ -206,5 +219,56 @@ describe('turnstile-protected write routes', () => {
     expect(res.statusCode).toBe(403);
     expect(res.body).toEqual({ error: 'forbidden' });
     expect(mockedWriteQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejects takedown requests with invalid fields even with Turnstile token', async () => {
+    const res = mockResponse();
+    await takedownRequestHandler(
+      {
+        method: 'POST',
+        query: {},
+        headers: trustedWriteHeaders,
+        body: {
+          place_id: '11111111-1111-1111-1111-111111111111',
+          reason: '너무 짧음',
+          email: 'invalid-email',
+          turnstile_token: 'valid-token',
+        },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ error: 'invalid_request' });
+    expect(mockedWriteQuery).not.toHaveBeenCalled();
+  });
+
+  it('accepts takedown requests with valid fields and writes to DB', async () => {
+    const res = mockResponse();
+    mockedWriteQuery.mockResolvedValueOnce({ rows: [{ result: { ok: true, request_id: 'req-123', place_id: '11111111-1111-1111-1111-111111111111', hidden: true } }] } as any);
+    await takedownRequestHandler(
+      {
+        method: 'POST',
+        query: {},
+        headers: trustedWriteHeaders,
+        body: {
+          place_id: '11111111-1111-1111-1111-111111111111',
+          reason: '식당 정보 오류: '.padEnd(60, '가'),
+          email: 'owner@example.com',
+          turnstile_token: 'valid-token',
+        },
+      } as never,
+      res as never,
+    );
+
+    expect(res.body).toEqual({ ok: true, request_id: 'req-123', place_id: '11111111-1111-1111-1111-111111111111', hidden: true });
+    expect(mockedWriteQuery).toHaveBeenCalledWith(
+      'SELECT public.request_takedown($1::uuid, $2::text, $3::text) AS result',
+      [
+        '11111111-1111-1111-1111-111111111111',
+        '식당 정보 오류: '.padEnd(60, '가'),
+        'owner@example.com',
+      ],
+    );
   });
 });

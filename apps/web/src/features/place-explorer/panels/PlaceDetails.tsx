@@ -221,9 +221,9 @@ export function PlaceDetails({
                           href={sourceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`${place.name} 방문 기록 공공기관 원문`}
+                          aria-label={`${place.name} 방문 기록 공공기관 원문: ${visit.source_title || ''}`}
                         >
-                          <ExternalLink size={13} aria-hidden /> 공공기관 원문
+                          <ExternalLink size={13} aria-hidden /> {visit.source_title || '공공기관 원문'}
                         </a>
                       ) : (
                         <span className="source-link-unavailable">

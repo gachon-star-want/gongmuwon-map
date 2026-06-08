@@ -331,6 +331,21 @@ class DefaultPlaceResolutionPolicy(PlaceResolutionPolicy):
         return (food_docs or documents)[0]
 
     def validate_candidate(self, place: PlaceRaw, document: dict[str, Any], agency: Agency | None = None) -> bool:
+        # Name similarity verification: reject candidates that have no common Korean characters
+        # when both normalized names contain Korean characters.
+        place_norm = normalize_name(place.name)
+        cand_name = document.get("place_name")
+        if cand_name:
+            cand_norm = normalize_name(cand_name)
+            if place_norm and cand_norm:
+                place_ko = "".join(re.findall(r"[가-힣]", place_norm))
+                cand_ko = "".join(re.findall(r"[가-힣]", cand_norm))
+                if place_ko and cand_ko:
+                    intersection_size = len(set(place_ko).intersection(set(cand_ko)))
+                    min_required = min(2, len(place_ko), len(cand_ko))
+                    if intersection_size < min_required:
+                        return False
+
         validation_latitude = _to_float(document.get("_validation_latitude"))
         validation_longitude = _to_float(document.get("_validation_longitude"))
         if self.source_coordinates and (validation_latitude is None or validation_longitude is None):

@@ -67,6 +67,23 @@ describe('publicData', () => {
     expect(calledUrl).toContain('limit=100');
   });
 
+  it('returns empty result without fetching if search query length is less than 2', async () => {
+    const fetchMock = vi.fn() as ReturnType<typeof vi.fn>;
+    vi.stubGlobal('fetch', fetchMock);
+
+    const query: PlaceQueryState = {
+      q: '가',
+      region: [],
+      grade: ['★★★'],
+      sort: 'score',
+      placeId: null,
+    };
+
+    const result = await searchPlaces(query);
+    expect(result).toEqual({ items: [], next_cursor: null, source_notice: '' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('loads regions, place by id, and visits', async () => {
     const regions = { items: [], source_notice: 'ok' };
     const place = { id: 'p1', name: 'Place 1' };
