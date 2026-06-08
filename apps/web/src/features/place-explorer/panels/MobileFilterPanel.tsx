@@ -43,7 +43,7 @@ export function MobileFilterPanel({
       </div>
       <MultiSelect data={regions} label="자치구" value={selectedRegions} onChange={onRegionsChange} searchable clearable />
       <div>
-        <div className="panel-label">추천 신호</div>
+        <div className="panel-label">방문 빈도 신호</div>
         <div className="grade-chip-group mobile-grade-group">
           <button
             className="filter-chip public-pick-chip"
@@ -52,7 +52,7 @@ export function MobileFilterPanel({
             aria-pressed={publicPickSelected}
             onClick={() => onGradesChange(publicPickSelected ? allGrades : defaultGrades)}
           >
-            공무원픽
+            다회 방문
           </button>
         </div>
       </div>
@@ -60,7 +60,7 @@ export function MobileFilterPanel({
         value={sort}
         onChange={(value) => onSortChange(value as SortMode)}
         data={[
-          { value: 'score', label: '추천순' },
+          { value: 'score', label: '기본 순' },
           { value: 'recent', label: '최근 방문순' },
           { value: 'visits', label: '방문 많은순' },
         ]}

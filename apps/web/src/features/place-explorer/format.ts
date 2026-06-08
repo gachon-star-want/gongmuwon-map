@@ -22,16 +22,16 @@ export function formatDate(value: string | null | undefined): string | null {
 }
 
 export function gradeLabel(grade: string): string {
-  if (grade === '★★★') return '강추';
-  if (grade === '★★') return '추천';
-  if (grade === '★') return '중립';
+  if (grade === '★★★') return '최다 방문';
+  if (grade === '★★') return '자주 방문';
+  if (grade === '★') return '일반 방문';
   return '신규';
 }
 
 export function markerLabel(grade: string): string {
-  if (grade === '★★★') return '강추';
-  if (grade === '★★') return '추천';
-  if (grade === '★') return '일반';
+  if (grade === '★★★') return '최다 방문';
+  if (grade === '★★') return '자주 방문';
+  if (grade === '★') return '일반 방문';
   return '신규';
 }
 
