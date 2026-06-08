@@ -194,37 +194,49 @@ class PostgresLoader:
         return UUID(str(row["id"]))
 
     async def _upsert_place(self, conn: psycopg.AsyncConnection[Any], place: ResolvedPlace) -> UUID:
+        existing_id = None
         if place.kakao_place_id:
-            row = await self._fetch_one(
-                conn,
+            cursor = await conn.execute(
+                "SELECT id FROM public.places WHERE kakao_place_id = %s OR natural_key = %s LIMIT 1",
+                (place.kakao_place_id, place.natural_key)
+            )
+            row = await cursor.fetchone()
+            if row:
+                existing_id = UUID(str(row["id"]))
+        else:
+            cursor = await conn.execute(
+                "SELECT id FROM public.places WHERE natural_key = %s LIMIT 1",
+                (place.natural_key,)
+            )
+            row = await cursor.fetchone()
+            if row:
+                existing_id = UUID(str(row["id"]))
+
+        if existing_id:
+            await conn.execute(
                 """
-                INSERT INTO public.places (
-                  kakao_place_id, natural_key, name, road_address, jibun_address,
-                  road_address_part, latitude, longitude, category, phone,
-                  valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (kakao_place_id) DO UPDATE SET
-                  name = EXCLUDED.name,
-                  road_address = EXCLUDED.road_address,
-                  jibun_address = EXCLUDED.jibun_address,
-                  road_address_part = EXCLUDED.road_address_part,
-                  latitude = EXCLUDED.latitude,
-                  longitude = EXCLUDED.longitude,
-                  category = EXCLUDED.category,
-                  phone = EXCLUDED.phone,
-                  valid_place = EXCLUDED.valid_place,
-                  is_restaurant_like = EXCLUDED.is_restaurant_like,
-                  is_chain = EXCLUDED.is_chain,
-                  is_large_chain = EXCLUDED.is_large_chain,
-                  chain_brand = EXCLUDED.chain_brand,
-                  chain_scale = EXCLUDED.chain_scale,
+                UPDATE public.places
+                SET
+                  kakao_place_id = COALESCE(%s, kakao_place_id),
+                  name = %s,
+                  road_address = %s,
+                  jibun_address = %s,
+                  road_address_part = %s,
+                  latitude = %s,
+                  longitude = %s,
+                  category = %s,
+                  phone = %s,
+                  valid_place = %s,
+                  is_restaurant_like = %s,
+                  is_chain = %s,
+                  is_large_chain = %s,
+                  chain_brand = %s,
+                  chain_scale = %s,
                   updated_at = now()
-                RETURNING id
+                WHERE id = %s
                 """,
                 (
                     place.kakao_place_id,
-                    place.natural_key,
                     place.name,
                     place.road_address,
                     place.jibun_address,
@@ -239,58 +251,174 @@ class PostgresLoader:
                     place.is_large_chain,
                     place.chain_brand,
                     place.chain_scale,
-                ),
+                    existing_id,
+                )
             )
-            return UUID(str(row["id"]))
+            return existing_id
 
-        row = await self._fetch_one(
-            conn,
-            """
-            INSERT INTO public.places (
-              kakao_place_id, natural_key, name, road_address, jibun_address,
-              road_address_part, latitude, longitude, category, phone,
-              valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (natural_key) DO UPDATE SET
-              kakao_place_id = COALESCE(EXCLUDED.kakao_place_id, public.places.kakao_place_id),
-              name = EXCLUDED.name,
-              road_address = EXCLUDED.road_address,
-              jibun_address = EXCLUDED.jibun_address,
-              road_address_part = EXCLUDED.road_address_part,
-              latitude = EXCLUDED.latitude,
-              longitude = EXCLUDED.longitude,
-              category = EXCLUDED.category,
-              phone = EXCLUDED.phone,
-              valid_place = EXCLUDED.valid_place,
-              is_restaurant_like = EXCLUDED.is_restaurant_like,
-              is_chain = EXCLUDED.is_chain,
-              is_large_chain = EXCLUDED.is_large_chain,
-              chain_brand = EXCLUDED.chain_brand,
-              chain_scale = EXCLUDED.chain_scale,
-              updated_at = now()
-            RETURNING id
-            """,
-            (
-                place.kakao_place_id,
-                place.natural_key,
-                place.name,
-                place.road_address,
-                place.jibun_address,
-                place.road_address_part,
-                place.latitude,
-                place.longitude,
-                place.category,
-                place.phone,
-                place.valid_place,
-                place.is_restaurant_like,
-                place.is_chain,
-                place.is_large_chain,
-                place.chain_brand,
-                place.chain_scale,
-            ),
-        )
-        return UUID(str(row["id"]))
+        try:
+            async with conn.transaction():
+                if place.kakao_place_id:
+                    row = await self._fetch_one(
+                        conn,
+                        """
+                        INSERT INTO public.places (
+                          kakao_place_id, natural_key, name, road_address, jibun_address,
+                          road_address_part, latitude, longitude, category, phone,
+                          valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (kakao_place_id) DO UPDATE SET
+                          natural_key = EXCLUDED.natural_key,
+                          name = EXCLUDED.name,
+                          road_address = EXCLUDED.road_address,
+                          jibun_address = EXCLUDED.jibun_address,
+                          road_address_part = EXCLUDED.road_address_part,
+                          latitude = EXCLUDED.latitude,
+                          longitude = EXCLUDED.longitude,
+                          category = EXCLUDED.category,
+                          phone = EXCLUDED.phone,
+                          valid_place = EXCLUDED.valid_place,
+                          is_restaurant_like = EXCLUDED.is_restaurant_like,
+                          is_chain = EXCLUDED.is_chain,
+                          is_large_chain = EXCLUDED.is_large_chain,
+                          chain_brand = EXCLUDED.chain_brand,
+                          chain_scale = EXCLUDED.chain_scale,
+                          updated_at = now()
+                        RETURNING id
+                        """,
+                        (
+                            place.kakao_place_id,
+                            place.natural_key,
+                            place.name,
+                            place.road_address,
+                            place.jibun_address,
+                            place.road_address_part,
+                            place.latitude,
+                            place.longitude,
+                            place.category,
+                            place.phone,
+                            place.valid_place,
+                            place.is_restaurant_like,
+                            place.is_chain,
+                            place.is_large_chain,
+                            place.chain_brand,
+                            place.chain_scale,
+                        ),
+                    )
+                    return UUID(str(row["id"]))
+                else:
+                    row = await self._fetch_one(
+                        conn,
+                        """
+                        INSERT INTO public.places (
+                          kakao_place_id, natural_key, name, road_address, jibun_address,
+                          road_address_part, latitude, longitude, category, phone,
+                          valid_place, is_restaurant_like, is_chain, is_large_chain, chain_brand, chain_scale
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (natural_key) DO UPDATE SET
+                          kakao_place_id = COALESCE(EXCLUDED.kakao_place_id, public.places.kakao_place_id),
+                          name = EXCLUDED.name,
+                          road_address = EXCLUDED.road_address,
+                          jibun_address = EXCLUDED.jibun_address,
+                          road_address_part = EXCLUDED.road_address_part,
+                          latitude = EXCLUDED.latitude,
+                          longitude = EXCLUDED.longitude,
+                          category = EXCLUDED.category,
+                          phone = EXCLUDED.phone,
+                          valid_place = EXCLUDED.valid_place,
+                          is_restaurant_like = EXCLUDED.is_restaurant_like,
+                          is_chain = EXCLUDED.is_chain,
+                          is_large_chain = EXCLUDED.is_large_chain,
+                          chain_brand = EXCLUDED.chain_brand,
+                          chain_scale = EXCLUDED.chain_scale,
+                          updated_at = now()
+                        RETURNING id
+                        """,
+                        (
+                            place.kakao_place_id,
+                            place.natural_key,
+                            place.name,
+                            place.road_address,
+                            place.jibun_address,
+                            place.road_address_part,
+                            place.latitude,
+                            place.longitude,
+                            place.category,
+                            place.phone,
+                            place.valid_place,
+                            place.is_restaurant_like,
+                            place.is_chain,
+                            place.is_large_chain,
+                            place.chain_brand,
+                            place.chain_scale,
+                        ),
+                    )
+                    return UUID(str(row["id"]))
+        except psycopg.errors.UniqueViolation:
+            if place.kakao_place_id:
+                cursor = await conn.execute(
+                    "SELECT id FROM public.places WHERE kakao_place_id = %s OR natural_key = %s LIMIT 1",
+                    (place.kakao_place_id, place.natural_key)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    existing_id = UUID(str(row["id"]))
+            else:
+                cursor = await conn.execute(
+                    "SELECT id FROM public.places WHERE natural_key = %s LIMIT 1",
+                    (place.natural_key,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    existing_id = UUID(str(row["id"]))
+
+            if existing_id:
+                await conn.execute(
+                    """
+                    UPDATE public.places
+                    SET
+                      kakao_place_id = COALESCE(%s, kakao_place_id),
+                      name = %s,
+                      road_address = %s,
+                      jibun_address = %s,
+                      road_address_part = %s,
+                      latitude = %s,
+                      longitude = %s,
+                      category = %s,
+                      phone = %s,
+                      valid_place = %s,
+                      is_restaurant_like = %s,
+                      is_chain = %s,
+                      is_large_chain = %s,
+                      chain_brand = %s,
+                      chain_scale = %s,
+                      updated_at = now()
+                    WHERE id = %s
+                    """,
+                    (
+                        place.kakao_place_id,
+                        place.name,
+                        place.road_address,
+                        place.jibun_address,
+                        place.road_address_part,
+                        place.latitude,
+                        place.longitude,
+                        place.category,
+                        place.phone,
+                        place.valid_place,
+                        place.is_restaurant_like,
+                        place.is_chain,
+                        place.is_large_chain,
+                        place.chain_brand,
+                        place.chain_scale,
+                        existing_id,
+                    )
+                )
+                return existing_id
+            else:
+                raise
 
     async def _upsert_visit(
         self,
