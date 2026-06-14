@@ -147,6 +147,8 @@ v1엔 자동 룰 + 수동 처리. v1.1에 운영자 대시보드:
 - ✅ 별도 커뮤니티 게시판은 로그인 작성으로만 운영 가능 ([ADR-012](adr/ADR-012-community-auth-and-lightweight-reactions.md))
 - ❌ 익명·운영자 미공개 (= 가처분 송달 불가능 상황 회피 시도)
 - ❌ "광고가 아니다, 진짜 맛집이다"식 마케팅 표현
+- ❌ '동네'(거주적합도) 절대등급(A/B/C·"나쁜 동네") 부여 — 시군구 내 상위 N% 상대표현만, 하위 동네는 등급 미부여 ([ADR-015](adr/ADR-015-livability-score-formula.md), [ADR-017](adr/ADR-017-livability-integration-identity.md))
+- ❌ 거주적합도 점수에 공무원 방문 데이터 혼합 — 두 데이터는 점수·API 완전 분리, 크로스링크는 단방향 보조만 ([ADR-017](adr/ADR-017-livability-integration-identity.md))
 
 ## 모니터링 체크리스트 (운영자 매주)
 

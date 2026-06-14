@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
 import { AppShell } from './AppShell';
 import { CommunityPage } from '../features/community/CommunityPage';
+import { NeighborhoodPage } from '../features/neighborhood/NeighborhoodPage';
 import { PlaceExplorer } from '../features/place-explorer/PlaceExplorer';
 import { StaticPage } from './staticPages';
 
@@ -28,7 +29,16 @@ export function App(): ReactElement {
       </>
     );
   }
-  
+
+  if (path === '/neighborhood') {
+    return (
+      <>
+        <ErrorBoundary key={path}><NeighborhoodPage /></ErrorBoundary>
+        <Analytics />
+      </>
+    );
+  }
+
   return (
     <>
       <AppShell>
