@@ -19,6 +19,11 @@ import apiAgencies from './v1/agencies';
 import apiAgencyById from './v1/agencies/[id]';
 import apiSitemap from './sitemap';
 import apiTakedownRequest from './takedown-request';
+import apiRegionsTree from './v1/regions/tree';
+import apiNeighborhoodsSubregions from './v1/neighborhoods/subregions';
+import apiNeighborhoodsDetail from './v1/neighborhoods/detail';
+import apiNeighborhoodsBoundary from './v1/neighborhoods/boundary';
+import apiCronRefreshScores from './cron/refresh-scores';
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
@@ -41,10 +46,15 @@ const routeTable: [string[], RouteEntry][] = [
   [['v1', 'places', ':id', 'visits'], { handler: apiPlaceVisits, hasId: true }],
   [['v1', 'places', ':id'], { handler: apiPlacesById, hasId: true }],
   [['v1', 'regions'], { handler: apiRegions }],
+  [['v1', 'regions', 'tree'], { handler: apiRegionsTree }],
+  [['v1', 'neighborhoods', 'subregions'], { handler: apiNeighborhoodsSubregions }],
+  [['v1', 'neighborhoods', 'detail'], { handler: apiNeighborhoodsDetail }],
+  [['v1', 'neighborhoods', 'boundary'], { handler: apiNeighborhoodsBoundary }],
   [['v1', 'stats', 'summary'], { handler: apiStatsSummary }],
 
   [['sitemap'], { handler: apiSitemap }],
   [['cron', 'recompute-grades'], { handler: apiCronRecomputeGrades }],
+  [['cron', 'refresh-scores'], { handler: apiCronRefreshScores }],
   [['closure-report'], { handler: apiClosureReport }],
   [['takedown-request'], { handler: apiTakedownRequest }],
 ];

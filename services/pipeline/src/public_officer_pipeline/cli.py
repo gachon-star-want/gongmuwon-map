@@ -276,6 +276,19 @@ def main(argv: list[str] | None = None) -> int:
     refresh_views = subparsers.add_parser("refresh-views", help="Refresh grade and agency stats materialized views")
     _add_write_target_args(refresh_views)
 
+    livability = subparsers.add_parser(
+        "run-livability",
+        help="Ingest SGIS+KOSIS livability metrics for 시군구 adm_cd(s) (예: 33020 충주)",
+    )
+    livability.add_argument(
+        "--adm-cd",
+        action="append",
+        required=True,
+        dest="adm_cd",
+        help="시군구 코드. 반복 지정 가능 (예: --adm-cd 33020)",
+    )
+    _add_write_target_args(livability)
+
     args = parser.parse_args(argv)
     if args.command == "run-seoul-city":
         write_target_error = _validate_write_target(args)
@@ -348,6 +361,11 @@ def main(argv: list[str] | None = None) -> int:
         if write_target_error is not None:
             return write_target_error
         return _refresh_views(args)
+    if args.command == "run-livability":
+        write_target_error = _validate_write_target(args)
+        if write_target_error is not None:
+            return write_target_error
+        return _run_livability(args)
     return 2
 
 
@@ -448,6 +466,23 @@ def _refresh_views(args: argparse.Namespace) -> int:
                     "refreshed": ["place_grade_v1", "agency_stats_v1"],
                     "write_target": args.write_target,
                 }
+            )
+        )
+        return 0
+    except PipelineConfigError as exc:
+        print(json.dumps({"error": "config_error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 3
+
+
+def _run_livability(args: argparse.Namespace) -> int:
+    from public_officer_pipeline.livability import run_livability
+
+    try:
+        total = asyncio.run(run_livability(args.adm_cd, database_url=_database_url_for_write_target(args)))
+        print(
+            json.dumps(
+                {"ok": True, "emd_loaded": total, "scope": args.adm_cd, "write_target": args.write_target},
+                ensure_ascii=False,
             )
         )
         return 0

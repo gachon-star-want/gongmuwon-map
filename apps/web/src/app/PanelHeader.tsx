@@ -1,9 +1,9 @@
-import { LogIn, MapPin, MessageCircle, UserRound } from 'lucide-react';
+import { Home, LogIn, MapPin, MessageCircle, UserRound } from 'lucide-react';
 import type { CurrentUser } from '../features/auth/authApi';
 import mascotLogo from '../assets/officer-mascot-logo.png';
 
 interface PanelHeaderProps {
-  activePage: 'map' | 'community';
+  activePage: 'map' | 'community' | 'neighborhood';
   currentUser?: CurrentUser | null;
   onLogin?: () => void;
   onLogout?: () => void;
@@ -24,6 +24,10 @@ export function PanelHeader({ activePage, currentUser, onLogin, onLogout }: Pane
         <a href="/community" className="panel-nav-tab" data-active={activePage === 'community'}>
           <MessageCircle size={15} aria-hidden />
           커뮤니티
+        </a>
+        <a href="/neighborhood" className="panel-nav-tab" data-active={activePage === 'neighborhood'}>
+          <Home size={15} aria-hidden />
+          동네
         </a>
       </nav>
       <div className="panel-header-auth">
