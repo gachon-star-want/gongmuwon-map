@@ -23,6 +23,7 @@ import apiRegionsTree from './v1/regions/tree';
 import apiNeighborhoodsSubregions from './v1/neighborhoods/subregions';
 import apiNeighborhoodsDetail from './v1/neighborhoods/detail';
 import apiNeighborhoodsBoundary from './v1/neighborhoods/boundary';
+import apiNeighborhoodsBoundaries from './v1/neighborhoods/boundaries';
 import apiCronRefreshScores from './cron/refresh-scores';
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
@@ -50,6 +51,7 @@ const routeTable: [string[], RouteEntry][] = [
   [['v1', 'neighborhoods', 'subregions'], { handler: apiNeighborhoodsSubregions }],
   [['v1', 'neighborhoods', 'detail'], { handler: apiNeighborhoodsDetail }],
   [['v1', 'neighborhoods', 'boundary'], { handler: apiNeighborhoodsBoundary }],
+  [['v1', 'neighborhoods', 'boundaries'], { handler: apiNeighborhoodsBoundaries }],
   [['v1', 'stats', 'summary'], { handler: apiStatsSummary }],
 
   [['sitemap'], { handler: apiSitemap }],

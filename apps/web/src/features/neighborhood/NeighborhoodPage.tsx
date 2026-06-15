@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Card, Group, Loader, Progress, SegmentedControl, Select, Stack, Text, Title } from '@mantine/core';
 import { PanelHeader } from '../../app/PanelHeader';
 import {
+  loadBoundaries,
   loadNeighborhoodDetail,
   loadRegionTree,
   loadSubregions,
+  type BoundaryFeature,
   type NeighborhoodDetail,
   type RankItem,
   type SidoNode,
 } from './neighborhoodApi';
+import { NeighborhoodMap } from './NeighborhoodMap';
 
 const HOUSEHOLD_OPTIONS = [
   { value: '1', label: '1인' },
@@ -37,6 +40,7 @@ export function NeighborhoodPage() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<NeighborhoodDetail | null>(null);
+  const [features, setFeatures] = useState<BoundaryFeature[]>([]);
 
   useEffect(() => {
     void loadRegionTree()
@@ -63,6 +67,16 @@ export function NeighborhoodPage() {
       .then((res) => setItems(res.items))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
+  }, [sigungu, household]);
+
+  useEffect(() => {
+    if (!sigungu) {
+      setFeatures([]);
+      return;
+    }
+    void loadBoundaries(sigungu, Number(household))
+      .then((res) => setFeatures(res.features))
+      .catch(() => setFeatures([]));
   }, [sigungu, household]);
 
   useEffect(() => {
@@ -124,6 +138,12 @@ export function NeighborhoodPage() {
           <Text mt="xl" c="dimmed">
             아직 이 시군구의 데이터가 없습니다. (적재 전이거나 집계 대기 중일 수 있습니다)
           </Text>
+        )}
+
+        {!loading && items.length > 0 && features.length > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <NeighborhoodMap features={features} selected={selected} onSelect={setSelected} />
+          </div>
         )}
 
         {!loading && items.length > 0 && (
