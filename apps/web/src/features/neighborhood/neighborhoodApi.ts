@@ -56,3 +56,13 @@ export const loadSubregions = (admCd: string, household: number) =>
 
 export const loadNeighborhoodDetail = (admCd: string, household: number) =>
   getJson<NeighborhoodDetail>(`/api/v1/neighborhoods/detail?adm_cd=${admCd}&household=${household}`, HOUR);
+
+export type BoundaryFeature = {
+  type: 'Feature';
+  properties: { adm_cd: string; name: string; score: number | null; rank: number | null };
+  geometry: { type: string; coordinates: unknown } | null;
+};
+export type BoundariesResponse = { type: 'FeatureCollection'; household: number; features: BoundaryFeature[] };
+
+export const loadBoundaries = (admCd: string, household: number) =>
+  getJson<BoundariesResponse>(`/api/v1/neighborhoods/boundaries?adm_cd=${admCd}&household=${household}`, HOUR);
