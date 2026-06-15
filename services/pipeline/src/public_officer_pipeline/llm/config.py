@@ -46,6 +46,9 @@ def _build_model_map() -> dict[str, dict[TaskType, str | None]]:
                 "ANTHROPIC_SITE_ADAPTER_INFER_MODEL",
                 "claude-opus-4-7",
             ),
+            TaskType.NEIGHBORHOOD_SUMMARY_POLISH: os.getenv(
+                "ANTHROPIC_NEIGHBORHOOD_SUMMARY_MODEL", "claude-haiku-4-5"
+            ),
         },
         "gemini": {
             TaskType.TABLE_NORMALIZE: os.getenv("GEMINI_TABLE_NORMALIZE_MODEL", "gemini-2.5-flash"),
@@ -54,6 +57,9 @@ def _build_model_map() -> dict[str, dict[TaskType, str | None]]:
             TaskType.NAME_NORMALIZE: os.getenv("GEMINI_NAME_NORMALIZE_MODEL", "gemini-2.5-flash"),
             TaskType.SITE_ADAPTER_INFER: os.getenv("GEMINI_SITE_ADAPTER_INFER_MODEL", "gemini-2.5-flash"),
             TaskType.MASKING_VERIFY: os.getenv("GEMINI_MASKING_VERIFY_MODEL", "gemini-2.5-flash"),
+            TaskType.NEIGHBORHOOD_SUMMARY_POLISH: os.getenv(
+                "GEMINI_NEIGHBORHOOD_SUMMARY_MODEL", "gemini-2.5-flash"
+            ),
         },
         "openai": {
             TaskType.TABLE_NORMALIZE: os.getenv("OPENAI_TABLE_NORMALIZE_MODEL", _default_openai_model()),
@@ -62,6 +68,9 @@ def _build_model_map() -> dict[str, dict[TaskType, str | None]]:
             TaskType.NAME_NORMALIZE: os.getenv("OPENAI_NAME_NORMALIZE_MODEL", _default_openai_model()),
             TaskType.SITE_ADAPTER_INFER: os.getenv("OPENAI_SITE_ADAPTER_INFER_MODEL", _default_openai_model()),
             TaskType.MASKING_VERIFY: os.getenv("OPENAI_MASKING_VERIFY_MODEL", _default_openai_model()),
+            TaskType.NEIGHBORHOOD_SUMMARY_POLISH: os.getenv(
+                "OPENAI_NEIGHBORHOOD_SUMMARY_MODEL", _default_openai_model()
+            ),
         },
     }
 
@@ -173,6 +182,20 @@ def default_task_configs(
                 "anthropic": ReasoningConfig(anthropic_thinking_tokens=32768),
                 "gemini": ReasoningConfig(gemini_thinking_level="high"),
                 "openai": ReasoningConfig(openai_reasoning_effort="high"),
+            },
+        },
+        TaskType.NEIGHBORHOOD_SUMMARY_POLISH: {
+            # 짧은 한 줄 윤색 — 저렴·빠른 모델로 충분(facts-locked, 출력 게이트로 검증)
+            "provider_order": ["anthropic", "gemini"],
+            "models": {
+                "anthropic": models["anthropic"][TaskType.NEIGHBORHOOD_SUMMARY_POLISH],
+                "gemini": models["gemini"][TaskType.NEIGHBORHOOD_SUMMARY_POLISH],
+                "openai": models["openai"][TaskType.NEIGHBORHOOD_SUMMARY_POLISH],
+            },
+            "reasoning": {
+                "anthropic": ReasoningConfig(),
+                "gemini": ReasoningConfig(gemini_thinking_level="minimal"),
+                "openai": ReasoningConfig(openai_reasoning_effort="low"),
             },
         },
     }

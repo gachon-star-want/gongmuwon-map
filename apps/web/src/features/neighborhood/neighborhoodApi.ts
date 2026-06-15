@@ -44,6 +44,7 @@ export type NeighborhoodDetail = {
   metrics: DetailMetric[];
   household_distribution: { size: number; households: number }[];
   fields: { category: string; percentile: number; rank: number; total: number }[];
+  summary: string | null;
   source_notice: string;
 };
 
