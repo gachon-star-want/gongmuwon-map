@@ -61,6 +61,8 @@ async def main() -> None:
     parser.add_argument("--no-llm", action="store_true", help="LLM 윤색 없이 룰 기반만")
     parser.add_argument("--limit", type=int, default=0, help="동 개수 제한(테스트)")
     parser.add_argument("--sido", nargs="*", default=[], help="시도 코드 필터(예: 33)")
+    parser.add_argument("--concurrency", type=int, default=8, help="LLM 동시 호출 수")
+    parser.add_argument("--skip-existing", action="store_true", help="이미 요약 있는 동 스킵(증분 재실행)")
     args = parser.parse_args()
 
     _load_env()
@@ -110,19 +112,35 @@ async def main() -> None:
             )
 
         adm_cds = list(by_emd)
+        if args.skip_existing:
+            cur = await conn.execute(
+                "SELECT adm_cd FROM public.neighborhood_summaries WHERE household_size = 0 AND profile_version = 1"
+            )
+            existing = {r["adm_cd"] for r in await cur.fetchall()}
+            before = len(adm_cds)
+            adm_cds = [c for c in adm_cds if c not in existing]
+            print(f"증분: 기존 {len(existing)}건 스킵 → {before}→{len(adm_cds)}개 대상", flush=True)
         if args.limit:
             adm_cds = adm_cds[: args.limit]
-        print(f"요약 생성 대상 {len(adm_cds)}개 동 (LLM={'on' if client else 'off'})", flush=True)
+        print(f"요약 생성 대상 {len(adm_cds)}개 동 (LLM={'on' if client else 'off'}, 동시 {args.concurrency})", flush=True)
 
-        for i, adm_cd in enumerate(adm_cds, 1):
-            emd = by_emd[adm_cd]
-            result = await generate_summary(
-                client=client,
-                fields=emd["fields"],  # type: ignore[arg-type]
-                region_name=str(emd["region_name"]),
-                sigungu_name=str(emd["sigungu_name"]),
-                household=0,
-            )
+        # LLM 호출(generate_summary)은 DB를 건드리지 않으므로 병렬, upsert만 순차(단일 커넥션)
+        sem = asyncio.Semaphore(max(1, args.concurrency))
+
+        async def gen(adm_cd: str):
+            async with sem:
+                emd = by_emd[adm_cd]
+                return adm_cd, await generate_summary(
+                    client=client,
+                    fields=emd["fields"],  # type: ignore[arg-type]
+                    region_name=str(emd["region_name"]),
+                    sigungu_name=str(emd["sigungu_name"]),
+                    household=0,
+                )
+
+        results = await asyncio.gather(*[gen(c) for c in adm_cds])
+
+        for i, (adm_cd, result) in enumerate(results, 1):
             await conn.execute(
                 """
                 INSERT INTO public.neighborhood_summaries
@@ -139,8 +157,8 @@ async def main() -> None:
                 llm += 1
             else:
                 rule += 1
-            if i % 100 == 0:
-                print(f"  {i}/{len(adm_cds)} (llm={llm}, rule={rule})", flush=True)
+            if i % 200 == 0:
+                print(f"  upsert {i}/{len(results)} (llm={llm}, rule={rule})", flush=True)
 
     print(f"완료: {ok}개 (LLM 윤색 {llm}, 룰 폴백 {rule})", flush=True)
 
