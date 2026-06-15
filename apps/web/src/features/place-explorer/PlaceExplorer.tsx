@@ -443,7 +443,7 @@ export function PlaceExplorer() {
       <div className="map-search-wrap">
         <nav className="map-nav-tabs" aria-label="섹션 이동">
           <a href="/" className="map-nav-tab" data-active="true">지도</a>
-          <a href="/neighborhood" className="map-nav-tab">동네</a>
+          <a href="/neighborhood" className="map-nav-tab">살기좋은동네</a>
           <a href="/community" className="map-nav-tab">커뮤니티</a>
         </nav>
         <MapSearchBar value={searchDraft} onChange={setSearchDraft} />

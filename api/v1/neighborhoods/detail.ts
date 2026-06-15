@@ -51,6 +51,12 @@ export default publicReadRoute(async ({ req }) => {
     [admCd],
   );
 
+  const fieldScores = await readQuery<{ category: string; field_score: string; rank_in_sigungu: number; sigungu_count: number }>(
+    `SELECT category, field_score::text AS field_score, rank_in_sigungu, sigungu_count
+     FROM public.neighborhood_field_scores_v1 WHERE adm_cd = $1 ORDER BY field_score DESC`,
+    [admCd],
+  );
+
   const sc = score.rows[0];
   return {
     region: region.rows[0],
@@ -68,6 +74,12 @@ export default publicReadRoute(async ({ req }) => {
       imputed: m.imputed,
     })),
     household_distribution: distribution.rows.map((d) => ({ size: d.household_size, households: Number(d.value) })),
+    fields: fieldScores.rows.map((f) => ({
+      category: f.category,
+      percentile: Number(f.field_score),
+      rank: f.rank_in_sigungu,
+      total: f.sigungu_count,
+    })),
     source_notice: SOURCE_NOTICE,
   };
 }, { cache: 'public, s-maxage=3600, stale-while-revalidate=86400' });
