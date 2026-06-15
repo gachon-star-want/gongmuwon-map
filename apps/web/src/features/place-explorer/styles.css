@@ -868,6 +868,37 @@
   }
 }
 
+.map-nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.map-nav-tab {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1.5px solid var(--color-border-mid);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.map-nav-tab[data-active='true'] {
+  background: var(--color-brand);
+  color: var(--color-text-inverse);
+  border-color: var(--color-brand);
+}
+
+@media (max-width: 767px) {
+  .map-nav-tabs { display: none; } /* 모바일은 하단 BottomNav가 담당 */
+}
+
 .map-search-bar {
   width: 100%;
 }
@@ -893,11 +924,11 @@
 .map-filter-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap; /* 폭 초과 시 다음 줄로 — 끝 버튼 잘림 방지 */
   gap: 6px;
   width: 100%;
-  overflow-x: auto;
   padding: 4px 2px 8px;
-  scrollbar-width: none; /* Firefox */
 }
 
 .map-filter-bar > * {
