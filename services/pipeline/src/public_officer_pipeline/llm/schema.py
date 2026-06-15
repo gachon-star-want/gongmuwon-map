@@ -16,6 +16,7 @@ class TaskType(StrEnum):
     MASKING_VERIFY = "masking_verify"
     NAME_NORMALIZE = "name_normalize"
     SITE_ADAPTER_INFER = "site_adapter_infer"
+    NEIGHBORHOOD_SUMMARY_POLISH = "neighborhood_summary_polish"
 
 
 class ExtractResult(BaseModel):

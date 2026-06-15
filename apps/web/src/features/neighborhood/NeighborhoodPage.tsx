@@ -206,9 +206,12 @@ export function NeighborhoodPage() {
                 .filter((f) => f.rank >= Math.ceil((f.total * 2) / 3))
                 .sort((a, b) => b.rank - a.rank);
               const strengthNames = strengths.slice(0, 2).map((s) => CATEGORY_LABEL[s.category] ?? s.category);
-              const summary = strengthNames.length
-                ? `같은 ${sigunguName} 안에서 ${strengthNames.join('·')}이(가) 돋보이는 동네예요.`
-                : '같은 시군구 안에서 고르게 평균적인 동네예요.';
+              // 서버(월배치 LLM 윤색·ADR-018) 요약 우선, 없으면 클라이언트 규칙 폴백
+              const summary =
+                detail.summary ??
+                (strengthNames.length
+                  ? `같은 ${sigunguName} 안에서 ${strengthNames.join('·')}이(가) 돋보이는 동네예요.`
+                  : '같은 시군구 안에서 고르게 평균적인 동네예요.');
               return (
               <Card withBorder w={320} style={{ flexShrink: 0 }}>
                 <Group justify="space-between" align="center" wrap="nowrap">

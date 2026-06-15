@@ -57,6 +57,14 @@ export default publicReadRoute(async ({ req }) => {
     [admCd],
   );
 
+  // 월배치로 미리 생성한 한 줄 요약(ADR-018). 가구원수별 있으면 우선, 없으면 공통(0).
+  const summary = await readQuery<{ summary: string; source: string }>(
+    `SELECT summary, source FROM public.neighborhood_summaries
+     WHERE adm_cd = $1 AND household_size IN (0, $2) AND profile_version = $3
+     ORDER BY household_size DESC LIMIT 1`,
+    [admCd, household, profile],
+  );
+
   const sc = score.rows[0];
   return {
     region: region.rows[0],
@@ -80,6 +88,7 @@ export default publicReadRoute(async ({ req }) => {
       rank: f.rank_in_sigungu,
       total: f.sigungu_count,
     })),
+    summary: summary.rows[0]?.summary ?? null,
     source_notice: SOURCE_NOTICE,
   };
 }, { cache: 'public, s-maxage=3600, stale-while-revalidate=86400' });
