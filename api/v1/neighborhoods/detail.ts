@@ -65,6 +65,19 @@ export default publicReadRoute(async ({ req }) => {
     [admCd, household, profile],
   );
 
+  // POI 근거(표시 전용, ADR-019). 점수와 무관 — neighborhood_poi_counts는 점수 MV에서 참조 안 함.
+  // MVP는 경계 내(pip)만. 0 카운트는 제외(낙인 방지). 프론트가 강점 분야에만 노출.
+  const poi = await readQuery<{
+    category: string; poi_type: string; display_name: string; count: number; distance_basis: string; source_notice: string;
+  }>(
+    `SELECT t.category, t.poi_type, t.display_name, p.count, p.distance_basis, t.source_notice
+     FROM public.neighborhood_poi_counts p
+     JOIN public.poi_type_catalog t ON t.poi_type = p.poi_type
+     WHERE p.adm_cd = $1 AND p.distance_basis = 'pip' AND p.count > 0
+     ORDER BY t.sort_order`,
+    [admCd],
+  );
+
   const sc = score.rows[0];
   return {
     region: region.rows[0],
@@ -89,6 +102,15 @@ export default publicReadRoute(async ({ req }) => {
       total: f.sigungu_count,
     })),
     summary: summary.rows[0]?.summary ?? null,
+    evidence_poi: poi.rows.map((p) => ({
+      category: p.category,
+      poi_type: p.poi_type,
+      display_name: p.display_name,
+      count: Number(p.count),
+      distance_basis: p.distance_basis,
+      estimated: p.distance_basis !== 'pip', // 직선버퍼는 추정
+      source_notice: p.source_notice,
+    })),
     source_notice: SOURCE_NOTICE,
   };
 }, { cache: 'public, s-maxage=3600, stale-while-revalidate=86400' });

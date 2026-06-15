@@ -212,6 +212,12 @@ export function NeighborhoodPage() {
                 (strengthNames.length
                   ? `같은 ${sigunguName} 안에서 ${strengthNames.join('·')}이(가) 돋보이는 동네예요.`
                   : '같은 시군구 안에서 고르게 평균적인 동네예요.');
+              // POI 근거(표시 전용, ADR-019): 강점 분야 옆에 "동네 안에 초등학교 3곳" 식으로
+              const poiByCategory: Record<string, { display_name: string; count: number; estimated: boolean }[]> = {};
+              for (const p of detail.evidence_poi ?? []) {
+                (poiByCategory[p.category] ??= []).push(p);
+              }
+              const hasPoi = (detail.evidence_poi ?? []).length > 0;
               return (
               <Card withBorder w={320} style={{ flexShrink: 0 }}>
                 <Group justify="space-between" align="center" wrap="nowrap">
@@ -239,11 +245,21 @@ export function NeighborhoodPage() {
                       ))}
                     </Group>
                     <Stack gap={2} mt={6}>
-                      {strengths.slice(0, 2).map((s) => (
-                        <Text key={s.category} size="xs" c="dimmed">
-                          · {CATEGORY_STRENGTH[s.category] ?? `${CATEGORY_LABEL[s.category] ?? s.category}이(가) 좋아요`}
-                        </Text>
-                      ))}
+                      {strengths.slice(0, 2).map((s) => {
+                        const pois = (poiByCategory[s.category] ?? []).filter((p) => !p.estimated);
+                        return (
+                          <div key={s.category}>
+                            <Text size="xs" c="dimmed">
+                              · {CATEGORY_STRENGTH[s.category] ?? `${CATEGORY_LABEL[s.category] ?? s.category}이(가) 좋아요`}
+                            </Text>
+                            {pois.length > 0 && (
+                              <Text size="xs" c="teal" ml={10}>
+                                동네 안에 {pois.map((p) => `${p.display_name} ${p.count}곳`).join(' · ')}
+                              </Text>
+                            )}
+                          </div>
+                        );
+                      })}
                     </Stack>
                   </>
                 )}
@@ -283,6 +299,11 @@ export function NeighborhoodPage() {
                 >
                   이 동네 공무원픽 맛집 보기
                 </Button>
+                {hasPoi && (
+                  <Text size="xs" c="dimmed" mt={6}>
+                    동네 안 시설 수는 점수에 반영되지 않은 참고 정보예요.
+                  </Text>
+                )}
                 <Text size="xs" c="dimmed" mt={6}>
                   {detail.source_notice}
                 </Text>

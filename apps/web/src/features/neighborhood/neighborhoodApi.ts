@@ -45,6 +45,15 @@ export type NeighborhoodDetail = {
   household_distribution: { size: number; households: number }[];
   fields: { category: string; percentile: number; rank: number; total: number }[];
   summary: string | null;
+  evidence_poi?: {
+    category: string;
+    poi_type: string;
+    display_name: string;
+    count: number;
+    distance_basis: string;
+    estimated: boolean;
+    source_notice: string;
+  }[];
   source_notice: string;
 };
 

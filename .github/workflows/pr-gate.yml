@@ -53,6 +53,20 @@ jobs:
             exit 1
           fi
 
+      - name: Enforce score/POI isolation (ADR-019)
+        run: |
+          set -euo pipefail
+          # 점수 MV(neighborhood_scores_v1 / field_scores_v1) 정의 파일이 POI 테이블을 참조하면
+          # "시설 많음=좋은 동네"로 점수가 오염된다. 같은 파일에 둘 다 등장하면 실패시킨다.
+          violators=$(grep -lE 'neighborhood_(scores|field_scores)_v1' supabase/migrations/*.sql 2>/dev/null \
+            | xargs grep -lE 'neighborhood_poi_counts|poi_type_catalog' 2>/dev/null || true)
+          if [ -n "$violators" ]; then
+            echo "❌ ADR-019 위반: 점수 MV 정의 파일이 POI 테이블을 참조합니다:" >&2
+            echo "$violators" >&2
+            exit 1
+          fi
+          echo "✅ 점수 MV ↔ POI 분리 확인"
+
   web-build:
     name: web-build
     runs-on: ubuntu-latest
