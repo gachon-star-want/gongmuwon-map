@@ -1,4 +1,4 @@
-import { Building2, Filter, Info, List, MapPin, MessageCircle } from 'lucide-react';
+import { Building2, Filter, Home, Info, List, MapPin, MessageCircle } from 'lucide-react';
 import type { MobileMode } from './BottomSheet';
 
 interface BottomNavProps {
@@ -22,6 +22,10 @@ export function BottomNav({ mode, onChange, hasSelection }: BottomNavProps) {
         <Filter size={18} aria-hidden />
         필터
       </button>
+      <a href="/neighborhood" className="bottom-nav-link">
+        <Home size={18} aria-hidden />
+        동네
+      </a>
       <a href="/community" className="bottom-nav-link">
         <MessageCircle size={18} aria-hidden />
         커뮤니티
