@@ -30,6 +30,7 @@
     "test:web": "npm --workspace apps/web run test",
     "test:pipeline": "uv run --project services/pipeline pytest",
     "test:api": "vitest run --root . api/_lib/*.test.ts",
+    "typecheck:api": "tsc -p tsconfig.api.json",
     "check:public-contracts": "node scripts/verify-public-route-contracts.mjs",
     "audit:markers": "node scripts/audit-markers.mjs",
     "remediate:markers": "node scripts/remediate-marker-audit.mjs",
