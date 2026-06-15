@@ -43,6 +43,7 @@ export type NeighborhoodDetail = {
   score: { score: number; rank: number; total: number; fields: number } | null;
   metrics: DetailMetric[];
   household_distribution: { size: number; households: number }[];
+  fields: { category: string; percentile: number; rank: number; total: number }[];
   source_notice: string;
 };
 
@@ -59,7 +60,7 @@ export const loadNeighborhoodDetail = (admCd: string, household: number) =>
 
 export type BoundaryFeature = {
   type: 'Feature';
-  properties: { adm_cd: string; name: string; score: number | null; rank: number | null };
+  properties: { adm_cd: string; name: string; score: number | null; rank: number | null; fields: Record<string, number> | null };
   geometry: { type: string; coordinates: unknown } | null;
 };
 export type BoundariesResponse = { type: 'FeatureCollection'; household: number; features: BoundaryFeature[] };

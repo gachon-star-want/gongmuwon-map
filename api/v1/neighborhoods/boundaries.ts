@@ -10,6 +10,7 @@ type BoundaryRow = {
   geojson: { type?: string; geometry?: unknown } | unknown;
   score: string | null;
   rank_in_sigungu: number | null;
+  fields: Record<string, number> | null;
 };
 
 // 시군구 하위 읍면동 경계 + 점수를 한 번에 (choropleth용 FeatureCollection)
@@ -23,7 +24,9 @@ export default publicReadRoute(async ({ req }) => {
   const profile = numberParam(req.query.profile, 1);
 
   const { rows } = await readQuery<BoundaryRow>(
-    `SELECT r.adm_cd, r.name, b.geojson, s.score::text AS score, s.rank_in_sigungu
+    `SELECT r.adm_cd, r.name, b.geojson, s.score::text AS score, s.rank_in_sigungu,
+            (SELECT jsonb_object_agg(f.category, f.field_score)
+             FROM public.neighborhood_field_scores_v1 f WHERE f.adm_cd = b.adm_cd) AS fields
      FROM public.region_boundaries b
      JOIN public.adm_regions r ON r.adm_cd = b.adm_cd
      LEFT JOIN public.neighborhood_scores_v1 s
@@ -41,6 +44,7 @@ export default publicReadRoute(async ({ req }) => {
         adm_cd: row.adm_cd,
         name: row.name,
         score: row.score === null ? null : Number(row.score),
+        fields: row.fields ?? null,
         rank: row.rank_in_sigungu,
       },
       geometry,

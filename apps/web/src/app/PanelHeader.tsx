@@ -1,4 +1,4 @@
-import { Home, LogIn, MapPin, MessageCircle, UserRound } from 'lucide-react';
+import { House, LogIn, MapPin, MessageCircle, UserRound } from 'lucide-react';
 import type { CurrentUser } from '../features/auth/authApi';
 import mascotLogo from '../assets/officer-mascot-logo.png';
 
@@ -26,8 +26,8 @@ export function PanelHeader({ activePage, currentUser, onLogin, onLogout }: Pane
           커뮤니티
         </a>
         <a href="/neighborhood" className="panel-nav-tab" data-active={activePage === 'neighborhood'}>
-          <Home size={15} aria-hidden />
-          동네
+          <House size={15} aria-hidden />
+          살기좋은동네
         </a>
       </nav>
       <div className="panel-header-auth">
