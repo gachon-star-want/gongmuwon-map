@@ -28,9 +28,6 @@ jobs:
       SGIS_SERVICE_ID: ${{ secrets.SGIS_SERVICE_ID }}
       SGIS_API_KEY: ${{ secrets.SGIS_API_KEY }}
       KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,15 +47,4 @@ jobs:
           fi
           uv run --project services/pipeline python \
             services/pipeline/scripts/ingest_nationwide_livability.py ${{ github.event.inputs.scope }}
-
-      - name: Generate neighborhood summaries (룰 claim + LLM 윤색·게이트, 키 없으면 룰 폴백)
-        run: |
-          set -euo pipefail
-          SCOPE="${{ github.event.inputs.scope }}"
-          if [ -n "$SCOPE" ]; then
-            uv run --project services/pipeline python \
-              services/pipeline/scripts/generate_neighborhood_summaries.py --sido $SCOPE
-          else
-            uv run --project services/pipeline python \
-              services/pipeline/scripts/generate_neighborhood_summaries.py
-          fi
+        # 요약 생성은 ingest와 분리(livability-summaries.yml) — ingest 실패에 묶이지 않게 한다
